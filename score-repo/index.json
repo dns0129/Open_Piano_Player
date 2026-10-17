@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "scores": [
+    {
+      "id": "golden-hour-netease-664959",
+      "title": "Golden Hour · 钢琴谱（9页全谱）",
+      "composer": "JVKE（Jake Lawson、Zac Lawson）· 编配：咲阿柚",
+      "description": "网易云9页55小节逐音转写 · E 大调 12/8 · 待对照原谱校对",
+      "timeSignature": [
+        12,
+        8
+      ],
+      "keySignature": 4,
+      "tempo": 141,
+      "measures": 55,
+      "notes": 2045,
+      "durationBeats": 330,
+      "sourceKind": "image-ai",
+      "sha256": "3ccc927edd5132ad5049edc5bfc794b99e7e202e1566b075e3355078c10b9a14",
+      "addedAt": "2026-10-17T23:04:38.628Z"
+    }
+  ]
+}

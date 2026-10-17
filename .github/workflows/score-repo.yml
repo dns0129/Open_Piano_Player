@@ -1,0 +1,19 @@
+name: Score repository
+
+on:
+  pull_request:
+    paths: ['score-repo/**', 'lib/score.mjs', 'lib/score-repository.mjs', 'scripts/score-repo.mjs', 'tests/score-repository.test.mjs']
+  push:
+    branches: [main]
+    paths: ['score-repo/**', 'lib/score.mjs', 'lib/score-repository.mjs', 'scripts/score-repo.mjs', 'tests/score-repository.test.mjs']
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/score-repo.mjs verify
+      - run: node --test tests/score-repository.test.mjs
