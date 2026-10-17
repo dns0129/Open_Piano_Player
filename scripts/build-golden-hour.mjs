@@ -1,9 +1,9 @@
 // Golden Hour · 网易云乐谱 664959（钢琴谱，编配：咲阿柚），9页55小节逐音转写。
 // 原谱为12/8、E大调，每小节6个四分拍；每个声部的事件（含休止）必须恰好填满小节。
 // 音名已按调号与临时记号写成实际音高；8va 段落直接写入实际（高八度）音高。
-// 用法：node scripts/build-golden-hour.mjs  → 重新生成 lib/scores/golden-hour.json
-import { writeFileSync } from 'node:fs';
+// 用法：node scripts/build-golden-hour.mjs  → 写入云端曲库 score-repo/scores/golden-hour-netease-664959.json
 import { validateScore } from '../lib/score.mjs';
+import { addScore } from '../lib/score-repository.mjs';
 
 const STEP = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
 const midi = name => {
@@ -138,5 +138,5 @@ const score = validateScore({
   },
   notes,
 });
-writeFileSync(new URL('../lib/scores/golden-hour.json', import.meta.url), JSON.stringify({ score }) + '\n');
+await addScore(score, { description: '网易云9页55小节逐音转写 · E 大调 12/8 · 待对照原谱校对' });
 console.log(`Golden Hour: ${BARS} 小节, ${score.notes.length} 个音符, ${score.durationBeats} 拍`);
