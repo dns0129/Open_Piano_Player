@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "samples": 10,
+  "pages": 15,
+  "pdfPages": 5,
+  "aiModelEffortAudits": 10,
+  "pngHashChecks": 15,
+  "completeReportsOnly": true,
+  "inputAndRequestAudit": "data/request-and-input-verification.json",
+  "independentScorer": "data/independent-score-verification.json",
+  "htmlInteractions": "data/html-validation.json"
+}

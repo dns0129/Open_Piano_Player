@@ -1,0 +1,27 @@
+{
+  "runId": "page1-low-gpt-5.6-luna-2x-802a6d94-f7b7-4706-8ab3-e48822393020",
+  "model": "gpt-5.6-luna",
+  "reasoningEffort": "low",
+  "startedAt": "2026-10-17T15:43:22.683Z",
+  "endedAt": "2026-10-17T15:43:29.837Z",
+  "elapsedSeconds": 7.152495459,
+  "resultCache": "bypassed",
+  "passesPerRow": 1,
+  "results": [
+    {
+      "regionId": "p1-s1",
+      "status": "failed",
+      "error": {
+        "code": "NEEDS_SOURCE",
+        "message": "需要清晰谱行：当前图片分辨率/裁切不足以可靠辨认整行的全部音高、时值、声部与连音（尤其第2小节密集音符及第1小节低音休止后的音符）。请提供更清晰的整行原图，保持左右边界和五线谱完整可见。"
+      },
+      "model": "gpt-5.6-luna",
+      "reasoningEffort": "low",
+      "sourceImageSha256": "24a592b779ebbb7d96dd6ecf7fd1fecfe04683a589c217786482543e462607bd",
+      "startedAt": "2026-10-17T15:43:22.686Z",
+      "endedAt": "2026-10-17T15:43:29.836Z",
+      "elapsedSeconds": 7.149923625
+    }
+  ],
+  "enlarged": true
+}

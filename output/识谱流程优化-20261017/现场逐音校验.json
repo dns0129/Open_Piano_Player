@@ -1,0 +1,111 @@
+{
+  "heads": 117,
+  "rows": [
+    {
+      "id": "p1-s3",
+      "heads": 29,
+      "comparison": {
+        "exactMatch": true,
+        "expectedCount": 29,
+        "actualCount": 29,
+        "missing": [],
+        "extra": [],
+        "notation": {
+          "passed": true,
+          "differences": []
+        }
+      },
+      "independent": {
+        "exactMatch": true,
+        "expectedCount": 29,
+        "actualCount": 29,
+        "missing": [],
+        "extra": [],
+        "notation": {
+          "passed": true,
+          "differences": []
+        }
+      }
+    },
+    {
+      "id": "p4-s3",
+      "heads": 32,
+      "comparison": {
+        "exactMatch": true,
+        "expectedCount": 32,
+        "actualCount": 32,
+        "missing": [],
+        "extra": [],
+        "notation": {
+          "passed": true,
+          "differences": []
+        }
+      },
+      "independent": {
+        "exactMatch": true,
+        "expectedCount": 32,
+        "actualCount": 32,
+        "missing": [],
+        "extra": [],
+        "notation": {
+          "passed": true,
+          "differences": []
+        }
+      }
+    },
+    {
+      "id": "p4-s4",
+      "heads": 39,
+      "comparison": {
+        "exactMatch": true,
+        "expectedCount": 39,
+        "actualCount": 39,
+        "missing": [],
+        "extra": [],
+        "notation": {
+          "passed": true,
+          "differences": []
+        }
+      },
+      "independent": {
+        "exactMatch": true,
+        "expectedCount": 39,
+        "actualCount": 39,
+        "missing": [],
+        "extra": [],
+        "notation": {
+          "passed": true,
+          "differences": []
+        }
+      }
+    },
+    {
+      "id": "p6-s3",
+      "heads": 17,
+      "comparison": {
+        "exactMatch": true,
+        "expectedCount": 17,
+        "actualCount": 17,
+        "missing": [],
+        "extra": [],
+        "notation": {
+          "passed": true,
+          "differences": []
+        }
+      },
+      "independent": {
+        "exactMatch": true,
+        "expectedCount": 17,
+        "actualCount": 17,
+        "missing": [],
+        "extra": [],
+        "notation": {
+          "passed": true,
+          "differences": []
+        }
+      }
+    }
+  ],
+  "allExact": true,
+  "scope": "Four representative original rows; final grace normalization tested separately on two of these rows. No old score data was supplied to GPT."
+}

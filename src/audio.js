@@ -1,0 +1,512 @@
+import { DEFAULT_PIANO_INSTRUMENT, pianoInstrument, pianoSampleProfile, PianoSampleBank } from '../lib/piano-voices.mjs';
+
+const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
+const EPSILON = 1e-7;
+
+/** Web Audio piano transport. Beats are always quarter notes, including in 6/8. */
+export class PianoPlayer {
+  constructor(options = {}) {
+    this.onFrame = options.onFrame || (() => {});
+    this.onStateChange = options.onStateChange || (() => {});
+    this.onInstrumentState = options.onInstrumentState || (() => {});
+    this._instrumentId = options.instrument || DEFAULT_PIANO_INSTRUMENT;
+    const initialInstrument = pianoInstrument(this._instrumentId);
+    this._activeInstrument = initialInstrument.engine === 'synth' ? 'synth' : null;
+    this._instrumentState = { id: this._instrumentId, status: this._activeInstrument ? 'ready' : 'idle',
+      engine: initialInstrument.engine, progress: this._activeInstrument ? 1 : 0, loaded: 0, total: 0,
+      message: this._activeInstrument ? '轻量合成已就绪' : '首次播放时加载本机钢琴采样' };
+    this._sampleOptions = { manifestURL: options.sampleManifestURL, manifest: options.sampleManifest, fetcher: options.sampleFetcher };
+    this._instrumentGeneration = 0;
+    this._disposed = false;
+    this._contextFactory = options.audioContextFactory || (() => {
+      const Context = globalThis.AudioContext || globalThis.webkitAudioContext;
+      if (!Context) throw new Error('当前浏览器不支持 Web Audio，请使用新版 Chrome、Edge 或 Safari。');
+      return new Context();
+    });
+    this._requestFrame = options.requestFrame || ((fn) => globalThis.requestAnimationFrame(fn));
+    this._cancelFrame = options.cancelFrame || ((id) => globalThis.cancelAnimationFrame(id));
+    this._setInterval = options.setIntervalFn || ((fn, delay) => globalThis.setInterval(fn, delay));
+    this._clearInterval = options.clearIntervalFn || ((id) => globalThis.clearInterval(id));
+    this._state = 'stopped';
+    this._beat = 0;
+    this._score = null;
+    this._notes = [];
+    this._voices = new Set();
+    this._config = {
+      tempo: 88, volume: 0.72, rightEnabled: true, leftEnabled: true,
+      metronome: false, loopEnabled: false, loopStart: 0, loopEnd: null,
+    };
+    this._timer = null;
+    this._raf = null;
+    this._lastHiddenFrameTime = -Infinity;
+    this._visibilityHandler = () => {
+      if (this._state === 'playing') {
+        this._schedule();
+        this._emitFrame();
+      }
+    };
+    globalThis.document?.addEventListener('visibilitychange', this._visibilityHandler);
+  }
+
+  get state() { return this._state; }
+  get instrument() { return this._instrumentId; }
+  get instrumentState() { return { ...this._instrumentState, activeId: this._activeInstrument }; }
+  get beat() {
+    return this._state === 'playing' ? this._positionAt(this._context.currentTime) : this._beat;
+  }
+
+  setScore(score) {
+    this.stop();
+    this._score = score || null;
+    this._notes = (score?.notes || [])
+      .filter((note) => Number.isFinite(note.midi) && Number.isFinite(note.beat) && note.duration > 0)
+      .map((note, index) => ({ ...note, id: note.id ?? `note-${index}`, hand: note.hand === 'left' ? 'left' : 'right' }))
+      .sort((a, b) => a.beat - b.beat);
+    this._duration = Math.max(0, Number(score?.durationBeats) || 0,
+      ...this._notes.map((note) => note.beat + note.duration));
+    this._config.tempo = clamp(score?.tempo || 88, 20, 240);
+    this._config.loopStart = 0;
+    this._config.loopEnd = this._duration;
+    this._config.loopEnabled = false;
+    this._emitFrame();
+  }
+
+  async play() {
+    if (!this._score || !this._duration || this._state === 'playing') return;
+    const generation = this._playGeneration = (this._playGeneration || 0) + 1;
+    await this._ensureAudio();
+    // A stop/pause while the browser's audio permission promise is pending wins.
+    await this._context.resume();
+    await this._prepareInstrument();
+    if (generation !== this._playGeneration) return;
+    let position = this._beat >= this._duration - EPSILON ? 0 : this._beat;
+    const loop = this._loopBounds();
+    if (loop && (position < loop.start || position >= loop.end)) position = loop.start;
+    this._state = 'playing';
+    this._resetSchedule(position);
+    this.onStateChange(this._state);
+    this._timer = this._setInterval(() => {
+      this._schedule();
+      // rAF is suspended in background tabs; this still derives position from audio time.
+      if (globalThis.document?.hidden && this._context.currentTime - this._lastHiddenFrameTime >= 0.2) {
+        this._lastHiddenFrameTime = this._context.currentTime;
+        this._emitFrame();
+      }
+    }, 25);
+    this._frame();
+  }
+
+  pause() {
+    this._playGeneration = (this._playGeneration || 0) + 1;
+    if (this._state !== 'playing') return;
+    this._beat = this.beat;
+    this._halt();
+    this._state = 'paused';
+    this.onStateChange(this._state);
+    this._emitFrame();
+  }
+
+  stop() {
+    this._playGeneration = (this._playGeneration || 0) + 1;
+    this._halt();
+    this._beat = 0;
+    const changed = this._state !== 'stopped';
+    this._state = 'stopped';
+    if (changed) this.onStateChange(this._state);
+    this._emitFrame();
+  }
+
+  seek(beat) {
+    let position = clamp(beat, 0, this._duration || 0);
+    const loop = this._loopBounds();
+    if (loop && (position < loop.start || position >= loop.end)) position = loop.start;
+    this._beat = position;
+    if (this._state === 'playing') this._resetSchedule(position);
+    this._emitFrame();
+  }
+
+  configure(changes = {}) {
+    const position = this.beat;
+    const before = { ...this._config };
+    if ('tempo' in changes) this._config.tempo = clamp(changes.tempo, 20, 240);
+    if ('volume' in changes) this._config.volume = clamp(changes.volume, 0, 1);
+    for (const key of ['rightEnabled', 'leftEnabled', 'metronome', 'loopEnabled']) {
+      if (key in changes) this._config[key] = Boolean(changes[key]);
+    }
+    if ('loopStart' in changes) this._config.loopStart = clamp(changes.loopStart, 0, this._duration || 0);
+    if ('loopEnd' in changes) this._config.loopEnd = clamp(changes.loopEnd, 0, this._duration || 0);
+    if (this._master && before.volume !== this._config.volume) {
+      this._master.gain.setTargetAtTime(this._config.volume * 0.72, this._context.currentTime, 0.015);
+    }
+    const reschedule = ['tempo', 'rightEnabled', 'leftEnabled', 'metronome', 'loopEnabled', 'loopStart', 'loopEnd']
+      .some((key) => before[key] !== this._config[key]);
+    if (reschedule && this._state === 'playing') {
+      const loop = this._loopBounds();
+      this._resetSchedule(loop && (position < loop.start || position >= loop.end) ? loop.start : position);
+    }
+    this._emitFrame();
+  }
+
+  async notePreview(midi, velocity = 0.7) {
+    const generation = this._playGeneration || 0;
+    await this._ensureAudio();
+    await this._context.resume();
+    await this._prepareInstrument();
+    if (generation !== (this._playGeneration || 0)) return;
+    this._piano(clamp(midi, 21, 108), this._context.currentTime + 0.005, 0.65, velocity);
+  }
+
+  setInstrument(id) {
+    if (this._disposed) return Promise.reject(new DOMException('播放器已关闭。', 'AbortError'));
+    const instrument = pianoInstrument(id);
+    if (id === this._instrumentId && this._instrumentState.status === 'loading' && this._instrumentPromise) return this._instrumentPromise;
+    if (id === this._activeInstrument && this._instrumentState.status === 'ready') return Promise.resolve(this.instrumentState);
+    const generation = ++this._instrumentGeneration;
+    this._instrumentId = id;
+    if (instrument.engine === 'synth') {
+      this._activateInstrument(id);
+      this._setInstrumentState({ id, status: 'ready', engine: 'synth', progress: 1, loaded: 0, total: 0, message: '轻量合成已就绪' });
+      return Promise.resolve(this.instrumentState);
+    }
+    this._setInstrumentState({ id, status: 'loading', engine: 'samples', progress: 0, loaded: 0, total: 0, message: '正在加载本机钢琴采样…' });
+    const pending = (async () => {
+      try {
+        await this._ensureAudio();
+        if (!this._sampleBank) this._sampleBank = new PianoSampleBank(this._context, this._sampleOptions);
+        await this._sampleBank.load(progress => {
+          if (generation !== this._instrumentGeneration) return;
+          this._setInstrumentState({ id, status: 'loading', engine: 'samples', ...progress,
+            message: `正在加载钢琴采样 ${progress.loaded} / ${progress.total || '…'}` });
+        });
+        if (generation !== this._instrumentGeneration) return this.instrumentState;
+        this._activateInstrument(id);
+        this._setInstrumentState({ id, status: 'ready', engine: 'samples', progress: 1,
+          loaded: this._sampleBank._progress.loaded, total: this._sampleBank._progress.total,
+          message: `${instrument.label} · 真实采样已就绪` });
+        return this.instrumentState;
+      } catch (error) {
+        if (generation !== this._instrumentGeneration) return this.instrumentState;
+        this._setInstrumentState({ id, status: 'error', engine: 'samples', progress: 0, loaded: 0, total: 0,
+          error: error.message, message: error.message || '钢琴采样加载失败，请重试或选择轻量合成。' });
+        throw error;
+      } finally {
+        if (this._instrumentPromise === pending) this._instrumentPromise = null;
+      }
+    })();
+    this._instrumentPromise = pending;
+    return pending;
+  }
+
+  _setInstrumentState(state) {
+    this._instrumentState = state;
+    this.onInstrumentState(this.instrumentState);
+  }
+
+  _activateInstrument(id) {
+    const position = this.beat;
+    this._activeInstrument = id;
+    if (this._state === 'playing') this._resetSchedule(position);
+    else this._cancelVoices();
+  }
+
+  async _prepareInstrument() {
+    while (this._activeInstrument !== this._instrumentId || this._instrumentState.status !== 'ready') {
+      if (this._disposed) throw new DOMException('播放器已关闭。', 'AbortError');
+      const pending = this._instrumentPromise || this.setInstrument(this._instrumentId);
+      await pending;
+    }
+  }
+
+  async dispose() {
+    this.stop();
+    this._disposed = true;
+    this._instrumentGeneration++;
+    this._sampleBank?.dispose();
+    this._sampleBank = null;
+    globalThis.document?.removeEventListener('visibilitychange', this._visibilityHandler);
+    if (this._context && this._context.state !== 'closed') await this._context.close();
+    this._context = null;
+  }
+
+  async _ensureAudio() {
+    if (this._disposed) throw new DOMException('播放器已关闭。', 'AbortError');
+    if (this._context) return;
+    this._context = this._contextFactory();
+    this._master = this._context.createGain();
+    this._master.gain.value = this._config.volume * 0.72;
+    const compressor = this._context.createDynamicsCompressor();
+    compressor.threshold.value = -12;
+    compressor.knee.value = 12;
+    compressor.ratio.value = 4;
+    compressor.attack.value = 0.003;
+    compressor.release.value = 0.18;
+    this._master.connect(compressor);
+    compressor.connect(this._context.destination);
+  }
+
+  _loopBounds() {
+    const start = this._config.loopStart;
+    const end = this._config.loopEnd ?? this._duration;
+    return this._config.loopEnabled && end - start > 1 / 960 ? { start, end, length: end - start } : null;
+  }
+
+  _absoluteAt(time) {
+    return this._anchorBeat + Math.max(0, time - this._anchorTime) * this._config.tempo / 60;
+  }
+
+  _positionAt(time) {
+    const absolute = this._absoluteAt(time);
+    const loop = this._loopBounds();
+    if (loop) return loop.start + ((absolute - loop.start) % loop.length + loop.length) % loop.length;
+    return Math.min(this._duration || 0, absolute);
+  }
+
+  _resetSchedule(beat) {
+    this._cancelVoices();
+    this._beat = beat;
+    this._anchorBeat = beat;
+    this._anchorTime = this._context.currentTime + 0.018;
+    this._nextAbsoluteBeat = beat;
+    this._includeOverlap = true;
+    this._schedule();
+  }
+
+  _schedule() {
+    if (this._state !== 'playing') return;
+    const now = this._context.currentTime;
+    const absoluteNow = this._absoluteAt(now);
+    const loop = this._loopBounds();
+    if (!loop && absoluteNow >= this._duration - EPSILON) {
+      this._beat = this._duration;
+      this._halt();
+      this._state = 'stopped';
+      this.onStateChange(this._state);
+      this.onFrame(this._beat, []);
+      return;
+    }
+    const lookAhead = globalThis.document?.hidden ? 5 : 0.16;
+    const horizon = this._absoluteAt(now + lookAhead);
+    // If the browser was suspended longer than the buffer, skip past expired attacks
+    // and revoice any sustained notes at the current clock position.
+    if (this._nextAbsoluteBeat < absoluteNow - this._config.tempo / 60 * 0.06) {
+      this._cancelVoices();
+      this._nextAbsoluteBeat = absoluteNow;
+      this._includeOverlap = true;
+    }
+    let from = this._nextAbsoluteBeat;
+    let includeOverlap = this._includeOverlap;
+    while (from < horizon - EPSILON) {
+      let cycleBase = 0;
+      let localFrom = from;
+      let localEnd = this._duration;
+      if (loop) {
+        const cycle = Math.floor((from - loop.start + EPSILON) / loop.length);
+        cycleBase = cycle * loop.length;
+        localFrom = from - cycleBase;
+        localEnd = loop.end;
+      }
+      const absoluteTo = Math.min(horizon, cycleBase + localEnd);
+      const localTo = absoluteTo - cycleBase;
+      if (localTo <= localFrom + EPSILON) break;
+      const overlaps = includeOverlap || Boolean(loop && Math.abs(localFrom - loop.start) < EPSILON);
+      this._scheduleSegment(localFrom, localTo, cycleBase, localEnd, overlaps);
+      from = absoluteTo;
+      includeOverlap = false;
+      if (!loop && from >= this._duration - EPSILON) break;
+    }
+    this._nextAbsoluteBeat = from;
+    this._includeOverlap = false;
+  }
+
+  _scheduleSegment(from, to, base, boundary, includeOverlap) {
+    const secondsPerBeat = 60 / this._config.tempo;
+    const timeFor = (beat) => Math.max(this._context.currentTime + 0.002,
+      this._anchorTime + (base + beat - this._anchorBeat) * secondsPerBeat);
+    for (const note of this._notes) {
+      if (note.beat >= to - EPSILON) break;
+      if (!this._config[`${note.hand}Enabled`]) continue;
+      const isAttack = note.beat >= from - EPSILON;
+      if (!isAttack && !(includeOverlap && note.beat + note.duration > from + EPSILON)) continue;
+      const start = Math.max(from, note.beat);
+      const end = Math.min(note.beat + note.duration, boundary, this._duration);
+      if (end <= start + EPSILON) continue;
+      this._piano(note.midi, timeFor(start), (end - start) * secondsPerBeat, note.velocity ?? 0.72,
+        (start - note.beat) * secondsPerBeat);
+    }
+    if (this._config.metronome) {
+      const denominator = this._score.timeSignature?.[1] || 4;
+      const beatUnit = 4 / denominator;
+      const numerator = this._score.timeSignature?.[0] || 4;
+      const firstTick = Math.ceil((from - EPSILON) / beatUnit);
+      for (let tick = firstTick; tick * beatUnit < to - EPSILON; tick++) {
+        this._click(timeFor(tick * beatUnit), tick % numerator === 0);
+      }
+    }
+  }
+
+  _piano(midi, start, duration, velocity, elapsed = 0) {
+    if (velocity <= 0) return;
+    if (this._activeInstrument !== 'synth') {
+      this._samplePiano(midi, start, duration, velocity, elapsed);
+      return;
+    }
+    const ctx = this._context;
+    const frequency = 440 * 2 ** ((midi - 69) / 12);
+    const loudness = clamp(velocity, 0.05, 1);
+    const release = Math.max(0.08, Math.min(0.32, 0.38 - (midi - 21) / 320));
+    const end = start + duration;
+    const stopAt = end + release;
+    const nodes = [];
+    const output = ctx.createGain();
+    output.gain.value = 1;
+    output.connect(this._master);
+    const voice = { output, nodes, end: stopAt, cancelled: false };
+    this._voices.add(voice);
+    // Two slightly detuned strings plus progressively faster-decaying, inharmonic
+    // upper partials reproduce a struck string without an external sample service.
+    const partials = [
+      [1, 0.62, -2.1], [1, 0.39, 2.1], [2, 0.31, 0],
+      [3, 0.15, 0.7], [4, 0.085, 1.4], [5, 0.038, 2.2], [7, 0.016, 3.5],
+    ];
+    let remaining = 0;
+    for (const [harmonic, weight, detune] of partials) {
+      if (frequency * harmonic > ctx.sampleRate * 0.43) continue;
+      const oscillator = ctx.createOscillator();
+      oscillator.type = 'sine';
+      oscillator.frequency.value = frequency * harmonic * Math.sqrt(1 + 0.000075 * harmonic * harmonic);
+      oscillator.detune.value = detune;
+      const gain = ctx.createGain();
+      const amplitude = Math.max(0.00002, weight * loudness * 0.25);
+      const attack = Math.min(0.006, duration * 0.25);
+      const decay = (5.5 - clamp((midi - 21) / 87, 0, 1) * 3.5) / harmonic ** 0.72;
+      const held = Math.max(0.00002, amplitude * Math.exp(-Math.max(0, duration - attack) / decay));
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(amplitude, start + attack);
+      gain.gain.exponentialRampToValueAtTime(held, Math.max(start + attack + 0.0001, end));
+      gain.gain.exponentialRampToValueAtTime(0.00001, stopAt);
+      oscillator.connect(gain);
+      gain.connect(output);
+      nodes.push(oscillator, gain);
+      remaining++;
+      oscillator.onended = () => {
+        oscillator.disconnect();
+        gain.disconnect();
+        if (--remaining === 0) {
+          output.disconnect();
+          this._voices.delete(voice);
+        }
+      };
+      oscillator.start(start);
+      oscillator.stop(stopAt);
+    }
+    if (!remaining) {
+      output.disconnect();
+      this._voices.delete(voice);
+    }
+  }
+
+  _samplePiano(midi, start, duration, velocity, elapsed) {
+    const ctx = this._context;
+    const profile = pianoSampleProfile(this._activeInstrument);
+    if (!profile || !this._sampleBank?.ready) throw new Error('真实钢琴采样尚未准备好。');
+    const sample = this._sampleBank.sampleFor(midi);
+    const rate = 2 ** ((midi - sample.midi) / 12);
+    const offset = elapsed * rate;
+    if (offset >= sample.buffer.duration - 0.004) return;
+    const source = ctx.createBufferSource();
+    source.buffer = sample.buffer;
+    source.playbackRate.value = rate;
+    const output = ctx.createGain();
+    const lowpass = ctx.createBiquadFilter();
+    lowpass.type = 'lowpass';
+    lowpass.frequency.value = Math.min(ctx.sampleRate * 0.45, profile.cutoff);
+    lowpass.Q.value = 0.45;
+    const shelf = ctx.createBiquadFilter();
+    shelf.type = 'highshelf';
+    shelf.frequency.value = 2400;
+    shelf.gain.value = profile.shelf;
+    source.connect(lowpass);
+    lowpass.connect(shelf);
+    shelf.connect(output);
+    output.connect(this._master);
+    const amplitude = profile.gain * clamp(velocity, 0.01, 1) ** profile.velocityExponent;
+    const naturalDuration = (sample.buffer.duration - offset) / rate;
+    const releaseAt = start + Math.min(duration, naturalDuration);
+    const stopAt = Math.min(start + naturalDuration, releaseAt + profile.release);
+    const attack = Math.min(profile.attack, duration / 4, (stopAt - start) / 4);
+    output.gain.setValueAtTime(0, start);
+    output.gain.linearRampToValueAtTime(amplitude, start + attack);
+    output.gain.setValueAtTime(amplitude, Math.max(start + attack, releaseAt));
+    output.gain.linearRampToValueAtTime(0, Math.max(start + attack + 0.001, stopAt));
+    const voice = { output, nodes: [source, lowpass, shelf], end: stopAt, cancelled: false };
+    this._voices.add(voice);
+    source.onended = () => {
+      source.disconnect(); lowpass.disconnect(); shelf.disconnect(); output.disconnect();
+      this._voices.delete(voice);
+    };
+    source.start(start, offset);
+    source.stop(stopAt);
+  }
+
+  _click(start, accent) {
+    const oscillator = this._context.createOscillator();
+    const output = this._context.createGain();
+    oscillator.type = 'triangle';
+    oscillator.frequency.value = accent ? 1320 : 880;
+    output.gain.setValueAtTime(0, start);
+    output.gain.linearRampToValueAtTime(accent ? 0.19 : 0.12, start + 0.002);
+    output.gain.exponentialRampToValueAtTime(0.00001, start + 0.045);
+    oscillator.connect(output);
+    output.connect(this._master);
+    const voice = { output, nodes: [oscillator], end: start + 0.05, cancelled: false };
+    this._voices.add(voice);
+    oscillator.onended = () => {
+      oscillator.disconnect();
+      output.disconnect();
+      this._voices.delete(voice);
+    };
+    oscillator.start(start);
+    oscillator.stop(start + 0.05);
+  }
+
+  _cancelVoices() {
+    if (!this._context) return;
+    const now = this._context.currentTime;
+    for (const voice of this._voices) {
+      if (voice.cancelled) continue;
+      voice.cancelled = true;
+      // Cancel future notes as well as currently sounding notes. A short gain fade
+      // avoids clicks, and oscillator.stop replaces its original scheduled stop.
+      voice.output.gain.cancelScheduledValues(now);
+      voice.output.gain.setValueAtTime(voice.output.gain.value, now);
+      voice.output.gain.linearRampToValueAtTime(0, now + 0.012);
+      for (const node of voice.nodes) {
+        if (typeof node.stop === 'function') {
+          try { node.stop(now + 0.015); } catch { /* a node may already have ended */ }
+        }
+      }
+    }
+    this._voices.clear();
+  }
+
+  _halt() {
+    if (this._timer !== null) this._clearInterval(this._timer);
+    if (this._raf !== null) this._cancelFrame(this._raf);
+    this._timer = null;
+    this._raf = null;
+    this._cancelVoices();
+  }
+
+  _frame() {
+    if (this._state !== 'playing') return;
+    this._emitFrame();
+    this._raf = this._requestFrame(() => this._frame());
+  }
+
+  _emitFrame() {
+    const beat = this.beat;
+    const active = this._notes.filter((note) => this._config[`${note.hand}Enabled`]
+      && note.beat <= beat + EPSILON && note.beat + note.duration > beat + EPSILON);
+    this.onFrame(beat, active);
+  }
+}

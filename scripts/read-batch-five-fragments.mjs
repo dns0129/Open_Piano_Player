@@ -1,0 +1,6 @@
+import{readFile,writeFile}from'node:fs/promises';import{resolve}from'node:path';import{pathToFileURL}from'node:url';
+const root='.local/batch-five-20261018',parts=JSON.parse(await readFile(root+'/fragments.json')),batch=JSON.parse(await readFile(root+'/private-jobs.json'));
+const{generateScoreRegion}=await import(pathToFileURL(resolve(root,'runtime/lib/ai.mjs')));const{validateRegionResult}=await import(pathToFileURL(resolve(root,'runtime/lib/full-score-jobs.mjs')));
+await Promise.all(parts.map(async p=>{const b=batch.jobs.find(b=>b.key===p.key),metadata={title:b.title,timeSignature:[4,4],keySignature:p.key==='sudi'?-6:-5,tempo:p.key==='sudi'?90:68};const request={jobId:b.id,metadata,region:{...p,measureCount:1,image:{mimeType:'image/png',data:(await readFile(p.path)).toString('base64')},context:'原谱单个完整小节，拍号4/4；右手高音谱号、左手低音谱号。共享音头的上下符干表示独立声部，允许不同voice音符共用同一坐标，不能把声部休止当成模糊音头。只读中间这对完整双谱表，忽略上下边缘相邻行的零散音符。'},pass:'recognize'};let result,error;try{result=await generateScoreRegion(request);result={...validateRegionResult(result,p,metadata),model:result.model,reasoningEffort:result.reasoningEffort,usage:result.usage,engine:'pi'};}catch(e){error={code:e.code,message:e.public?e.message:'Failed fragment'};}
+await writeFile(root+'/'+p.key+'/'+p.id+'.json',JSON.stringify({part:p,result,error},null,2));console.log(p.key,p.id,result?.checks.passed,error?.code);
+}));

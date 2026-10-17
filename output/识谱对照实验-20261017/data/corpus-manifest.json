@@ -1,0 +1,257 @@
+[
+  {
+    "id": "01-minuet",
+    "title": "G大调小步舞曲",
+    "sourceUrl": "https://github.com/musetrainer/library/blob/9128876f6164d96997c877a2be843349a32bdabb/scores/Bach_Minuet_in_G_Major_BWV_Anh._114.mxl",
+    "downloadUrl": "https://raw.githubusercontent.com/musetrainer/library/9128876f6164d96997c877a2be843349a32bdabb/scores/Bach_Minuet_in_G_Major_BWV_Anh._114.mxl",
+    "sha256": "490aba9a679e06429e0b7e6e58e50701658389d64c3b5c91511af3ec68355b4d",
+    "license": "Repository states Public Domain; source attribution retained",
+    "repositoryCommit": "9128876f6164d96997c877a2be843349a32bdabb",
+    "pages": [
+      {
+        "page": 1,
+        "width": 1680,
+        "height": 2376,
+        "path": "page-1.png",
+        "sha256": "302c4d366fd63e785cf080bb199c2525fcc4cfc3f128017db99a9f491b2ad3f6"
+      }
+    ],
+    "rendererVersion": "6.3.0-425dd7b",
+    "inputKind": "Rasterized clean engraving from pinned source MusicXML; identical pixels for both recognizers",
+    "inputPdfSha256": "0a84d256ffd5d81bea02cc96752defad937a2a72aeae68ff8351d7c13bc65079",
+    "referenceSha256": "b2827a17b11f14cf0f9f41e53e8f9fb5e2020e84ac1ec9dfe0568ff850449f6e"
+  },
+  {
+    "id": "02-greensleeves",
+    "title": "绿袖子 · 简易钢琴版",
+    "sourceUrl": "https://github.com/musetrainer/library/blob/9128876f6164d96997c877a2be843349a32bdabb/scores/Greensleeves_for_Piano_easy_and_beautiful.mxl",
+    "downloadUrl": "https://raw.githubusercontent.com/musetrainer/library/9128876f6164d96997c877a2be843349a32bdabb/scores/Greensleeves_for_Piano_easy_and_beautiful.mxl",
+    "sha256": "0ad671a423701077141599cfc76dbbe3830150fabc5b32314b3428d1d159c940",
+    "license": "Repository states Public Domain; source attribution retained",
+    "repositoryCommit": "9128876f6164d96997c877a2be843349a32bdabb",
+    "pages": [
+      {
+        "page": 1,
+        "width": 1680,
+        "height": 2376,
+        "path": "page-1.png",
+        "sha256": "e18053e5739276c5d0b0ef51fb34b3ffe0bc0037cec1e392b4e01f6540ae69e1"
+      }
+    ],
+    "rendererVersion": "6.3.0-425dd7b",
+    "inputKind": "Rasterized clean engraving from pinned source MusicXML; identical pixels for both recognizers",
+    "inputPdfSha256": "1ea5f2b5353917bf87ba42ba0c9bc965e217e2a49761c255e39ffab2b6aa95ee",
+    "referenceSha256": "76a0ed01506623718cf0744c84ba19aadc3b5ff7a9e18c925de595303c1d2401"
+  },
+  {
+    "id": "03-birthday",
+    "title": "生日快乐 · C大调钢琴版",
+    "sourceUrl": "https://github.com/musetrainer/library/blob/9128876f6164d96997c877a2be843349a32bdabb/scores/Happy_Birthday_To_You_C_Major.mxl",
+    "downloadUrl": "https://raw.githubusercontent.com/musetrainer/library/9128876f6164d96997c877a2be843349a32bdabb/scores/Happy_Birthday_To_You_C_Major.mxl",
+    "sha256": "32cd97167d5c3dcef483c9d3e81a9e94b81e58f504416710c38524cd48b7eacf",
+    "license": "Repository states Public Domain; source attribution retained",
+    "repositoryCommit": "9128876f6164d96997c877a2be843349a32bdabb",
+    "pages": [
+      {
+        "page": 1,
+        "width": 1680,
+        "height": 2376,
+        "path": "page-1.png",
+        "sha256": "e5eb86e61bd584b07ca727c58e39efc5a06c2e9830c488e5c0342f7c00dfe120"
+      }
+    ],
+    "rendererVersion": "6.3.0-425dd7b",
+    "inputKind": "Rasterized clean engraving from pinned source MusicXML; identical pixels for both recognizers",
+    "inputPdfSha256": "79059177ede1a93373dbe81fb7bed447a66430828a6c4f7e5461792cdbeee6e2",
+    "referenceSha256": "e9486a4ebc971973d43598033bb5526ce933fba1d83555fe0cf317419f886b8b"
+  },
+  {
+    "id": "04-ode",
+    "title": "欢乐颂 · 简易变奏",
+    "sourceUrl": "https://github.com/musetrainer/library/blob/9128876f6164d96997c877a2be843349a32bdabb/scores/Ode_to_Joy_Easy_variation.mxl",
+    "downloadUrl": "https://raw.githubusercontent.com/musetrainer/library/9128876f6164d96997c877a2be843349a32bdabb/scores/Ode_to_Joy_Easy_variation.mxl",
+    "sha256": "96e7b89cd7509749e554f8e7aaa4e566a33fdc9b7968115ed44b96da8c2f12b1",
+    "license": "Repository states Public Domain; source attribution retained",
+    "repositoryCommit": "9128876f6164d96997c877a2be843349a32bdabb",
+    "pages": [
+      {
+        "page": 1,
+        "width": 1680,
+        "height": 2376,
+        "path": "page-1.png",
+        "sha256": "4a3b1f6dd5592d371966843dd639b6731d139c94e676aa822a4b417941afefd8"
+      }
+    ],
+    "rendererVersion": "6.3.0-425dd7b",
+    "inputKind": "Rasterized clean engraving from pinned source MusicXML; identical pixels for both recognizers",
+    "inputPdfSha256": "6c11306f794143e71360daed80f710b948fe06a5b9f64692e9faf47ef17cd759",
+    "referenceSha256": "e02f510e5cb0aa988d9e59d1967154fd062139b01601ab8fc3ed1d4a7940512e"
+  },
+  {
+    "id": "05-elise",
+    "title": "致爱丽丝 · 简易钢琴版",
+    "sourceUrl": "https://github.com/musetrainer/library/blob/9128876f6164d96997c877a2be843349a32bdabb/scores/Fur_Elise_Easy_Piano.mxl",
+    "downloadUrl": "https://raw.githubusercontent.com/musetrainer/library/9128876f6164d96997c877a2be843349a32bdabb/scores/Fur_Elise_Easy_Piano.mxl",
+    "sha256": "44efa40c1c927ba0d0ca89acd0d3659dcb4760a885b2054de0b8f4d4a763ab40",
+    "license": "Repository states Public Domain; source attribution retained",
+    "repositoryCommit": "9128876f6164d96997c877a2be843349a32bdabb",
+    "pages": [
+      {
+        "page": 1,
+        "width": 1680,
+        "height": 2376,
+        "path": "page-1.png",
+        "sha256": "6505a7af3c1159bc3a8c26bc081e90b0e080085d462a40802f65878d579814fa"
+      }
+    ],
+    "rendererVersion": "6.3.0-425dd7b",
+    "inputKind": "Rasterized clean engraving from pinned source MusicXML; identical pixels for both recognizers",
+    "inputPdfSha256": "9f0c058d44e45cdae38f12796f2b05133040425596cd92d72ff8f0e49fecdff5",
+    "referenceSha256": "dbeb40661d33cb4ea8e356551ba30ff54b83c3f4ed0e229ce1e2687432362baa"
+  },
+  {
+    "id": "06-gymnopedie",
+    "title": "第一号裸体舞曲",
+    "sourceUrl": "https://github.com/musetrainer/library/blob/9128876f6164d96997c877a2be843349a32bdabb/scores/Gymnopdie_No._1__Satie.mxl",
+    "downloadUrl": "https://raw.githubusercontent.com/musetrainer/library/9128876f6164d96997c877a2be843349a32bdabb/scores/Gymnopdie_No._1__Satie.mxl",
+    "sha256": "caa620432bb90503e62f5978e60935bc881e633e594f2d83eb655152968e424b",
+    "license": "Repository states Public Domain; source attribution retained",
+    "repositoryCommit": "9128876f6164d96997c877a2be843349a32bdabb",
+    "pages": [
+      {
+        "page": 1,
+        "width": 1680,
+        "height": 2376,
+        "path": "page-1.png",
+        "sha256": "d6b791d97590bdf1799eb10af657fdd94500f8fd245657ca8f7199eccc77273b"
+      },
+      {
+        "page": 2,
+        "width": 1680,
+        "height": 2376,
+        "path": "page-2.png",
+        "sha256": "6efb719063b8afc1c0cd3e632510b6035bf7464f34188e046efeb9f91c7665b3"
+      }
+    ],
+    "rendererVersion": "6.3.0-425dd7b",
+    "inputKind": "Rasterized clean engraving from pinned source MusicXML; identical pixels for both recognizers",
+    "inputPdfSha256": "d94d5ab313f799392f00344b7bde84c153251001d5b4b0af6adbd1799bf6452f",
+    "referenceSha256": "3a20f3e48809cb37a6b5fbeb87454129f4808ff724f8783ad3a97ca74fc73f40"
+  },
+  {
+    "id": "07-bach-prelude",
+    "title": "C大调前奏曲 BWV846",
+    "sourceUrl": "https://github.com/musetrainer/library/blob/9128876f6164d96997c877a2be843349a32bdabb/scores/Prelude_I_in_C_major_BWV_846_-_Well_Tempered_Clavier_First_Book.mxl",
+    "downloadUrl": "https://raw.githubusercontent.com/musetrainer/library/9128876f6164d96997c877a2be843349a32bdabb/scores/Prelude_I_in_C_major_BWV_846_-_Well_Tempered_Clavier_First_Book.mxl",
+    "sha256": "286535dfb99cf841bfa9848e4cd71ddb2339c476a123971cb326b3d85e410018",
+    "license": "Repository states Public Domain; source attribution retained",
+    "repositoryCommit": "9128876f6164d96997c877a2be843349a32bdabb",
+    "pages": [
+      {
+        "page": 1,
+        "width": 1680,
+        "height": 2376,
+        "path": "page-1.png",
+        "sha256": "a8a4be8a9f839d06c1abd9eaf5825145cc3134abaf04918cfb8e7a7d5abb9282"
+      },
+      {
+        "page": 2,
+        "width": 1680,
+        "height": 2376,
+        "path": "page-2.png",
+        "sha256": "bad730bd48a865b13dab98528cd6e82186ba4d84f2b3ef646f75e9718c46df4c"
+      }
+    ],
+    "rendererVersion": "6.3.0-425dd7b",
+    "inputKind": "Rasterized clean engraving from pinned source MusicXML; identical pixels for both recognizers",
+    "inputPdfSha256": "ffedf5c76f7de1eb5ad6b9c6f430c4e88043f6f78d76485afa63d15f8af679b8",
+    "referenceSha256": "c27b93e734f807f40f270c1b37d5d2765b846945c36ef58882e1d625f0ca52f2"
+  },
+  {
+    "id": "08-chopin-prelude",
+    "title": "E小调前奏曲 Op.28 No.4",
+    "sourceUrl": "https://github.com/musetrainer/library/blob/9128876f6164d96997c877a2be843349a32bdabb/scores/Prlude_No._4_in_E_Minor_Op._28_-_Frdric_Chopin.mxl",
+    "downloadUrl": "https://raw.githubusercontent.com/musetrainer/library/9128876f6164d96997c877a2be843349a32bdabb/scores/Prlude_No._4_in_E_Minor_Op._28_-_Frdric_Chopin.mxl",
+    "sha256": "af16b22270dd243a6c4ecb627b840f4450e1d477ae2bc7c885ccb0ba25c4fd5d",
+    "license": "Repository states Public Domain; source attribution retained",
+    "repositoryCommit": "9128876f6164d96997c877a2be843349a32bdabb",
+    "pages": [
+      {
+        "page": 1,
+        "width": 1680,
+        "height": 2376,
+        "path": "page-1.png",
+        "sha256": "f1e4ef8d545ccf4bcfea9152021499311a3a77c8a8f600fa2adb9e1cb4dac04b"
+      },
+      {
+        "page": 2,
+        "width": 1680,
+        "height": 2376,
+        "path": "page-2.png",
+        "sha256": "9fef0de7aa7eaf784f9b4c1d7bde77ea2f2ebeb9869f93713c631e755cd5b6bc"
+      }
+    ],
+    "rendererVersion": "6.3.0-425dd7b",
+    "inputKind": "Rasterized clean engraving from pinned source MusicXML; identical pixels for both recognizers",
+    "inputPdfSha256": "fead27530e5fdd7ca29fa2232db34590ab95d0e533ad0410320053fd31f7e9c0",
+    "referenceSha256": "507b567da2449ff09e7302d5d3098fdc23eb4c169336153d4f5f51a75d758f69"
+  },
+  {
+    "id": "09-village-dance",
+    "title": "乡村舞曲",
+    "sourceUrl": "https://github.com/musetrainer/library/blob/9128876f6164d96997c877a2be843349a32bdabb/scores/DANSE_VILLAGEOISE_Beethoven.mxl",
+    "downloadUrl": "https://raw.githubusercontent.com/musetrainer/library/9128876f6164d96997c877a2be843349a32bdabb/scores/DANSE_VILLAGEOISE_Beethoven.mxl",
+    "sha256": "9feef438e49325d05dd5a27950244a97909500258470254ae532241e2640ce3a",
+    "license": "Repository states Public Domain; source attribution retained",
+    "repositoryCommit": "9128876f6164d96997c877a2be843349a32bdabb",
+    "pages": [
+      {
+        "page": 1,
+        "width": 1680,
+        "height": 2376,
+        "path": "page-1.png",
+        "sha256": "944030f7ab73fc95a9397038b066f963f93d54744aab53e5d1a90fc47cfc4d76"
+      },
+      {
+        "page": 2,
+        "width": 1680,
+        "height": 2376,
+        "path": "page-2.png",
+        "sha256": "cd525c42f15a675b604962e485c0f90e1814e259d36518ea2b4b5606dccc236f"
+      }
+    ],
+    "rendererVersion": "6.3.0-425dd7b",
+    "inputKind": "Rasterized clean engraving from pinned source MusicXML; identical pixels for both recognizers",
+    "inputPdfSha256": "abc712b73d9782261589c9b633e9acc5f7544c10e05775dd87124bca4ce56d06",
+    "referenceSha256": "a1121e17b1bf474222da5d02b64d24572cd80b0e514de2c773d8ff8d351f6218"
+  },
+  {
+    "id": "10-waltz",
+    "title": "A小调圆舞曲",
+    "sourceUrl": "https://github.com/musetrainer/library/blob/9128876f6164d96997c877a2be843349a32bdabb/scores/Waltz_in_A_MinorChopin.mxl",
+    "downloadUrl": "https://raw.githubusercontent.com/musetrainer/library/9128876f6164d96997c877a2be843349a32bdabb/scores/Waltz_in_A_MinorChopin.mxl",
+    "sha256": "07c809a6d0f4bab8c6a3f11a10694087c8ecc8bd421e9ee0977cd17339a06613",
+    "license": "Repository states Public Domain; source attribution retained",
+    "repositoryCommit": "9128876f6164d96997c877a2be843349a32bdabb",
+    "pages": [
+      {
+        "page": 1,
+        "width": 1680,
+        "height": 2376,
+        "path": "page-1.png",
+        "sha256": "1ca0396b8a0365252edb1dd6dcaa08083577dea88dc164bbdd0c131af7e2cb46"
+      },
+      {
+        "page": 2,
+        "width": 1680,
+        "height": 2376,
+        "path": "page-2.png",
+        "sha256": "12833a65e770f118a6ddb417ea3d52297fe13736b79f373553c0502ef4309dfc"
+      }
+    ],
+    "rendererVersion": "6.3.0-425dd7b",
+    "inputKind": "Rasterized clean engraving from pinned source MusicXML; identical pixels for both recognizers",
+    "inputPdfSha256": "95e51ef0a8b47cfc67337cbf7ef8ae9262a0a6e56e3549a5ada0312c8b513343",
+    "referenceSha256": "089ffcdfbcb3f86984c67d00b0962e3dc4128394b41b323dd01fb0f4d0093a08"
+  }
+]

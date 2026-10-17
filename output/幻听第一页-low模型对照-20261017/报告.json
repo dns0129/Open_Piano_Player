@@ -1,0 +1,252 @@
+{
+  "title": "《幻听》第一页：GPT-6.1 Sol low / GPT-5.6 Luna low 实际识别对照",
+  "at": "2026-10-17T15:45:20.508742+00:00",
+  "protocol": {
+    "page": 1,
+    "systems": 5,
+    "measures": 17,
+    "quarterBeats": 68,
+    "expectedWrittenHeads": 134,
+    "passesPerRow": 1,
+    "independentReread": false,
+    "concurrencyPerModel": 2,
+    "groupsRanConcurrently": true,
+    "sameInputsAndPrompts": true,
+    "resultCache": "未读取或复用历史识别结果；直接发起全新模型请求，不经过整谱缓存/检查点/同PDF复用入口。供应商内部提示词缓存不在本机控制范围内，未将其计作结果复用。",
+    "referenceUse": "原已校对稿只在本轮新输出全部保存后用于离线比对，不提供给模型。",
+    "sourcePdfSha256": "0e7022e7b359f6d0f1b61ca8627dd9d8265977aa4ebc077c2f2354a84eca485a",
+    "metrics": "音符事件按音高、手别、起拍和时值匹配，三连音按1e-4拍容差；拍号、调号、小节长度与延音另核对。力度和音头坐标不计入百分比。"
+  },
+  "models": [
+    {
+      "model": "gpt-6.1-sol",
+      "effort": "low",
+      "elapsedSeconds": 67.23185970899999,
+      "concurrency": 2,
+      "plannedRows": 5,
+      "returnedRows": 5,
+      "refusedRows": 0,
+      "expectedWrittenHeads": 134,
+      "returnedWrittenHeads": 134,
+      "strictEventMatches": 133,
+      "strictEventMatchRate": 0.9925373134328358,
+      "requests": 5,
+      "usage": {
+        "input": 9014,
+        "output": 5650,
+        "totalTokens": 14664
+      },
+      "unknownUsage": 0,
+      "actualPayloadVerified": true,
+      "resultCacheReused": false,
+      "rows": [
+        {
+          "id": "p1-s1",
+          "status": "returned",
+          "expected": 13,
+          "actual": 13,
+          "matches": 13,
+          "structural": true,
+          "comparison": {
+            "exactMatch": true,
+            "expectedCount": 13,
+            "actualCount": 13,
+            "missing": [],
+            "extra": [],
+            "notation": {
+              "passed": true,
+              "differences": []
+            }
+          }
+        },
+        {
+          "id": "p1-s2",
+          "status": "returned",
+          "expected": 26,
+          "actual": 26,
+          "matches": 25,
+          "structural": true,
+          "comparison": {
+            "exactMatch": false,
+            "expectedCount": 26,
+            "actualCount": 26,
+            "missing": [
+              "right:58:67500:2500"
+            ],
+            "extra": [
+              "right:60:67500:2500"
+            ],
+            "notation": {
+              "passed": true,
+              "differences": []
+            }
+          }
+        },
+        {
+          "id": "p1-s3",
+          "status": "returned",
+          "expected": 29,
+          "actual": 29,
+          "matches": 29,
+          "structural": true,
+          "comparison": {
+            "exactMatch": true,
+            "expectedCount": 29,
+            "actualCount": 29,
+            "missing": [],
+            "extra": [],
+            "notation": {
+              "passed": true,
+              "differences": []
+            }
+          }
+        },
+        {
+          "id": "p1-s4",
+          "status": "returned",
+          "expected": 31,
+          "actual": 31,
+          "matches": 31,
+          "structural": true,
+          "comparison": {
+            "exactMatch": true,
+            "expectedCount": 31,
+            "actualCount": 31,
+            "missing": [],
+            "extra": [],
+            "notation": {
+              "passed": true,
+              "differences": []
+            }
+          }
+        },
+        {
+          "id": "p1-s5",
+          "status": "returned",
+          "expected": 35,
+          "actual": 35,
+          "matches": 35,
+          "structural": true,
+          "comparison": {
+            "exactMatch": true,
+            "expectedCount": 35,
+            "actualCount": 35,
+            "missing": [],
+            "extra": [],
+            "notation": {
+              "passed": true,
+              "differences": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "model": "gpt-5.6-luna",
+      "effort": "low",
+      "elapsedSeconds": 15.401072666,
+      "concurrency": 2,
+      "plannedRows": 5,
+      "returnedRows": 0,
+      "refusedRows": 5,
+      "expectedWrittenHeads": 134,
+      "returnedWrittenHeads": 0,
+      "strictEventMatches": null,
+      "strictEventMatchRate": null,
+      "requests": 5,
+      "usage": {
+        "input": 9014,
+        "output": 2126,
+        "totalTokens": 11140
+      },
+      "unknownUsage": 0,
+      "actualPayloadVerified": true,
+      "resultCacheReused": false,
+      "rows": [
+        {
+          "id": "p1-s1",
+          "status": "failed",
+          "expected": 13,
+          "error": {
+            "code": "NEEDS_SOURCE",
+            "message": "需要清晰谱行：当前谱图分辨率不足以可靠判定整行的全部音符时值、连音/延音及小节内声部（尤其第2、3小节），请提供更清晰的原谱整行图片。"
+          }
+        },
+        {
+          "id": "p1-s2",
+          "status": "failed",
+          "expected": 26,
+          "error": {
+            "code": "NEEDS_SOURCE",
+            "message": "需要清晰谱行：当前图片分辨率不足以可靠辨认整行全部音高、节奏、临时记号及延音，尤其第1、3、4小节的密集音符；为避免猜写，请提供更高清原图或裁剪后保持整行完整的清晰谱图。"
+          }
+        },
+        {
+          "id": "p1-s3",
+          "status": "failed",
+          "expected": 29,
+          "error": {
+            "code": "NEEDS_SOURCE",
+            "message": "需要清晰谱行：当前图片分辨率不足以可靠判定整行所有音符的精确拍位、时值、声部及延音（尤其第1—4小节的多声部连音/三连音）；请提供更高分辨率或裁剪后仍包含整条谱行的清晰图片。"
+          }
+        },
+        {
+          "id": "p1-s4",
+          "status": "failed",
+          "expected": 31,
+          "error": {
+            "code": "NEEDS_SOURCE",
+            "message": "需要清晰谱行：当前图片分辨率不足以可靠辨认整行的所有音符时值、音高与跨声部延音（尤其第1—2小节及低音琶音），无法忠实完成完整双手转写。请提供更高清、裁切后谱行图片。"
+          }
+        },
+        {
+          "id": "p1-s5",
+          "status": "failed",
+          "expected": 35,
+          "error": {
+            "code": "NEEDS_SOURCE",
+            "message": "需要清晰谱行：当前谱行分辨率不足以可靠辨认全部音高、节奏与延音（尤其首小节右手休止/连音及各声部时值）。请提供更高分辨率的原图或裁剪整行清晰图；需包含完整双手五线谱、调号和全部小节。"
+          }
+        }
+      ]
+    }
+  ],
+  "difference": {
+    "regionId": "p1-s2",
+    "measure": 5,
+    "rowLocalBeat": 6.75,
+    "duration": 0.25,
+    "hand": "right",
+    "expectedMidi": 58,
+    "expectedPitch": "A♯3",
+    "actualMidi": 60,
+    "actualPitch": "C4",
+    "reason": "源图音头位于高音谱表下加二线A3，七升号调号下应为A♯3；原图已人工放大核对。",
+    "rawOutputPreserved": true
+  },
+  "supplement": {
+    "model": "gpt-5.6-luna",
+    "effort": "low",
+    "input": "原PDF第一页第1行，按两倍尺寸渲染，不补画细节",
+    "elapsedSeconds": 7.152495459,
+    "requests": 1,
+    "returnedRows": 0,
+    "error": {
+      "code": "NEEDS_SOURCE",
+      "message": "需要清晰谱行：当前图片分辨率/裁切不足以可靠辨认整行的全部音高、时值、声部与连音（尤其第2小节密集音符及第1小节低音休止后的音符）。请提供更清晰的整行原图，保持左右边界和五线谱完整可见。"
+    },
+    "usage": {
+      "input": 3033,
+      "output": 370,
+      "totalTokens": 3403
+    },
+    "unknownUsage": 0,
+    "note": "额外改变输入尺寸的拒识排查；不混入同图五行对照统计。"
+  },
+  "totalValidationUsage": {
+    "requests": 11,
+    "reportedTokens": 29207,
+    "unknownUsage": 0
+  },
+  "boundary": "单页单次读取实验，不等同整谱识别+独立复读+人工校对+导入的总耗时，也不能代表所有曲谱的总体准确率。实验使用隔离模型配置，当前App默认GPT-6.1 Sol high和已校对曲库不变。"
+}

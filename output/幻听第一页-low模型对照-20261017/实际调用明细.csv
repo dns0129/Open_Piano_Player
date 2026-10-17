@@ -1,0 +1,12 @@
+﻿模型,推理等级,谱行,类型,状态,耗时秒,输入tokens,输出tokens,总tokens,实际请求数,用量已返回
+gpt-6.1-sol,low,p1-s1,recognize,returned,18.868,1704,804,2508,1,True
+gpt-6.1-sol,low,p1-s2,recognize,returned,24.994,1758,1053,2811,1,True
+gpt-6.1-sol,low,p1-s3,recognize,returned,22.958,1814,1234,3048,1,True
+gpt-6.1-sol,low,p1-s4,recognize,returned,28.156,1869,1250,3119,1,True
+gpt-6.1-sol,low,p1-s5,recognize,returned,25.389,1869,1309,3178,1,True
+gpt-5.6-luna,low,p1-s1,recognize,failed,4.931,1704,307,2011,1,True
+gpt-5.6-luna,low,p1-s2,recognize,failed,7.859,1758,569,2327,1,True
+gpt-5.6-luna,low,p1-s3,recognize,failed,5.845,1814,373,2187,1,True
+gpt-5.6-luna,low,p1-s5,recognize,failed,4.251,1869,290,2159,1,True
+gpt-5.6-luna,low,p1-s4,recognize,failed,7.533,1869,587,2456,1,True
+gpt-5.6-luna,low,p1-s1,recognize,failed,7.146,3033,370,3403,1,True

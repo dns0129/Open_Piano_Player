@@ -1,0 +1,63 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtemp,mkdir,writeFile,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {once} from 'node:events';
+import {createLocalLibrary} from '../lib/local-library.mjs';
+import {createAppServer} from '../server.mjs';
+
+async function fixture(t) {
+  const directory=await mkdtemp(join(tmpdir(),'qinban-library-'));
+  t.after(()=>rm(directory,{recursive:true,force:true}));
+  const id='reviewed-song';
+  const job={id,status:'needs-review',needsUserScopeConfirmation:false,updatedAt:'2026-10-18T00:00:00Z',
+    tokenHash:'PRIVATE',ownerHash:'PRIVATE',regions:[{id:'p1-s1',status:'confirmed',image:{mimeType:'image/png'}}],
+    result:{reviewStatus:'human-confirmed',checks:{passed:true},scope:{completeDocument:true},
+      score:{id:`full-score-${id}`,title:'跨浏览器测试谱',tempo:90,timeSignature:[4,4],keySignature:0,durationBeats:4,
+        notes:[{id:'n1',midi:60,beat:0,duration:1,hand:'right'}]},
+      sourceNotation:{version:1,scoreId:`full-score-${id}`,systems:[{id:'p1-s1',imageUrl:'full-score-region:p1-s1'}],notes:[]}}};
+  await mkdir(join(directory,id));await writeFile(join(directory,id,'p1-s1.image'),'fixture-image');
+  const save=()=>writeFile(join(directory,id,'job.json'),JSON.stringify(job));await save();
+  return {directory,id,job,save};
+}
+
+test('only completed, scoped, checked scores enter the disk-backed library and survive a fresh store',async t=>{
+  const f=await fixture(t),store=createLocalLibrary(f);
+  assert.equal((await store.list()).scores.length,0);
+  f.job.status='complete';f.job.needsUserScopeConfirmation=true;await f.save();
+  assert.equal((await store.list()).scores.length,0);
+  f.job.needsUserScopeConfirmation=false;f.job.result.checks.passed=false;await f.save();
+  assert.equal((await store.list()).scores.length,0);
+  f.job.result.checks.passed=true;await f.save();
+  assert.equal((await store.list()).scores.length,1);
+  assert.equal((await createLocalLibrary(f).list()).scores[0].score.title,'跨浏览器测试谱');
+  const source=await store.source(f.id);
+  assert.equal(source.notation.systems[0].imageUrl,`/api/local-library/${f.id}/images/p1-s1`);
+  assert(!JSON.stringify(source).includes('PRIVATE'));
+  assert.equal((await store.image(f.id,'p1-s1')).buffer.toString(),'fixture-image');
+  await assert.rejects(store.image(f.id,'../job'),{code:'SCORE_NOT_FOUND'});
+  f.job.regions[0].status='needs-review';await f.save();
+  assert.equal((await store.list()).scores.length,0);
+  await assert.rejects(store.source(f.id),{code:'SCORE_NOT_FOUND'});
+});
+
+test('two independent browser sessions see the same completed score and original images without task credentials',async t=>{
+  const f=await fixture(t);f.job.status='complete';await f.save();
+  const server=createAppServer({localLibrary:createLocalLibrary(f),statusReader:async()=>({available:false}),settingsStore:{read:async()=>({})},fullScoreJobs:{close:async()=>{}},neteaseProvider:{close(){}}});
+  server.listen(0,'127.0.0.1');await once(server,'listening');
+  t.after(async()=>{server.closeAllConnections();await new Promise(r=>server.close(r));});
+  const url=`http://127.0.0.1:${server.address().port}`;
+  assert.equal((await fetch(url+'/api/local-library')).status,403);
+  const cookies=[];
+  for(let i=0;i<2;i++) {
+    const status=await fetch(url+'/api/status');const cookie=status.headers.get('set-cookie').split(';')[0];cookies.push(cookie);
+    const response=await fetch(url+'/api/local-library',{headers:{cookie}});assert.equal(response.status,200);
+    const data=await response.json();assert.equal(data.scores[0].score.id,f.job.result.score.id);assert(!JSON.stringify(data).includes('PRIVATE'));
+    const source=await (await fetch(url+`/api/local-library/${f.id}`,{headers:{cookie}})).json();
+    const image=await fetch(url+source.notation.systems[0].imageUrl,{headers:{cookie}});
+    assert.equal(image.status,200);assert.equal(await image.text(),'fixture-image');
+  }
+  assert.notEqual(cookies[0],cookies[1]);
+  assert.equal((await fetch(url+'/api/local-library',{headers:{cookie:cookies[0],origin:'https://untrusted.example'}})).status,403);
+});

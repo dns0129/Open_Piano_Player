@@ -1,0 +1,14 @@
+{
+  "engine": "Audiveris",
+  "version": "5.11.0",
+  "profile": "basic",
+  "inputPdfSha256": "fead27530e5fdd7ca29fa2232db34590ab95d0e533ad0410320053fd31f7e9c0",
+  "cacheReused": false,
+  "start": "2026-10-17T10:20:17.652Z",
+  "end": "2026-10-17T10:20:36.230Z",
+  "elapsedSeconds": 18.577180416999997,
+  "exitCode": 1,
+  "signal": null,
+  "parsed": false,
+  "status": "failed"
+}

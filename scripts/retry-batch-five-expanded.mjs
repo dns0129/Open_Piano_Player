@@ -1,0 +1,16 @@
+import {readFile,writeFile,mkdir,cp} from 'node:fs/promises';import {resolve} from 'node:path';import {pathToFileURL} from 'node:url';
+const root='.local/batch-five-20261018',batch=JSON.parse(await readFile(root+'/private-jobs.json'));
+await cp(root+'/raw-calls',root+'/context-raw-calls',{recursive:true,force:false,errorOnExist:true}).catch(e=>{if(e.code!=='EEXIST')throw e;});
+const {createFullScoreJobStore}=await import(pathToFileURL(resolve(root,'runtime/lib/full-score-jobs.mjs'))),{generateScoreRegion}=await import(pathToFileURL(resolve(root,'runtime/lib/ai.mjs')));
+const adapter=async(request,options)=>{const result=await generateScoreRegion(request,{},options);await writeFile(root+'/raw-calls/'+request.jobId+'-'+request.region.id+'-'+request.pass+'.json',JSON.stringify({endedAt:new Date().toISOString(),result},null,2));return result;};
+const keys={'merry':-5,'eutopia-staff':-3,sudi:-6,ifyou:-5,golden:4};
+const meter=(key,r)=>key==='merry'?(r.page===1||r.page===2&&r.system===1?[12,8]:[4,4]):key==='golden'?[12,8]:[4,4];
+const work=[];
+for(const b of batch.jobs){const path='.local/full-score-jobs/'+b.id+'/job.json',j=JSON.parse(await readFile(path));if(j.status==='running')throw Error('Initial batch still running');await writeFile(root+'/'+b.key+'/before-expanded-retry.json',JSON.stringify(j,null,2));j.metadata.keySignature=keys[b.key];if(b.key!=='merry')j.metadata.timeSignature=meter(b.key,j.regions[0]);const selected=[];
+ for(const r of j.regions){const ts=meter(b.key,r);r.context='只读取中间这对完整双手谱表，忽略上下边缘属于相邻行的零散音符。原谱已目视核实：本行起始拍号'+ts.join('/')+'，调号'+keys[b.key]+'；行尾新拍号适用于下一行，不得倒用于本行。';
+  if(!r.result||!r.result.checks.passed){const layout=JSON.parse(await readFile(root+'/'+b.key+'/render-'+r.page+'.layout.json'));r.rect=layout.systems[r.system-1].rect;await writeFile('.local/full-score-jobs/'+j.id+'/'+r.id+'.image',await readFile(root+'/'+b.key+'/'+r.id+'-expanded.png'));r.image={...r.image,bytes:(await readFile(root+'/'+b.key+'/'+r.id+'-expanded.png')).length};if(b.key==='eutopia-staff'&&r.id==='p3-s1')r.context='原图本行第一小节2/4，随后两小节4/4。整行score.timeSignature用4/4，bars必须按原图保留[2,4,4]，不是补成4拍；左手低音谱号。只读本行三小节。';r.result=null;r.recognitionCheckpoint=null;r.error=null;r.status='queued';selected.push(r.id);}
+ }
+ j.status='paused';j.result=null;await writeFile(path,JSON.stringify(j,null,2),{mode:0o600});work.push({...b,selected});}
+const store=createFullScoreJobStore({maxConcurrency:100,recognizeRegion:adapter,checkRegion:(r,o)=>adapter({...r,pass:'verify'},o)});
+for(const b of work)if(b.selected.length){await store.startJob(b.id,{...b,regionIds:b.selected,forceFresh:true});console.log('Context retry',b.key,b.selected.length);}
+let last='';while(true){const states=[];for(const b of work){const j=await store.getJob(b.id,b);states.push({key:b.key,status:j.status,...j.progress});if(j.status!=='running')await writeFile(root+'/'+b.key+'/after-expanded-retry.json',JSON.stringify(j,null,2));}const s=JSON.stringify(states);if(s!==last){console.log(s);last=s;await writeFile(root+'/expanded-progress.json',JSON.stringify(states,null,2));}if(states.every(s=>s.status!=='running'))break;await new Promise(r=>setTimeout(r,1000));}await store.close();console.log('BATCH_RETRY_FINISHED');

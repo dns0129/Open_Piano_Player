@@ -1,0 +1,61 @@
+{
+  "at": "2026-10-17T10:20:01.011Z",
+  "sampleCount": 10,
+  "wholeSelectedEditions": true,
+  "sourceIsCleanEngraving": true,
+  "scoringToleranceQuarterBeats": 0.0001,
+  "repeatPolicy": "written order, no repeats unfolded",
+  "gracePolicy": "separate pitch/onset metric; no interpretive realization timing",
+  "tiePolicy": "adjacent identical pitch and hand chains merged; tie edges also scored separately",
+  "model": "gpt-6.1-sol",
+  "thinkingLevel": "high",
+  "aiPassesPerScore": 1,
+  "concurrency": 1,
+  "retries": 0,
+  "hash": {
+    ".local/omr-benchmark-20261017/manifest.json": "f7fcec4eeb354d38aa9dc3041383aa43c4ebab75308b37bb88434c036f4c0c14",
+    "scripts/omr-benchmark/score.mjs": "61c172909c5d2d7030905a65ade3cbf904c8f57f3b9312e24f8011d93eb197b0",
+    "scripts/omr-benchmark/reference.py": "370ddfa06819ff2254f0bcb7fb2af80d5cd8b6ad5e10781bf22e6cd55c0c0b61",
+    "scripts/omr-benchmark/run.mjs": "5c7234de9114d3bcf1feb41fd2ed3c09e66feb2108da397ead7b4d04cedee4c3"
+  },
+  "aiPromptFrozenAt": "2026-10-17T10:21:44.276Z",
+  "excludedPerformanceFeatures": [
+    "pedal",
+    "dynamics",
+    "unwritten trill/turn expansion"
+  ],
+  "referenceNormalizationVersion": 2,
+  "referenceCorrection": {
+    "at": "2026-10-17T10:27:00.332010+00:00",
+    "reason": "Independent MusicXML normalization bug: omitted implicit flag must not turn a one-beat pickup into a full three-beat bar. Source XML timing and printed pickup reviewed. Actual measure lengths always use maximum written cursor, including overfull OMR bars, so global score cannot silently discard drift.",
+    "sourceImagesChanged": false,
+    "recognizerOutputsChanged": false,
+    "scoringFormulaChanged": false,
+    "reRecognitionPerformed": false,
+    "referenceChanges": [
+      {
+        "id": "02-greensleeves",
+        "beforeBeats": 99.0,
+        "afterBeats": 97.0,
+        "firstMeasureBefore": 3.0,
+        "firstMeasureAfter": 1.0
+      },
+      {
+        "id": "09-village-dance",
+        "beforeBeats": 183.0,
+        "afterBeats": 181.0,
+        "firstMeasureBefore": 3.0,
+        "firstMeasureAfter": 1.0
+      },
+      {
+        "id": "10-waltz",
+        "beforeBeats": 171.0,
+        "afterBeats": 169.0,
+        "firstMeasureBefore": 3.0,
+        "firstMeasureAfter": 1.0
+      }
+    ],
+    "oldParserSha256": "6033aa37f6a32bb14dfcd075112e96b84470f9137511131ab63ecc339fd10d50",
+    "newParserSha256": "370ddfa06819ff2254f0bcb7fb2af80d5cd8b6ad5e10781bf22e6cd55c0c0b61"
+  }
+}

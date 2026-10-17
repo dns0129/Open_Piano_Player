@@ -1,0 +1,611 @@
+{
+  "freshRecognitionAudit": {
+    "at": "2026-10-17T13:34:20.519Z",
+    "jobId": "feb36563796cd9a9b7f118a809ad559fe4dc",
+    "jobStatus": "complete",
+    "model": "gpt-6.1-sol",
+    "reasoningEffort": "high",
+    "localOmrCalls": 0,
+    "totalPages": 6,
+    "rows": 28,
+    "writtenHeads": 1068,
+    "playbackEvents": 982,
+    "expectedPlaybackEvents": 982,
+    "durationBeats": 380,
+    "measures": 95,
+    "tempo": 90,
+    "keySignature": 7,
+    "sourceNotationHeads": 1068,
+    "sourceSystems": 28,
+    "fullScope": true,
+    "allRowsConfirmed": true,
+    "missing": [],
+    "extra": [],
+    "rowsDetail": [
+      {
+        "id": "p1-s1",
+        "page": 1,
+        "system": 1,
+        "confirmed": true,
+        "writtenHeads": 13,
+        "positions": 13,
+        "measureCount": 3,
+        "durationBeats": 12,
+        "structural": true,
+        "model": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      {
+        "id": "p1-s2",
+        "page": 1,
+        "system": 2,
+        "confirmed": true,
+        "writtenHeads": 26,
+        "positions": 26,
+        "measureCount": 4,
+        "durationBeats": 16,
+        "structural": true,
+        "model": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      {
+        "id": "p1-s3",
+        "page": 1,
+        "system": 3,
+        "confirmed": true,
+        "writtenHeads": 29,
+        "positions": 29,
+        "measureCount": 3,
+        "durationBeats": 12,
+        "structural": true,
+        "model": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      {
+        "id": "p1-s4",
+        "page": 1,
+        "system": 4,
+        "confirmed": true,
+        "writtenHeads": 31,
+        "positions": 31,
+        "measureCount": 4,
+        "durationBeats": 16,
+        "structural": true,
+        "model": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      {
+        "id": "p1-s5",
+        "page": 1,
+        "system": 5,
+        "confirmed": true,
+        "writtenHeads": 35,
+        "positions": 35,
+        "measureCount": 3,
+        "durationBeats": 12,
+        "structural": true,
+        "model": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      {
+        "id": "p2-s1",
+        "page": 2,
+        "system": 1,
+        "confirmed": true,
+        "writtenHeads": 28,
+        "positions": 28,
+        "measureCount": 3,
+        "durationBeats": 12,
+        "structural": true,
+        "model": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      {
+        "id": "p2-s2",
+        "page": 2,
+        "system": 2,
+        "confirmed": true,
+        "writtenHeads": 33,
+        "positions": 33,
+        "measureCount": 4,
+        "durationBeats": 16,
+        "structural": true,
+        "model": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      {
+        "id": "p2-s3",
+        "page": 2,
+        "system": 3,
+        "confirmed": true,
+        "writtenHeads": 22,
+        "positions": 22,
+        "measureCount": 4,
+        "durationBeats": 16,
+        "structural": true,
+        "model": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      {
+        "id": "p2-s4",
+        "page": 2,
+        "system": 4,
+        "confirmed": true,
+        "writtenHeads": 29,
+        "positions": 29,
+        "measureCount": 4,
+        "durationBeats": 16,
+        "structural": true,
+        "model": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      {
+        "id": "p2-s5",
+        "page": 2,
+        "system": 5,
+        "confirmed": true,
+        "writtenHeads": 32,
+        "positions": 32,
+        "measureCount": 4,
+        "durationBeats": 16,
+        "structural": true,
+        "model": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      {
+        "id": "p3-s1",
+        "page": 3,
+        "system": 1,
+        "confirmed": true,
+        "writtenHeads": 36,
+        "positions": 36,
+        "measureCount": 4,
+        "durationBeats": 16,
+        "structural": true,
+        "model": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      {
+        "id": "p3-s2",
+        "page": 3,
+        "system": 2,
+        "confirmed": true,
+        "writtenHeads": 24,
+        "positions": 24,
+        "measureCount": 3,
+        "durationBeats": 12,
+        "structural": true,
+        "model": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      {
+        "id": "p3-s3",
+        "page": 3,
+        "system": 3,
+        "confirmed": true,
+        "writtenHeads": 66,
+        "positions": 66,
+        "measureCount": 3,
+        "durationBeats": 12,
+        "structural": true,
+        "model": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      {
+        "id": "p3-s4",
+        "page": 3,
+        "system": 4,
+        "confirmed": true,
+        "writtenHeads": 62,
+        "positions": 62,
+        "measureCount": 3,
+        "durationBeats": 12,
+        "structural": true,
+        "model": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      {
+        "id": "p3-s5",
+        "page": 3,
+        "system": 5,
+        "confirmed": true,
+        "writtenHeads": 46,
+        "positions": 46,
+        "measureCount": 3,
+        "durationBeats": 12,
+        "structural": true,
+        "model": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      {
+        "id": "p4-s1",
+        "page": 4,
+        "system": 1,
+        "confirmed": true,
+        "writtenHeads": 64,
+        "positions": 64,
+        "measureCount": 3,
+        "durationBeats": 12,
+        "structural": true,
+        "model": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      {
+        "id": "p4-s2",
+        "page": 4,
+        "system": 2,
+        "confirmed": true,
+        "writtenHeads": 38,
+        "positions": 38,
+        "measureCount": 3,
+        "durationBeats": 12,
+        "structural": true,
+        "model": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      {
+        "id": "p4-s3",
+        "page": 4,
+        "system": 3,
+        "confirmed": true,
+        "writtenHeads": 32,
+        "positions": 32,
+        "measureCount": 3,
+        "durationBeats": 12,
+        "structural": true,
+        "model": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      {
+        "id": "p4-s4",
+        "page": 4,
+        "system": 4,
+        "confirmed": true,
+        "writtenHeads": 39,
+        "positions": 39,
+        "measureCount": 3,
+        "durationBeats": 12,
+        "structural": true,
+        "model": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      {
+        "id": "p4-s5",
+        "page": 4,
+        "system": 5,
+        "confirmed": true,
+        "writtenHeads": 25,
+        "positions": 25,
+        "measureCount": 3,
+        "durationBeats": 12,
+        "structural": true,
+        "model": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      {
+        "id": "p5-s1",
+        "page": 5,
+        "system": 1,
+        "confirmed": true,
+        "writtenHeads": 53,
+        "positions": 53,
+        "measureCount": 4,
+        "durationBeats": 16,
+        "structural": true,
+        "model": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      {
+        "id": "p5-s2",
+        "page": 5,
+        "system": 2,
+        "confirmed": true,
+        "writtenHeads": 66,
+        "positions": 66,
+        "measureCount": 3,
+        "durationBeats": 12,
+        "structural": true,
+        "model": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      {
+        "id": "p5-s3",
+        "page": 5,
+        "system": 3,
+        "confirmed": true,
+        "writtenHeads": 46,
+        "positions": 46,
+        "measureCount": 3,
+        "durationBeats": 12,
+        "structural": true,
+        "model": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      {
+        "id": "p5-s4",
+        "page": 5,
+        "system": 4,
+        "confirmed": true,
+        "writtenHeads": 66,
+        "positions": 66,
+        "measureCount": 3,
+        "durationBeats": 12,
+        "structural": true,
+        "model": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      {
+        "id": "p5-s5",
+        "page": 5,
+        "system": 5,
+        "confirmed": true,
+        "writtenHeads": 44,
+        "positions": 44,
+        "measureCount": 3,
+        "durationBeats": 12,
+        "structural": true,
+        "model": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      {
+        "id": "p6-s1",
+        "page": 6,
+        "system": 1,
+        "confirmed": true,
+        "writtenHeads": 24,
+        "positions": 24,
+        "measureCount": 3,
+        "durationBeats": 12,
+        "structural": true,
+        "model": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      {
+        "id": "p6-s2",
+        "page": 6,
+        "system": 2,
+        "confirmed": true,
+        "writtenHeads": 42,
+        "positions": 42,
+        "measureCount": 5,
+        "durationBeats": 20,
+        "structural": true,
+        "model": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      },
+      {
+        "id": "p6-s3",
+        "page": 6,
+        "system": 3,
+        "confirmed": true,
+        "writtenHeads": 17,
+        "positions": 17,
+        "measureCount": 4,
+        "durationBeats": 16,
+        "structural": true,
+        "model": "gpt-6.1-sol",
+        "reasoningEffort": "high"
+      }
+    ],
+    "referenceCorrections": {
+      "changesToPriorAuditReferenceOnly": true,
+      "gptOutputsChanged": false,
+      "oldAppLibraryChanged": false,
+      "corrections": [
+        {
+          "regionId": "p3-s2",
+          "page": 3,
+          "measure": 42,
+          "beat": 5.5,
+          "hand": "left",
+          "duration": 1,
+          "fromMidi": 60,
+          "toMidi": 61,
+          "reason": "原图音头在低音谱表上加一线 C4；7升号调号下为 C#4，不是上方第一间的 B#3。GPT两次独立转写均为61，旧人工校对对照稿此处误为60。"
+        },
+        {
+          "regionId": "p3-s2",
+          "page": 3,
+          "measure": 43,
+          "beat": 11.5,
+          "hand": "left",
+          "duration": 0.5,
+          "fromMidi": 60,
+          "toMidi": 61,
+          "reason": "原图同为低音谱表上加一线 C4，7升号下应为 C#4；旧对照稿误读为 B#3。GPT识别与复读均正确。"
+        },
+        {
+          "regionId": "p3-s3",
+          "page": 3,
+          "measure": 44,
+          "beat": 2,
+          "hand": "left",
+          "duration": 0.5,
+          "fromMidi": 60,
+          "toMidi": 61,
+          "reason": "低音谱表音头在上加一线 C4，7升号下为 C#4。与该小节 F#2-C#3-F#3-A#3-C#4 分解和弦及原图谱线一致；旧对照稿为60，GPT两次均为61。"
+        },
+        {
+          "regionId": "p4-s4",
+          "page": 4,
+          "measure": 64,
+          "beat": 11.4375,
+          "hand": "right",
+          "duration": 0.0625,
+          "fromMidi": 72,
+          "toMidi": 74,
+          "reason": "放大原PDF第64小节确认：第二枚小倚音在高音谱表第四线 D5 并带还原号，与后续 D#5 主音同高；应为 D5(MIDI74)，旧对照稿误为 C5(MIDI72)。GPT两次均读取74。"
+        }
+      ],
+      "tieCorrections": [
+        {
+          "regionId": "p5-s3",
+          "page": 5,
+          "measure": 75,
+          "fromBeat": 3.5,
+          "toBeat": 4,
+          "duration": 0.5,
+          "midi": 80,
+          "hand": "right",
+          "action": "add",
+          "reason": "原图第75至76小节的G#5/G#6八度和弦有上下两条延音；旧对照稿仅保留高音G#6一条，漏了下方G#5(MIDI80)。保留GPT读取的下方延音；两颗书写音头保留，播放合并一次。"
+        }
+      ]
+    },
+    "method": "Compared fresh GPT transcription against independently source-corrected earlier review; no reference notes supplied to GPT. Grace playback timing uses the App convention.",
+    "passed": true
+  },
+  "editsToGptResults": {
+    "edits": [
+      {
+        "regionId": "p4-s3",
+        "page": 4,
+        "system": 3,
+        "type": "rest-duration",
+        "hand": "right",
+        "beat": 4,
+        "fromDuration": 2,
+        "toDuration": 1.9375,
+        "reason": "第60小节倚音占用主音前0.0625拍；音头已在5.9375拍正确读取，应从前置半休止借时，避免同声部休止与倚音重叠。所有音符保持GPT原始转写。"
+      },
+      {
+        "regionId": "p4-s4",
+        "page": 4,
+        "system": 4,
+        "type": "note-duration",
+        "noteId": "m64-r1",
+        "from": 1,
+        "to": 0.9375,
+        "reason": "从前置主音借出0.0625拍给后续倚音，保持纸面主音拍位不变。"
+      },
+      {
+        "regionId": "p4-s4",
+        "page": 4,
+        "system": 4,
+        "type": "grace-realization",
+        "noteId": "m64-g1",
+        "from": {
+          "beat": 10.375,
+          "duration": 0.125,
+          "voice": "right_grace"
+        },
+        "to": {
+          "beat": 10.4375,
+          "duration": 0.0625,
+          "voice": "right_main"
+        },
+        "reason": "采用App既定的主音前0.0625拍倚音播放约定；不更改书写音高。"
+      },
+      {
+        "regionId": "p4-s4",
+        "page": 4,
+        "system": 4,
+        "type": "note-duration",
+        "noteId": "m64-r2",
+        "from": 1,
+        "to": 0.9375,
+        "reason": "从前置主音借出0.0625拍给后续倚音。"
+      },
+      {
+        "regionId": "p4-s4",
+        "page": 4,
+        "system": 4,
+        "type": "grace-realization",
+        "noteId": "m64-g2",
+        "from": {
+          "beat": 11.375,
+          "duration": 0.125,
+          "voice": "right_grace"
+        },
+        "to": {
+          "beat": 11.4375,
+          "duration": 0.0625,
+          "voice": "right_main"
+        },
+        "reason": "采用相同倚音播放约定，并保持由原图确认的D5 MIDI74。"
+      }
+    ],
+    "manualSourceCheckRequired": [
+      "p1-s3",
+      "p4-s3"
+    ]
+  },
+  "sourceReferenceCorrections": {
+    "changesToPriorAuditReferenceOnly": true,
+    "gptOutputsChanged": false,
+    "oldAppLibraryChanged": false,
+    "corrections": [
+      {
+        "regionId": "p3-s2",
+        "page": 3,
+        "measure": 42,
+        "beat": 5.5,
+        "hand": "left",
+        "duration": 1,
+        "fromMidi": 60,
+        "toMidi": 61,
+        "reason": "原图音头在低音谱表上加一线 C4；7升号调号下为 C#4，不是上方第一间的 B#3。GPT两次独立转写均为61，旧人工校对对照稿此处误为60。"
+      },
+      {
+        "regionId": "p3-s2",
+        "page": 3,
+        "measure": 43,
+        "beat": 11.5,
+        "hand": "left",
+        "duration": 0.5,
+        "fromMidi": 60,
+        "toMidi": 61,
+        "reason": "原图同为低音谱表上加一线 C4，7升号下应为 C#4；旧对照稿误读为 B#3。GPT识别与复读均正确。"
+      },
+      {
+        "regionId": "p3-s3",
+        "page": 3,
+        "measure": 44,
+        "beat": 2,
+        "hand": "left",
+        "duration": 0.5,
+        "fromMidi": 60,
+        "toMidi": 61,
+        "reason": "低音谱表音头在上加一线 C4，7升号下为 C#4。与该小节 F#2-C#3-F#3-A#3-C#4 分解和弦及原图谱线一致；旧对照稿为60，GPT两次均为61。"
+      },
+      {
+        "regionId": "p4-s4",
+        "page": 4,
+        "measure": 64,
+        "beat": 11.4375,
+        "hand": "right",
+        "duration": 0.0625,
+        "fromMidi": 72,
+        "toMidi": 74,
+        "reason": "放大原PDF第64小节确认：第二枚小倚音在高音谱表第四线 D5 并带还原号，与后续 D#5 主音同高；应为 D5(MIDI74)，旧对照稿误为 C5(MIDI72)。GPT两次均读取74。"
+      }
+    ],
+    "tieCorrections": [
+      {
+        "regionId": "p5-s3",
+        "page": 5,
+        "measure": 75,
+        "fromBeat": 3.5,
+        "toBeat": 4,
+        "duration": 0.5,
+        "midi": 80,
+        "hand": "right",
+        "action": "add",
+        "reason": "原图第75至76小节的G#5/G#6八度和弦有上下两条延音；旧对照稿仅保留高音G#6一条，漏了下方G#5(MIDI80)。保留GPT读取的下方延音；两颗书写音头保留，播放合并一次。"
+      }
+    ]
+  },
+  "enlargement": {
+    "at": "2026-10-17T13:28:36.530Z",
+    "regionId": "p6-s3",
+    "originalDimensions": [
+      1457,
+      293
+    ],
+    "submittedDimensions": [
+      2914,
+      586
+    ],
+    "method": "App Canvas imageSmoothingQuality=high, scale=2; normalized note coordinates unchanged; no synthetic detail or note answers supplied"
+  }
+}

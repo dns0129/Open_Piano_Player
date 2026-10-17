@@ -1,0 +1,355 @@
+import { Renderer, Stave, StaveNote, StaveConnector, Voice, Formatter, Accidental, Dot, StaveTie, Beam, Tuplet, Annotation, Fraction, VexFlow, Barline } from 'vexflow';
+import { beatsPerMeasure, KEY_NAMES, midiName, scoreMeasureBounds, scoreMeasureIndex } from '../lib/score.mjs';
+import { measureSegments, spellMidi, numberedPitch, durationGlyph, planSystems } from '../lib/notation-layout.mjs';
+
+const NS = 'http://www.w3.org/2000/svg';
+let fontsLoaded = false;
+// VexFlow registers embedded FontFace objects; await these local faces before measuring glyphs.
+export const fontsReady = typeof document !== 'undefined' && document.fonts
+  ? Promise.all([document.fonts.load('32px Bravura'), document.fonts.load('12px Academico')]).then(() => { VexFlow.setFonts('Bravura', 'Academico'); fontsLoaded = true; })
+  : Promise.resolve().then(() => { fontsLoaded = true; });
+const symbol = accidental => ({ '-2': '𝄫', '-1': '♭', 0: '', 1: '♯', 2: '𝄪' })[accidental] || '';
+const RHYTHM_EPSILON = 0.00001;
+const ordinaryDurations = [6, 4, 3, 2, 1.5, 1, .75, .5, .25];
+const tripletDurations = [[4 / 3, 'h'], [2 / 3, 'q'], [1 / 3, '8'], [1 / 6, '16'], [1 / 12, '32']];
+const closeTo = (a, b) => Math.abs(a - b) < RHYTHM_EPSILON;
+
+/** The played duration stays exact; a triplet's printed value is its 3:2 base. */
+export function notationDuration(duration) {
+  const ordinary = ordinaryDurations.find(value => closeTo(value, duration));
+  if (ordinary !== undefined) { const [glyph, dots] = durationGlyph(ordinary); return { glyph, dots, printedBeats: ordinary, triplet: false }; }
+  const small = [[.1875, '32', 1], [.125, '32', 0], [.09375, '64', 1], [.0625, '64', 0], [.03125, '128', 0]].find(([value]) => closeTo(value, duration));
+  if (small) return { glyph: small[1], dots: small[2], printedBeats: small[0], triplet: false };
+  const triplet = tripletDurations.find(([value]) => closeTo(value, duration));
+  if (triplet) return { glyph: triplet[1], dots: 0, printedBeats: triplet[0] * 1.5, triplet: true };
+  throw new Error('此处包含暂不支持的连音节奏，请使用原谱查看准确节奏。');
+}
+
+/** Preserve ordinary scores' layout, while never rounding a triplet to 16ths. */
+export function notationMeasureSegments(score, measureIndex, hand) {
+  const {length,start,end}=scoreMeasureBounds(score,measureIndex);
+  const inMeasure = score.notes.filter(note => note.hand === hand && note.beat < end - RHYTHM_EPSILON && note.beat + note.duration > start + RHYTHM_EPSILON);
+  if (inMeasure.every(note => closeTo(note.beat * 4, Math.round(note.beat * 4)) && closeTo((note.beat + note.duration) * 4, Math.round((note.beat + note.duration) * 4)))) return measureSegments(score, measureIndex, hand);
+  const snap = value => {
+    for (const grid of [4, 12, 8, 16, 32]) if (closeTo(value, Math.round(value * grid) / grid)) return Math.round(value * grid) / grid;
+    return value;
+  };
+  const notes = inMeasure.map(note => ({ ...note, start: Math.max(start, snap(note.beat)), end: Math.min(end, snap(note.beat + note.duration)) }));
+  const boundaries = [...new Set([start, end, ...notes.flatMap(note => [note.start, note.end])])].sort((a, b) => a - b);
+  const segments = [];
+  for (let index = 0; index < boundaries.length - 1; index++) {
+    const beat = boundaries[index], stop = boundaries[index + 1];
+    if (stop - beat < RHYTHM_EPSILON) continue;
+    const active = notes.filter(note => note.start < stop - RHYTHM_EPSILON && note.end > beat + RHYTHM_EPSILON).sort((a, b) => a.midi - b.midi);
+    const previous = segments.at(-1);
+    if (previous && previous.notes.map(note => note.id).join('|') === active.map(note => note.id).join('|')) previous.duration += stop - beat;
+    else segments.push({ beat, duration: stop - beat, notes: active });
+  }
+  return segments.flatMap(segment => {
+    try { notationDuration(segment.duration); return [segment]; } catch { /* A long ordinary span may need tied subdivisions. */ }
+    let remaining = segment.duration, beat = segment.beat;
+    const result = [];
+    for (const duration of ordinaryDurations) while (remaining >= duration - RHYTHM_EPSILON) { result.push({ ...segment, beat, duration }); remaining -= duration; beat += duration; }
+    if (remaining > RHYTHM_EPSILON) { notationDuration(remaining); result.push({ ...segment, beat, duration: remaining }); }
+    return result;
+  });
+}
+
+/** A 3:2 span can contain mixed note values, e.g. two eighths and two sixteenths. */
+export function notationTupletGroups(segments) {
+  const groups = [];
+  for (let index = 0; index < segments.length; index++) {
+    const first = segments[index], descriptor = notationDuration(first.duration);
+    if (!descriptor.triplet) continue;
+    const group = [];
+    let duration = 0, complete = false;
+    for (let next = index; next < segments.length; next++) {
+      const segment = segments[next];
+      if (!notationDuration(segment.duration).triplet || !closeTo(segment.beat, first.beat + duration)) break;
+      group.push(next); duration += segment.duration;
+      if (group.length > 1 && [.25, .5, 1, 2, 4].some(span => closeTo(duration, span))) { complete = true; break; }
+      if (duration > 4 + RHYTHM_EPSILON) break;
+    }
+    if (!complete) throw new Error('此处连音组合暂不能准确重排，请使用原谱查看。');
+    groups.push(group); index = group.at(-1);
+  }
+  return groups;
+}
+
+function hasMergedVoices(score) {
+  for (const hand of ['right', 'left']) {
+    let previousBeat = -1, previousEnd = -1;
+    for (const note of score.notes.filter(note => note.hand === hand).sort((a, b) => a.beat - b.beat)) {
+      if (note.beat > previousBeat + RHYTHM_EPSILON && note.beat < previousEnd - RHYTHM_EPSILON) return true;
+      previousBeat = note.beat; previousEnd = Math.max(previousEnd, note.beat + note.duration);
+    }
+  }
+  return false;
+}
+function svgElement(name, attrs = {}, content) {
+  const node = document.createElementNS(NS, name);
+  for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, String(value));
+  if (content !== undefined) node.textContent = content;
+  return node;
+}
+const css = `
+.notation-root{width:100%;min-width:0;color:#273235;--score-accent:#2b796b}
+.notation-systems{display:flex;flex-direction:column;gap:16px;width:100%;min-width:0}
+.notation-system{position:relative;width:100%;min-width:0;margin:0;background:transparent}
+.notation-system>svg{display:block;width:100%;height:auto;overflow:visible}
+.notation-measure{cursor:pointer}
+.notation-measure-shade{fill:transparent;stroke:none;pointer-events:all;transition:fill .12s}
+.notation-measure.is-current>.notation-measure-shade{fill:#e8f1e5;fill-opacity:.52}
+.notation-measure-label{font:10px system-ui;fill:#8d978e;pointer-events:none}
+.notation-hit{fill:transparent;cursor:pointer;outline:none;stroke:none;pointer-events:all}
+.notation-hit:hover,.notation-hit:focus{fill:#dbeee6;fill-opacity:.7;stroke:#659c89;stroke-width:1}
+.notation-hit.is-active{fill:#a9d5bf;fill-opacity:.55}
+.notation-cursor{stroke:#2b796b;stroke-width:1.65;pointer-events:none;opacity:0}
+.notation-pitch{pointer-events:none;fill:#263b35;font-family:Georgia,'Songti SC',serif;font-weight:600}
+.notation-rest{fill:#8d9891}.notation-barline{stroke:#657064;stroke-width:1;pointer-events:none}
+.notation-help{font:11px/1.6 system-ui;color:#87918b;margin:8px 0 17px}
+.notation-error{padding:24px;color:#96563d;font:13px/1.6 system-ui}
+@media print{.notation-system{break-inside:avoid;page-break-inside:avoid}.notation-measure-shade,.notation-hit{fill:transparent!important;stroke:none!important}.notation-cursor{display:none!important}.notation-help{color:#666}.notation-systems{gap:14px}}
+`;
+function installStyles() {
+  let style = document.getElementById('pianola-notation-styles');
+  if (!style) { style = document.createElement('style'); style.id = 'pianola-notation-styles'; document.head.append(style); }
+  if (style.textContent !== css) style.textContent = css;
+}
+
+/** One SVG per continuous system. Adjacent bars share staff-line coordinates and barlines. */
+export function renderNotation(container, score, options = {}) {
+  installStyles();
+  const { mode = 'staff', onSeek = () => {}, showNoteNames = false } = options;
+  const barLength = beatsPerMeasure(score), measureCount = score.measureMap?.length || Math.max(1, Math.ceil(score.durationBeats / barLength));
+  const root = document.createElement('div'); root.className = 'notation-root'; root.dataset.mode = mode;
+  const help = document.createElement('p'); help.className = 'notation-help';
+  help.textContent = mode === 'numbered'
+    ? `1 = ${KEY_NAMES[score.keySignature + 7].replace('b', '♭').replace('#', '♯')} · ${score.timeSignature.join('/')} · 上行为右手，下行为左手；上下点表示八度，下划线表示短时值。点击音符定位。`
+    : '高音谱表为右手，低音谱表为左手。点击音符定位，播放位置会沿连续谱面前进。';
+  if (options.onSelectNotes) help.textContent = '点击谱面选择音符；和弦内的单音也可在下方逐个选择。';
+  if (hasMergedVoices(score)) help.textContent += ' 复声部合并为和弦及延音线；原谱保留独立声部书写。';
+  if (score.notes.some(note => tripletDurations.some(([duration]) => closeTo(note.duration, duration)))) help.textContent += ' 括号 3 表示三连音。';
+  const systemsHost = document.createElement('div'); systemsHost.className = 'notation-systems'; root.append(help, systemsHost); container.replaceChildren(root);
+  let systems = [], measures = [], beatNow = 0, currentIndex = -1, destroyed = false, layoutWidth = 0, resizeFrame = 0, scrollFrame = 0, visibilityObserver;
+  const cache = new Map();
+  const segments = (index, hand) => { const key = `${index}:${hand}`; if (!cache.has(key)) cache.set(key, notationMeasureSegments(score, index, hand)); return cache.get(key); };
+
+  function systemDimensions(system) {
+    if (mode === 'numbered') {
+      const maxChord = Math.max(1, ...system.bars.flatMap(i => ['right', 'left'].flatMap(h => segments(i.index, h).map(s => new Set(s.notes.map(n => n.midi)).size))));
+      const rowHeight = Math.max(105, maxChord * 31 + 48);
+      return { maxChord, rowHeight, height: rowHeight * 2 + 20 };
+    }
+    const upper = system.bars.flatMap(i => segments(i.index, 'right').flatMap(s => s.notes)), lower = system.bars.flatMap(i => segments(i.index, 'left').flatMap(s => s.notes));
+    const topExtra = Math.max(0, Math.ceil((Math.max(77, ...upper.map(n => n.midi)) - 77) / 12) * 36), bottomExtra = Math.max(0, Math.ceil((43 - Math.min(43, ...lower.map(n => n.midi))) / 12) * 36);
+    return { topY: 28 + topExtra, bottomY: 137 + topExtra, height: 243 + topExtra + bottomExtra };
+  }
+
+  function seekable(rect, segment) {
+    const { beat, duration, notes } = segment;
+    rect.classList.add('notation-hit'); rect.setAttribute('tabindex', '0'); rect.setAttribute('role', 'button'); rect.dataset.beat = beat;
+    rect.setAttribute('aria-label', `定位第 ${scoreMeasureIndex(score,beat) + 1} 小节，${notes.length ? notes.map(n => midiName(n.midi)).join('、') : '休止'}，第 ${(beat - scoreMeasureBounds(score,scoreMeasureIndex(score,beat)).start + 1).toFixed(2).replace(/\.00$/, '')} 拍`);
+    const select = () => { if (options.onSelectNotes && notes.length) options.onSelectNotes(notes.map(n => n.id)); else onSeek(beat); };
+    rect.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); select(); });
+    rect.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); select(); } });
+    return { rect, beat, end: beat + duration, notes };
+  }
+  function prepareMeasure(info, group, height) {
+    group.classList.add('notation-measure'); group.dataset.measure = info.index; group.dataset.x = info.x; group.dataset.width = info.width;
+    group.addEventListener('click', event => {
+      if (event.defaultPrevented || event.target?.closest?.('.notation-hit')) return;
+      onSeek(info.start);
+    }); info.group = group;
+    group.insertBefore(svgElement('rect', { x: info.x, y: 19, width: info.width, height: height - 32, class: 'notation-measure-shade' }), group.firstChild);
+    group.append(svgElement('text', { x: info.x + 5, y: 14, class: 'notation-measure-label' }, String(info.index + 1)));
+  }
+  function makeVoice(info, hand, stave) {
+    const clef = hand === 'right' ? 'treble' : 'bass';
+    const objects = segments(info.index, hand).map(segment => {
+      const { glyph: duration, dots } = notationDuration(segment.duration), pitches = [...new Map(segment.notes.map(n => [n.midi, n])).values()];
+      const keys = pitches.length ? pitches.map(n => { const p = spellMidi(n.midi, score.keySignature); return `${p.letter.toLowerCase()}${['bb', 'b', '', '#', '##'][p.accidental + 2]}/${p.octave}`; }) : [clef === 'treble' ? 'b/4' : 'd/3'];
+      const note = new StaveNote({ clef, keys, duration: duration + (pitches.length ? '' : 'r'), dots, autoStem: true }).setStave(stave);
+      if (dots) Dot.buildAndAttach([note], { all: true });
+      if (showNoteNames && pitches.length) note.addModifier(new Annotation(pitches.map(n => midiName(n.midi, score.keySignature < 0)).join(' ')).setFont('Arial', 8).setVerticalJustification('top'));
+      return { ...segment, pitches, note, stave, info, hand };
+    });
+    // Attach tuplets before adding tickables: VexFlow then formats a true 3:2
+    // eighth-note group, rather than a visibly incorrect 16th/eighth/16th group.
+    const tuplets = notationTupletGroups(objects).map(indices => new Tuplet(indices.map(index => objects[index].note), { numNotes: 3, notesOccupied: 2, bracketed: true, ratioed: false }));
+    const voice = new Voice({ numBeats: info.timeSignature[0], beatValue: info.timeSignature[1] }).setMode(Voice.Mode.SOFT).addTickables(objects.map(n => n.note));
+    Accidental.applyAccidentals([voice], KEY_NAMES[score.keySignature + 7]);
+    let beams = [];
+    try { beams = Beam.generateBeams(objects.map(n => n.note), { groups: [new Fraction(info.timeSignature[1] === 8 && info.timeSignature[0] % 3 === 0 ? 3 : 1, info.timeSignature[1])] }); } catch { /* Isolated flagged notes remain valid. */ }
+    return { voice, objects, beams, tuplets, stave };
+  }
+  function drawStaffTies(objects, context, system) {
+    for (let i = 1; i < objects.length; i++) {
+      const a = objects[i - 1], b = objects[i], common = b.pitches.filter(n => a.pitches.some(p => p.id === n.id));
+      if (common.length) new StaveTie({ firstNote: a.note, lastNote: b.note, firstIndexes: common.map(n => a.pitches.findIndex(p => p.midi === n.midi)), lastIndexes: common.map(n => b.pitches.findIndex(p => p.midi === n.midi)) }).setContext(context).draw();
+    }
+    const first = objects[0], last = objects.at(-1);
+    const before = first?.pitches.filter(n => n.beat < scoreMeasureBounds(score,system.firstMeasure).start - .001) || [];
+    const after = last?.pitches.filter(n => n.beat + n.duration > scoreMeasureBounds(score,system.lastMeasure).end + .001) || [];
+    if (before.length) {
+      const indexes = before.map(n => first.pitches.findIndex(p => p.midi === n.midi));
+      new StaveTie({ lastNote: first.note, firstIndexes: indexes, lastIndexes: indexes }).setContext(context).draw();
+    }
+    if (after.length) {
+      const indexes = after.map(n => last.pitches.findIndex(p => p.midi === n.midi));
+      new StaveTie({ firstNote: last.note, firstIndexes: indexes, lastIndexes: indexes }).setContext(context).draw();
+    }
+  }
+  function drawStaff(system) {
+    const { topY, bottomY, height } = system.dimensions;
+    const renderer = new Renderer(system.host, Renderer.Backends.SVG); renderer.resize(system.width, height);
+    const context = renderer.getContext(); context.setFillStyle('#283b34'); context.setStrokeStyle('#46534b');
+    const allRight = [], allLeft = [], rendered = [];
+    for (let position = 0; position < system.bars.length; position++) {
+      const info = system.bars[position], group = context.openGroup('notation-measure', `measure-${info.index}`);
+      const top = new Stave(info.x, topY, info.width).setBegBarType(Barline.type.NONE).setEndBarType(Barline.type.NONE), bottom = new Stave(info.x, bottomY, info.width).setBegBarType(Barline.type.NONE).setEndBarType(Barline.type.NONE);
+      if (position === 0) {
+        top.addClef('treble').addKeySignature(KEY_NAMES[score.keySignature + 7]); bottom.addClef('bass').addKeySignature(KEY_NAMES[score.keySignature + 7]);
+      }
+      if(info.index===0||info.timeSignature.join('/')!==scoreMeasureBounds(score,info.index-1).timeSignature.join('/')){top.addTimeSignature(info.timeSignature.join('/'));bottom.addTimeSignature(info.timeSignature.join('/'));}
+      const noteStartX = Math.max(top.getNoteStartX(), bottom.getNoteStartX()) + (position ? 8 : 0); top.setNoteStartX(noteStartX); bottom.setNoteStartX(noteStartX);
+      top.setContext(context).draw(); bottom.setContext(context).draw();
+      if (position === 0) { new StaveConnector(top, bottom).setType('brace').setContext(context).draw(); new StaveConnector(top, bottom).setType('singleLeft').setContext(context).draw(); }
+      const right = makeVoice(info, 'right', top), left = makeVoice(info, 'left', bottom);
+      // Tick contexts are local. StaveNote adds its stave's absolute noteStartX exactly once.
+      new Formatter().joinVoices([right.voice]).joinVoices([left.voice]).formatToStave([right.voice, left.voice], top);
+      for (const v of [right, left]) { v.voice.draw(context, v.stave); v.beams.forEach(b => b.setContext(context).draw()); v.tuplets.forEach(tuplet => tuplet.setContext(context).draw()); }
+      allRight.push(...right.objects); allLeft.push(...left.objects); rendered.push(...right.objects, ...left.objects); context.closeGroup(); prepareMeasure(info, group, height);
+      group.append(svgElement('line', { x1: info.endX, x2: info.endX, y1: top.getYForLine(0), y2: bottom.getYForLine(4), class: 'notation-barline' }));
+      if (info.index === measureCount - 1) group.append(svgElement('line', { x1: info.endX - 4, x2: info.endX - 4, y1: top.getYForLine(0), y2: bottom.getYForLine(4), class: 'notation-barline', 'stroke-width': 2 }));
+      info.anchors = [];
+    }
+    drawStaffTies(allRight, context, system); drawStaffTies(allLeft, context, system);
+    const svg = system.host.querySelector('svg'); svg.setAttribute('viewBox', `0 0 ${system.width} ${height}`); svg.removeAttribute('width'); svg.removeAttribute('height'); svg.style.removeProperty('width'); svg.style.removeProperty('height'); svg.setAttribute('aria-label', `第 ${system.firstMeasure + 1} 至 ${system.lastMeasure + 1} 小节连续钢琴五线谱`);
+    // VexFlow's beams and tuplet brackets are outside the individual note SVG
+    // groups. Keep every seek target above the entire printed score so those
+    // glyphs cannot intercept a note click and redirect it to its bar's start.
+    const hitLayer = svgElement('g', { class: 'notation-hit-layer' }); svg.append(hitLayer);
+    for (const item of rendered) {
+      const ys = item.note.getYs(), x = item.note.getAbsoluteX(), y = Math.min(...ys) - 17;
+      const hit = svgElement('rect', { x: x - 11, y, width: 29, height: Math.max(43, Math.max(...ys) - y + 20), rx: 4 }); hitLayer.append(hit); item.info.hits.push(seekable(hit, item));
+      const noteGroup = item.note.getSVGElement(); if (noteGroup) noteGroup.style.pointerEvents = 'none'; item.info.anchors.push({ beat: item.beat, x });
+    }
+    for (const info of system.bars) { info.anchors = [...new Map(info.anchors.map(a => [a.beat, a])).values()].sort((a, b) => a.beat - b.beat); info.anchors.push({ beat: info.end, x: info.endX - 3 }); }
+    system.cursor = svgElement('line', { x1: 0, x2: 0, y1: topY + 17, y2: bottomY + 93, class: 'notation-cursor' }); svg.append(system.cursor);
+  }
+  function drawNumberedTies(events, svg, system) {
+    const arc = (x1, y1, x2, y2) => svg.append(svgElement('path', { d: `M ${x1} ${y1 - 29} Q ${(x1 + x2) / 2} ${Math.min(y1, y2) - 44} ${x2} ${y2 - 29}`, fill: 'none', stroke: '#637c68', 'stroke-width': 1.1, 'pointer-events': 'none', class: 'notation-tie' }));
+    for (let i = 1; i < events.length; i++) { const a = events[i - 1], b = events[i]; for (const p of b.pitches) { const prev = a.pitches.find(n => n.id === p.id); if (prev) arc(a.x + 8, prev.y, b.x - 8, p.y); } }
+    const first = events[0], last = events.at(-1);
+    if (first) for (const p of first.pitches) if (p.beat < scoreMeasureBounds(score,system.firstMeasure).start - .001) arc(system.bars[0].x + 33, p.y, first.x - 8, p.y);
+    if (last) for (const p of last.pitches) if (p.beat + p.duration > scoreMeasureBounds(score,system.lastMeasure).end + .001) arc(last.x + 8, p.y, system.width - 17, p.y);
+  }
+  function drawNumbered(system) {
+    const { maxChord, rowHeight, height } = system.dimensions;
+    const svg = svgElement('svg', { viewBox: `0 0 ${system.width} ${height}`, 'aria-label': `第 ${system.firstMeasure + 1} 至 ${system.lastMeasure + 1} 小节连续双手简谱` }); system.host.append(svg);
+    const events = { right: [], left: [] }, baselines = [52 + (maxChord - 1) * 31, 52 + (maxChord - 1) * 31 + rowHeight];
+    for (const [hand, row] of [['right', 0], ['left', 1]]) svg.append(svgElement('text', { x: 17, y: baselines[row], 'font-size': 11, fill: '#8c978d', class: 'notation-row-label' }, hand === 'right' ? '右手' : '左手'));
+    for (let position = 0; position < system.bars.length; position++) {
+      const info = system.bars[position], group = svgElement('g'); svg.append(group); prepareMeasure(info, group, height);
+      const musicStart = info.x + (position ? 10 : 45), musicEnd = info.endX - 12, span = Math.max(20, musicEnd - musicStart - 17);
+      info.anchors = [{ beat: info.start, x: musicStart + 9 }, { beat: info.end, x: info.endX - 2 }];
+      for (const [hand, row] of [['right', 0], ['left', 1]]) {
+        const baseline = baselines[row]; group.append(svgElement('line', { x1: info.endX, x2: info.endX, y1: baseline - (maxChord - 1) * 31 - 34, y2: baseline + 23, class: 'notation-barline' }));
+        const measureEvents = [];
+        for (const segment of segments(info.index, hand)) {
+          const engraving = notationDuration(segment.duration);
+          const x = musicStart + 9 + (segment.beat - info.start) / info.length * span, durationWidth = Math.max(24, segment.duration / info.length * span);
+          const pitches = [...new Map(segment.notes.map(n => [n.midi, n])).values()].sort((a, b) => a.midi - b.midi);
+          const hit = svgElement('rect', { x: x - 14, y: baseline - (pitches.length - 1) * 31 - 32, width: Math.max(27, durationWidth - 3), height: Math.max(57, pitches.length * 31 + 22), rx: 4 }); group.append(hit); info.hits.push(seekable(hit, segment));
+          const event = { x, pitches: [], beat: segment.beat, duration: segment.duration }; events[hand].push(event); measureEvents.push(event);
+          (pitches.length ? pitches : [null]).forEach((note, j) => {
+            const y = baseline - j * 31, p = note ? numberedPitch(note.midi, score.keySignature) : null;
+            group.append(svgElement('text', { x, y, class: `notation-pitch${note ? '' : ' notation-rest'}`, 'font-size': 25, 'text-anchor': 'middle' }, p ? String(p.degree) : '0'));
+            if (p?.accidental) group.append(svgElement('text', { x: x - 15, y: y - 8, 'font-size': 16, class: 'notation-pitch' }, symbol(p.accidental)));
+            if (p?.octave) for (let k = 0; k < Math.min(4, Math.abs(p.octave)); k++) group.append(svgElement('circle', { cx: x, cy: p.octave > 0 ? y - 26 - k * 5 : y + 10 + k * 5, r: 1.45, fill: '#263b35', 'pointer-events': 'none' }));
+            const underlineCount = Math.max(0, Math.round(Math.log2(1 / (engraving.printedBeats / (engraving.dots ? 1.5 : 1)))));
+            for (let k = 0; k < underlineCount; k++) group.append(svgElement('line', { x1: x - 8, x2: x + 8, y1: y + 4 + k * 4, y2: y + 4 + k * 4, stroke: '#263b35', 'stroke-width': 1.5, 'pointer-events': 'none' }));
+            if (engraving.dots) group.append(svgElement('circle', { cx: x + 13, cy: y - 8, r: 1.8, fill: '#263b35', 'pointer-events': 'none' }));
+            if (segment.duration >= 2) for (let k = 1; k < Math.floor(segment.duration); k++) group.append(svgElement('text', { x: x + k / info.length * span, y, class: 'notation-pitch', 'font-size': 21, 'text-anchor': 'middle' }, '—'));
+            if (showNoteNames && note) group.append(svgElement('text', { x, y: y + 28, 'font-size': 9, 'text-anchor': 'middle', fill: '#9aa69c', 'pointer-events': 'none' }, midiName(note.midi, score.keySignature < 0)));
+            if (note) event.pitches.push({ ...note, y });
+          });
+        }
+        for (const indices of notationTupletGroups(measureEvents)) {
+          const first = measureEvents[indices[0]], last = measureEvents[indices.at(-1)], y = baseline - (maxChord - 1) * 31 - 39;
+          const bracket = svgElement('g', { class: 'notation-tuplet', 'aria-label': '3比2连音，可含不同时值的音符', 'pointer-events': 'none' });
+          bracket.append(svgElement('path', { d: `M ${first.x - 9} ${y + 5} V ${y} H ${last.x + 9} V ${y + 5}`, fill: 'none', stroke: '#637c68', 'stroke-width': 1 }));
+          bracket.append(svgElement('rect', { x: (first.x + last.x) / 2 - 7, y: y - 7, width: 14, height: 13, fill: '#fff' }));
+          bracket.append(svgElement('text', { x: (first.x + last.x) / 2, y: y + 4, 'text-anchor': 'middle', 'font-size': 13, fill: '#46644f' }, '3'));
+          group.append(bracket);
+        }
+      }
+    }
+    drawNumberedTies(events.right, svg, system); drawNumberedTies(events.left, svg, system);
+    system.cursor = svgElement('line', { x1: 0, x2: 0, y1: 22, y2: height - 15, class: 'notation-cursor' }); svg.append(system.cursor);
+  }
+  function update(system) {
+    if (!system?.drawn) return;
+    const activeIndex = Math.min(measureCount - 1, scoreMeasureIndex(score,beatNow)); let activeInfo;
+    for (const info of system.bars) {
+      const active = info.index === activeIndex && beatNow < score.durationBeats; info.group?.classList.toggle('is-current', active);
+      for (const hit of info.hits) hit.rect.classList.toggle('is-active', active && hit.notes.length > 0 && beatNow >= hit.beat - .0001 && beatNow < hit.end - .0001);
+      if (active) activeInfo = info;
+    }
+    if (system.cursor) {
+      system.cursor.style.opacity = activeInfo ? '1' : '0';
+      if (activeInfo?.anchors.length) {
+        const anchors = activeInfo.anchors; let a = anchors[0], b = anchors.at(-1);
+        for (let i = 0; i < anchors.length - 1; i++) if (beatNow >= anchors[i].beat && beatNow < anchors[i + 1].beat) { a = anchors[i]; b = anchors[i + 1]; break; }
+        const ratio = Math.max(0, Math.min(1, (beatNow - a.beat) / (b.beat - a.beat || 1))), x = a.x + (b.x - a.x) * ratio; system.cursor.setAttribute('x1', x); system.cursor.setAttribute('x2', x);
+      }
+    }
+  }
+  function paint(system) {
+    if (!system || system.drawn || destroyed) return;
+    if (mode === 'staff' && !fontsLoaded) { system.pending = true; return; } system.drawn = true;
+    try { if (system.layoutError) throw system.layoutError; mode === 'numbered' ? drawNumbered(system) : drawStaff(system); }
+    catch (error) { system.host.replaceChildren(); const message = document.createElement('p'); message.className = 'notation-error'; message.textContent = `此行五线谱排版失败，可切换简谱查看。${error.message}`; system.host.append(message); console.error('Score engraving failed:', error); }
+    system.host.style.minHeight = '0'; update(system);
+  }
+  function rebuild() {
+    if (destroyed) return; visibilityObserver?.disconnect(); layoutWidth = Math.max(240, Math.floor(container.clientWidth || 800)); systems = planSystems(score, layoutWidth, mode); measures = []; systemsHost.replaceChildren();
+    visibilityObserver = typeof IntersectionObserver !== 'undefined' ? new IntersectionObserver(entries => { for (const entry of entries) if (entry.isIntersecting) { const system = systems[Number(entry.target.dataset.system)]; if (system?.host === entry.target) paint(system); visibilityObserver.unobserve(entry.target); } }, { rootMargin: '700px' }) : null;
+    for (const system of systems) {
+      try { system.dimensions = systemDimensions(system); }
+      catch (error) { system.dimensions = { height: mode === 'staff' ? 243 : 230 }; system.layoutError = error; }
+      // Reserve the real SVG ratio before lazy drawing. Otherwise ledger lines
+      // and chords change earlier systems' heights after following a later bar.
+      const host = document.createElement('div'); host.className = 'notation-system'; host.dataset.system = system.index; host.dataset.firstMeasure = system.firstMeasure; host.dataset.lastMeasure = system.lastMeasure; host.style.aspectRatio = `${system.width} / ${system.dimensions.height}`;
+      system.host = host; system.drawn = false; system.cursor = null; systemsHost.append(host);
+      for (const info of system.bars) { info.system = system; info.group = null; info.hits = []; info.anchors = []; measures[info.index] = info; }
+      if (system.index < 3 || !visibilityObserver) paint(system); else visibilityObserver.observe(host);
+    }
+    const index = Math.min(measureCount - 1, scoreMeasureIndex(score,beatNow)); paint(measures[index]?.system); update(measures[index]?.system);
+    // A scrollbar or window resize can rebuild the layout after the first seek.
+    // Follow the new system, rather than retaining a target in the removed DOM.
+    if (currentIndex >= 0 && options.autoScroll !== false) follow(measures[index]);
+  }
+  function follow(info) {
+    cancelAnimationFrame(scrollFrame);
+    scrollFrame = requestAnimationFrame(() => {
+      if (destroyed) return;
+      const bounds = info.system.host.getBoundingClientRect(), viewport = container.getBoundingClientRect();
+      if (bounds.top < viewport.top + 14 || bounds.bottom > viewport.bottom - 14) container.scrollTo({ top: Math.max(0, container.scrollTop + bounds.top - viewport.top - Math.max(12, (container.clientHeight - bounds.height) / 2)), behavior: 'smooth' });
+    });
+  }
+  rebuild();
+  if (mode === 'staff' && !fontsLoaded) fontsReady.then(() => { if (!destroyed) for (const system of systems) if (system.pending) paint(system); }).catch(error => { if (destroyed) return; const message = document.createElement('p'); message.className = 'notation-error'; message.textContent = '乐谱字体加载失败，请刷新页面后重试。'; systemsHost.replaceChildren(message); console.error('Music fonts could not load:', error); });
+  const resizeObserver = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => { if (destroyed || Math.abs(container.clientWidth - layoutWidth) < 8) return; cancelAnimationFrame(resizeFrame); resizeFrame = requestAnimationFrame(rebuild); }) : null; resizeObserver?.observe(container);
+  const beforePrint = () => { if (Math.abs(container.clientWidth - layoutWidth) >= 8) rebuild(); for (const system of systems) paint(system); }; window.addEventListener('beforeprint', beforePrint);
+  return {
+    setBeat(beat) {
+      if (destroyed) return; beatNow = Math.max(0, Math.min(score.durationBeats, Number(beat) || 0));
+      const index = Math.min(measureCount - 1, scoreMeasureIndex(score,beatNow)), previous = measures[currentIndex], info = measures[index];
+      if (previous && previous.system !== info.system) update(previous.system); paint(info.system); update(info.system);
+      if (index !== currentIndex && options.autoScroll !== false) follow(info); currentIndex = index;
+    },
+    destroy() { destroyed = true; cancelAnimationFrame(resizeFrame); cancelAnimationFrame(scrollFrame); visibilityObserver?.disconnect(); resizeObserver?.disconnect(); window.removeEventListener('beforeprint', beforePrint); root.remove(); },
+  };
+}

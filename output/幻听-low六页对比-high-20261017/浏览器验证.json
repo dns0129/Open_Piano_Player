@@ -1,0 +1,162 @@
+{
+  "validationEndedAt": "2026-10-17T16:05:41.858Z",
+  "observations": [
+    {
+      "phase": "pause",
+      "activeHeads": 2,
+      "at": "2026-10-17T16:00:15.458Z",
+      "beat": "15.85",
+      "caption": "第 4–7 小节原谱第 1 页 · 第 2 行",
+      "follow": true,
+      "loop": false,
+      "max": "380",
+      "play": "播放",
+      "tempo": "90",
+      "toolbar": "已暂停\n第 4 / 95 小节\n速度\n90\nBPM\n右手\n左手\n节拍器\n循环\n—\n音色\n标准钢琴\n柔和钢琴\n明亮钢琴\n轻量合成\n采样已就绪\n0:11\n4:13\n原谱\n五线谱\n简谱\n跟随\n−\n移调\n＋"
+    },
+    {
+      "phase": "pause-held",
+      "activeHeads": 2,
+      "at": "2026-10-17T16:00:32.370Z",
+      "beat": "15.85",
+      "caption": "第 4–7 小节原谱第 1 页 · 第 2 行",
+      "follow": true,
+      "loop": false,
+      "max": "380",
+      "play": "播放",
+      "tempo": "90",
+      "toolbar": "已暂停\n第 4 / 95 小节\n速度\n90\nBPM\n右手\n左手\n节拍器\n循环\n—\n音色\n标准钢琴\n柔和钢琴\n明亮钢琴\n轻量合成\n采样已就绪\n0:11\n4:13\n原谱\n五线谱\n简谱\n跟随\n−\n移调\n＋"
+    },
+    {
+      "phase": "full-play-start",
+      "activeHeads": 0,
+      "at": "2026-10-17T16:00:32.912Z",
+      "beat": "0",
+      "caption": "第 1–3 小节原谱第 1 页 · 第 1 行",
+      "follow": true,
+      "loop": false,
+      "max": "380",
+      "play": "播放",
+      "tempo": "90",
+      "toolbar": "准备练习\n第 1 / 95 小节\n速度\n90\nBPM\n右手\n左手\n节拍器\n循环\n—\n音色\n标准钢琴\n柔和钢琴\n明亮钢琴\n轻量合成\n采样已就绪\n0:00\n4:13\n原谱\n五线谱\n简谱\n跟随\n−\n移调\n＋"
+    },
+    {
+      "phase": "full-play-running",
+      "activeHeads": 0,
+      "at": "2026-10-17T16:00:39.861Z",
+      "beat": "0.32",
+      "caption": "第 1–3 小节原谱第 1 页 · 第 1 行",
+      "follow": true,
+      "loop": false,
+      "max": "380",
+      "play": "暂停",
+      "tempo": "90",
+      "toolbar": "正在播放\n第 1 / 95 小节\n速度\n90\nBPM\n右手\n左手\n节拍器\n循环\n—\n音色\n标准钢琴\n柔和钢琴\n明亮钢琴\n轻量合成\n采样已就绪\n0:00\n4:13\n原谱\n五线谱\n简谱\n跟随\n−\n移调\n＋"
+    },
+    {
+      "phase": "page2",
+      "activeHeads": 2,
+      "at": "2026-10-17T16:01:31.594Z",
+      "beat": "67.05",
+      "caption": "第 15–17 小节原谱第 1 页 · 第 5 行",
+      "follow": true,
+      "loop": false,
+      "max": "380",
+      "play": "暂停",
+      "tempo": "90",
+      "toolbar": "正在播放\n第 17 / 95 小节\n速度\n90\nBPM\n右手\n左手\n节拍器\n循环\n—\n音色\n标准钢琴\n柔和钢琴\n明亮钢琴\n轻量合成\n采样已就绪\n0:45\n4:13\n原谱\n五线谱\n简谱\n跟随\n−\n移调\n＋"
+    },
+    {
+      "phase": "page2-observed",
+      "activeHeads": 2,
+      "at": "2026-10-17T16:01:42.321Z",
+      "beat": "83.14",
+      "caption": "第 21–24 小节原谱第 2 页 · 第 2 行",
+      "follow": true,
+      "loop": false,
+      "max": "380",
+      "play": "暂停",
+      "tempo": "90",
+      "toolbar": "正在播放\n第 21 / 95 小节\n速度\n90\nBPM\n右手\n左手\n节拍器\n循环\n—\n音色\n标准钢琴\n柔和钢琴\n明亮钢琴\n轻量合成\n采样已就绪\n0:55\n4:13\n原谱\n五线谱\n简谱\n跟随\n−\n移调\n＋"
+    },
+    {
+      "phase": "page3-observed",
+      "activeHeads": 2,
+      "at": "2026-10-17T16:02:33.166Z",
+      "beat": "159.4",
+      "caption": "第 37–40 小节原谱第 3 页 · 第 1 行",
+      "follow": true,
+      "loop": false,
+      "max": "380",
+      "play": "暂停",
+      "tempo": "90",
+      "toolbar": "正在播放\n第 40 / 95 小节\n速度\n90\nBPM\n右手\n左手\n节拍器\n循环\n—\n音色\n标准钢琴\n柔和钢琴\n明亮钢琴\n轻量合成\n采样已就绪\n1:46\n4:13\n原谱\n五线谱\n简谱\n跟随\n−\n移调\n＋"
+    },
+    {
+      "phase": "page4-observed",
+      "activeHeads": 2,
+      "at": "2026-10-17T16:03:26.007Z",
+      "beat": "238.51",
+      "caption": "第 59–61 小节原谱第 4 页 · 第 3 行",
+      "follow": true,
+      "loop": false,
+      "max": "380",
+      "play": "暂停",
+      "tempo": "90",
+      "toolbar": "正在播放\n第 60 / 95 小节\n速度\n90\nBPM\n右手\n左手\n节拍器\n循环\n—\n音色\n标准钢琴\n柔和钢琴\n明亮钢琴\n轻量合成\n采样已就绪\n2:39\n4:13\n原谱\n五线谱\n简谱\n跟随\n−\n移调\n＋"
+    },
+    {
+      "phase": "page5-observed",
+      "activeHeads": 3,
+      "at": "2026-10-17T16:04:05.157Z",
+      "beat": "297.23",
+      "caption": "第 75–77 小节原谱第 5 页 · 第 3 行",
+      "follow": true,
+      "loop": false,
+      "max": "380",
+      "play": "暂停",
+      "tempo": "90",
+      "toolbar": "正在播放\n第 75 / 95 小节\n速度\n90\nBPM\n右手\n左手\n节拍器\n循环\n—\n音色\n标准钢琴\n柔和钢琴\n明亮钢琴\n轻量合成\n采样已就绪\n3:18\n4:13\n原谱\n五线谱\n简谱\n跟随\n−\n移调\n＋"
+    },
+    {
+      "phase": "page6-observed",
+      "activeHeads": 3,
+      "at": "2026-10-17T16:04:46.190Z",
+      "beat": "358.78",
+      "caption": "第 87–91 小节原谱第 6 页 · 第 2 行",
+      "follow": true,
+      "loop": false,
+      "max": "380",
+      "play": "暂停",
+      "tempo": "90",
+      "toolbar": "正在播放\n第 90 / 95 小节\n速度\n90\nBPM\n右手\n左手\n节拍器\n循环\n—\n音色\n标准钢琴\n柔和钢琴\n明亮钢琴\n轻量合成\n采样已就绪\n3:59\n4:13\n原谱\n五线谱\n简谱\n跟随\n−\n移调\n＋"
+    },
+    {
+      "phase": "full-play-complete",
+      "activeHeads": 0,
+      "at": "2026-10-17T16:05:15.007Z",
+      "beat": "380",
+      "follow": true,
+      "loop": false,
+      "max": "380",
+      "play": "播放",
+      "tempo": "90",
+      "toolbar": "播放完成\n第 95 / 95 小节\n速度\n90\nBPM\n右手\n左手\n节拍器\n循环\n—\n音色\n标准钢琴\n柔和钢琴\n明亮钢琴\n轻量合成\n采样已就绪\n4:13\n4:13\n原谱\n五线谱\n简谱\n跟随\n−\n移调\n＋"
+    }
+  ],
+  "jianpu": {
+    "notationErrors": 0,
+    "renderedSvg": 4
+  },
+  "afterRefresh": {
+    "at": "2026-10-17T16:05:41.858Z",
+    "beat": "0",
+    "heading": "幻听 · GPT low 六页重识别 · 全谱",
+    "heads": 1068,
+    "max": "380",
+    "systems": 28,
+    "tempo": "90"
+  },
+  "noSeekingDuringFullPlay": true,
+  "tempoDuringFullPlay": 90
+}

@@ -1,0 +1,106 @@
+{
+  "passed": true,
+  "checks": [
+    {
+      "id": "01-minuet",
+      "model": "gpt-6.1-sol",
+      "effort": "high",
+      "pages": 1,
+      "omrStatus": "returned",
+      "aiStatus": "returned",
+      "hashesMatch": true,
+      "calls": 1
+    },
+    {
+      "id": "02-greensleeves",
+      "model": "gpt-6.1-sol",
+      "effort": "high",
+      "pages": 1,
+      "omrStatus": "returned",
+      "aiStatus": "returned",
+      "hashesMatch": true,
+      "calls": 1
+    },
+    {
+      "id": "03-birthday",
+      "model": "gpt-6.1-sol",
+      "effort": "high",
+      "pages": 1,
+      "omrStatus": "returned",
+      "aiStatus": "returned",
+      "hashesMatch": true,
+      "calls": 1
+    },
+    {
+      "id": "04-ode",
+      "model": "gpt-6.1-sol",
+      "effort": "high",
+      "pages": 1,
+      "omrStatus": "returned",
+      "aiStatus": "returned",
+      "hashesMatch": true,
+      "calls": 1
+    },
+    {
+      "id": "05-elise",
+      "model": "gpt-6.1-sol",
+      "effort": "high",
+      "pages": 1,
+      "omrStatus": "returned",
+      "aiStatus": "returned",
+      "hashesMatch": true,
+      "calls": 1
+    },
+    {
+      "id": "06-gymnopedie",
+      "model": "gpt-6.1-sol",
+      "effort": "high",
+      "pages": 2,
+      "omrStatus": "returned",
+      "aiStatus": "returned",
+      "hashesMatch": true,
+      "calls": 1
+    },
+    {
+      "id": "07-bach-prelude",
+      "model": "gpt-6.1-sol",
+      "effort": "high",
+      "pages": 2,
+      "omrStatus": "returned",
+      "aiStatus": "returned",
+      "hashesMatch": true,
+      "calls": 1
+    },
+    {
+      "id": "08-chopin-prelude",
+      "model": "gpt-6.1-sol",
+      "effort": "high",
+      "pages": 2,
+      "omrStatus": "failed",
+      "aiStatus": "returned",
+      "hashesMatch": true,
+      "calls": 1
+    },
+    {
+      "id": "09-village-dance",
+      "model": "gpt-6.1-sol",
+      "effort": "high",
+      "pages": 2,
+      "omrStatus": "returned",
+      "aiStatus": "returned",
+      "hashesMatch": true,
+      "calls": 1
+    },
+    {
+      "id": "10-waltz",
+      "model": "gpt-6.1-sol",
+      "effort": "high",
+      "pages": 2,
+      "omrStatus": "returned",
+      "aiStatus": "returned",
+      "hashesMatch": true,
+      "calls": 1
+    }
+  ],
+  "at": "2026-10-17T10:44:01.372Z"
+}

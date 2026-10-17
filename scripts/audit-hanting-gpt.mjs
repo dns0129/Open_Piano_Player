@@ -1,0 +1,20 @@
+import {readFile,writeFile,readdir} from 'node:fs/promises';
+const root='.local/hanting-gpt-high-20261017';
+const oldId=(await readFile('.local/hanting-source/final-job-id.txt','utf8')).trim(),old=JSON.parse(await readFile('.local/full-score-jobs/'+oldId+'/job.json'));
+const corrections=JSON.parse(await readFile(root+'/reference-corrections.json').catch(()=>'{"corrections":[]}')).corrections;
+for(const correction of corrections){const region=old.regions.find(r=>r.id===correction.regionId),notes=region.result.score.notes.filter(n=>n.beat===correction.beat&&n.duration===correction.duration&&n.hand===correction.hand&&n.midi===correction.fromMidi);if(notes.length!==1)throw Error('Ambiguous reviewed-reference correction');notes[0].midi=correction.toMidi;}
+const tieCorrections=JSON.parse(await readFile(root+'/reference-corrections.json')).tieCorrections||[];
+for(const correction of tieCorrections){const result=old.regions.find(r=>r.id===correction.regionId).result,find=beat=>{const notes=result.score.notes.filter(n=>n.beat===beat&&n.duration===correction.duration&&n.midi===correction.midi&&n.hand===correction.hand);if(notes.length!==1)throw Error('Ambiguous reviewed tie correction');return notes[0].id;};result.internalTies.push({fromNoteId:find(correction.fromBeat),toNoteId:find(correction.toBeat)});}
+const event=n=>[Math.round(n.beat*1e4),Math.round(n.duration*1e4),n.midi,n.hand].join('|');
+function ties(result){const notes=new Map(result.score.notes.map(n=>[n.id,n])),out=[];for(const tie of result.internalTies||[])out.push('inside:'+event(notes.get(tie.fromNoteId))+'>'+event(notes.get(tie.toNoteId)));for(const direction of ['tieIn','tieOut'])for(const tie of result.continuity[direction]||[])out.push(direction+':'+event(notes.get(tie.noteId)));return out.sort();}
+function delta(a,b){const counts=new Map();for(const value of b)counts.set(value,(counts.get(value)||0)+1);return a.filter(value=>{const count=counts.get(value)||0;if(count){counts.set(value,count-1);return false;}return true;});}
+const rows=[];
+for(const file of (await readdir(root+'/initial-results')).sort()){
+  const current=JSON.parse(await readFile(root+'/initial-results/'+file)),reference=old.regions.find(r=>r.id===current.region.id),a=reference.result,b=current.result;
+  const aKeys=a.score.notes.map(event),bKeys=b.score.notes.map(event),missing=delta(aKeys,bKeys),extra=delta(bKeys,aKeys),aTies=ties(a),bTies=ties(b);
+  const oldByKey=new Map(a.score.notes.map(n=>[event(n),n])),oldPositions=new Map(a.positions.map(p=>[p.noteId,p])),positions=new Map(b.positions.map(p=>[p.noteId,p])),distances=[];
+  for(const n of b.score.notes){const before=oldByKey.get(event(n)),p=before&&oldPositions.get(before.id),q=positions.get(n.id);if(p&&q)distances.push(Math.hypot(p.x/reference.pageWidth-q.x/current.region.pageWidth,p.y/reference.pageHeight-q.y/current.region.pageHeight));}
+  rows.push({id:reference.id,page:reference.page,system:reference.system,notes:bKeys.length,referenceNotes:aKeys.length,missing,extra,missingTies:delta(aTies,bTies),extraTies:delta(bTies,aTies),measures:b.coverage.measureCount,expectedMeasures:a.coverage.measureCount,duration:b.score.durationBeats,expectedDuration:a.score.durationBeats,keySignature:b.score.keySignature,timeSignature:b.score.timeSignature,structural:b.checks,independent:b.verification,positionCompared:distances.length,positionMeanNormalizedDistance:distances.length?distances.reduce((s,d)=>s+d,0)/distances.length:null});
+}
+await writeFile(root+'/audit.json',JSON.stringify({at:new Date().toISOString(),reference:'Prior source-reviewed transcription used only for audit, never supplied to GPT; independently corrected against source where needed',referenceCorrections:corrections,tieCorrections,rows},null,2));
+console.log(JSON.stringify(rows.map(({id,notes,missing,extra,missingTies,extraTies,structural,independent})=>({id,notes,missing:missing.length,extra:extra.length,missingTies:missingTies.length,extraTies:extraTies.length,structural:structural.passed,independentExact:independent?.comparison?.exactMatch??null})),null,2));

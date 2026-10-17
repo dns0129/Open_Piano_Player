@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {readFile,writeFile} from 'node:fs/promises';
+import {compareRegionReadings} from '../lib/recognition-comparison.mjs';
+const root='.local/hanting-deepseek-high-six-pages-20261018',auth=JSON.parse(await readFile(root+'/private-job.json'));
+const job=JSON.parse(await readFile('.local/full-score-jobs/'+auth.id+'/job.json'));
+const ref=JSON.parse(await readFile('.local/full-score-jobs/feb36563796cd9a9b7f118a809ad559fe4dc/job.json'));
+assert.equal(job.status,'complete');assert.equal(job.totalPages,6);assert.equal(job.regions.length,28);assert.equal(job.reuse.hits,0);
+const rows=job.regions.map(region=>{const expected=ref.regions.find(r=>r.id===region.id),result=region.result,comparison=compareRegionReadings(expected.result,result);assert.equal(region.status,'confirmed');assert.equal(result.checks.passed,true);assert.equal(result.model,'deepseek-flash');assert.equal(result.reasoningEffort,'high');assert.equal(comparison.exactMatch,true);assert.equal(result.positions.length,result.score.notes.length);return {id:region.id,page:region.page,heads:result.score.notes.length,positions:result.positions.length,comparisonPassed:comparison.exactMatch,checksPassed:result.checks.passed};});
+const event=n=>[n.midi,n.hand,Math.round(n.beat*1e4),Math.round(n.duration*1e4)].join('|');
+assert.deepEqual(job.result.score.notes.map(event).sort(),ref.result.score.notes.map(event).sort());
+assert.equal(job.result.score.durationBeats,380);assert.equal(job.result.sourceNotation.notes.length,1068);assert.equal(job.result.sourceNotation.systems.length,28);assert.equal(job.result.scope.completeDocument,true);
+const result={at:new Date().toISOString(),jobId:job.id,passed:true,model:'deepseek-flash',forceFresh:true,cacheHits:0,pages:6,rows:28,writtenHeads:1068,playbackEvents:job.result.score.notes.length,beats:380,measures:job.result.measureMap.length,tempo:job.result.score.tempo,sourceNotationHeads:job.result.sourceNotation.notes.length,exactComparedToSourceReviewedReference:true,referenceUse:'offline audit and correction only; not model raw accuracy',rowsDetail:rows};
+await writeFile(root+'/final-audit.json',JSON.stringify(result,null,2));console.log(JSON.stringify({...result,rowsDetail:undefined}));
