@@ -94,6 +94,9 @@ test('library distinguishes simplified arrangements from the complete source edi
   for(const score of library){assert.equal(validateScore(score).notes.length,score.notes.length);assert.ok(score.notes.some(n=>n.hand==='left'));assert.ok(score.notes.some(n=>n.hand==='right'));if(score.source.kind==='public-domain-arrangement')assert.match(score.source.label,/非原版全曲/);}
   const complete=findLibraryScores('野蜂飞舞')[0];
   assert.equal(complete.id,'bumblebee-yeung-complete');assert.equal(complete.source.kind,'pdf-transcription-checked');assert.equal(complete.notes.length,1313);assert.equal(complete.durationBeats,210);assert.match(complete.source.license,/CC BY-SA 3\.0/);assert.match(complete.source.license,/Non-PD US/);
+  const golden=findLibraryScores('golden hour')[0];
+  assert.equal(golden.id,'golden-hour-netease-664959');assert.equal(golden.source.kind,'image-ai');assert.match(golden.source.label,/待对照原谱校对/);assert.deepEqual(golden.timeSignature,[12,8]);assert.equal(golden.keySignature,4);assert.equal(golden.durationBeats,330);assert.equal(golden.notes.length,2045);
+  for(let bar=0;bar<55;bar++)for(const hand of['right','left'])assert.ok(golden.notes.filter(n=>n.hand===hand&&n.beat>=bar*6&&n.beat<bar*6+6).every(n=>n.beat+n.duration<=bar*6+6+1e-9),`第${bar+1}小节${hand}不越过小节线`);
   assert.equal(findLibraryScores('小星星')[0].id,'twinkle');assert.equal(findLibraryScores('ode to joy')[0].id,'ode-to-joy');assert.equal(findLibraryScores('不存在的歌曲').length,0);
 });
 
