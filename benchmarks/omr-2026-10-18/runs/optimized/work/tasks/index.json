@@ -1,0 +1,262 @@
+{
+ "tasks": [
+  {
+   "task": "p1-s1",
+   "image": "p1-s1.png",
+   "draft": "p1-s1.bars",
+   "bars": [
+    1,
+    2,
+    3
+   ],
+   "flagged": [
+    1,
+    2,
+    3
+   ],
+   "repeatCandidates": []
+  },
+  {
+   "task": "p1-s2",
+   "image": "p1-s2.png",
+   "draft": "p1-s2.bars",
+   "bars": [
+    4,
+    5,
+    6
+   ],
+   "flagged": [
+    4,
+    5,
+    6
+   ],
+   "repeatCandidates": []
+  },
+  {
+   "task": "p1-s3",
+   "image": "p1-s3.png",
+   "draft": "p1-s3.bars",
+   "bars": [
+    7,
+    8,
+    9
+   ],
+   "flagged": [
+    7,
+    8,
+    9
+   ],
+   "repeatCandidates": []
+  },
+  {
+   "task": "p1-s4",
+   "image": "p1-s4.png",
+   "draft": "p1-s4.bars",
+   "bars": [
+    10,
+    11,
+    12
+   ],
+   "flagged": [
+    10,
+    11,
+    12
+   ],
+   "repeatCandidates": []
+  },
+  {
+   "task": "p1-s5",
+   "image": "p1-s5.png",
+   "draft": "p1-s5.bars",
+   "bars": [
+    13,
+    14,
+    15
+   ],
+   "flagged": [
+    13,
+    14,
+    15
+   ],
+   "repeatCandidates": []
+  },
+  {
+   "task": "p2-s1",
+   "image": "p2-s1.png",
+   "draft": "p2-s1.bars",
+   "bars": [
+    16,
+    17,
+    18
+   ],
+   "flagged": [
+    16,
+    17,
+    18
+   ],
+   "repeatCandidates": []
+  },
+  {
+   "task": "p2-s2",
+   "image": "p2-s2.png",
+   "draft": "p2-s2.bars",
+   "bars": [
+    19,
+    20,
+    21
+   ],
+   "flagged": [
+    19,
+    20,
+    21
+   ],
+   "repeatCandidates": []
+  },
+  {
+   "task": "p2-s3",
+   "image": "p2-s3.png",
+   "draft": "p2-s3.bars",
+   "bars": [
+    22,
+    23,
+    24
+   ],
+   "flagged": [
+    22,
+    23,
+    24
+   ],
+   "repeatCandidates": []
+  },
+  {
+   "task": "p2-s4",
+   "image": "p2-s4.png",
+   "draft": "p2-s4.bars",
+   "bars": [
+    25,
+    26,
+    27
+   ],
+   "flagged": [
+    25,
+    26,
+    27
+   ],
+   "repeatCandidates": []
+  },
+  {
+   "task": "p2-s5",
+   "image": "p2-s5.png",
+   "draft": "p2-s5.bars",
+   "bars": [
+    28,
+    29,
+    30
+   ],
+   "flagged": [
+    28,
+    29,
+    30
+   ],
+   "repeatCandidates": []
+  },
+  {
+   "task": "p3-s1",
+   "image": "p3-s1.png",
+   "draft": "p3-s1.bars",
+   "bars": [
+    31,
+    32,
+    33
+   ],
+   "flagged": [
+    31,
+    32,
+    33
+   ],
+   "repeatCandidates": []
+  },
+  {
+   "task": "p3-s2",
+   "image": "p3-s2.png",
+   "draft": "p3-s2.bars",
+   "bars": [
+    34,
+    35,
+    36
+   ],
+   "flagged": [
+    34,
+    35,
+    36
+   ],
+   "repeatCandidates": []
+  },
+  {
+   "task": "p3-s3",
+   "image": "p3-s3.png",
+   "draft": "p3-s3.bars",
+   "bars": [
+    37,
+    38,
+    39
+   ],
+   "flagged": [
+    37,
+    38,
+    39
+   ],
+   "repeatCandidates": []
+  },
+  {
+   "task": "p3-s4",
+   "image": "p3-s4.png",
+   "draft": "p3-s4.bars",
+   "bars": [
+    40,
+    41,
+    42
+   ],
+   "flagged": [
+    40,
+    41,
+    42
+   ],
+   "repeatCandidates": []
+  },
+  {
+   "task": "p3-s5",
+   "image": "p3-s5.png",
+   "draft": "p3-s5.bars",
+   "bars": [
+    43,
+    44,
+    45
+   ],
+   "flagged": [
+    43,
+    44,
+    45
+   ],
+   "repeatCandidates": []
+  },
+  {
+   "task": "p3-s6",
+   "image": "p3-s6.png",
+   "draft": "p3-s6.bars",
+   "bars": [
+    46,
+    47,
+    48
+   ],
+   "flagged": [
+    46,
+    47,
+    48
+   ],
+   "repeatCandidates": []
+  }
+ ],
+ "key": -4,
+ "time": "3/2"
+}

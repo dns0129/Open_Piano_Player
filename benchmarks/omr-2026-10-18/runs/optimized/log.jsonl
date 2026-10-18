@@ -1,0 +1,12 @@
+{"at":"2026-10-18T08:29:18.700Z","event":"run-start"}
+{"at":"2026-10-18T08:29:18.703Z","event":"preprocess-start"}
+{"at":"2026-10-18T08:29:26.739Z","event":"preprocess-end"}
+{"at":"2026-10-18T08:29:33.068Z","event":"reader-start","page":1}
+{"at":"2026-10-18T08:29:33.070Z","event":"reader-start","page":2}
+{"at":"2026-10-18T08:29:33.072Z","event":"reader-start","page":3}
+{"at":"2026-10-18T10:02:00.174Z","event":"reader-failed","page":1,"type":"rate-limit","detail":"HTTP 429 session limit, resets 10:00 UTC; not retried automatically"}
+{"at":"2026-10-18T10:02:00.178Z","event":"reader-failed","page":2,"type":"rate-limit","detail":"HTTP 429 session limit, resets 10:00 UTC; not retried automatically"}
+{"at":"2026-10-18T10:02:00.181Z","event":"reader-failed","page":3,"type":"rate-limit","detail":"HTTP 429 session limit, resets 10:00 UTC; not retried automatically"}
+{"at":"2026-10-18T10:02:07.727Z","event":"reader-resume","page":1,"detail":"manual resume after session limit reset (same agent context)"}
+{"at":"2026-10-18T10:02:07.729Z","event":"reader-resume","page":2,"detail":"manual resume after session limit reset (same agent context)"}
+{"at":"2026-10-18T10:02:07.734Z","event":"reader-resume","page":3,"detail":"manual resume after session limit reset (same agent context)"}
