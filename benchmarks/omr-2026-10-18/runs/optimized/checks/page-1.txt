@@ -1,0 +1,12 @@
+# 第 1 页自动检查（只是提示，复核者仍须逐小节对照原图）
+
+## 小节时值检查（bars-to-score）
+✓ 15 小节，291 个音符 → /tmp/tmp.HQD955mOVA/page.json
+
+## 检测到但识读结果中没有对应的音头（omr-assist audit，按音名比较，8va 小节不比较）
+  第3小节 右手：检测到 6 个音头，乐谱中只对上 5 个（检测 D D+F B+F F；乐谱 B D F+F E D+F C B A B A G F）
+  第4小节 左手：检测到 5 个音头，乐谱中只对上 4 个（检测 C+G E D B；乐谱 C+G C D C B）
+  第9小节 右手：检测到 5 个音头，乐谱中只对上 4 个（检测 C F F C B；乐谱 C F F B B A）
+  第11小节 右手：检测到 11 个音头，乐谱中只对上 9 个（检测 F+G E B D E C A C D G；乐谱 G E B D E C A B B D E+G B）
+  第13小节 右手：检测到 8 个音头，乐谱中只对上 6 个（检测 C+C+E A F E B G；乐谱 C A G F E D C B A G F E）
+  第15小节 右手：检测到 9 个音头，乐谱中只对上 7 个（检测 B+F D G F E B G F；乐谱 B+F D C B A G F E D C B A）
