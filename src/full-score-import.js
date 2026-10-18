@@ -1,3 +1,4 @@
+import { assetURL } from '../lib/asset-url.mjs';
 import { prepareScoreImage, mountScoreImageSelector } from './score-image.js';
 import { normalizeCropRect } from '../lib/score-image-layout.mjs';
 import { validateScore, midiName } from '../lib/score.mjs';
@@ -567,7 +568,7 @@ export function mountFullScoreImport(host, { file, source = {}, resumeJob = null
     if (disposed) return;
     state.capabilities = capabilities;
     pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).href;
-    documentTask = pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()), isEvalSupported: false, wasmUrl: '/pdfjs/wasm/', standardFontDataUrl: '/pdfjs/standard_fonts/', cMapUrl: '/pdfjs/cmaps/', cMapPacked: true });
+    documentTask = pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()), isEvalSupported: false, wasmUrl: assetURL('/pdfjs/wasm/'), standardFontDataUrl: assetURL('/pdfjs/standard_fonts/'), cMapUrl: assetURL('/pdfjs/cmaps/'), cMapPacked: true });
     pdf = await documentTask.promise; if (disposed) return;
     if (pdf.numPages > 200) throw new Error('PDF 超过 200 页，请先提取明确的练习范围。不会截取前 200 页冒充全谱。');
     draft.totalPages = pdf.numPages; render();

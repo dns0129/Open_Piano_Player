@@ -1,3 +1,4 @@
+import { assetURL } from '../lib/asset-url.mjs';
 import { beatsPerMeasure, midiName } from '../lib/score.mjs';
 
 const NS = 'http://www.w3.org/2000/svg';
@@ -207,7 +208,7 @@ export function renderSourceNotation(container, score, options = {}) {
       viewBox: `0 0 ${system.rect.width} ${system.rect.height}`,
       'aria-label': `原钢琴谱第 ${system.page} 页，第 ${system.system} 行，第 ${system.firstMeasure} 至 ${system.lastMeasure} 小节`,
     });
-    const image = svgElement('image', { href: system.imageUrl, x: 0, y: 0, width: system.rect.width, height: system.rect.height, preserveAspectRatio: 'none', class: 'source-notation-image' });
+    const image = svgElement('image', { href: assetURL(system.imageUrl), x: 0, y: 0, width: system.rect.width, height: system.rect.height, preserveAspectRatio: 'none', class: 'source-notation-image' });
     image.setAttribute('aria-hidden', 'true');
     const imageError = document.createElement('p'); imageError.className = 'source-notation-image-error'; imageError.setAttribute('role', 'alert'); imageError.textContent = `原谱第 ${system.page} 页第 ${system.system} 行图片加载失败，请刷新页面。`;
     image.addEventListener('error', () => { if (!destroyed) section.classList.add('has-image-error'); });

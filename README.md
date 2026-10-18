@@ -46,6 +46,12 @@ npm start
 
 来源标为「AI 识谱 · 待校对」，没有经过人工逐行确认。原谱图片不随源码提供。
 
+## 网页版（GitHub Pages）
+
+`npm run build:pages` 生成纯静态网页到 `dist-pages/`（默认部署在 `/qinban-web/` 子路径，可用 `PAGES_BASE=/其他路径/` 覆盖）。网页版包含全部曲库、五线谱/简谱、钢琴播放、变速、分手、循环、移调、导出，以及本地 MusicXML/MXL/MIDI/JSON 导入和浏览器内音频转谱；联网找谱、图片/PDF 识谱、网易云导入和本机共享曲库需要 Node 服务，网页版会给出说明而不会发起这些请求。
+
+发布：把 `dist-pages/` 的内容推送到公开仓库 `dns0129/qinban-web` 的 `main` 分支根目录（含 `.nojekyll`），在该仓库 Settings → Pages 选择 “Deploy from a branch · main · /(root)”。网页公开可见，其中包括全部内置曲目。
+
 ## 云端曲库仓库（score-repo/）
 
 `score-repo/` 是随 Git 同步的曲库：GitHub `main` 分支即云端副本，其他电脑 `git pull` 后重新构建即可得到同一份曲目。每首曲目一个规范化 JSON（`scores/<id>.json`），`index.json` 记录标题、拍号、小节数、音符数、来源类型、入库时间和文件 SHA-256；`index.mjs` 由工具生成并静态导入全部曲目，App 启动时自动并入「我的曲库」。

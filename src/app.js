@@ -34,6 +34,15 @@ import {
   FileAudio,
 } from "lucide";
 import { library } from "../lib/catalog.mjs";
+import { STATIC_SITE } from "../lib/asset-url.mjs";
+// 网页版没有本机服务：/api 请求统一返回说明，沿用各功能原有的错误提示。
+const STATIC_NOTICE = "网页版只提供曲库练习、本地 MusicXML/MIDI/JSON 导入和音频转谱；联网找谱、图片/PDF识谱和网易云导入需要在本机运行琴伴。";
+if (STATIC_SITE) {
+  const nativeFetch = globalThis.fetch.bind(globalThis);
+  globalThis.fetch = (input, init) => String(typeof input === "string" ? input : input?.url || "").startsWith("/api/")
+    ? Promise.resolve(new Response(JSON.stringify({ error: STATIC_NOTICE, code: "STATIC_SITE" }), { status: 503, headers: { "Content-Type": "application/json" } }))
+    : nativeFetch(input, init);
+}
 import { validateScore, transposeScore } from "../lib/score.mjs";
 import { importScore } from "../lib/importers.mjs";
 import { exportMusicXML, exportMidi } from "../lib/exporters.mjs";
@@ -1237,6 +1246,7 @@ async function loadAvailablePracticeSource(score) {
 }
 let librarySync;
 function syncLocalLibrary() {
+  if(STATIC_SITE)return Promise.resolve();
   if(librarySync)return librarySync;
   librarySync=(async()=>{
     try {
@@ -1631,3 +1641,4 @@ void syncLocalLibrary().then(()=>{
   if(restored&&state.score.id===(restoredScore||library.find(score=>score.id==="bumblebee-yeung-complete")||library[0]).id)setScore(restored);
 });
 window.addEventListener('focus',()=>void syncLocalLibrary());
+if(STATIC_SITE)toast(STATIC_NOTICE);
