@@ -1,3 +1,4 @@
+import { assetURL } from "../lib/asset-url.mjs";
 import {
   MAX_TRANSCRIPTION_SECONDS,
   TRANSCRIPTION_SAMPLE_RATE,
@@ -163,12 +164,8 @@ export async function transcribeAudio(file, options = {}) {
           startSeconds: segment.start,
           onsetThreshold: options.onsetThreshold ?? 0.5,
           frameThreshold: options.frameThreshold ?? 0.3,
-          modelUrl: new URL(
-            "/models/basic-pitch/model.json",
-            globalThis.location.origin,
-          ).href,
-          wasmPath: new URL("/models/basic-pitch/", globalThis.location.origin)
-            .href,
+          modelUrl: new URL(assetURL("/models/basic-pitch/model.json"), globalThis.location.origin).href,
+          wasmPath: new URL(assetURL("/models/basic-pitch/"), globalThis.location.origin).href,
         },
       },
       [samples.buffer],
