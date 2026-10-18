@@ -1,0 +1,25 @@
+{
+ "flow": "baseline",
+ "codeCommit": "65effac (config) / tool not used",
+ "startedAt": "2026-10-18T08:14:53Z",
+ "finishedAt": "2026-10-18T08:28:59Z",
+ "agents": [
+  {
+   "role": "single reader (all 3 pages)",
+   "effort": "high",
+   "model": "inherited session model",
+   "durationMs": 827155,
+   "toolUses": 131,
+   "sessionReportedSubagentTokens": 270967,
+   "tokenNote": "Claude Code subagent usage total; not split into input/output/cache; not per-request usage"
+  }
+ ],
+ "modelCalls": "not exposed (agent made 131 tool calls; number of model requests is not reported)",
+ "retries": 0,
+ "pageCoverage": {
+  "pages": "3/3",
+  "bars": "48/48 (bars 1-48 present in output)"
+ },
+ "selfCheck": "bars-to-score passed: 48 bars, 894 notes",
+ "agentReportedUncertainties": "see agent-report.md"
+}
