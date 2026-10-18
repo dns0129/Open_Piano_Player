@@ -18,7 +18,7 @@
     "scores:verify": "node scripts/score-repo.mjs verify",
     "scores:list": "node scripts/score-repo.mjs list",
     "scores:index": "node scripts/score-repo.mjs index",
-    "build:pages": "node scripts/prepare-assets.mjs && VITE_STATIC_SITE=1 vite build --base ${PAGES_BASE:-/qinban-web/} --outDir dist-pages"
+    "build:pages": "node scripts/prepare-assets.mjs && VITE_STATIC_SITE=1 vite build --base ${PAGES_BASE:-/Open_Piano_Player/} --outDir dist-pages"
   },
   "dependencies": {
     "@earendil-works/pi-agent-core": "1.1.0",

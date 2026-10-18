@@ -48,9 +48,11 @@ npm start
 
 ## 网页版（GitHub Pages）
 
-`npm run build:pages` 生成纯静态网页到 `dist-pages/`（默认部署在 `/qinban-web/` 子路径，可用 `PAGES_BASE=/其他路径/` 覆盖）。网页版包含全部曲库、五线谱/简谱、钢琴播放、变速、分手、循环、移调、导出，以及本地 MusicXML/MXL/MIDI/JSON 导入和浏览器内音频转谱；联网找谱、图片/PDF 识谱、网易云导入和本机共享曲库需要 Node 服务，网页版会给出说明而不会发起这些请求。
+在线打开：https://dns0129.github.io/Open_Piano_Player/
 
-发布：把 `dist-pages/` 的内容推送到公开仓库 `dns0129/qinban-web` 的 `main` 分支根目录（含 `.nojekyll`），在该仓库 Settings → Pages 选择 “Deploy from a branch · main · /(root)”。网页公开可见，其中包括全部内置曲目。
+`npm run build:pages` 生成纯静态网页到 `dist-pages/`（默认部署在 `/Open_Piano_Player/` 子路径，可用 `PAGES_BASE=/其他路径/` 覆盖）。网页版包含全部曲库、五线谱/简谱、钢琴播放、变速、分手、循环、移调、导出，以及本地 MusicXML/MXL/MIDI/JSON 导入和浏览器内音频转谱；联网找谱、图片/PDF 识谱、网易云导入和本机共享曲库需要 Node 服务，网页版会给出说明而不会发起这些请求。
+
+发布：推送到 `main` 后，`.github/workflows/pages.yml` 自动构建网页版并发布到 `gh-pages` 分支（也可在 Actions 页手动运行），仓库 Settings → Pages 选择 “Deploy from a branch · gh-pages · /(root)”。网页公开可见，其中包括全部内置曲目。
 
 ## 云端曲库仓库（score-repo/）
 
