@@ -1,30 +1,30 @@
-{"at":"2026-10-18T08:29:18.700Z","event":"run-start"}
-{"at":"2026-10-18T08:29:18.703Z","event":"preprocess-start"}
-{"at":"2026-10-18T08:29:26.739Z","event":"preprocess-end"}
-{"at":"2026-10-18T08:29:33.068Z","event":"reader-start","page":1}
-{"at":"2026-10-18T08:29:33.070Z","event":"reader-start","page":2}
-{"at":"2026-10-18T08:29:33.072Z","event":"reader-start","page":3}
-{"at":"2026-10-18T10:02:00.174Z","event":"reader-failed","page":1,"type":"rate-limit","detail":"HTTP 429 session limit, resets 10:00 UTC; not retried automatically"}
-{"at":"2026-10-18T10:02:00.178Z","event":"reader-failed","page":2,"type":"rate-limit","detail":"HTTP 429 session limit, resets 10:00 UTC; not retried automatically"}
-{"at":"2026-10-18T10:02:00.181Z","event":"reader-failed","page":3,"type":"rate-limit","detail":"HTTP 429 session limit, resets 10:00 UTC; not retried automatically"}
-{"at":"2026-10-18T10:02:07.727Z","event":"reader-resume","page":1,"detail":"manual resume after session limit reset (same agent context)"}
-{"at":"2026-10-18T10:02:07.729Z","event":"reader-resume","page":2,"detail":"manual resume after session limit reset (same agent context)"}
-{"at":"2026-10-18T10:02:07.734Z","event":"reader-resume","page":3,"detail":"manual resume after session limit reset (same agent context)"}
-{"at":"2026-10-18T10:07:30.452Z","event":"reader-end","page":3,"durationMs":311656,"toolUses":64,"sessionReportedSubagentTokens":138145}
-{"at":"2026-10-18T10:07:30.454Z","event":"check-start","page":3}
-{"at":"2026-10-18T10:07:34.877Z","event":"check-end","page":3}
-{"at":"2026-10-18T10:07:34.884Z","event":"reviewer-start","page":3}
-{"at":"2026-10-18T10:08:08.037Z","event":"reader-end","page":2,"durationMs":342041,"toolUses":65,"sessionReportedSubagentTokens":129539}
-{"at":"2026-10-18T10:08:08.039Z","event":"check-start","page":2}
-{"at":"2026-10-18T10:08:08.811Z","event":"check-end","page":2}
-{"at":"2026-10-18T10:08:08.817Z","event":"reviewer-start","page":2}
-{"at":"2026-10-18T10:08:27.404Z","event":"reader-end","page":1,"durationMs":350809,"toolUses":54,"sessionReportedSubagentTokens":159165}
-{"at":"2026-10-18T10:08:27.407Z","event":"check-start","page":1}
-{"at":"2026-10-18T10:08:27.952Z","event":"check-end","page":1}
-{"at":"2026-10-18T10:08:27.957Z","event":"reviewer-start","page":1}
-{"at":"2026-10-18T10:11:28.617Z","event":"reviewer-end","page":2,"durationMs":187818,"toolUses":28,"sessionReportedSubagentTokens":121615,"changes":0}
-{"at":"2026-10-18T10:11:55.649Z","event":"reviewer-end","page":3,"durationMs":249234,"toolUses":74,"sessionReportedSubagentTokens":127610,"changes":"1 voice reassignment + 2 comment edits"}
-{"at":"2026-10-18T10:12:29.525Z","event":"reviewer-end","page":1,"durationMs":226310,"toolUses":36,"sessionReportedSubagentTokens":116239,"changes":1}
-{"at":"2026-10-18T10:12:29.527Z","event":"merge-start"}
-{"at":"2026-10-18T10:12:29.771Z","event":"merge-end","retriesNeeded":0}
-{"at":"2026-10-18T10:12:29.773Z","event":"run-end"}
+{"at": "2026-10-18T08:29:18.700Z", "event": "run-start"}
+{"at": "2026-10-18T08:29:18.703Z", "event": "preprocess-start"}
+{"at": "2026-10-18T08:29:26.739Z", "event": "preprocess-end"}
+{"at": "2026-10-18T08:29:33.068Z", "event": "reader-start", "page": 1}
+{"at": "2026-10-18T08:29:33.070Z", "event": "reader-start", "page": 2}
+{"at": "2026-10-18T08:29:33.072Z", "event": "reader-start", "page": 3}
+{"at": "2026-10-18T08:29:47.163Z", "event": "reader-failed", "page": 2, "type": "rate-limit", "detail": "HTTP 429 session limit (resets 10:00 UTC); not retried automatically", "loggedAt": "2026-10-18T10:02:00.178Z", "timeSource": "task-notification enqueue time in the orchestrator transcript (entry was first written late, at loggedAt)"}
+{"at": "2026-10-18T08:29:48.419Z", "event": "reader-failed", "page": 1, "type": "rate-limit", "detail": "HTTP 429 session limit (resets 10:00 UTC); not retried automatically", "loggedAt": "2026-10-18T10:02:00.174Z", "timeSource": "task-notification enqueue time in the orchestrator transcript (entry was first written late, at loggedAt)"}
+{"at": "2026-10-18T08:29:53.991Z", "event": "reader-failed", "page": 3, "type": "rate-limit", "detail": "HTTP 429 session limit (resets 10:00 UTC); not retried automatically", "loggedAt": "2026-10-18T10:02:00.181Z", "timeSource": "task-notification enqueue time in the orchestrator transcript (entry was first written late, at loggedAt)"}
+{"at": "2026-10-18T10:02:07.727Z", "event": "reader-resume", "page": 1, "detail": "manual resume after session limit reset (same agent context)"}
+{"at": "2026-10-18T10:02:07.729Z", "event": "reader-resume", "page": 2, "detail": "manual resume after session limit reset (same agent context)"}
+{"at": "2026-10-18T10:02:07.734Z", "event": "reader-resume", "page": 3, "detail": "manual resume after session limit reset (same agent context)"}
+{"at": "2026-10-18T10:07:30.452Z", "event": "reader-end", "page": 3, "durationMs": 311656, "toolUses": 64, "sessionReportedSubagentTokens": 138145}
+{"at": "2026-10-18T10:07:30.454Z", "event": "check-start", "page": 3}
+{"at": "2026-10-18T10:07:34.877Z", "event": "check-end", "page": 3}
+{"at": "2026-10-18T10:07:34.884Z", "event": "reviewer-start", "page": 3}
+{"at": "2026-10-18T10:08:08.037Z", "event": "reader-end", "page": 2, "durationMs": 342041, "toolUses": 65, "sessionReportedSubagentTokens": 129539}
+{"at": "2026-10-18T10:08:08.039Z", "event": "check-start", "page": 2}
+{"at": "2026-10-18T10:08:08.811Z", "event": "check-end", "page": 2}
+{"at": "2026-10-18T10:08:08.817Z", "event": "reviewer-start", "page": 2}
+{"at": "2026-10-18T10:08:27.404Z", "event": "reader-end", "page": 1, "durationMs": 350809, "toolUses": 54, "sessionReportedSubagentTokens": 159165}
+{"at": "2026-10-18T10:08:27.407Z", "event": "check-start", "page": 1}
+{"at": "2026-10-18T10:08:27.952Z", "event": "check-end", "page": 1}
+{"at": "2026-10-18T10:08:27.957Z", "event": "reviewer-start", "page": 1}
+{"at": "2026-10-18T10:11:28.617Z", "event": "reviewer-end", "page": 2, "durationMs": 187818, "toolUses": 28, "sessionReportedSubagentTokens": 121615, "changes": 0}
+{"at": "2026-10-18T10:11:55.649Z", "event": "reviewer-end", "page": 3, "durationMs": 249234, "toolUses": 74, "sessionReportedSubagentTokens": 127610, "changes": "1 voice reassignment + 2 comment edits"}
+{"at": "2026-10-18T10:12:29.525Z", "event": "reviewer-end", "page": 1, "durationMs": 226310, "toolUses": 36, "sessionReportedSubagentTokens": 116239, "changes": 1}
+{"at": "2026-10-18T10:12:29.527Z", "event": "merge-start"}
+{"at": "2026-10-18T10:12:29.771Z", "event": "merge-end", "retriesNeeded": 0}
+{"at": "2026-10-18T10:12:29.773Z", "event": "run-end"}

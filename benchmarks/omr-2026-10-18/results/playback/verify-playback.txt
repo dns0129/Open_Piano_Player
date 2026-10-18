@@ -1,0 +1,42 @@
+{
+ "id": "beethoven-prelude-woo55",
+ "totalBeats": 288,
+ "bars": 48,
+ "results": [
+  {
+   "label": "开头",
+   "startBeat": 0,
+   "barBefore": 1,
+   "barAfter": 2,
+   "seekAfter": 6.59,
+   "advanced": true,
+   "highlightedMeasure": 2,
+   "activeNotes": 2,
+   "followsPlayback": true
+  },
+  {
+   "label": "中段",
+   "startBeat": 144,
+   "barBefore": 25,
+   "barAfter": 26,
+   "seekAfter": 152,
+   "advanced": true,
+   "highlightedMeasure": 26,
+   "activeNotes": 1,
+   "followsPlayback": true
+  },
+  {
+   "label": "末段",
+   "startBeat": 259,
+   "barBefore": 44,
+   "barAfter": 45,
+   "seekAfter": 266.99,
+   "advanced": true,
+   "highlightedMeasure": 45,
+   "activeNotes": 2,
+   "followsPlayback": true
+  }
+ ],
+ "pageErrors": [],
+ "failedRequests": []
+}

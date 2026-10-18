@@ -2,6 +2,24 @@
   "version": 1,
   "scores": [
     {
+      "id": "beethoven-prelude-woo55",
+      "title": "Prelude in F minor, WoO 55",
+      "composer": "Ludwig van Beethoven",
+      "description": "Mutopia #939（Public Domain）PDF 页图经优化识谱流程（识读+独立复核）转写；未经人工修正，评测见 benchmarks/omr-2026-10-18",
+      "timeSignature": [
+        3,
+        2
+      ],
+      "keySignature": -4,
+      "tempo": 120,
+      "measures": 48,
+      "notes": 890,
+      "durationBeats": 288,
+      "sourceKind": "image-ai",
+      "sha256": "e97023fd71970f11072c6d1ecbe677996d48e82cc88872bb5bd3faad203f582d",
+      "addedAt": "2026-10-18T10:14:52.419Z"
+    },
+    {
       "id": "golden-hour-netease-664959",
       "title": "Golden Hour · 钢琴谱（9页全谱）",
       "composer": "JVKE（Jake Lawson、Zac Lawson）· 编配：咲阿柚",
