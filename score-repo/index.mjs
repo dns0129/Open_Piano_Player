@@ -10,11 +10,16 @@ import s6 from './scores/full-score-7e87728f60040aa1f7178325cebffac4e8ad.json' w
 import s7 from './scores/full-score-9241860ef6cad1e3c0f17e48ca0d30ffdbff.json' with { type: 'json' };
 import s8 from './scores/full-score-feb36563796cd9a9b7f118a809ad559fe4dc.json' with { type: 'json' };
 import s9 from './scores/golden-hour-netease-664959.json' with { type: 'json' };
-import s10 from './scores/score-mv906k5t.json' with { type: 'json' };
-import s11 from './scores/score-mv9096ep.json' with { type: 'json' };
-import s12 from './scores/score-mv90aval.json' with { type: 'json' };
-import s13 from './scores/score-mv9j4u62.json' with { type: 'json' };
-import s14 from './scores/score-mv9mxb7i.json' with { type: 'json' };
+import s10 from './scores/reread-gpt61-high-v2-eutopia-staff.json' with { type: 'json' };
+import s11 from './scores/reread-gpt61-high-v2-golden.json' with { type: 'json' };
+import s12 from './scores/reread-gpt61-high-v2-ifyou.json' with { type: 'json' };
+import s13 from './scores/reread-gpt61-high-v2-merry.json' with { type: 'json' };
+import s14 from './scores/reread-gpt61-high-v2-sudi.json' with { type: 'json' };
+import s15 from './scores/score-mv906k5t.json' with { type: 'json' };
+import s16 from './scores/score-mv9096ep.json' with { type: 'json' };
+import s17 from './scores/score-mv90aval.json' with { type: 'json' };
+import s18 from './scores/score-mv9j4u62.json' with { type: 'json' };
+import s19 from './scores/score-mv9mxb7i.json' with { type: 'json' };
 
 export const repositoryScores = [
   { ...validateScore(s0), description: "从本地曲库同步；保留原有来源及待校对标记。" },
@@ -27,9 +32,14 @@ export const repositoryScores = [
   { ...validateScore(s7), description: "本地保存版本；DeepSeek 识别后使用此前已审核 GPT high 谱稿校正，不代表 DeepSeek 原始识别结果。" },
   { ...validateScore(s8), description: "从本地曲库同步；保留原有来源及待校对标记。" },
   { ...validateScore(s9), description: "网易云9页55小节逐音转写 · E 大调 12/8 · 待对照原谱校对" },
-  { ...validateScore(s10), description: "从本地曲库同步；保留原有来源及待校对标记。" },
-  { ...validateScore(s11), description: "从本地曲库同步；保留原有来源及待校对标记。" },
-  { ...validateScore(s12), description: "从本地曲库同步；保留原有来源及待校对标记。" },
-  { ...validateScore(s13), description: "从本地曲库同步；保留原有来源及待校对标记。" },
-  { ...validateScore(s14), description: "从本地曲库同步；保留原有来源及待校对标记。" },
+  { ...validateScore(s10), description: "accidentals-v2-20261018 · 4页16行完整新识别 · 复读与原图疑点校核完成，待人工逐音复核" },
+  { ...validateScore(s11), description: "accidentals-v2-20261018 · 9页45行完整新识别 · 复读与原图疑点校核完成，待人工逐音复核" },
+  { ...validateScore(s12), description: "accidentals-v2-20261018 · 6页23行完整新识别 · 复读与原图疑点校核完成，待人工逐音复核" },
+  { ...validateScore(s13), description: "accidentals-v2-20261018 · 6页34行完整新识别 · 复读与原图疑点校核完成，待人工逐音复核" },
+  { ...validateScore(s14), description: "accidentals-v2-20261018 · 5页25行完整新识别 · 复读与原图疑点校核完成，待人工逐音复核" },
+  { ...validateScore(s15), description: "从本地曲库同步；保留原有来源及待校对标记。" },
+  { ...validateScore(s16), description: "从本地曲库同步；保留原有来源及待校对标记。" },
+  { ...validateScore(s17), description: "从本地曲库同步；保留原有来源及待校对标记。" },
+  { ...validateScore(s18), description: "从本地曲库同步；保留原有来源及待校对标记。" },
+  { ...validateScore(s19), description: "从本地曲库同步；保留原有来源及待校对标记。" },
 ];

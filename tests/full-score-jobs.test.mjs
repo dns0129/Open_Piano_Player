@@ -239,7 +239,33 @@ test('AI draft export requires every row and scope confirmation, and never marks
  const draft=await store.exportDraft(id,auth,{scopeConfirmed:true});assert.equal(draft.result.reviewStatus,'ai-unreviewed');assert.equal(draft.result.score.source.kind,'full-score-ai-draft');assert.equal(draft.result.scope.allIncludedRowsConfirmed,false);assert.equal(draft.result.sourceNotation.systems.length,2);assert.equal((await store.getJob(id,auth)).progress.confirmed,0);
 });
 
+test('an empty tool submission falls back once to independent digital output on the real job path',async t=>{
+ let fallbackCalls=0;
+ const fallback=async({region})=>{fallbackCalls++;return{...regionResult(region),positions:[],positionlessReview:true,wireFormat:'compact-json-v2'};};
+ const {store}=await fixture(t,{recognizeRegion:async()=>{throw Object.assign(new Error('no submission'),{code:'NO_REGION_RESULT'});},digitalFallback:true,digitalRecognizeRegion:fallback,checkRegion:fallback});
+ const {id}=await store.createJob(rawJob(1),auth);await store.startJob(id,auth);const job=await store.waitForIdle(id,auth);
+ assert.equal(job.calls.recognition,2);assert.equal(fallbackCalls,2);assert.equal(job.regions[0].result.positionlessSource,true);assert.equal(job.regions[0].result.verification.comparison.exactMatch,true);
+ const exported=await store.exportDraft(id,auth,{scopeConfirmed:true});assert.equal(exported.result.score.notes.length,2);assert.equal(exported.result.sourceNotation.notes.length,0);assert.equal(exported.progress.confirmed,0);
+});
+
+test('digital-only AI readings export timed notes without inventing original image head positions',async t=>{
+ const original=await fixture(t);const {id}=await original.store.createJob(rawJob(1),auth);await original.store.startJob(id,auth);await original.store.waitForIdle(id,auth);await original.store.close();
+ const path=join(original.directory,id,'job.json'),saved=JSON.parse(await readFile(path,'utf8')),row=saved.regions[0];
+ row.result.positions=[];row.result.positionlessSource=true;row.result.checks=validateRegionResult(row.result,row,saved.metadata,{requirePositions:false}).checks;await writeFile(path,JSON.stringify(saved));
+ const digital=createFullScoreJobStore({directory:original.directory});t.after(()=>digital.close());
+ const exported=await digital.exportDraft(id,auth,{scopeConfirmed:true});assert.equal(exported.result.score.notes.length,2);assert.equal(exported.result.sourceNotation.notes.length,0);assert.equal(exported.result.reviewStatus,'ai-unreviewed');assert.equal(exported.progress.confirmed,0);
+ delete row.result.positionlessSource;await writeFile(path,JSON.stringify(saved));
+ const strict=createFullScoreJobStore({directory:original.directory});t.after(()=>strict.close());
+ await assert.rejects(strict.exportDraft(id,auth,{scopeConfirmed:true}),e=>e.code==='MISSING_HEAD_POSITIONS');
+});
+
 test('full-score assembly preserves a 12/8 to 4/4 change without changing note times',async t=>{
  const {store}=await fixture(t,{recognizeRegion:async({region})=>{const r=regionResult(region),duration=region.page===1?6:4;r.score.timeSignature=region.page===1?[12,8]:[4,4];r.score.durationBeats=duration;r.score.notes.forEach(n=>n.duration=duration);r.coverage.measureDurations=[duration];return r;}});
  const raw=rawJob(2);delete raw.timeSignature;const {id}=await store.createJob(raw,auth);await store.startJob(id,auth);let job=await store.waitForIdle(id,auth);for(const row of job.regions)await store.confirmRegion(id,row.id,row.result,auth);job=await store.getJob(id,auth);assert.equal(job.status,'complete');assert.deepEqual(job.result.score.measureMap.map(b=>[b.beat,b.duration,b.timeSignature]),[[0,6,[12,8]],[6,4,[4,4]]]);assert.equal(job.result.score.durationBeats,10);
+});
+
+test('an explicit in-row 2/4 bar is not treated as a 4/4 pickup',async t=>{
+ const {store}=await fixture(t,{recognizeRegion:async({region})=>{const r=regionResult(region);r.score.durationBeats=6;r.score.notes.forEach(n=>n.duration=6);r.coverage={complete:true,measureCount:2,measureDurations:[2,4],measureTimeSignatures:[[2,4],[4,4]]};return r;}});
+ const raw=rawJob(1);raw.regions[0].measureCount=2;const {id}=await store.createJob(raw,auth);await store.startJob(id,auth);await store.waitForIdle(id,auth);
+ const job=await store.exportDraft(id,auth,{scopeConfirmed:true});assert.deepEqual(job.result.score.measureMap.map(b=>[b.duration,b.timeSignature,b.implicit]),[[2,[2,4],false],[4,[4,4],false]]);
 });

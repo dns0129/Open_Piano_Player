@@ -178,8 +178,98 @@
       "notes": 2045,
       "durationBeats": 330,
       "sourceKind": "image-ai",
-      "sha256": "3ccc927edd5132ad5049edc5bfc794b99e7e202e1566b075e3355078c10b9a14",
+      "sha256": "979962a64ff3d490b0025844cdaafd5d265c71e361b089ff4049da6c590e79aa",
       "addedAt": "2026-10-17T23:04:38.628Z"
+    },
+    {
+      "id": "reread-gpt61-high-v2-eutopia-staff",
+      "title": "Eutopia · GPT‑6.1 high 新策略",
+      "composer": "未知",
+      "description": "accidentals-v2-20261018 · 4页16行完整新识别 · 复读与原图疑点校核完成，待人工逐音复核",
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": -3,
+      "tempo": 90,
+      "measures": 56,
+      "notes": 1074,
+      "durationBeats": 222,
+      "sourceKind": "full-score-ai-draft",
+      "sha256": "08e377c1cf39847e6604ac18a8290def7a5adcbb2310ec2a7d9f7683bded5277",
+      "addedAt": "2026-10-18T11:57:22.008Z"
+    },
+    {
+      "id": "reread-gpt61-high-v2-golden",
+      "title": "golden hour · GPT‑6.1 high 新策略",
+      "composer": "未知",
+      "description": "accidentals-v2-20261018 · 9页45行完整新识别 · 复读与原图疑点校核完成，待人工逐音复核",
+      "timeSignature": [
+        12,
+        8
+      ],
+      "keySignature": 4,
+      "tempo": 94,
+      "measures": 55,
+      "notes": 2045,
+      "durationBeats": 330,
+      "sourceKind": "full-score-ai-draft",
+      "sha256": "ef2f04a5a7a6b8e42289eaa8b8ed1bfc1ddc42559bd980d8529c91b6c0a541c2",
+      "addedAt": "2026-10-18T11:57:22.020Z"
+    },
+    {
+      "id": "reread-gpt61-high-v2-ifyou",
+      "title": "IF YOU · GPT‑6.1 high 新策略",
+      "composer": "未知",
+      "description": "accidentals-v2-20261018 · 6页23行完整新识别 · 复读与原图疑点校核完成，待人工逐音复核",
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": -5,
+      "tempo": 68,
+      "measures": 50,
+      "notes": 1252,
+      "durationBeats": 200,
+      "sourceKind": "full-score-ai-draft",
+      "sha256": "2647d3c3f9a08c714d7b8f75e1d252d74ea90a7af20ca92a99511534b4bce2d6",
+      "addedAt": "2026-10-18T11:57:22.015Z"
+    },
+    {
+      "id": "reread-gpt61-high-v2-merry",
+      "title": "Merry Christmas Mr. Lawrence · GPT‑6.1 high 新策略",
+      "composer": "未知",
+      "description": "accidentals-v2-20261018 · 6页34行完整新识别 · 复读与原图疑点校核完成，待人工逐音复核",
+      "timeSignature": [
+        12,
+        8
+      ],
+      "keySignature": -5,
+      "tempo": 60,
+      "measures": 103,
+      "notes": 2199,
+      "durationBeats": 444,
+      "sourceKind": "full-score-ai-draft",
+      "sha256": "3ec4b4257e9a22cfb7cb8f66c98d5973729e540e91313f6ab9b74fa532ed6dec",
+      "addedAt": "2026-10-18T11:57:21.990Z"
+    },
+    {
+      "id": "reread-gpt61-high-v2-sudi",
+      "title": "天龙八部之宿敌 · GPT‑6.1 high 新策略",
+      "composer": "未知",
+      "description": "accidentals-v2-20261018 · 5页25行完整新识别 · 复读与原图疑点校核完成，待人工逐音复核",
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": -6,
+      "tempo": 90,
+      "measures": 101,
+      "notes": 1044,
+      "durationBeats": 404,
+      "sourceKind": "full-score-ai-draft",
+      "sha256": "0f7e465d1bb7eb3df2b6a6b0adb078585a4ac6776b658b2248a16ba4e3a0ae0d",
+      "addedAt": "2026-10-18T11:57:22.012Z"
     },
     {
       "id": "score-mv906k5t",
@@ -196,7 +286,7 @@
       "notes": 11,
       "durationBeats": 8,
       "sourceKind": "image-ai",
-      "sha256": "0496fe1f091ea7890ad180d1207a3d2bff1d824e3d16e17be24f6fd9c42fcd98",
+      "sha256": "1185186bd0e5b5ac75bb7aea1fb78fae358b2eff93f869525777927af440637d",
       "addedAt": "2026-10-18T07:48:19.676Z"
     },
     {
@@ -268,7 +358,7 @@
       "notes": 24,
       "durationBeats": 6,
       "sourceKind": "image-ai",
-      "sha256": "81b2bedb7be5b179961030b6ea39935b718db0c539d64fbc3fd8b7f0f74384fb",
+      "sha256": "b21006b3b3caa0b5f5cbb10f6884fc50c545e3776111636d35575d56bd871bac",
       "addedAt": "2026-10-18T07:48:19.671Z"
     }
   ]

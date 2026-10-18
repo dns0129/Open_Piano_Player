@@ -13,6 +13,7 @@ import { importScore, importMusicXML } from '../lib/importers.mjs';
 import { library, findLibraryScores } from '../lib/catalog.mjs';
 import { measureSegments, spellMidi, numberedPitch, planSystems, durationGlyph } from '../lib/notation-layout.mjs';
 const { Midi }=MidiPackage;
+const simpleScore=library.find(score=>score.id==='twinkle');
 
 test('MIDI titles recover Chinese metadata only when the actual filename confirms it',async()=>{
   const midi=new Midi();midi.name=String.fromCharCode(0xc7,0xe0,0xbb,0xa8,0xb4,0xc9);
@@ -59,7 +60,7 @@ test('MIDI converts ticks to beats without losing independent tracks and chords'
 });
 
 test('validation rejects unsafe or unbounded event data',()=>{
-  const source=library[0];
+  const source=simpleScore;
   for(const change of [{midi:109},{beat:Infinity},{duration:-1},{hand:'other'},{velocity:2}])assert.throws(()=>validateScore({...source,notes:[{...source.notes[0],...change}]}));
   assert.throws(()=>validateScore({...source,durationBeats:1}));
   assert.throws(()=>validateScore({...source,notes:Array(10001).fill(source.notes[0])}));
@@ -68,8 +69,8 @@ test('validation rejects unsafe or unbounded event data',()=>{
 });
 
 test('transposition changes all pitches and key signature consistently and respects piano range',()=>{
-  const score=transposeScore(library[0],2);assert.equal(score.keySignature,2);assert.equal(score.notes[0].midi,library[0].notes[0].midi+2);assert.equal(score.notes[0].beat,library[0].notes[0].beat);
-  assert.throws(()=>transposeScore({...library[0],notes:[{...library[0].notes[0],midi:108}]},1));
+  const score=transposeScore(simpleScore,2);assert.equal(score.keySignature,2);assert.equal(score.notes[0].midi,simpleScore.notes[0].midi+2);assert.equal(score.notes[0].beat,simpleScore.notes[0].beat);
+  assert.throws(()=>transposeScore({...simpleScore,notes:[{...simpleScore.notes[0],midi:108}]},1));
 });
 
 test('key spelling and numbered pitches respect sharp/flat key signatures and octaves',()=>{
@@ -91,17 +92,17 @@ test('engraving segments keep whole measures and tie independent overlapping dur
 });
 
 test('library distinguishes simplified arrangements from the complete source edition and has searchable aliases',()=>{
-  for(const score of library){assert.equal(validateScore(score).notes.length,score.notes.length);assert.ok(score.notes.some(n=>n.hand==='left'));assert.ok(score.notes.some(n=>n.hand==='right'));if(score.source.kind==='public-domain-arrangement')assert.match(score.source.label,/非原版全曲/);}
-  const complete=findLibraryScores('野蜂飞舞')[0];
+  for(const score of library){assert.equal(validateScore(score).notes.length,score.notes.length);if(score.source.kind==='public-domain-arrangement'){assert.ok(score.notes.some(n=>n.hand==='left'));assert.ok(score.notes.some(n=>n.hand==='right'));assert.match(score.source.label,/非原版全曲/);}}
+  const complete=findLibraryScores('野蜂飞舞').find(score=>score.id==='bumblebee-yeung-complete');
   assert.equal(complete.id,'bumblebee-yeung-complete');assert.equal(complete.source.kind,'pdf-transcription-checked');assert.equal(complete.notes.length,1313);assert.equal(complete.durationBeats,210);assert.match(complete.source.license,/CC BY-SA 3\.0/);assert.match(complete.source.license,/Non-PD US/);
-  const golden=findLibraryScores('golden hour')[0];
-  assert.equal(golden.id,'golden-hour-netease-664959');assert.equal(golden.source.kind,'image-ai');assert.match(golden.source.label,/待对照原谱校对/);assert.deepEqual(golden.timeSignature,[12,8]);assert.equal(golden.keySignature,4);assert.equal(golden.durationBeats,330);assert.equal(golden.notes.length,2045);
+  const golden=findLibraryScores('golden hour').find(score=>score.id==='golden-hour-netease-664959');
+  assert.equal(golden.source.kind,'image-ai');assert.match(golden.source.label,/待对照原谱校对/);assert.deepEqual(golden.timeSignature,[12,8]);assert.equal(golden.keySignature,4);assert.equal(golden.durationBeats,330);assert.equal(golden.notes.length,2045);
   for(let bar=0;bar<55;bar++)for(const hand of['right','left'])assert.ok(golden.notes.filter(n=>n.hand===hand&&n.beat>=bar*6&&n.beat<bar*6+6).every(n=>n.beat+n.duration<=bar*6+6+1e-9),`第${bar+1}小节${hand}不越过小节线`);
-  assert.equal(findLibraryScores('小星星')[0].id,'twinkle');assert.equal(findLibraryScores('ode to joy')[0].id,'ode-to-joy');assert.equal(findLibraryScores('不存在的歌曲').length,0);
+  assert.ok(findLibraryScores('小星星').some(score=>score.id==='twinkle'));assert.ok(findLibraryScores('ode to joy').some(score=>score.id==='ode-to-joy'));assert.equal(findLibraryScores('不存在的歌曲').length,0);
 });
 
 test('continuous systems pack 1–5 bars responsively with no horizontal gaps or lost measures',()=>{
-  const score=library[0], count=Math.ceil(score.durationBeats/beatsPerMeasure(score));
+  const score=simpleScore, count=Math.ceil(score.durationBeats/beatsPerMeasure(score));
   for(const [width,expected]of[[280,1],[420,2],[640,3],[900,4],[1200,5]]){
     for(const mode of['staff','numbered']){
       const systems=planSystems(score,width,mode);

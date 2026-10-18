@@ -8,6 +8,7 @@ import {execFileSync} from 'node:child_process';
 import {PDFDocument} from 'pdf-lib';
 import {createFullScoreJobStore} from '../lib/full-score-jobs.mjs';
 import {generateScoreRegion,normalizeGenerateInput} from '../lib/ai.mjs';
+import {generateDigitalRegion} from '../lib/digital-recognition.mjs';
 import {sharedCredential} from '../lib/auth.mjs';
 import {SCORE_RECOGNITION} from '../lib/recognition-policy.mjs';
 import {addScore,verifyRepository,DEFAULT_REPOSITORY} from '../lib/score-repository.mjs';
@@ -114,8 +115,15 @@ export async function runFive({run=false,importScores=false,publish=false,source
   await save(join(callsDirectory,`${request.jobId}-${request.region.id}-${request.pass}-${Date.now()}.json`),{startedAt,endedAt:new Date().toISOString(),result});
   assertNewReading(result);return result;
  };
+ const digitalAdapter=async(request,options)=>{
+  const startedAt=new Date().toISOString(),task=state.jobs.find(j=>j.id===request.jobId);
+  const snapshot=await store.getJob(request.jobId,{token:task.token}),first=snapshot.regions[0];
+  const enriched=withFreshTempoContext(request,first.result||first.recognitionCheckpoint?.result);
+  const result=await generateDigitalRegion(enriched,{...options,traceOptions:{path:join(outputDirectory,'usage.jsonl')}});
+  assertNewReading(result);await save(join(callsDirectory,`${request.jobId}-${request.region.id}-${request.pass}-digital-${Date.now()}.json`),{startedAt,endedAt:new Date().toISOString(),result});return result;
+ };
  const concurrencyUsed=Math.max(1,Math.min(100,concurrency));
- const store=createFullScoreJobStore({directory:jobsDirectory,maxConcurrency:concurrencyUsed,recognizeRegion:adapter,checkRegion:adapter});
+ const store=createFullScoreJobStore({directory:jobsDirectory,maxConcurrency:concurrencyUsed,recognizeRegion:adapter,checkRegion:adapter,digitalFallback:true,digitalRecognizeRegion:digitalAdapter});
  let stopping=false;
  const cancel=()=>{stopping=true;void Promise.allSettled(state.jobs.map(j=>store.cancelJob(j.id,{token:j.token})));};
  process.once('SIGINT',cancel);process.once('SIGTERM',cancel);
@@ -137,12 +145,18 @@ export async function runFive({run=false,importScores=false,publish=false,source
     throw Error('首行实际识读或复读未返回完整结果，整批未继续调用；已保留现场。');
    }
   }
+  // All books share the same physical gate; a slow final row in one book
+  // must not prevent unrelated pages in the other books from being read.
+  for(const task of state.jobs){
+   if(stopping)break;
+   await store.startJob(task.id,{token:task.token,forceFresh:!task.started});
+   task.started=true;await save(statePath,state);
+  }
   const outcomes=[];
   for(const task of state.jobs){
    if(stopping)break;
-   await store.startJob(task.id,{token:task.token,forceFresh:!task.started});task.started=true;await save(statePath,state);
    const job=await store.waitForIdle(task.id,{token:task.token});await save(join(outputDirectory,task.key+'-job.json'),job);
-   const incomplete=job.regions.filter(r=>!r.result?.coverage?.complete||!r.result.checks?.passed||!r.result.verification?.checks?.passed||r.result.verification.error);
+   const incomplete=job.regions.filter(r=>!r.result?.coverage?.complete||!r.result.checks?.passed||!r.result.verification?.checks?.passed||r.result.verification.error||!r.result.verification?.comparison?.exactMatch);
    const summary={key:task.key,jobId:task.id,pages:job.totalPages,rows:job.regions.length,status:job.status,calls:job.calls,
     incompleteRows:incomplete.map(r=>r.id),independentDisagreementRows:job.regions.filter(r=>r.result?.verification?.comparison?.exactMatch===false).map(r=>r.id),cacheHits:job.reuse.hits};
    outcomes.push(summary);await save(join(outputDirectory,'progress.json'),outcomes);console.log(JSON.stringify(summary));
