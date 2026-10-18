@@ -48,7 +48,7 @@ export async function inspectFiveSources({sourceDirectory=resolve('.local/batch-
     const image={mimeType:r.image?.mimeType,data:buffer.toString('base64')};
     normalizeGenerateInput({provider:'pi',mode:'ocr',title:definition.title,images:[image]});
     regions.push({id:r.id,page:r.page,system:r.system,rect:r.rect,pageWidth:r.pageWidth,pageHeight:r.pageHeight,
-     measureCount:r.measureCount,context:r.context,image});
+     measureCount:r.measureCount,context:(r.context||'')+'\n速度统一以四分音符/分钟提交；若原谱用附点四分音符标速，换算成四分音符速度。',image});
     hashes.push({id:r.id,page:r.page,system:r.system,sha256:sha(buffer)});
    }
    for(let page=1;page<=definition.pages;page++){
@@ -59,12 +59,13 @@ export async function inspectFiveSources({sourceDirectory=resolve('.local/batch-
    const pdf=await readFile(join(jobsDirectory,candidates[0].id,'original.pdf'));
    if(!pdf.subarray(0,5).equals(Buffer.from('%PDF-'))||pdf.length>50*1024*1024)throw Error('原始PDF无效');
    if((await PDFDocument.load(pdf)).getPageCount()!==definition.pages)throw Error('实际PDF页数与原谱范围不符');
-   const {composer,tempo,timeSignature,keySignature,source}=old.metadata||{};
-   const manifest={title:definition.title+' · GPT‑6.1 high 升降号增强版',composer,tempo,timeSignature,keySignature,source,
+   // A prior practice BPM must not override the newly read first system's tempo.
+   const {composer,timeSignature,keySignature,source}=old.metadata||{};
+   const manifest={title:definition.title+' · GPT‑6.1 high 升降号增强版',composer,timeSignature,keySignature,source,
     totalPages:definition.pages,engine:'pi',verify:true,needsUserScopeConfirmation:true,regions,
     originalPdf:{name:definition.title+'.pdf',mimeType:'application/pdf',buffer:pdf}};
    plans.push({definition,manifest});
-   const sourceContextSha256=sha(JSON.stringify({composer,tempo,timeSignature,keySignature,regions:regions.map(({image,...r})=>r)}));
+   const sourceContextSha256=sha(JSON.stringify({composer,timeSignature,keySignature,regions:regions.map(({image,...r})=>r)}));
    entries.push({key:definition.key,title:definition.title,pages:definition.pages,rows:regions.length,pdfSha256:sha(pdf),sourceContextSha256,images:hashes});
   }catch(error){errors.push(`${definition.title}：${error.message}`);}
  }
