@@ -1,0 +1,1116 @@
+{
+ "bars": 48,
+ "barBeats": 6,
+ "hands": {
+  "right": {
+   "referenceNotes": 529,
+   "predictedNotes": 540,
+   "P": {
+    "matched": 528,
+    "missing": 1,
+    "extra": 12,
+    "recall": 0.998109640831758,
+    "precision": 0.9777777777777777,
+    "f1": 0.9878391019644527
+   },
+   "PO": {
+    "matched": 528,
+    "missing": 1,
+    "extra": 12,
+    "recall": 0.998109640831758,
+    "precision": 0.9777777777777777,
+    "f1": 0.9878391019644527
+   },
+   "POD": {
+    "matched": 527,
+    "missing": 2,
+    "extra": 13,
+    "recall": 0.996219281663516,
+    "precision": 0.975925925925926,
+    "f1": 0.9859681945743687
+   },
+   "durationGivenOnset": 0.9981060606060606,
+   "exactUnits": 39,
+   "units": 48,
+   "exactUnitRate": 0.8125
+  },
+  "left": {
+   "referenceNotes": 353,
+   "predictedNotes": 354,
+   "P": {
+    "matched": 351,
+    "missing": 2,
+    "extra": 3,
+    "recall": 0.9943342776203966,
+    "precision": 0.9915254237288136,
+    "f1": 0.9929278642149929
+   },
+   "PO": {
+    "matched": 351,
+    "missing": 2,
+    "extra": 3,
+    "recall": 0.9943342776203966,
+    "precision": 0.9915254237288136,
+    "f1": 0.9929278642149929
+   },
+   "POD": {
+    "matched": 351,
+    "missing": 2,
+    "extra": 3,
+    "recall": 0.9943342776203966,
+    "precision": 0.9915254237288136,
+    "f1": 0.9929278642149929
+   },
+   "durationGivenOnset": 1,
+   "exactUnits": 45,
+   "units": 48,
+   "exactUnitRate": 0.9375
+  }
+ },
+ "total": {
+  "referenceNotes": 882,
+  "predictedNotes": 894,
+  "P": {
+   "matched": 879,
+   "missing": 3,
+   "extra": 15,
+   "recall": 0.9965986394557823,
+   "precision": 0.9832214765100671,
+   "f1": 0.9898648648648648
+  },
+  "PO": {
+   "matched": 879,
+   "missing": 3,
+   "extra": 15,
+   "recall": 0.9965986394557823,
+   "precision": 0.9832214765100671,
+   "f1": 0.9898648648648648
+  },
+  "POD": {
+   "matched": 878,
+   "missing": 4,
+   "extra": 16,
+   "recall": 0.9954648526077098,
+   "precision": 0.9821029082774049,
+   "f1": 0.9887387387387389
+  },
+  "durationGivenOnset": 0.9988623435722411,
+  "exactUnits": 84,
+  "units": 96,
+  "exactUnitRate": 0.875,
+  "exactBars": 37,
+  "exactBarRate": 0.7708333333333334,
+  "notesAfterLastBar": 0,
+  "handAgnosticPO": 879
+ },
+ "perBar": [
+  {
+   "bar": 1,
+   "right": {
+    "ref": 11,
+    "pred": 11,
+    "P": 11,
+    "PO": 11,
+    "POD": 11,
+    "exact": true
+   },
+   "left": {
+    "ref": 6,
+    "pred": 6,
+    "P": 6,
+    "PO": 6,
+    "POD": 6,
+    "exact": true
+   },
+   "handAgnosticPO": 17,
+   "exact": true
+  },
+  {
+   "bar": 2,
+   "right": {
+    "ref": 11,
+    "pred": 11,
+    "P": 11,
+    "PO": 11,
+    "POD": 11,
+    "exact": true
+   },
+   "left": {
+    "ref": 4,
+    "pred": 4,
+    "P": 4,
+    "PO": 4,
+    "POD": 4,
+    "exact": true
+   },
+   "handAgnosticPO": 15,
+   "exact": true
+  },
+  {
+   "bar": 3,
+   "right": {
+    "ref": 12,
+    "pred": 15,
+    "P": 12,
+    "PO": 12,
+    "POD": 12,
+    "exact": false
+   },
+   "left": {
+    "ref": 6,
+    "pred": 6,
+    "P": 6,
+    "PO": 6,
+    "POD": 6,
+    "exact": true
+   },
+   "handAgnosticPO": 18,
+   "exact": false
+  },
+  {
+   "bar": 4,
+   "right": {
+    "ref": 17,
+    "pred": 17,
+    "P": 17,
+    "PO": 17,
+    "POD": 17,
+    "exact": true
+   },
+   "left": {
+    "ref": 6,
+    "pred": 6,
+    "P": 6,
+    "PO": 6,
+    "POD": 6,
+    "exact": true
+   },
+   "handAgnosticPO": 23,
+   "exact": true
+  },
+  {
+   "bar": 5,
+   "right": {
+    "ref": 12,
+    "pred": 13,
+    "P": 12,
+    "PO": 12,
+    "POD": 12,
+    "exact": false
+   },
+   "left": {
+    "ref": 4,
+    "pred": 4,
+    "P": 4,
+    "PO": 4,
+    "POD": 4,
+    "exact": true
+   },
+   "handAgnosticPO": 16,
+   "exact": false
+  },
+  {
+   "bar": 6,
+   "right": {
+    "ref": 9,
+    "pred": 9,
+    "P": 9,
+    "PO": 9,
+    "POD": 9,
+    "exact": true
+   },
+   "left": {
+    "ref": 12,
+    "pred": 12,
+    "P": 12,
+    "PO": 12,
+    "POD": 12,
+    "exact": true
+   },
+   "handAgnosticPO": 21,
+   "exact": true
+  },
+  {
+   "bar": 7,
+   "right": {
+    "ref": 12,
+    "pred": 13,
+    "P": 12,
+    "PO": 12,
+    "POD": 12,
+    "exact": false
+   },
+   "left": {
+    "ref": 12,
+    "pred": 12,
+    "P": 12,
+    "PO": 12,
+    "POD": 12,
+    "exact": true
+   },
+   "handAgnosticPO": 24,
+   "exact": false
+  },
+  {
+   "bar": 8,
+   "right": {
+    "ref": 13,
+    "pred": 13,
+    "P": 13,
+    "PO": 13,
+    "POD": 13,
+    "exact": true
+   },
+   "left": {
+    "ref": 9,
+    "pred": 9,
+    "P": 9,
+    "PO": 9,
+    "POD": 9,
+    "exact": true
+   },
+   "handAgnosticPO": 22,
+   "exact": true
+  },
+  {
+   "bar": 9,
+   "right": {
+    "ref": 6,
+    "pred": 6,
+    "P": 6,
+    "PO": 6,
+    "POD": 6,
+    "exact": true
+   },
+   "left": {
+    "ref": 11,
+    "pred": 11,
+    "P": 11,
+    "PO": 11,
+    "POD": 11,
+    "exact": true
+   },
+   "handAgnosticPO": 17,
+   "exact": true
+  },
+  {
+   "bar": 10,
+   "right": {
+    "ref": 15,
+    "pred": 15,
+    "P": 15,
+    "PO": 15,
+    "POD": 15,
+    "exact": true
+   },
+   "left": {
+    "ref": 3,
+    "pred": 3,
+    "P": 3,
+    "PO": 3,
+    "POD": 3,
+    "exact": true
+   },
+   "handAgnosticPO": 18,
+   "exact": true
+  },
+  {
+   "bar": 11,
+   "right": {
+    "ref": 13,
+    "pred": 13,
+    "P": 13,
+    "PO": 13,
+    "POD": 13,
+    "exact": true
+   },
+   "left": {
+    "ref": 10,
+    "pred": 10,
+    "P": 10,
+    "PO": 10,
+    "POD": 10,
+    "exact": true
+   },
+   "handAgnosticPO": 23,
+   "exact": true
+  },
+  {
+   "bar": 12,
+   "right": {
+    "ref": 9,
+    "pred": 10,
+    "P": 9,
+    "PO": 9,
+    "POD": 9,
+    "exact": false
+   },
+   "left": {
+    "ref": 10,
+    "pred": 10,
+    "P": 10,
+    "PO": 10,
+    "POD": 10,
+    "exact": true
+   },
+   "handAgnosticPO": 19,
+   "exact": false
+  },
+  {
+   "bar": 13,
+   "right": {
+    "ref": 12,
+    "pred": 12,
+    "P": 12,
+    "PO": 12,
+    "POD": 12,
+    "exact": true
+   },
+   "left": {
+    "ref": 3,
+    "pred": 3,
+    "P": 3,
+    "PO": 3,
+    "POD": 3,
+    "exact": true
+   },
+   "handAgnosticPO": 15,
+   "exact": true
+  },
+  {
+   "bar": 14,
+   "right": {
+    "ref": 10,
+    "pred": 10,
+    "P": 10,
+    "PO": 10,
+    "POD": 10,
+    "exact": true
+   },
+   "left": {
+    "ref": 12,
+    "pred": 12,
+    "P": 11,
+    "PO": 11,
+    "POD": 11,
+    "exact": false
+   },
+   "handAgnosticPO": 21,
+   "exact": false
+  },
+  {
+   "bar": 15,
+   "right": {
+    "ref": 13,
+    "pred": 13,
+    "P": 13,
+    "PO": 13,
+    "POD": 13,
+    "exact": true
+   },
+   "left": {
+    "ref": 3,
+    "pred": 3,
+    "P": 3,
+    "PO": 3,
+    "POD": 3,
+    "exact": true
+   },
+   "handAgnosticPO": 16,
+   "exact": true
+  },
+  {
+   "bar": 16,
+   "right": {
+    "ref": 10,
+    "pred": 10,
+    "P": 10,
+    "PO": 10,
+    "POD": 10,
+    "exact": true
+   },
+   "left": {
+    "ref": 9,
+    "pred": 9,
+    "P": 9,
+    "PO": 9,
+    "POD": 9,
+    "exact": true
+   },
+   "handAgnosticPO": 19,
+   "exact": true
+  },
+  {
+   "bar": 17,
+   "right": {
+    "ref": 15,
+    "pred": 15,
+    "P": 15,
+    "PO": 15,
+    "POD": 14,
+    "exact": false
+   },
+   "left": {
+    "ref": 8,
+    "pred": 8,
+    "P": 7,
+    "PO": 7,
+    "POD": 7,
+    "exact": false
+   },
+   "handAgnosticPO": 22,
+   "exact": false
+  },
+  {
+   "bar": 18,
+   "right": {
+    "ref": 15,
+    "pred": 15,
+    "P": 15,
+    "PO": 15,
+    "POD": 15,
+    "exact": true
+   },
+   "left": {
+    "ref": 9,
+    "pred": 9,
+    "P": 9,
+    "PO": 9,
+    "POD": 9,
+    "exact": true
+   },
+   "handAgnosticPO": 24,
+   "exact": true
+  },
+  {
+   "bar": 19,
+   "right": {
+    "ref": 6,
+    "pred": 7,
+    "P": 6,
+    "PO": 6,
+    "POD": 6,
+    "exact": false
+   },
+   "left": {
+    "ref": 13,
+    "pred": 13,
+    "P": 13,
+    "PO": 13,
+    "POD": 13,
+    "exact": true
+   },
+   "handAgnosticPO": 19,
+   "exact": false
+  },
+  {
+   "bar": 20,
+   "right": {
+    "ref": 12,
+    "pred": 12,
+    "P": 12,
+    "PO": 12,
+    "POD": 12,
+    "exact": true
+   },
+   "left": {
+    "ref": 2,
+    "pred": 2,
+    "P": 2,
+    "PO": 2,
+    "POD": 2,
+    "exact": true
+   },
+   "handAgnosticPO": 14,
+   "exact": true
+  },
+  {
+   "bar": 21,
+   "right": {
+    "ref": 13,
+    "pred": 14,
+    "P": 13,
+    "PO": 13,
+    "POD": 13,
+    "exact": false
+   },
+   "left": {
+    "ref": 4,
+    "pred": 4,
+    "P": 4,
+    "PO": 4,
+    "POD": 4,
+    "exact": true
+   },
+   "handAgnosticPO": 17,
+   "exact": false
+  },
+  {
+   "bar": 22,
+   "right": {
+    "ref": 15,
+    "pred": 15,
+    "P": 14,
+    "PO": 14,
+    "POD": 14,
+    "exact": false
+   },
+   "left": {
+    "ref": 3,
+    "pred": 3,
+    "P": 3,
+    "PO": 3,
+    "POD": 3,
+    "exact": true
+   },
+   "handAgnosticPO": 17,
+   "exact": false
+  },
+  {
+   "bar": 23,
+   "right": {
+    "ref": 6,
+    "pred": 6,
+    "P": 6,
+    "PO": 6,
+    "POD": 6,
+    "exact": true
+   },
+   "left": {
+    "ref": 11,
+    "pred": 11,
+    "P": 11,
+    "PO": 11,
+    "POD": 11,
+    "exact": true
+   },
+   "handAgnosticPO": 17,
+   "exact": true
+  },
+  {
+   "bar": 24,
+   "right": {
+    "ref": 13,
+    "pred": 13,
+    "P": 13,
+    "PO": 13,
+    "POD": 13,
+    "exact": true
+   },
+   "left": {
+    "ref": 8,
+    "pred": 8,
+    "P": 8,
+    "PO": 8,
+    "POD": 8,
+    "exact": true
+   },
+   "handAgnosticPO": 21,
+   "exact": true
+  },
+  {
+   "bar": 25,
+   "right": {
+    "ref": 5,
+    "pred": 5,
+    "P": 5,
+    "PO": 5,
+    "POD": 5,
+    "exact": true
+   },
+   "left": {
+    "ref": 12,
+    "pred": 12,
+    "P": 12,
+    "PO": 12,
+    "POD": 12,
+    "exact": true
+   },
+   "handAgnosticPO": 17,
+   "exact": true
+  },
+  {
+   "bar": 26,
+   "right": {
+    "ref": 13,
+    "pred": 13,
+    "P": 13,
+    "PO": 13,
+    "POD": 13,
+    "exact": true
+   },
+   "left": {
+    "ref": 8,
+    "pred": 8,
+    "P": 8,
+    "PO": 8,
+    "POD": 8,
+    "exact": true
+   },
+   "handAgnosticPO": 21,
+   "exact": true
+  },
+  {
+   "bar": 27,
+   "right": {
+    "ref": 6,
+    "pred": 6,
+    "P": 6,
+    "PO": 6,
+    "POD": 6,
+    "exact": true
+   },
+   "left": {
+    "ref": 13,
+    "pred": 13,
+    "P": 13,
+    "PO": 13,
+    "POD": 13,
+    "exact": true
+   },
+   "handAgnosticPO": 19,
+   "exact": true
+  },
+  {
+   "bar": 28,
+   "right": {
+    "ref": 12,
+    "pred": 12,
+    "P": 12,
+    "PO": 12,
+    "POD": 12,
+    "exact": true
+   },
+   "left": {
+    "ref": 4,
+    "pred": 4,
+    "P": 4,
+    "PO": 4,
+    "POD": 4,
+    "exact": true
+   },
+   "handAgnosticPO": 16,
+   "exact": true
+  },
+  {
+   "bar": 29,
+   "right": {
+    "ref": 12,
+    "pred": 12,
+    "P": 12,
+    "PO": 12,
+    "POD": 12,
+    "exact": true
+   },
+   "left": {
+    "ref": 2,
+    "pred": 2,
+    "P": 2,
+    "PO": 2,
+    "POD": 2,
+    "exact": true
+   },
+   "handAgnosticPO": 14,
+   "exact": true
+  },
+  {
+   "bar": 30,
+   "right": {
+    "ref": 13,
+    "pred": 13,
+    "P": 13,
+    "PO": 13,
+    "POD": 13,
+    "exact": true
+   },
+   "left": {
+    "ref": 3,
+    "pred": 3,
+    "P": 3,
+    "PO": 3,
+    "POD": 3,
+    "exact": true
+   },
+   "handAgnosticPO": 16,
+   "exact": true
+  },
+  {
+   "bar": 31,
+   "right": {
+    "ref": 12,
+    "pred": 12,
+    "P": 12,
+    "PO": 12,
+    "POD": 12,
+    "exact": true
+   },
+   "left": {
+    "ref": 2,
+    "pred": 2,
+    "P": 2,
+    "PO": 2,
+    "POD": 2,
+    "exact": true
+   },
+   "handAgnosticPO": 14,
+   "exact": true
+  },
+  {
+   "bar": 32,
+   "right": {
+    "ref": 13,
+    "pred": 13,
+    "P": 13,
+    "PO": 13,
+    "POD": 13,
+    "exact": true
+   },
+   "left": {
+    "ref": 8,
+    "pred": 8,
+    "P": 8,
+    "PO": 8,
+    "POD": 8,
+    "exact": true
+   },
+   "handAgnosticPO": 21,
+   "exact": true
+  },
+  {
+   "bar": 33,
+   "right": {
+    "ref": 5,
+    "pred": 5,
+    "P": 5,
+    "PO": 5,
+    "POD": 5,
+    "exact": true
+   },
+   "left": {
+    "ref": 14,
+    "pred": 14,
+    "P": 14,
+    "PO": 14,
+    "POD": 14,
+    "exact": true
+   },
+   "handAgnosticPO": 19,
+   "exact": true
+  },
+  {
+   "bar": 34,
+   "right": {
+    "ref": 11,
+    "pred": 11,
+    "P": 11,
+    "PO": 11,
+    "POD": 11,
+    "exact": true
+   },
+   "left": {
+    "ref": 6,
+    "pred": 6,
+    "P": 6,
+    "PO": 6,
+    "POD": 6,
+    "exact": true
+   },
+   "handAgnosticPO": 17,
+   "exact": true
+  },
+  {
+   "bar": 35,
+   "right": {
+    "ref": 11,
+    "pred": 11,
+    "P": 11,
+    "PO": 11,
+    "POD": 11,
+    "exact": true
+   },
+   "left": {
+    "ref": 4,
+    "pred": 4,
+    "P": 4,
+    "PO": 4,
+    "POD": 4,
+    "exact": true
+   },
+   "handAgnosticPO": 15,
+   "exact": true
+  },
+  {
+   "bar": 36,
+   "right": {
+    "ref": 12,
+    "pred": 15,
+    "P": 12,
+    "PO": 12,
+    "POD": 12,
+    "exact": false
+   },
+   "left": {
+    "ref": 6,
+    "pred": 6,
+    "P": 6,
+    "PO": 6,
+    "POD": 6,
+    "exact": true
+   },
+   "handAgnosticPO": 18,
+   "exact": false
+  },
+  {
+   "bar": 37,
+   "right": {
+    "ref": 16,
+    "pred": 16,
+    "P": 16,
+    "PO": 16,
+    "POD": 16,
+    "exact": true
+   },
+   "left": {
+    "ref": 6,
+    "pred": 6,
+    "P": 6,
+    "PO": 6,
+    "POD": 6,
+    "exact": true
+   },
+   "handAgnosticPO": 22,
+   "exact": true
+  },
+  {
+   "bar": 38,
+   "right": {
+    "ref": 13,
+    "pred": 13,
+    "P": 13,
+    "PO": 13,
+    "POD": 13,
+    "exact": true
+   },
+   "left": {
+    "ref": 6,
+    "pred": 6,
+    "P": 6,
+    "PO": 6,
+    "POD": 6,
+    "exact": true
+   },
+   "handAgnosticPO": 19,
+   "exact": true
+  },
+  {
+   "bar": 39,
+   "right": {
+    "ref": 13,
+    "pred": 13,
+    "P": 13,
+    "PO": 13,
+    "POD": 13,
+    "exact": true
+   },
+   "left": {
+    "ref": 6,
+    "pred": 6,
+    "P": 6,
+    "PO": 6,
+    "POD": 6,
+    "exact": true
+   },
+   "handAgnosticPO": 19,
+   "exact": true
+  },
+  {
+   "bar": 40,
+   "right": {
+    "ref": 6,
+    "pred": 6,
+    "P": 6,
+    "PO": 6,
+    "POD": 6,
+    "exact": true
+   },
+   "left": {
+    "ref": 13,
+    "pred": 13,
+    "P": 13,
+    "PO": 13,
+    "POD": 13,
+    "exact": true
+   },
+   "handAgnosticPO": 19,
+   "exact": true
+  },
+  {
+   "bar": 41,
+   "right": {
+    "ref": 14,
+    "pred": 14,
+    "P": 14,
+    "PO": 14,
+    "POD": 14,
+    "exact": true
+   },
+   "left": {
+    "ref": 5,
+    "pred": 5,
+    "P": 5,
+    "PO": 5,
+    "POD": 5,
+    "exact": true
+   },
+   "handAgnosticPO": 19,
+   "exact": true
+  },
+  {
+   "bar": 42,
+   "right": {
+    "ref": 12,
+    "pred": 12,
+    "P": 12,
+    "PO": 12,
+    "POD": 12,
+    "exact": true
+   },
+   "left": {
+    "ref": 10,
+    "pred": 10,
+    "P": 10,
+    "PO": 10,
+    "POD": 10,
+    "exact": true
+   },
+   "handAgnosticPO": 22,
+   "exact": true
+  },
+  {
+   "bar": 43,
+   "right": {
+    "ref": 5,
+    "pred": 5,
+    "P": 5,
+    "PO": 5,
+    "POD": 5,
+    "exact": true
+   },
+   "left": {
+    "ref": 12,
+    "pred": 12,
+    "P": 12,
+    "PO": 12,
+    "POD": 12,
+    "exact": true
+   },
+   "handAgnosticPO": 17,
+   "exact": true
+  },
+  {
+   "bar": 44,
+   "right": {
+    "ref": 12,
+    "pred": 12,
+    "P": 12,
+    "PO": 12,
+    "POD": 12,
+    "exact": true
+   },
+   "left": {
+    "ref": 7,
+    "pred": 7,
+    "P": 7,
+    "PO": 7,
+    "POD": 7,
+    "exact": true
+   },
+   "handAgnosticPO": 19,
+   "exact": true
+  },
+  {
+   "bar": 45,
+   "right": {
+    "ref": 12,
+    "pred": 12,
+    "P": 12,
+    "PO": 12,
+    "POD": 12,
+    "exact": true
+   },
+   "left": {
+    "ref": 6,
+    "pred": 6,
+    "P": 6,
+    "PO": 6,
+    "POD": 6,
+    "exact": true
+   },
+   "handAgnosticPO": 18,
+   "exact": true
+  },
+  {
+   "bar": 46,
+   "right": {
+    "ref": 7,
+    "pred": 7,
+    "P": 7,
+    "PO": 7,
+    "POD": 7,
+    "exact": true
+   },
+   "left": {
+    "ref": 9,
+    "pred": 10,
+    "P": 9,
+    "PO": 9,
+    "POD": 9,
+    "exact": false
+   },
+   "handAgnosticPO": 16,
+   "exact": false
+  },
+  {
+   "bar": 47,
+   "right": {
+    "ref": 11,
+    "pred": 11,
+    "P": 11,
+    "PO": 11,
+    "POD": 11,
+    "exact": true
+   },
+   "left": {
+    "ref": 6,
+    "pred": 6,
+    "P": 6,
+    "PO": 6,
+    "POD": 6,
+    "exact": true
+   },
+   "handAgnosticPO": 17,
+   "exact": true
+  },
+  {
+   "bar": 48,
+   "right": {
+    "ref": 3,
+    "pred": 3,
+    "P": 3,
+    "PO": 3,
+    "POD": 3,
+    "exact": true
+   },
+   "left": {
+    "ref": 7,
+    "pred": 7,
+    "P": 7,
+    "PO": 7,
+    "POD": 7,
+    "exact": true
+   },
+   "handAgnosticPO": 10,
+   "exact": true
+  }
+ ]
+}

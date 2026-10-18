@@ -24,3 +24,7 @@
 {"at":"2026-10-18T10:08:27.957Z","event":"reviewer-start","page":1}
 {"at":"2026-10-18T10:11:28.617Z","event":"reviewer-end","page":2,"durationMs":187818,"toolUses":28,"sessionReportedSubagentTokens":121615,"changes":0}
 {"at":"2026-10-18T10:11:55.649Z","event":"reviewer-end","page":3,"durationMs":249234,"toolUses":74,"sessionReportedSubagentTokens":127610,"changes":"1 voice reassignment + 2 comment edits"}
+{"at":"2026-10-18T10:12:29.525Z","event":"reviewer-end","page":1,"durationMs":226310,"toolUses":36,"sessionReportedSubagentTokens":116239,"changes":1}
+{"at":"2026-10-18T10:12:29.527Z","event":"merge-start"}
+{"at":"2026-10-18T10:12:29.771Z","event":"merge-end","retriesNeeded":0}
+{"at":"2026-10-18T10:12:29.773Z","event":"run-end"}
