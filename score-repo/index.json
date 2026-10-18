@@ -2,6 +2,168 @@
   "version": 1,
   "scores": [
     {
+      "id": "edited-8314396d-6190-40b0-8ef2-969ae6384e09",
+      "title": "幻听 · GPT low 六页重识别（修改版）",
+      "composer": "未知",
+      "description": "从本地曲库同步；保留原有来源及待校对标记。",
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 4,
+      "tempo": 90,
+      "measures": 95,
+      "notes": 984,
+      "durationBeats": 380,
+      "sourceKind": "user-edited",
+      "sha256": "0f9dc674f03f42955b8e77db520814b18c305ab397911dfbde3080526d83fa37",
+      "addedAt": "2026-10-18T07:48:19.640Z"
+    },
+    {
+      "id": "edited-ce75adef-be21-4f3d-83dd-307afae68b14",
+      "title": "小星星（修改版）",
+      "composer": "法国传统民谣",
+      "description": "从本地曲库同步；保留原有来源及待校对标记。",
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 0,
+      "tempo": 84,
+      "measures": 12,
+      "notes": 66,
+      "durationBeats": 48,
+      "sourceKind": "user-edited",
+      "sha256": "2c7a59e8f629b0fbfe9b35dbc63dbf04b28567dde6931b1a5220b22200d4e535",
+      "addedAt": "2026-10-18T07:48:19.657Z"
+    },
+    {
+      "id": "full-score-3a9bbbda8e36a4e4bdd1bd5f3a5d1cbbbd5d",
+      "title": "生日快乐 · GPT high 双页验证 · 全谱",
+      "composer": "未知",
+      "description": "从本地曲库同步；保留原有来源及待校对标记。",
+      "timeSignature": [
+        3,
+        4
+      ],
+      "keySignature": 0,
+      "tempo": 90,
+      "measures": 8,
+      "notes": 52,
+      "durationBeats": 24,
+      "sourceKind": "full-pdf-reviewed",
+      "sha256": "24100c7329f6fc849d645deee50f844ce9fc260e25bc773a8adb321a2d269b25",
+      "addedAt": "2026-10-18T07:48:19.664Z"
+    },
+    {
+      "id": "full-score-3cfc9015e3c9659ed09b9da473df64d23709",
+      "title": "幻听 · GPT low 六页重识别 · 全谱",
+      "composer": "未知",
+      "description": "从本地曲库同步；保留原有来源及待校对标记。",
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 7,
+      "tempo": 90,
+      "measures": 95,
+      "notes": 982,
+      "durationBeats": 380,
+      "sourceKind": "full-pdf-reviewed",
+      "sha256": "b287e0cfb8a1f3c4e941bbeffabb9a7dc1c095b166ff4a2cd54274517c1d5a59",
+      "addedAt": "2026-10-18T07:48:19.658Z"
+    },
+    {
+      "id": "full-score-3ebe23e0ff3d04f304d36ed9ad54a03e15a0",
+      "title": "幻听 · 全谱",
+      "composer": "原谱未署名",
+      "description": "从本地曲库同步；保留原有来源及待校对标记。",
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 7,
+      "tempo": 90,
+      "measures": 95,
+      "notes": 983,
+      "durationBeats": 380,
+      "sourceKind": "full-pdf-reviewed",
+      "sha256": "f912dc9d4ab1e37f730112d831016a314d78c87d2d2c74e369bf3018613bcfc9",
+      "addedAt": "2026-10-18T07:48:19.667Z"
+    },
+    {
+      "id": "full-score-483da5cbff9d2b5ec2e86e6c6ba0f3cb267a",
+      "title": "巴赫 C大调前奏曲 BWV846 · 全谱",
+      "composer": "未知",
+      "description": "从本地曲库同步；保留原有来源及待校对标记。",
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 0,
+      "tempo": 120,
+      "measures": 35,
+      "notes": 549,
+      "durationBeats": 140,
+      "sourceKind": "full-pdf-reviewed",
+      "sha256": "2394244e8e6447a409714140c505fd7ea68a468f19a8755ea4754db7e6e0001e",
+      "addedAt": "2026-10-18T07:48:19.669Z"
+    },
+    {
+      "id": "full-score-7e87728f60040aa1f7178325cebffac4e8ad",
+      "title": "C大调前奏曲 · BWV846 · 全谱",
+      "composer": "J. S. Bach",
+      "description": "从本地曲库同步；保留原有来源及待校对标记。",
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 0,
+      "tempo": 96,
+      "measures": 35,
+      "notes": 549,
+      "durationBeats": 140,
+      "sourceKind": "full-pdf-reviewed",
+      "sha256": "129e4a28a0f55318063714aa12368b8456db9ab4c28e23f207ec498c6d8bd1cb",
+      "addedAt": "2026-10-18T07:48:19.665Z"
+    },
+    {
+      "id": "full-score-9241860ef6cad1e3c0f17e48ca0d30ffdbff",
+      "title": "幻听 · DeepSeek high 六页重识别 · 全谱",
+      "composer": "未知",
+      "description": "本地保存版本；DeepSeek 识别后使用此前已审核 GPT high 谱稿校正，不代表 DeepSeek 原始识别结果。",
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 7,
+      "tempo": 90,
+      "measures": 95,
+      "notes": 982,
+      "durationBeats": 380,
+      "sourceKind": "full-pdf-reviewed",
+      "sha256": "2dd9a948c90425fedd91e0429702a7cd40cbcbdf546c004dd6144783d3ad6146",
+      "addedAt": "2026-10-18T07:48:19.654Z"
+    },
+    {
+      "id": "full-score-feb36563796cd9a9b7f118a809ad559fe4dc",
+      "title": "幻听 · GPT high 六页重识别 · 全谱",
+      "composer": "未知",
+      "description": "从本地曲库同步；保留原有来源及待校对标记。",
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 7,
+      "tempo": 90,
+      "measures": 95,
+      "notes": 982,
+      "durationBeats": 380,
+      "sourceKind": "full-pdf-reviewed",
+      "sha256": "1cabaeec94d9e10a228bc6ce2ccbc21e49b3fa207a6e1115987b9cab2bc4385f",
+      "addedAt": "2026-10-18T07:48:19.661Z"
+    },
+    {
       "id": "golden-hour-netease-664959",
       "title": "Golden Hour · 钢琴谱（9页全谱）",
       "composer": "JVKE（Jake Lawson、Zac Lawson）· 编配：咲阿柚",
@@ -18,6 +180,96 @@
       "sourceKind": "image-ai",
       "sha256": "3ccc927edd5132ad5049edc5bfc794b99e7e202e1566b075e3355078c10b9a14",
       "addedAt": "2026-10-17T23:04:38.628Z"
+    },
+    {
+      "id": "score-mv906k5t",
+      "title": "小星星 · 图片前两小节",
+      "composer": "法国传统民谣",
+      "description": "从本地曲库同步；保留原有来源及待校对标记。",
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 0,
+      "tempo": 84,
+      "measures": 2,
+      "notes": 11,
+      "durationBeats": 8,
+      "sourceKind": "image-ai",
+      "sha256": "0496fe1f091ea7890ad180d1207a3d2bff1d824e3d16e17be24f6fd9c42fcd98",
+      "addedAt": "2026-10-18T07:48:19.676Z"
+    },
+    {
+      "id": "score-mv9096ep",
+      "title": "Canon in D",
+      "composer": "Pachelbel",
+      "description": "从本地曲库同步；保留原有来源及待校对标记。",
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 2,
+      "tempo": 100,
+      "measures": 49,
+      "notes": 442,
+      "durationBeats": 196,
+      "sourceKind": "public-domain",
+      "sha256": "743bc883f5270f3a4a6cde009c4d5b0b458e6c9e0f3e446226d8519cda61cbf5",
+      "addedAt": "2026-10-18T07:48:19.677Z"
+    },
+    {
+      "id": "score-mv90aval",
+      "title": "窗边的晨光",
+      "composer": "AI 原创",
+      "description": "从本地曲库同步；保留原有来源及待校对标记。",
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 0,
+      "tempo": 72,
+      "measures": 4,
+      "notes": 20,
+      "durationBeats": 16,
+      "sourceKind": "original-ai",
+      "sha256": "b376b037644ab4d312454518112206f3c5ba65b69924fe49e62da521455e20ce",
+      "addedAt": "2026-10-18T07:48:19.675Z"
+    },
+    {
+      "id": "score-mv9j4u62",
+      "title": "青花瓷",
+      "composer": "MIDI 导入",
+      "description": "从本地曲库同步；保留原有来源及待校对标记。",
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": -5,
+      "tempo": 96,
+      "measures": 104,
+      "notes": 1355,
+      "durationBeats": 415.508333,
+      "sourceKind": "web-score",
+      "sha256": "6b5e4efe120dc22f9aba580595738e58fa4909add16b7a82554a4148fb48948c",
+      "addedAt": "2026-10-18T07:48:19.672Z"
+    },
+    {
+      "id": "score-mv9mxb7i",
+      "title": "野蜂飞舞 · 第 1 页 · 第 1 行",
+      "composer": "尼古拉·里姆斯基-科萨科夫；改编：Kevin W. K. Yeung",
+      "description": "从本地曲库同步；保留原有来源及待校对标记。",
+      "timeSignature": [
+        2,
+        4
+      ],
+      "keySignature": 0,
+      "tempo": 185,
+      "measures": 3,
+      "notes": 24,
+      "durationBeats": 6,
+      "sourceKind": "image-ai",
+      "sha256": "81b2bedb7be5b179961030b6ea39935b718db0c539d64fbc3fd8b7f0f74384fb",
+      "addedAt": "2026-10-18T07:48:19.671Z"
     }
   ]
 }
