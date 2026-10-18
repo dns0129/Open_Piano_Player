@@ -81,7 +81,16 @@ export function assertNewReading(result){
  }
 }
 
-export async function runFive({run=false,importScores=false,publish=false,sourceDirectory,jobsDirectory=resolve('.local/full-score-jobs'),outputDirectory=resolve('.local/batch-five-high-accidentals-v2'),concurrency=4}={}){
+export function withFreshTempoContext(request,firstReading){
+ const tempo=firstReading?.score?.tempo;
+ const inherited=Number.isFinite(tempo)&&tempo>=20&&tempo<=300;
+ return {...request,metadata:{...request.metadata,...(inherited?{tempo}:{})},region:{...request.region,
+  context:(request.region.context||'')+'\n速度处理：原图明确印出的速度及音符单位优先；没有数字标速时，'+
+   (inherited?`沿用本轮首页新识读的 ${tempo} 四分音符/分钟`:'暂用90四分音符/分钟作为可编辑的练习默认速度，并在warnings说明未印数字标速')+
+   '。此数值仅用于练习播放，不是推断音符的依据；不能仅因当前行未印速度而拒绝识读。'}};
+}
+
+export async function runFive({run=false,importScores=false,publish=false,sourceDirectory,jobsDirectory=resolve('.local/full-score-jobs'),outputDirectory=resolve('.local/batch-five-high-accidentals-v2'),concurrency=16}={}){
  const {preflight,plans,fingerprint}=await inspectFiveSources({sourceDirectory,jobsDirectory});
  await mkdir(outputDirectory,{recursive:true,mode:0o700});await save(join(outputDirectory,'preflight.json'),preflight);
  console.log(JSON.stringify(preflight,null,2));
@@ -97,11 +106,16 @@ export async function runFive({run=false,importScores=false,publish=false,source
  const callsDirectory=join(outputDirectory,'raw-calls');await mkdir(callsDirectory,{recursive:true,mode:0o700});
  const adapter=async(request,options)=>{
   const startedAt=new Date().toISOString();
-  const result=await generateScoreRegion(request,{}, {...options,traceOptions:{path:join(outputDirectory,'usage.jsonl')}});
+  const task=state.jobs.find(j=>j.id===request.jobId);
+  const snapshot=await store.getJob(request.jobId,{token:task.token});
+  const first=snapshot.regions[0];
+  const enriched=withFreshTempoContext(request,first.result||first.recognitionCheckpoint?.result);
+  const result=await generateScoreRegion(enriched,{}, {...options,traceOptions:{path:join(outputDirectory,'usage.jsonl')}});
   await save(join(callsDirectory,`${request.jobId}-${request.region.id}-${request.pass}-${Date.now()}.json`),{startedAt,endedAt:new Date().toISOString(),result});
   assertNewReading(result);return result;
  };
- const store=createFullScoreJobStore({directory:jobsDirectory,maxConcurrency:Math.max(1,Math.min(4,concurrency)),recognizeRegion:adapter,checkRegion:adapter});
+ const concurrencyUsed=Math.max(1,Math.min(100,concurrency));
+ const store=createFullScoreJobStore({directory:jobsDirectory,maxConcurrency:concurrencyUsed,recognizeRegion:adapter,checkRegion:adapter});
  let stopping=false;
  const cancel=()=>{stopping=true;void Promise.allSettled(state.jobs.map(j=>store.cancelJob(j.id,{token:j.token})));};
  process.once('SIGINT',cancel);process.once('SIGTERM',cancel);
@@ -110,6 +124,18 @@ export async function runFive({run=false,importScores=false,publish=false,source
    if(state.jobs.some(j=>j.key===plan.definition.key))continue;
    const created=await store.createJob(plan.manifest);
    state.jobs.push({key:plan.definition.key,id:created.id,token:created.token,started:false});await save(statePath,state);
+  }
+  // Use the first real row as a paid preflight, keeping its successful result.
+  // A payload audit alone is not proof that the service can return music.
+  const first=state.jobs[0],firstAuth={token:first.token};
+  const firstBefore=await store.getJob(first.id,firstAuth);
+  if(!firstBefore.regions[0].result){
+   await store.startJob(first.id,{...firstAuth,regionIds:[firstBefore.regions[0].id],forceFresh:true});
+   const checked=await store.waitForIdle(first.id,firstAuth),row=checked.regions[0];
+   await save(join(outputDirectory,'preflight-row.json'),{at:new Date().toISOString(),job:checked});
+   if(!row.result?.coverage?.complete||row.result.verification?.error||row.error){
+    throw Error('首行实际识读或复读未返回完整结果，整批未继续调用；已保留现场。');
+   }
   }
   const outcomes=[];
   for(const task of state.jobs){
@@ -122,7 +148,7 @@ export async function runFive({run=false,importScores=false,publish=false,source
    outcomes.push(summary);await save(join(outputDirectory,'progress.json'),outcomes);console.log(JSON.stringify(summary));
   }
   const ready=!stopping&&outcomes.length===5&&outcomes.every(o=>!o.incompleteRows.length);
-  const report={startedAt:state.startedAt,endedAt:new Date().toISOString(),policy:SCORE_RECOGNITION,fingerprint,ready,priorAnswersProvided:false,outcomes,imported:[],published:false};
+  const report={startedAt:state.startedAt,endedAt:new Date().toISOString(),policy:SCORE_RECOGNITION,fingerprint,concurrencyUsed,globalConcurrencyLimit:100,ready,priorAnswersProvided:false,outcomes,imported:[],published:false};
   await save(join(outputDirectory,'report.json'),report);
   if(importScores&&ready){
    const drafts=[];
@@ -162,5 +188,5 @@ if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).hr
  for(const arg of args.filter(a=>a.startsWith('--')))if(!allowed.has(arg))throw Error('未知参数：'+arg);
  await runFive({run:args.includes('--run'),importScores:args.includes('--import'),publish:args.includes('--publish'),
   sourceDirectory:value('--source')&&resolve(value('--source')),jobsDirectory:value('--jobs')&&resolve(value('--jobs')),
-  outputDirectory:value('--out')&&resolve(value('--out')),concurrency:Number(value('--concurrency'))||4});
+  outputDirectory:value('--out')&&resolve(value('--out')),concurrency:Number(value('--concurrency'))||16});
 }

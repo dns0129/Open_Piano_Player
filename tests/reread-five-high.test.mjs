@@ -3,10 +3,18 @@ import assert from 'node:assert/strict';
 import {mkdtemp,mkdir,writeFile,readFile,rm} from 'node:fs/promises';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
-import {FIVE_SCORES,inspectFiveSources,assertNewReading} from '../scripts/reread-five-high.mjs';
+import {FIVE_SCORES,inspectFiveSources,assertNewReading,withFreshTempoContext} from '../scripts/reread-five-high.mjs';
 import {SCORE_RECOGNITION} from '../lib/recognition-policy.mjs';
 import {PDFDocument} from 'pdf-lib';
 const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC0lEQVR42mP8/x8AAusB9Wl6P7sAAAAASUVORK5CYII=','base64');
+test('rows without printed tempo inherit only a fresh reading, with a labelled practice fallback',()=>{
+ const request={metadata:{title:'source'},region:{id:'p2-s1',context:'4/4'}};
+ const fresh=withFreshTempoContext(request,{score:{tempo:141,notes:['PRIVATE-NOTES']}});
+ assert.equal(fresh.metadata.tempo,141);assert.ok(!JSON.stringify(fresh).includes('PRIVATE-NOTES'));
+ assert.match(fresh.region.context,/原图明确印出的速度及音符单位优先/);
+ const absent=withFreshTempoContext(request);assert.equal(absent.metadata.tempo,undefined);
+ assert.match(absent.region.context,/可编辑的练习默认速度/);assert.equal(request.region.context,'4/4');
+});
 async function fixture(t){
  const root=await mkdtemp(join(tmpdir(),'piano-five-source-'));
  t.after(()=>rm(root,{recursive:true,force:true}));
