@@ -26,3 +26,11 @@ test('every voice must fill its bar; missing bars and hands are reported, not fi
   assert.ok(errors.some(e => /缺少第2小节/.test(e)));
   assert.ok(errors.some(e => /声部2共 2 拍/.test(e)));
 });
+
+test('a single page can be checked on its own with allowMissing', () => {
+  const page = `time: 4/4\n5 R: C5:4\n5 L: C3:4\n6 R: D5:4\n6 L: D3:4\n`;
+  assert.ok(barsToScore(page).errors.some(e => /缺少第1小节/.test(e)));
+  const { errors, score } = barsToScore(page, { allowMissing: '1' });
+  assert.deepEqual(errors, []);
+  assert.equal(score.notes[0].beat, 16, 'bar 5 keeps its real position');
+});

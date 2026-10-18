@@ -2,12 +2,13 @@
 // 把一个或多个逐小节文本（.bars）合并为琴伴乐谱 JSON：
 //   node scripts/bars-to-score.mjs out.json a.bars b.bars ... [--key 4 --time 12/8 --tempo 141 --title 曲名 --id id]
 // 每个声部都必须恰好填满小节；有任何错误时列出全部错误并以非零状态退出，不生成乐谱。
+// --allow-missing 1：只检查文件中已有的小节（例如单页），缺少的小节不报错。
 import { readFile, writeFile } from 'node:fs/promises';
 import { barsToScore } from '../lib/bar-notation.mjs';
 
 const args = process.argv.slice(2), overrides = {}, files = [];
 for (let i = 0; i < args.length; i++) {
-  if (args[i].startsWith('--')) overrides[args[i].slice(2)] = args[++i];
+  if (args[i].startsWith('--')) overrides[args[i].slice(2).replace(/-([a-z])/g, (_, c) => c.toUpperCase())] = args[++i];
   else files.push(args[i]);
 }
 const [out, ...inputs] = files;
