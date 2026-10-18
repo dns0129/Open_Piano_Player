@@ -10,3 +10,7 @@
 {"at":"2026-10-18T10:02:07.727Z","event":"reader-resume","page":1,"detail":"manual resume after session limit reset (same agent context)"}
 {"at":"2026-10-18T10:02:07.729Z","event":"reader-resume","page":2,"detail":"manual resume after session limit reset (same agent context)"}
 {"at":"2026-10-18T10:02:07.734Z","event":"reader-resume","page":3,"detail":"manual resume after session limit reset (same agent context)"}
+{"at":"2026-10-18T10:07:30.452Z","event":"reader-end","page":3,"durationMs":311656,"toolUses":64,"sessionReportedSubagentTokens":138145}
+{"at":"2026-10-18T10:07:30.454Z","event":"check-start","page":3}
+{"at":"2026-10-18T10:07:34.877Z","event":"check-end","page":3}
+{"at":"2026-10-18T10:07:34.884Z","event":"reviewer-start","page":3}
