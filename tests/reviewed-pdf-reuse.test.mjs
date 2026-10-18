@@ -1,6 +1,13 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {findReviewedPdf} from '../lib/reviewed-pdf-reuse.mjs';
-const hash='a'.repeat(64),job={id:'source',status:'complete',originalPdf:{sha256:hash},result:{scope:{completeDocument:true},reviewStatus:'human-confirmed'},regions:[{status:'confirmed',result:{model:'gpt-6.1-sol',reasoningEffort:'high',checks:{passed:true},score:{notes:[{}]},positions:[{}]}}]};
+import {RECOGNITION_PROMPT_VERSION} from '../lib/recognition-prompts.mjs';
+const hash='a'.repeat(64),job={id:'source',status:'complete',originalPdf:{sha256:hash},result:{scope:{completeDocument:true},reviewStatus:'human-confirmed'},regions:[{status:'confirmed',result:{model:'gpt-6.1-sol',reasoningEffort:'high',promptVersion:RECOGNITION_PROMPT_VERSION,checks:{passed:true},score:{notes:[{}]},positions:[{}]}}]};
+test('identical PDFs from a previous or unrecorded prompt require a fresh read',async()=>{
+ for(const version of [undefined,'previous']){
+  const old=structuredClone(job);old.regions[0].result.promptVersion=version;
+  assert.equal(await findReviewedPdf(hash,['old'],async()=>old),null);
+ }
+});
 test('same PDF reuses only fully reviewed GPT source; failed authorization and partial/legacy scores are skipped',async()=>{
  assert.equal((await findReviewedPdf(hash,['old','valid'],async id=>id==='old'?{...job,regions:[{status:'confirmed',result:{model:'audiveris'}}]}:job)).reusedExactPdf,true);
  assert.equal(await findReviewedPdf('b'.repeat(64),['valid'],async()=>job),null);

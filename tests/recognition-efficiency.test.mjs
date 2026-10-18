@@ -5,11 +5,26 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {createRecognitionGate} from '../lib/recognition-gate.mjs';
 import {createFullScoreJobStore} from '../lib/full-score-jobs.mjs';
+import {RECOGNITION_PROMPT_VERSION} from '../lib/recognition-prompts.mjs';
+import {recognitionCacheKey} from '../lib/recognition-cache.mjs';
 
 const image={mimeType:'image/png',data:'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl6P7sAAAAASUVORK5CYII='};
 const auth={sessionId:'efficiency-owner'};
 const manifest=()=>({title:'Repeated piano source',totalPages:1,timeSignature:[4,4],tempo:90,keySignature:0,regions:[{id:'row',page:1,system:1,rect:{x:0,y:0,width:100,height:100},pageWidth:100,pageHeight:100,measureCount:1,image}]});
-const result=()=>({score:{title:'Source',tempo:90,timeSignature:[4,4],keySignature:0,durationBeats:4,notes:[{id:'r',beat:0,duration:4,midi:60,hand:'right',voice:'right-1'},{id:'l',beat:0,duration:4,midi:48,hand:'left',voice:'left-1'}]},coverage:{complete:true,measureCount:1,measureDurations:[4]},positions:[{noteId:'r',x:30,y:25},{noteId:'l',x:30,y:75}],rests:[],continuity:{tieIn:[],tieOut:[]},internalTies:[],model:'gpt-6.1-sol',reasoningEffort:'high'});
+const result=()=>({score:{title:'Source',tempo:90,timeSignature:[4,4],keySignature:0,durationBeats:4,notes:[{id:'r',beat:0,duration:4,midi:60,hand:'right',voice:'right-1'},{id:'l',beat:0,duration:4,midi:48,hand:'left',voice:'left-1'}]},coverage:{complete:true,measureCount:1,measureDurations:[4]},positions:[{noteId:'r',x:30,y:25},{noteId:'l',x:30,y:75}],rests:[],continuity:{tieIn:[],tieOut:[]},internalTies:[],model:'gpt-6.1-sol',reasoningEffort:'high',promptVersion:RECOGNITION_PROMPT_VERSION});
+
+test('prompt changes invalidate source keys and old reviewed results are never seeded into the new cache',async t=>{
+ const source=manifest(),region=source.regions[0],policy={model:'gpt-6.1-sol',reasoningEffort:'high'};
+ assert.notEqual(recognitionCacheKey(source,region,{...policy,promptVersion:'previous'}),recognitionCacheKey(source,region,{...policy,promptVersion:RECOGNITION_PROMPT_VERSION}));
+ const directory=await mkdtemp(join(tmpdir(),'qinban-prompt-cache-'));let calls=0;
+ const adapter=async()=>({...result(),promptVersion:++calls<=2?'previous':RECOGNITION_PROMPT_VERSION});
+ const store=createFullScoreJobStore({directory,recognizeRegion:adapter,checkRegion:adapter});
+ t.after(async()=>{await store.close();await rm(directory,{recursive:true,force:true});});
+ const first=await store.createJob(source,auth);await store.startJob(first.id,auth);const old=await store.waitForIdle(first.id,auth);
+ await store.confirmRegion(first.id,'row',old.regions[0].result,auth);
+ const second=await store.createJob(source,auth);await store.startJob(second.id,auth);const fresh=await store.waitForIdle(second.id,auth);
+ assert.equal(calls,4);assert.equal(fresh.reuse.hits,0);assert.equal(fresh.regions[0].result.promptVersion,RECOGNITION_PROMPT_VERSION);
+});
 test('reimporting exactly the same reviewed source does not spend two more model calls',async t=>{
  const directory=await mkdtemp(join(tmpdir(),'qinban-efficiency-'));let calls=0;
  const adapter=async()=>{calls++;return result();};

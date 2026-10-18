@@ -5,6 +5,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {createFullScoreJobStore,validateRegionResult} from '../lib/full-score-jobs.mjs';
 import {acceptScoreRegion} from '../lib/ai.mjs';
+import {RECOGNITION_PROMPT_VERSION} from '../lib/recognition-prompts.mjs';
 
 const image={mimeType:'image/png',data:'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl6P7sAAAAASUVORK5CYII='};
 const auth={sessionId:'server-owned-session'};
@@ -218,7 +219,7 @@ test('internal ties reject wrong pitch/hand/voice, nonadjacency, duplicate edges
 
 test('DeepSeek jobs keep their provider across resume and reread, reject switching, and isolate Pi caches',async t=>{
   const requests=[];
-  const adapter=async request=>{requests.push({engine:request.engine,pass:request.pass,hasPrevious:!!request.previousResult});return regionResult(request.region,{engine:request.engine,model:request.engine==='deepseek'?'deepseek-flash':'gpt-6.1-sol',reasoningEffort:'high'});};
+  const adapter=async request=>{requests.push({engine:request.engine,pass:request.pass,hasPrevious:!!request.previousResult});return regionResult(request.region,{engine:request.engine,model:request.engine==='deepseek'?'deepseek-flash':'gpt-6.1-sol',reasoningEffort:'high',promptVersion:RECOGNITION_PROMPT_VERSION});};
   const {store}=await fixture(t,{recognizeRegion:adapter,checkRegion:adapter});
   const pi=await store.createJob(rawJob(1),auth);await store.startJob(pi.id,auth);await store.waitForIdle(pi.id,auth);await store.confirmRegion(pi.id,'row-1',null,auth);
   const ds=await store.createJob({...rawJob(1),engine:'deepseek'},auth);assert.equal(ds.snapshot.engine,'deepseek');assert.equal(ds.snapshot.recognition.model,'deepseek-flash');
