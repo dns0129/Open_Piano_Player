@@ -1,0 +1,611 @@
+{
+  "schema": "piano-score-transcription/v1",
+  "provenance": {
+    "promptVersion": "accidentals-v2-20261018",
+    "model": "synthetic-fixture-no-model-call",
+    "reasoning": null,
+    "calls": []
+  },
+  "pages": [
+    {
+      "page": 1,
+      "sha256": "synthetic-page-1",
+      "status": "score",
+      "reviewed": true,
+      "systems": [
+        {
+          "id": "p1s1",
+          "staves": 2,
+          "measureStart": 1,
+          "measureEnd": 2,
+          "complete": true,
+          "reviewed": true
+        }
+      ]
+    },
+    {
+      "page": 2,
+      "sha256": "synthetic-page-2",
+      "status": "score",
+      "reviewed": true,
+      "systems": [
+        {
+          "id": "p2s1",
+          "staves": 2,
+          "measureStart": 3,
+          "measureEnd": 3,
+          "complete": true,
+          "reviewed": true
+        }
+      ]
+    }
+  ],
+  "score": {
+    "version": 1,
+    "id": "synthetic-piano-skill",
+    "title": "Original notation verification exercise",
+    "composer": "Qinban synthetic fixture",
+    "tempo": 141,
+    "timeSignature": [
+      4,
+      4
+    ],
+    "keySignature": 0,
+    "mode": "major",
+    "durationBeats": 12,
+    "measureMap": [
+      {
+        "beat": 0,
+        "duration": 4,
+        "timeSignature": [
+          4,
+          4
+        ]
+      },
+      {
+        "beat": 4,
+        "duration": 4,
+        "timeSignature": [
+          4,
+          4
+        ]
+      },
+      {
+        "beat": 8,
+        "duration": 4,
+        "timeSignature": [
+          4,
+          4
+        ]
+      }
+    ],
+    "source": {
+      "kind": "image-ai",
+      "label": "Original synthetic fixture; not an accuracy benchmark"
+    },
+    "notes": [
+      {
+        "id": "bb",
+        "midi": 70,
+        "beat": 0,
+        "duration": 1,
+        "hand": "right",
+        "voice": "1",
+        "dynamic": "p",
+        "accent": "accent"
+      },
+      {
+        "id": "bbCarry",
+        "midi": 70,
+        "beat": 1,
+        "duration": 1,
+        "hand": "right",
+        "voice": "1"
+      },
+      {
+        "id": "bn",
+        "midi": 71,
+        "beat": 2,
+        "duration": 1,
+        "hand": "right",
+        "voice": "1",
+        "articulation": "tenuto"
+      },
+      {
+        "id": "aSharp",
+        "midi": 70,
+        "beat": 3,
+        "duration": 1,
+        "hand": "right",
+        "voice": "1",
+        "tieTo": "aSharpTie"
+      },
+      {
+        "id": "aSharpTie",
+        "midi": 70,
+        "beat": 4,
+        "duration": 1,
+        "hand": "right",
+        "voice": "1"
+      },
+      {
+        "id": "aReset",
+        "midi": 69,
+        "beat": 5,
+        "duration": 1,
+        "hand": "right",
+        "voice": "1",
+        "articulation": "staccato"
+      },
+      {
+        "id": "trill",
+        "midi": 72,
+        "beat": 6,
+        "duration": 1,
+        "hand": "right",
+        "voice": "1",
+        "ornament": "trill",
+        "ornamentInterval": 2,
+        "dynamic": "mf"
+      },
+      {
+        "id": "mordent",
+        "midi": 74,
+        "beat": 7,
+        "duration": 1,
+        "hand": "right",
+        "voice": "1",
+        "ornament": "mordent-lower",
+        "ornamentInterval": 2
+      },
+      {
+        "id": "arpC",
+        "midi": 72,
+        "beat": 8,
+        "duration": 1,
+        "hand": "right",
+        "voice": "1",
+        "arpeggio": "up",
+        "dynamic": "f"
+      },
+      {
+        "id": "arpE",
+        "midi": 76,
+        "beat": 8,
+        "duration": 1,
+        "hand": "right",
+        "voice": "1",
+        "arpeggio": "up",
+        "dynamic": "f"
+      },
+      {
+        "id": "arpG",
+        "midi": 79,
+        "beat": 8,
+        "duration": 1,
+        "hand": "right",
+        "voice": "1",
+        "arpeggio": "up",
+        "dynamic": "f"
+      },
+      {
+        "id": "t1",
+        "midi": 72,
+        "beat": 9,
+        "duration": 0.3333333333333333,
+        "hand": "right",
+        "voice": "1"
+      },
+      {
+        "id": "t2",
+        "midi": 74,
+        "beat": 9.333333333333334,
+        "duration": 0.3333333333333333,
+        "hand": "right",
+        "voice": "1"
+      },
+      {
+        "id": "t3",
+        "midi": 76,
+        "beat": 9.666666666666666,
+        "duration": 0.3333333333333333,
+        "hand": "right",
+        "voice": "1"
+      },
+      {
+        "id": "end",
+        "midi": 72,
+        "beat": 10,
+        "duration": 2,
+        "hand": "right",
+        "voice": "1",
+        "accent": "marcato"
+      },
+      {
+        "id": "bass0",
+        "midi": 48,
+        "beat": 0,
+        "duration": 4,
+        "hand": "left",
+        "voice": "2"
+      },
+      {
+        "id": "bass1",
+        "midi": 48,
+        "beat": 4,
+        "duration": 4,
+        "hand": "left",
+        "voice": "2"
+      },
+      {
+        "id": "bass2",
+        "midi": 48,
+        "beat": 8,
+        "duration": 4,
+        "hand": "left",
+        "voice": "2"
+      }
+    ]
+  },
+  "notation": {
+    "notes": {
+      "bb": {
+        "pitch": {
+          "step": "B",
+          "alter": -1,
+          "octave": 4
+        },
+        "printedAccidental": -1,
+        "source": {
+          "page": 1,
+          "system": "p1s1",
+          "measure": 1,
+          "staff": 1
+        },
+        "checked": true
+      },
+      "bbCarry": {
+        "pitch": {
+          "step": "B",
+          "alter": -1,
+          "octave": 4
+        },
+        "printedAccidental": null,
+        "source": {
+          "page": 1,
+          "system": "p1s1",
+          "measure": 1,
+          "staff": 1
+        },
+        "checked": true
+      },
+      "bn": {
+        "pitch": {
+          "step": "B",
+          "alter": 0,
+          "octave": 4
+        },
+        "printedAccidental": 0,
+        "source": {
+          "page": 1,
+          "system": "p1s1",
+          "measure": 1,
+          "staff": 1
+        },
+        "checked": true
+      },
+      "aSharp": {
+        "pitch": {
+          "step": "A",
+          "alter": 1,
+          "octave": 4
+        },
+        "printedAccidental": 1,
+        "source": {
+          "page": 1,
+          "system": "p1s1",
+          "measure": 1,
+          "staff": 1
+        },
+        "checked": true
+      },
+      "aSharpTie": {
+        "pitch": {
+          "step": "A",
+          "alter": 1,
+          "octave": 4
+        },
+        "printedAccidental": null,
+        "source": {
+          "page": 1,
+          "system": "p1s1",
+          "measure": 2,
+          "staff": 1
+        },
+        "checked": true
+      },
+      "aReset": {
+        "pitch": {
+          "step": "A",
+          "alter": 0,
+          "octave": 4
+        },
+        "printedAccidental": null,
+        "source": {
+          "page": 1,
+          "system": "p1s1",
+          "measure": 2,
+          "staff": 1
+        },
+        "checked": true
+      },
+      "trill": {
+        "pitch": {
+          "step": "C",
+          "alter": 0,
+          "octave": 5
+        },
+        "printedAccidental": null,
+        "source": {
+          "page": 1,
+          "system": "p1s1",
+          "measure": 2,
+          "staff": 1
+        },
+        "checked": true
+      },
+      "mordent": {
+        "pitch": {
+          "step": "D",
+          "alter": 0,
+          "octave": 5
+        },
+        "printedAccidental": null,
+        "source": {
+          "page": 1,
+          "system": "p1s1",
+          "measure": 2,
+          "staff": 1
+        },
+        "checked": true
+      },
+      "arpC": {
+        "pitch": {
+          "step": "C",
+          "alter": 0,
+          "octave": 5
+        },
+        "printedAccidental": null,
+        "source": {
+          "page": 2,
+          "system": "p2s1",
+          "measure": 3,
+          "staff": 1
+        },
+        "checked": true
+      },
+      "arpE": {
+        "pitch": {
+          "step": "E",
+          "alter": 0,
+          "octave": 5
+        },
+        "printedAccidental": null,
+        "source": {
+          "page": 2,
+          "system": "p2s1",
+          "measure": 3,
+          "staff": 1
+        },
+        "checked": true
+      },
+      "arpG": {
+        "pitch": {
+          "step": "G",
+          "alter": 0,
+          "octave": 5
+        },
+        "printedAccidental": null,
+        "source": {
+          "page": 2,
+          "system": "p2s1",
+          "measure": 3,
+          "staff": 1
+        },
+        "checked": true
+      },
+      "t1": {
+        "pitch": {
+          "step": "C",
+          "alter": 0,
+          "octave": 5
+        },
+        "printedAccidental": null,
+        "source": {
+          "page": 2,
+          "system": "p2s1",
+          "measure": 3,
+          "staff": 1
+        },
+        "checked": true,
+        "rhythm": {
+          "type": "eighth",
+          "dots": 0,
+          "tuplet": {
+            "actual": 3,
+            "normal": 2,
+            "group": "triplet-1",
+            "number": 1
+          }
+        }
+      },
+      "t2": {
+        "pitch": {
+          "step": "D",
+          "alter": 0,
+          "octave": 5
+        },
+        "printedAccidental": null,
+        "source": {
+          "page": 2,
+          "system": "p2s1",
+          "measure": 3,
+          "staff": 1
+        },
+        "checked": true,
+        "rhythm": {
+          "type": "eighth",
+          "dots": 0,
+          "tuplet": {
+            "actual": 3,
+            "normal": 2,
+            "group": "triplet-1",
+            "number": 1
+          }
+        }
+      },
+      "t3": {
+        "pitch": {
+          "step": "E",
+          "alter": 0,
+          "octave": 5
+        },
+        "printedAccidental": null,
+        "source": {
+          "page": 2,
+          "system": "p2s1",
+          "measure": 3,
+          "staff": 1
+        },
+        "checked": true,
+        "rhythm": {
+          "type": "eighth",
+          "dots": 0,
+          "tuplet": {
+            "actual": 3,
+            "normal": 2,
+            "group": "triplet-1",
+            "number": 1
+          }
+        }
+      },
+      "end": {
+        "pitch": {
+          "step": "C",
+          "alter": 0,
+          "octave": 5
+        },
+        "printedAccidental": null,
+        "source": {
+          "page": 2,
+          "system": "p2s1",
+          "measure": 3,
+          "staff": 1
+        },
+        "checked": true,
+        "fermata": "normal"
+      },
+      "bass0": {
+        "pitch": {
+          "step": "C",
+          "alter": 0,
+          "octave": 3
+        },
+        "printedAccidental": null,
+        "source": {
+          "page": 1,
+          "system": "p1s1",
+          "measure": 1,
+          "staff": 2
+        },
+        "checked": true
+      },
+      "bass1": {
+        "pitch": {
+          "step": "C",
+          "alter": 0,
+          "octave": 3
+        },
+        "printedAccidental": null,
+        "source": {
+          "page": 1,
+          "system": "p1s1",
+          "measure": 2,
+          "staff": 2
+        },
+        "checked": true
+      },
+      "bass2": {
+        "pitch": {
+          "step": "C",
+          "alter": 0,
+          "octave": 3
+        },
+        "printedAccidental": null,
+        "source": {
+          "page": 2,
+          "system": "p2s1",
+          "measure": 3,
+          "staff": 2
+        },
+        "checked": true
+      }
+    },
+    "keys": [
+      {
+        "measure": 1,
+        "fifths": 0,
+        "mode": "major"
+      }
+    ],
+    "tempoMarks": [
+      {
+        "beat": 0,
+        "unit": "quarter",
+        "dots": 1,
+        "bpm": 94
+      },
+      {
+        "beat": 8,
+        "unit": "quarter",
+        "dots": 0,
+        "bpm": 100
+      }
+    ],
+    "graces": [
+      {
+        "id": "graceD",
+        "beforeNote": "trill",
+        "pitch": {
+          "step": "D",
+          "alter": 0,
+          "octave": 5
+        },
+        "type": "16th",
+        "slash": true,
+        "source": {
+          "page": 1,
+          "system": "p1s1",
+          "measure": 2,
+          "staff": 1
+        },
+        "checked": true
+      }
+    ],
+    "spanners": [
+      {
+        "type": "slur",
+        "start": "bb",
+        "end": "bn",
+        "number": 1
+      }
+    ],
+    "unhandled": []
+  },
+  "issues": [],
+  "review": {
+    "status": "checked",
+    "method": "synthetic-known-input",
+    "humanConfirmed": false
+  }
+}

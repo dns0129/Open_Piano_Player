@@ -1,0 +1,14 @@
+{
+  "name": "piano-score-to-musicxml-skill",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.19.0" },
+  "scripts": { "test": "node --test scripts/self-test.mjs" },
+  "dependencies": {
+    "@tonejs/midi": "2.0.28",
+    "fast-xml-parser": "5.11.2",
+    "midi-file": "1.2.4",
+    "verovio": "6.3.0"
+  }
+}

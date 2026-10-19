@@ -1,0 +1,4 @@
+interface:
+  display_name: "钢琴谱识别与重绘"
+  short_description: "读取多页钢琴谱，校对音高与演奏记号，重绘并导出可编辑 MusicXML"
+  default_prompt: "使用 $piano-score-to-musicxml 识别我提供的全部钢琴谱页，核对音高、调号和演奏记号，重绘并导出 MusicXML。"
