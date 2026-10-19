@@ -47,12 +47,12 @@ test('all pages and all ordered systems must be explicitly accounted before call
   const created=await store.createJob(excluded,auth);assert.equal(created.snapshot.totalPages,2);assert.equal(calls,0);
 });
 
-test('one start processes every row with concurrency two and independent review, then waits for human confirmation',async t=>{
+test('one start processes every row once with concurrency two, then waits for human confirmation',async t=>{
   let active=0,maximum=0,calls=0;
   const recognize=async({region})=>{active++;maximum=Math.max(maximum,active);calls++;await delay(5);active--;return regionResult(region);};
   const {store}=await fixture(t,{recognizeRegion:recognize,checkRegion:recognize,maxConcurrency:2});
-  const {id}=await store.createJob(rawJob(),auth);const started=await store.startJob(id,auth);assert.equal(started.status,'running');assert.equal(started.estimate.piCalls,6);
-  let job=await store.waitForIdle(id,auth);assert.equal(calls,6);assert.equal(maximum,2);assert.equal(job.status,'needs-review');assert.equal(job.progress.needsReview,3);assert.equal(job.result,null);
+  const {id}=await store.createJob(rawJob(),auth);const started=await store.startJob(id,auth);assert.equal(started.status,'running');assert.equal(started.estimate.piCalls,3);
+  let job=await store.waitForIdle(id,auth);assert.equal(calls,3);assert.equal(maximum,2);assert.equal(job.status,'needs-review');assert.equal(job.progress.needsReview,3);assert.equal(job.result,null);
   await assert.rejects(store.confirmJob(id,auth),e=>e.code==='INCOMPLETE_JOB');
   for(const region of job.regions)job=await store.confirmRegion(id,region.id,region.result,auth);
   assert.equal(job.status,'complete');assert.equal(job.result.score.notes.length,6);assert.equal(job.result.score.durationBeats,12);
@@ -156,8 +156,14 @@ test('uncertain page/row scope needs explicit final human acknowledgement',async
   const {store}=await fixture(t);const {id}=await store.createJob({...rawJob(1),needsUserScopeConfirmation:true},auth);await store.startJob(id,auth);let job=await store.waitForIdle(id,auth);job=await store.confirmRegion(id,'row-1',job.regions[0].result,auth);assert.equal(job.status,'needs-review');assert.equal(job.result.reviewStatus,'needs-scope-confirmation');await assert.rejects(store.confirmJob(id,auth),e=>e.code==='SCOPE_CONFIRMATION_REQUIRED');job=await store.confirmJob(id,auth,{scopeConfirmed:true});assert.equal(job.status,'complete');assert.equal(job.result.scope.completeDocument,true);
 });
 
-test('independent model disagreement remains a visible correction requirement, never auto-confirmed',async t=>{
-  const {store}=await fixture(t,{checkRegion:async({region})=>{const raw=regionResult(region);raw.score.notes[0].midi=61;return raw;}});const {id}=await store.createJob(rawJob(1),auth);await store.startJob(id,auth);const job=await store.waitForIdle(id,auth);assert.equal(job.regions[0].result.verification.comparison.exactMatch,false);assert.equal(job.regions[0].result.reviewStatus,'needs-correction');assert.equal(job.result,null);assert.equal(job.progress.confirmed,0);
+test('legacy verify requests and injected reviewers cannot add a second reading',async t=>{
+  let reviews=0;
+  const {store}=await fixture(t,{checkRegion:async()=>{reviews++;throw Error('review must not run');}});
+  const {id}=await store.createJob({...rawJob(1),verify:true},auth);
+  await store.startJob(id,auth);const job=await store.waitForIdle(id,auth);
+  assert.equal(reviews,0);assert.equal(job.calls.recognition,1);assert.equal(job.calls.verification,0);
+  assert.equal(job.estimate.modelCalls,1);assert.equal(job.regions[0].result.verification,null);
+  assert.equal(job.regions[0].result.score.notes.find(n=>n.hand==='right').midi,60);assert.equal(job.progress.confirmed,0);
 });
 
 test('rest-only source rows remain silent while keeping their full place in the document',async t=>{
@@ -225,8 +231,8 @@ test('DeepSeek jobs keep their provider across resume and reread, reject switchi
   const ds=await store.createJob({...rawJob(1),engine:'deepseek'},auth);assert.equal(ds.snapshot.engine,'deepseek');assert.equal(ds.snapshot.recognition.model,'deepseek-flash');
   await assert.rejects(store.startJob(ds.id,{...auth,engine:'pi'}),{code:'RECOGNITION_ENGINE_LOCKED'});
   await store.startJob(ds.id,auth);let job=await store.waitForIdle(ds.id,auth);
-  assert.equal(job.reuse.hits,0);assert.equal(job.calls.recognition,1);assert.equal(job.calls.verification,1);assert.equal(job.regions[0].result.model,'deepseek-flash');
-  assert.deepEqual(requests.slice(-2),[{engine:'deepseek',pass:'recognize',hasPrevious:false},{engine:'deepseek',pass:'verify',hasPrevious:false}]);
+  assert.equal(job.reuse.hits,0);assert.equal(job.calls.recognition,1);assert.equal(job.calls.verification,0);assert.equal(job.regions[0].result.model,'deepseek-flash');
+  assert.deepEqual(requests.slice(-1),[{engine:'deepseek',pass:'recognize',hasPrevious:false}]);
   await store.confirmRegion(ds.id,'row-1',null,auth);
   const next=await store.createJob({...rawJob(1),engine:'deepseek'},auth);await store.startJob(next.id,auth);job=await store.waitForIdle(next.id,auth);assert.equal(job.reuse.hits,1);assert.equal(job.calls.recognition,0);
 });
@@ -244,7 +250,7 @@ test('an empty tool submission falls back once to independent digital output on 
  const fallback=async({region})=>{fallbackCalls++;return{...regionResult(region),positions:[],positionlessReview:true,wireFormat:'compact-json-v2'};};
  const {store}=await fixture(t,{recognizeRegion:async()=>{throw Object.assign(new Error('no submission'),{code:'NO_REGION_RESULT'});},digitalFallback:true,digitalRecognizeRegion:fallback,checkRegion:fallback});
  const {id}=await store.createJob(rawJob(1),auth);await store.startJob(id,auth);const job=await store.waitForIdle(id,auth);
- assert.equal(job.calls.recognition,2);assert.equal(fallbackCalls,2);assert.equal(job.regions[0].result.positionlessSource,true);assert.equal(job.regions[0].result.verification.comparison.exactMatch,true);
+ assert.equal(job.calls.recognition,2);assert.equal(fallbackCalls,1);assert.equal(job.regions[0].result.positionlessSource,true);assert.equal(job.regions[0].result.verification,null);
  const exported=await store.exportDraft(id,auth,{scopeConfirmed:true});assert.equal(exported.result.score.notes.length,2);assert.equal(exported.result.sourceNotation.notes.length,0);assert.equal(exported.progress.confirmed,0);
 });
 

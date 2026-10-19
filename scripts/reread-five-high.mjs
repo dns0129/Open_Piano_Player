@@ -63,7 +63,7 @@ export async function inspectFiveSources({sourceDirectory=resolve('.local/batch-
    // A prior practice BPM must not override the newly read first system's tempo.
    const {composer,timeSignature,keySignature,source}=old.metadata||{};
    const manifest={title:definition.title+' · GPT‑6.1 high 升降号增强版',composer,timeSignature,keySignature,source,
-    totalPages:definition.pages,engine:'pi',verify:true,needsUserScopeConfirmation:true,regions,
+    totalPages:definition.pages,engine:'pi',verify:false,needsUserScopeConfirmation:true,regions,
     originalPdf:{name:definition.title+'.pdf',mimeType:'application/pdf',buffer:pdf}};
    plans.push({definition,manifest});
    const sourceContextSha256=sha(JSON.stringify({composer,timeSignature,keySignature,regions:regions.map(({image,...r})=>r)}));
@@ -123,7 +123,7 @@ export async function runFive({run=false,importScores=false,publish=false,source
   assertNewReading(result);await save(join(callsDirectory,`${request.jobId}-${request.region.id}-${request.pass}-digital-${Date.now()}.json`),{startedAt,endedAt:new Date().toISOString(),result});return result;
  };
  const concurrencyUsed=Math.max(1,Math.min(100,concurrency));
- const store=createFullScoreJobStore({directory:jobsDirectory,maxConcurrency:concurrencyUsed,recognizeRegion:adapter,checkRegion:adapter,digitalFallback:true,digitalRecognizeRegion:digitalAdapter});
+ const store=createFullScoreJobStore({directory:jobsDirectory,maxConcurrency:concurrencyUsed,recognizeRegion:adapter,digitalFallback:true,digitalRecognizeRegion:digitalAdapter});
  let stopping=false;
  const cancel=()=>{stopping=true;void Promise.allSettled(state.jobs.map(j=>store.cancelJob(j.id,{token:j.token})));};
  process.once('SIGINT',cancel);process.once('SIGTERM',cancel);
@@ -141,8 +141,8 @@ export async function runFive({run=false,importScores=false,publish=false,source
    await store.startJob(first.id,{...firstAuth,regionIds:[firstBefore.regions[0].id],forceFresh:true});
    const checked=await store.waitForIdle(first.id,firstAuth),row=checked.regions[0];
    await save(join(outputDirectory,'preflight-row.json'),{at:new Date().toISOString(),job:checked});
-   if(!row.result?.coverage?.complete||row.result.verification?.error||row.error){
-    throw Error('首行实际识读或复读未返回完整结果，整批未继续调用；已保留现场。');
+   if(!row.result?.coverage?.complete||row.error){
+    throw Error('首行实际识读未返回完整结果，整批未继续调用；已保留现场。');
    }
   }
   // All books share the same physical gate; a slow final row in one book
@@ -156,9 +156,9 @@ export async function runFive({run=false,importScores=false,publish=false,source
   for(const task of state.jobs){
    if(stopping)break;
    const job=await store.waitForIdle(task.id,{token:task.token});await save(join(outputDirectory,task.key+'-job.json'),job);
-   const incomplete=job.regions.filter(r=>!r.result?.coverage?.complete||!r.result.checks?.passed||!r.result.verification?.checks?.passed||r.result.verification.error||!r.result.verification?.comparison?.exactMatch);
+   const incomplete=job.regions.filter(r=>!r.result?.coverage?.complete||!r.result.checks?.passed);
    const summary={key:task.key,jobId:task.id,pages:job.totalPages,rows:job.regions.length,status:job.status,calls:job.calls,
-    incompleteRows:incomplete.map(r=>r.id),independentDisagreementRows:job.regions.filter(r=>r.result?.verification?.comparison?.exactMatch===false).map(r=>r.id),cacheHits:job.reuse.hits};
+    incompleteRows:incomplete.map(r=>r.id),recognitionPasses:1,cacheHits:job.reuse.hits};
    outcomes.push(summary);await save(join(outputDirectory,'progress.json'),outcomes);console.log(JSON.stringify(summary));
   }
   const ready=!stopping&&outcomes.length===5&&outcomes.every(o=>!o.incompleteRows.length);
@@ -174,7 +174,7 @@ export async function runFive({run=false,importScores=false,publish=false,source
     drafts.push({score,key:task.key});await save(join(outputDirectory,task.key+'-score.json'),{score,warnings:exported.result.warnings,reviewStatus:'ai-unreviewed'});
    }
    for(const {score,key} of drafts){
-    const imported=await addScore(score,{description:`${SCORE_RECOGNITION.promptVersion} · 原谱全页新识别及独立复读 · AI草稿待逐音校对`});
+    const imported=await addScore(score,{description:`${SCORE_RECOGNITION.promptVersion} · 原谱全页首次识别 · AI草稿待逐音校对`});
     report.imported.push({key,id:score.id,sha256:imported.entry.sha256,notes:score.notes.length});
    }
    const checked=await verifyRepository();if(!checked.ok)throw Error('曲库校验失败：'+checked.problems.join('；'));

@@ -17,47 +17,51 @@ test('prompt changes invalidate source keys and old reviewed results are never s
  const source=manifest(),region=source.regions[0],policy={model:'gpt-6.1-sol',reasoningEffort:'high'};
  assert.notEqual(recognitionCacheKey(source,region,{...policy,promptVersion:'previous'}),recognitionCacheKey(source,region,{...policy,promptVersion:RECOGNITION_PROMPT_VERSION}));
  const directory=await mkdtemp(join(tmpdir(),'qinban-prompt-cache-'));let calls=0;
- const adapter=async()=>({...result(),promptVersion:++calls<=2?'previous':RECOGNITION_PROMPT_VERSION});
+ const adapter=async()=>({...result(),promptVersion:++calls<=1?'previous':RECOGNITION_PROMPT_VERSION});
  const store=createFullScoreJobStore({directory,recognizeRegion:adapter,checkRegion:adapter});
  t.after(async()=>{await store.close();await rm(directory,{recursive:true,force:true});});
  const first=await store.createJob(source,auth);await store.startJob(first.id,auth);const old=await store.waitForIdle(first.id,auth);
  await store.confirmRegion(first.id,'row',old.regions[0].result,auth);
  const second=await store.createJob(source,auth);await store.startJob(second.id,auth);const fresh=await store.waitForIdle(second.id,auth);
- assert.equal(calls,4);assert.equal(fresh.reuse.hits,0);assert.equal(fresh.regions[0].result.promptVersion,RECOGNITION_PROMPT_VERSION);
+ assert.equal(calls,2);assert.equal(fresh.reuse.hits,0);assert.equal(fresh.regions[0].result.promptVersion,RECOGNITION_PROMPT_VERSION);
 });
-test('reimporting exactly the same reviewed source does not spend two more model calls',async t=>{
+test('reimporting exactly the same reviewed source does not spend another model call',async t=>{
  const directory=await mkdtemp(join(tmpdir(),'qinban-efficiency-'));let calls=0;
  const adapter=async()=>{calls++;return result();};
  const store=createFullScoreJobStore({directory,recognizeRegion:adapter,checkRegion:adapter});
  t.after(async()=>{await store.close();await rm(directory,{recursive:true,force:true});});
  const first=await store.createJob(manifest(),auth);assert.equal(first.snapshot.estimate.concurrency,100);await store.startJob(first.id,auth);let job=await store.waitForIdle(first.id,auth);
- await store.confirmRegion(first.id,'row',job.regions[0].result,auth);assert.equal(calls,2);
+ await store.confirmRegion(first.id,'row',job.regions[0].result,auth);assert.equal(calls,1);
  const second=await store.createJob(manifest(),auth);await store.startJob(second.id,auth);job=await store.waitForIdle(second.id,auth);
- assert.equal(calls,2,'identical reviewed images must reuse the prior result instead of recognizing and rereading again');
+ assert.equal(calls,1,'identical reviewed images must reuse the prior result instead of recognizing and rereading again');
  assert.equal(job.regions[0].result.score.notes.length,2);assert.equal(job.progress.total,1);
 });
 
-test('a completed transcription survives cancellation during verification and resumes only the second read',async t=>{
- const directory=await mkdtemp(join(tmpdir(),'qinban-checkpoint-'));let reads=0,checks=0,checking;
- const entered=new Promise(resolve=>checking=resolve);
- const store=createFullScoreJobStore({directory,recognizeRegion:async()=>{reads++;return result();},checkRegion:async(_request,{signal})=>{checks++;if(checks===1){checking();await new Promise(resolve=>signal.addEventListener('abort',resolve,{once:true}));throw signal.reason;}return result();}});
+test('legacy on-disk verify flag is ignored when a saved task resumes',async t=>{
+ const directory=await mkdtemp(join(tmpdir(),'qinban-legacy-'));let reads=0,checks=0;
+ const {readFile,writeFile}=await import('node:fs/promises');
+ const original=createFullScoreJobStore({directory,recognizeRegion:async()=>result()});
+ const {id}=await original.createJob(manifest(),auth);await original.close();
+ const path=join(directory,id,'job.json'),saved=JSON.parse(await readFile(path,'utf8'));saved.verify=true;await writeFile(path,JSON.stringify(saved));
+ const store=createFullScoreJobStore({directory,recognizeRegion:async()=>{reads++;return result();},checkRegion:async()=>{checks++;return result();}});
  t.after(async()=>{await store.close();await rm(directory,{recursive:true,force:true});});
- const {id}=await store.createJob(manifest(),auth);await store.startJob(id,auth);await entered;await store.cancelJob(id,auth);await store.waitForIdle(id,auth);
  await store.startJob(id,auth);const job=await store.waitForIdle(id,auth);
- assert.equal(reads,1,'resume must not repeat a completed first read');assert.equal(checks,2);assert.equal(job.regions[0].result.verification.comparison.exactMatch,true);
+ assert.equal(reads,1);assert.equal(checks,0);assert.equal(job.estimate.modelCalls,1);assert.equal(job.calls.verification,0);
 });
 test('cache is private to the authorized session and invalidates changed musical context',async t=>{
  const directory=await mkdtemp(join(tmpdir(),'qinban-cache-boundary-'));let calls=0;const adapter=async()=>{calls++;return result();};
  const store=createFullScoreJobStore({directory,recognizeRegion:adapter,checkRegion:adapter});t.after(async()=>{await store.close();await rm(directory,{recursive:true,force:true});});
  const first=await store.createJob(manifest(),auth);await store.startJob(first.id,auth);let job=await store.waitForIdle(first.id,auth);await store.confirmRegion(first.id,'row',job.regions[0].result,auth);
- const other={sessionId:'different-owner'},second=await store.createJob(manifest(),other);await store.startJob(second.id,other);await store.waitForIdle(second.id,other);assert.equal(calls,4);
- const changed=manifest();changed.regions[0].context='different clef or octave context';const third=await store.createJob(changed,auth);await store.startJob(third.id,auth);await store.waitForIdle(third.id,auth);assert.equal(calls,6);
+ const other={sessionId:'different-owner'},second=await store.createJob(manifest(),other);await store.startJob(second.id,other);await store.waitForIdle(second.id,other);assert.equal(calls,2);
+ const changed=manifest();changed.regions[0].context='different clef or octave context';const third=await store.createJob(changed,auth);await store.startJob(third.id,auth);await store.waitForIdle(third.id,auth);assert.equal(calls,3);
 });
-test('retrying only failed verification retains the successful primary and its source positions',async t=>{
- const directory=await mkdtemp(join(tmpdir(),'qinban-review-retry-'));let reads=0,checks=0;
- const store=createFullScoreJobStore({directory,recognizeRegion:async()=>{reads++;return result();},checkRegion:async()=>{if(++checks===1)throw new Error('failed independent read');return result();}});t.after(async()=>{await store.close();await rm(directory,{recursive:true,force:true});});
- const {id}=await store.createJob(manifest(),auth);await store.startJob(id,auth);const first=await store.waitForIdle(id,auth);assert.ok(first.regions[0].result.verification.error);
- await store.retryRegion(id,'row',auth,{phase:'verify'});const second=await store.waitForIdle(id,auth);assert.equal(reads,1);assert.equal(checks,2);assert.deepEqual(second.regions[0].result.positions,first.regions[0].result.positions);
+test('removed verification retry fails without clearing the first reading',async t=>{
+ const directory=await mkdtemp(join(tmpdir(),'qinban-review-removed-'));let reads=0;
+ const store=createFullScoreJobStore({directory,recognizeRegion:async()=>{reads++;return result();}});
+ t.after(async()=>{await store.close();await rm(directory,{recursive:true,force:true});});
+ const {id}=await store.createJob(manifest(),auth);await store.startJob(id,auth);const first=await store.waitForIdle(id,auth);
+ await assert.rejects(store.retryRegion(id,'row',auth,{phase:'verify'}),{code:'VERIFICATION_REMOVED'});
+ const second=await store.getJob(id,auth);assert.equal(reads,1);assert.deepEqual(second.regions[0].result,first.regions[0].result);
 });
 test('the shared request gate keeps four-call concurrency across two simultaneous full-score jobs',async t=>{
  const directory=await mkdtemp(join(tmpdir(),'qinban-concurrency-'));let active=0,maximum=0;
