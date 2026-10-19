@@ -1,0 +1,397 @@
+{
+  "version": 1,
+  "scores": [
+    {
+      "id": "bumblebee-yeung-complete",
+      "title": "野蜂飞舞 · Yeung钢琴独奏版（7页全谱）",
+      "composer": "Nikolai Rimsky-Korsakov",
+      "tempo": 185,
+      "timeSignature": [
+        2,
+        4
+      ],
+      "keySignature": 0,
+      "notes": 1313,
+      "hasOriginal": true,
+      "reviewRequired": false,
+      "file": "scores/bumblebee-yeung-complete.json"
+    },
+    {
+      "id": "edited-8314396d-6190-40b0-8ef2-969ae6384e09",
+      "title": "幻听 · GPT low 六页重识别（修改版）",
+      "composer": "未知",
+      "tempo": 90,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 4,
+      "notes": 984,
+      "hasOriginal": false,
+      "reviewRequired": false,
+      "file": "scores/edited-8314396d-6190-40b0-8ef2-969ae6384e09.json"
+    },
+    {
+      "id": "edited-ce75adef-be21-4f3d-83dd-307afae68b14",
+      "title": "小星星（修改版）",
+      "composer": "法国传统民谣",
+      "tempo": 84,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 0,
+      "notes": 66,
+      "hasOriginal": false,
+      "reviewRequired": false,
+      "file": "scores/edited-ce75adef-be21-4f3d-83dd-307afae68b14.json"
+    },
+    {
+      "id": "full-score-3a9bbbda8e36a4e4bdd1bd5f3a5d1cbbbd5d",
+      "title": "生日快乐 · GPT high 双页验证 · 全谱",
+      "composer": "未知",
+      "tempo": 90,
+      "timeSignature": [
+        3,
+        4
+      ],
+      "keySignature": 0,
+      "notes": 52,
+      "hasOriginal": false,
+      "reviewRequired": false,
+      "file": "scores/full-score-3a9bbbda8e36a4e4bdd1bd5f3a5d1cbbbd5d.json"
+    },
+    {
+      "id": "full-score-3cfc9015e3c9659ed09b9da473df64d23709",
+      "title": "幻听 · GPT low 六页重识别 · 全谱",
+      "composer": "未知",
+      "tempo": 90,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 7,
+      "notes": 982,
+      "hasOriginal": false,
+      "reviewRequired": false,
+      "file": "scores/full-score-3cfc9015e3c9659ed09b9da473df64d23709.json"
+    },
+    {
+      "id": "full-score-3ebe23e0ff3d04f304d36ed9ad54a03e15a0",
+      "title": "幻听 · 全谱",
+      "composer": "原谱未署名",
+      "tempo": 90,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 7,
+      "notes": 983,
+      "hasOriginal": false,
+      "reviewRequired": false,
+      "file": "scores/full-score-3ebe23e0ff3d04f304d36ed9ad54a03e15a0.json"
+    },
+    {
+      "id": "full-score-483da5cbff9d2b5ec2e86e6c6ba0f3cb267a",
+      "title": "巴赫 C大调前奏曲 BWV846 · 全谱",
+      "composer": "未知",
+      "tempo": 120,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 0,
+      "notes": 549,
+      "hasOriginal": false,
+      "reviewRequired": false,
+      "file": "scores/full-score-483da5cbff9d2b5ec2e86e6c6ba0f3cb267a.json"
+    },
+    {
+      "id": "full-score-7e87728f60040aa1f7178325cebffac4e8ad",
+      "title": "C大调前奏曲 · BWV846 · 全谱",
+      "composer": "J. S. Bach",
+      "tempo": 96,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 0,
+      "notes": 549,
+      "hasOriginal": false,
+      "reviewRequired": false,
+      "file": "scores/full-score-7e87728f60040aa1f7178325cebffac4e8ad.json"
+    },
+    {
+      "id": "full-score-9241860ef6cad1e3c0f17e48ca0d30ffdbff",
+      "title": "幻听 · DeepSeek high 六页重识别 · 全谱",
+      "composer": "未知",
+      "tempo": 90,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 7,
+      "notes": 982,
+      "hasOriginal": false,
+      "reviewRequired": false,
+      "file": "scores/full-score-9241860ef6cad1e3c0f17e48ca0d30ffdbff.json"
+    },
+    {
+      "id": "full-score-feb36563796cd9a9b7f118a809ad559fe4dc",
+      "title": "幻听 · GPT high 六页重识别 · 全谱",
+      "composer": "未知",
+      "tempo": 90,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 7,
+      "notes": 982,
+      "hasOriginal": false,
+      "reviewRequired": false,
+      "file": "scores/full-score-feb36563796cd9a9b7f118a809ad559fe4dc.json"
+    },
+    {
+      "id": "fur-elise",
+      "title": "致爱丽丝 · 开头",
+      "composer": "Ludwig van Beethoven",
+      "tempo": 68,
+      "timeSignature": [
+        3,
+        8
+      ],
+      "keySignature": 0,
+      "notes": 42,
+      "hasOriginal": false,
+      "reviewRequired": false,
+      "file": "scores/fur-elise.json"
+    },
+    {
+      "id": "golden-hour-netease-664959",
+      "title": "Golden Hour · 钢琴谱（9页全谱）",
+      "composer": "JVKE（Jake Lawson、Zac Lawson）· 编配：咲阿柚",
+      "tempo": 141,
+      "timeSignature": [
+        12,
+        8
+      ],
+      "keySignature": 4,
+      "notes": 2045,
+      "hasOriginal": false,
+      "reviewRequired": true,
+      "file": "scores/golden-hour-netease-664959.json"
+    },
+    {
+      "id": "hanting-complete",
+      "title": "幻听 · 完整六页钢琴谱",
+      "composer": "未知",
+      "tempo": 90,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 7,
+      "notes": 982,
+      "hasOriginal": true,
+      "reviewRequired": false,
+      "file": "scores/hanting-complete.json"
+    },
+    {
+      "id": "mary-lamb",
+      "title": "玛丽有只小羊羔",
+      "composer": "传统童谣",
+      "tempo": 88,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 0,
+      "notes": 42,
+      "hasOriginal": false,
+      "reviewRequired": false,
+      "file": "scores/mary-lamb.json"
+    },
+    {
+      "id": "ode-to-joy",
+      "title": "欢乐颂",
+      "composer": "Ludwig van Beethoven",
+      "tempo": 92,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 0,
+      "notes": 46,
+      "hasOriginal": false,
+      "reviewRequired": false,
+      "file": "scores/ode-to-joy.json"
+    },
+    {
+      "id": "reread-gpt61-high-v2-eutopia-staff",
+      "title": "Eutopia · GPT‑6.1 high 新策略",
+      "composer": "未知",
+      "tempo": 90,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": -3,
+      "notes": 1074,
+      "hasOriginal": false,
+      "reviewRequired": true,
+      "file": "scores/reread-gpt61-high-v2-eutopia-staff.json"
+    },
+    {
+      "id": "reread-gpt61-high-v2-golden",
+      "title": "golden hour · GPT‑6.1 high 新策略",
+      "composer": "未知",
+      "tempo": 94,
+      "timeSignature": [
+        12,
+        8
+      ],
+      "keySignature": 4,
+      "notes": 2045,
+      "hasOriginal": false,
+      "reviewRequired": true,
+      "file": "scores/reread-gpt61-high-v2-golden.json"
+    },
+    {
+      "id": "reread-gpt61-high-v2-ifyou",
+      "title": "IF YOU · GPT‑6.1 high 新策略",
+      "composer": "未知",
+      "tempo": 68,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": -5,
+      "notes": 1252,
+      "hasOriginal": false,
+      "reviewRequired": true,
+      "file": "scores/reread-gpt61-high-v2-ifyou.json"
+    },
+    {
+      "id": "reread-gpt61-high-v2-merry",
+      "title": "Merry Christmas Mr. Lawrence · GPT‑6.1 high 新策略",
+      "composer": "未知",
+      "tempo": 60,
+      "timeSignature": [
+        12,
+        8
+      ],
+      "keySignature": -5,
+      "notes": 2199,
+      "hasOriginal": false,
+      "reviewRequired": true,
+      "file": "scores/reread-gpt61-high-v2-merry.json"
+    },
+    {
+      "id": "reread-gpt61-high-v2-sudi",
+      "title": "天龙八部之宿敌 · GPT‑6.1 high 新策略",
+      "composer": "未知",
+      "tempo": 90,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": -6,
+      "notes": 1044,
+      "hasOriginal": false,
+      "reviewRequired": true,
+      "file": "scores/reread-gpt61-high-v2-sudi.json"
+    },
+    {
+      "id": "score-mv906k5t",
+      "title": "小星星 · 图片前两小节",
+      "composer": "法国传统民谣",
+      "tempo": 84,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 0,
+      "notes": 11,
+      "hasOriginal": false,
+      "reviewRequired": true,
+      "file": "scores/score-mv906k5t.json"
+    },
+    {
+      "id": "score-mv9096ep",
+      "title": "Canon in D",
+      "composer": "Pachelbel",
+      "tempo": 100,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 2,
+      "notes": 442,
+      "hasOriginal": false,
+      "reviewRequired": false,
+      "file": "scores/score-mv9096ep.json"
+    },
+    {
+      "id": "score-mv90aval",
+      "title": "窗边的晨光",
+      "composer": "AI 原创",
+      "tempo": 72,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 0,
+      "notes": 20,
+      "hasOriginal": false,
+      "reviewRequired": false,
+      "file": "scores/score-mv90aval.json"
+    },
+    {
+      "id": "score-mv9j4u62",
+      "title": "青花瓷",
+      "composer": "MIDI 导入",
+      "tempo": 96,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": -5,
+      "notes": 1355,
+      "hasOriginal": false,
+      "reviewRequired": false,
+      "file": "scores/score-mv9j4u62.json"
+    },
+    {
+      "id": "score-mv9mxb7i",
+      "title": "野蜂飞舞 · 第 1 页 · 第 1 行",
+      "composer": "尼古拉·里姆斯基-科萨科夫；改编：Kevin W. K. Yeung",
+      "tempo": 185,
+      "timeSignature": [
+        2,
+        4
+      ],
+      "keySignature": 0,
+      "notes": 24,
+      "hasOriginal": false,
+      "reviewRequired": true,
+      "file": "scores/score-mv9mxb7i.json"
+    },
+    {
+      "id": "twinkle",
+      "title": "小星星",
+      "composer": "法国传统民谣",
+      "tempo": 84,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 0,
+      "notes": 66,
+      "hasOriginal": false,
+      "reviewRequired": false,
+      "file": "scores/twinkle.json"
+    }
+  ],
+  "deletedIds": [],
+  "updatedAt": "2026-10-19T04:36:40.172Z"
+}

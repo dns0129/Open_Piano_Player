@@ -1,3 +1,4 @@
+import {saveCloudDownload,packageLocalScore} from './cloud-library.js';
 import { hantingNotation, hantingNotationMatched } from '../lib/scores/hanting.mjs';
 import {findReviewedPdf} from '../lib/reviewed-pdf-reuse.mjs';
 import {
@@ -55,7 +56,7 @@ import { mountFullScoreImport } from "./full-score-import.js";
 import { decodeFullScoreRecovery } from "../lib/full-score-recovery.mjs";
 import { mountSourceBrowser } from "./source-browser.js";
 import { mountNeteaseImport } from "./netease-import.js";
-import { savePracticeSource, loadPracticeSource, deletePracticeSource, sourceMatchesScore, releasePracticeSource } from "./source-library.js";
+import { savePracticeSource, loadPracticeSource, listDownloadedScores, deletePracticeSource, sourceMatchesScore, releasePracticeSource } from "./source-library.js";
 import { bumblebeeYeungNotation, sourceNotationMatched } from "../lib/scores/bumblebee-yeung-notation.mjs";
 import { PianoPlayer } from "./audio.js";
 import {
@@ -128,6 +129,9 @@ const state = {
   saved: read("qinban-scores", []),
   shared: [],
   sharedJobs: new Map(),
+  downloadedIds: new Set(),
+  cloudScores: [], cloudLoaded: false, cloudError: '', cloudBusy: false,
+  libraryTab: read('qinban-library-tab', 'local'),
   status: null,
   tempo: 80,
   volume: 0.65,
@@ -239,7 +243,7 @@ function remember(score) {
 }
 function availableScores() {
   const seen = new Set();
-  return [...state.shared, ...state.saved, ...library].filter((score) => {
+  return [...state.shared, ...state.saved].filter((score) => {
     if (seen.has(score.id)) return false;
     seen.add(score.id);
     return true;
@@ -369,13 +373,22 @@ function safeLink(url, label) {
   }
 }
 function libraryView() {
-  return `<section class="content-page"><div class="page-heading"><div><span class="eyebrow">YOUR MUSIC LIBRARY</span><h1>我的曲库</h1><p>收藏的曲谱，都在这里。选择一首，开始练习。</p></div><button class="button primary" data-ai>${icon("search")}按歌名找谱</button></div><div class="library-filter search-input">${icon("search")}<input id="library-query" aria-label="搜索我的曲库" placeholder="搜索已保存的歌名、作曲家…"><span>${availableScores().length} 份乐谱</span></div><div class="library-grid" id="library-grid">${scoreCards(availableScores())}</div></section>`;
+  const cloud=state.libraryTab==='cloud',scores=cloud?state.cloudScores:availableScores();
+  return `<section class="content-page"><div class="page-heading"><div><span class="eyebrow">YOUR MUSIC LIBRARY</span><h1>${cloud?'云端曲库':'本地曲库'}</h1><p>${cloud?'下载到本地后即可练习；本地删除不影响云端。':'下载和导入的曲谱保存在本地，可随时删除。'}</p></div><button class="button primary" data-ai>${icon("search")}按歌名找谱</button></div>
+  <div class="cloud-library-tabs"><button class="button ${!cloud?'primary':'secondary'}" data-library-tab="local">本地曲库</button><button class="button ${cloud?'primary':'secondary'}" data-library-tab="cloud">云端曲库</button>${cloud?`<button class="button quiet" data-cloud-refresh ${state.cloudBusy?'disabled':''}>${state.cloudBusy?'正在处理…':'刷新云端'}</button>`:''}</div>
+  ${cloud&&state.cloudError?`<p class="cloud-library-error" role="alert">${esc(state.cloudError)}</p>`:''}
+  <div class="library-filter search-input">${icon("search")}<input id="library-query" aria-label="搜索曲库" placeholder="搜索歌名、作曲家…"><span>${scores.length} 份乐谱</span></div><div class="library-grid" id="library-grid">${cloud?cloudCards(scores):scoreCards(scores)}</div>${!scores.length?`<p class="cloud-library-empty">${cloud?state.cloudLoaded?'云端暂无曲目。':'正在读取云端曲库…':'本地暂无曲目，前往云端曲库下载，或导入自己的乐谱。'}</p>`:''}</section>`;
 }
+function cloudCards(scores) {
+  const localIds=new Set(availableScores().map(s=>s.id));
+  return scores.map((s,i)=>`<article class="score-card" data-card="${esc(s.id)}"><div class="card-art tone-${i%4}"><span class="card-note">𝄞</span><span class="card-type">${s.reviewRequired?'待人工校对':s.hasOriginal?'含原谱图片':'数字乐谱'}</span></div><div class="card-info"><h3>${esc(s.title)}</h3><p>${esc(s.composer)}</p><div class="card-details">${s.notes} 音符 · ${s.tempo} BPM</div><div class="cloud-card-actions"><button class="button primary" data-cloud-download="${esc(s.id)}" ${state.cloudBusy?'disabled':''}>${icon('download')}${localIds.has(s.id)?'重新下载':'下载到本地'}</button>${!STATIC_SITE?`<button class="button quiet" data-cloud-delete="${esc(s.id)}" ${state.cloudBusy?'disabled':''}>删除云端</button>`:''}</div></div></article>`).join('');
+}
+
 function scoreCards(scores) {
   return scores
     .map(
       (s, i) =>
-        `<article class="score-card" data-card="${esc(s.id)}"><div class="card-art tone-${i % 4}"><span class="card-note">${["𝄞", "♫", "♩", "♬"][i % 4]}</span><span class="card-type">${hantingNotationMatched(s) ? "6页完整钢琴谱" : s.source?.kind === "full-score-model-reviewed" ? "AI全谱校对版 · 待人工确认" : s.source?.reviewRequired || s.source?.kind === "full-score-ai-draft" ? "数字谱 · 待校对" : s.source?.kind === "full-pdf-reviewed" ? "完整PDF钢琴谱" : s.source?.kind === "pdf-transcription-checked" ? "7页完整钢琴谱" : library.some((x) => x.id === s.id) ? "精选练习曲" : "我的乐谱"}</span><button data-open="${esc(s.id)}" class="card-play" aria-label="打开 ${esc(s.title)}">${icon("play")}</button></div><div class="card-info"><h3>${esc(s.title)}</h3><p>${esc(s.composer || "钢琴练习曲")}</p><div class="card-details"><span>${s.mode ? esc(tonalityLabel(s)) : keyName(s.keySignature) + " 调"} · ${s.timeSignature.join("/")}</span><span>${s.tempo} BPM</span></div></div>${!state.sharedJobs.has(s.id) && !library.some((x) => x.id === s.id) ? `<button class="delete-score" data-delete="${esc(s.id)}" aria-label="删除 ${esc(s.title)}">${icon("trash-2")}</button>` : ""}</article>`,
+        `<article class="score-card" data-card="${esc(s.id)}"><div class="card-art tone-${i % 4}"><span class="card-note">${["𝄞", "♫", "♩", "♬"][i % 4]}</span><span class="card-type">${hantingNotationMatched(s) ? "6页完整钢琴谱" : s.source?.kind === "full-score-model-reviewed" ? "AI全谱校对版 · 待人工确认" : s.source?.reviewRequired || s.source?.kind === "full-score-ai-draft" ? "数字谱 · 待校对" : s.source?.kind === "full-pdf-reviewed" ? "完整PDF钢琴谱" : s.source?.kind === "pdf-transcription-checked" ? "7页完整钢琴谱" : library.some((x) => x.id === s.id) ? "精选练习曲" : "我的乐谱"}</span><button data-open="${esc(s.id)}" class="card-play" aria-label="打开 ${esc(s.title)}">${icon("play")}</button></div><div class="card-info"><h3>${esc(s.title)}</h3><p>${esc(s.composer || "钢琴练习曲")}</p><div class="card-details"><span>${s.mode ? esc(tonalityLabel(s)) : keyName(s.keySignature) + " 调"} · ${s.timeSignature.join("/")}</span><span>${s.tempo} BPM</span></div></div>${!STATIC_SITE ? `<button class="button quiet cloud-upload" data-cloud-upload="${esc(s.id)}" ${state.cloudBusy?'disabled':''}>上传云端</button>` : ""}<button class="button quiet cloud-delete-local" data-delete="${esc(s.id)}" aria-label="本地删除 ${esc(s.title)}" title="仅删除本地副本">${icon("trash-2")}删除本地</button></article>`,
     )
     .join("");
 }
@@ -387,7 +400,7 @@ function bindCommon() {
         player.pause();
         state.view = b.dataset.nav;
         render();
-        if(state.view === "library")void syncLocalLibrary();
+        if(state.view === "library"){void syncLocalLibrary();if(state.libraryTab==='cloud')void syncCloudLibrary();}
       }),
   );
   $$("[data-upload]").forEach(
@@ -947,16 +960,41 @@ function bindLibrary() {
         if (score) setScore(score);
       }),
   );
-  $$("[data-delete]").forEach(
-    (b) =>
-      (b.onclick = () => {
-        void deletePracticeSource(b.dataset.delete).catch(error=>toast(error.message,true));
-        state.saved = state.saved.filter((s) => s.id !== b.dataset.delete);
-        saveLibrary();
-        render();
-        toast("已从本机曲库移除");
-      }),
-  );
+  $$('[data-library-tab]').forEach(b=>b.onclick=()=>{state.libraryTab=b.dataset.libraryTab;localStorage.setItem('qinban-library-tab',JSON.stringify(state.libraryTab));render();if(state.libraryTab==='cloud')void syncCloudLibrary();});
+  $('[data-cloud-refresh]')?.addEventListener('click',()=>void syncCloudLibrary());
+  $$('[data-cloud-download]').forEach(b=>b.onclick=()=>void cloudAction(async()=>{
+    const id=b.dataset.cloudDownload;
+    const bundle=STATIC_SITE?await cloudJSON(assetURL(`/cloud-library/scores/${id}.json`)):await api(`/api/cloud-library/${id}`);
+    if(bundle.score?.id!==id)throw new Error('云端下载曲目不匹配，未保存。');
+    await saveCloudDownload(bundle,STATIC_SITE?{}:{saveOnDisk:data=>api('/api/local-downloads',data)});
+    await syncLocalLibrary();
+    toast('已下载到本地曲库，原谱图片一并保存。');
+  }));
+  $$('[data-cloud-delete]').forEach(b=>b.onclick=()=>{
+    const entry=state.cloudScores.find(s=>s.id===b.dataset.cloudDelete);
+    if(!confirm(`从云端删除“${entry?.title||b.dataset.cloudDelete}”？所有用户将无法再下载，已有本地副本会保留。`))return;
+    void cloudAction(async()=>{await api(`/api/cloud-library/${b.dataset.cloudDelete}/delete`,{});state.cloudScores=state.cloudScores.filter(s=>s.id!==b.dataset.cloudDelete);toast('云端 main 已删除；公开网页将在 Pages 发布后更新，本地副本保留。');});
+  });
+  $$('[data-cloud-upload]').forEach(b=>b.onclick=()=>void cloudAction(async()=>{
+    const score=availableScores().find(s=>s.id===b.dataset.cloudUpload);
+    if(!confirm(`将“${score.title}”及其原谱图片发布到公开云端曲库？所有人都可下载。`))return;
+    const bundle=await packageLocalScore(score,await loadAvailablePracticeSource(score));
+    await api('/api/cloud-library',bundle);toast('已上传云端 main，公开下载将在 Pages 发布后更新。');
+  }));
+  $$('[data-delete]').forEach(b=>b.onclick=()=>void cloudAction(async()=>{
+    const id=b.dataset.delete;
+    if(!confirm('仅删除这首曲子的本地副本？云端曲目不受影响，可以重新下载。'))return;
+    // Complete server persistence changes before changing the visible library.
+    if(state.sharedJobs.has(id))await api(`/api/local-library/${state.sharedJobs.get(id)}/delete`,{});
+    if(!STATIC_SITE&&state.downloadedIds.has(id))await api(`/api/local-downloads/${id}/delete`,{});
+    const previous=state.saved;
+    state.saved=state.saved.filter(s=>s.id!==id);
+    if(!saveLibrary()){state.saved=previous;throw new Error('本地曲库删除未能保存，请重试。');}
+    await deletePracticeSource(id);
+    state.shared=state.shared.filter(s=>s.id!==id);state.sharedJobs.delete(id);state.downloadedIds.delete(id);
+    if(state.score.id===id){player.stop();sourceLoadEpoch++;releasePracticeSource(id);state.sourceRecord=null;localStorage.removeItem('qinban-active-score');state.view='library';}
+    toast('已删除本地副本，云端曲目保留。');
+  }));
   $("#library-query").oninput = (e) => {
     const query = e.target.value.toLowerCase();
     $$("[data-card]").forEach(
@@ -1246,6 +1284,11 @@ async function api(path, body, signal, recovered = false) {
   return data;
 }
 async function loadAvailablePracticeSource(score) {
+  if(!STATIC_SITE&&state.downloadedIds.has(score.id)){
+    const result=await api(`/api/local-downloads/${score.id}`);
+    if(!result.notation)return null;
+    return {id:score.id,reference:{id:result.score.id,durationBeats:result.score.durationBeats,keySignature:result.score.keySignature,timeSignature:[...result.score.timeSignature],notes:result.score.notes.map(n=>[n.id,n.beat,n.duration,n.midi,n.hand]).sort((a,b)=>a[0].localeCompare(b[0]))},notation:result.notation,warnings:result.warnings,reviewStatus:result.reviewStatus};
+  }
   const jobId=state.sharedJobs.get(score.id);
   if(!jobId)return loadPracticeSource(score);
   const result=await api(`/api/local-library/${jobId}`);
@@ -1253,14 +1296,30 @@ async function loadAvailablePracticeSource(score) {
     timeSignature:[...result.score.timeSignature],notes:result.score.notes.map(n=>[n.id,n.beat,n.duration,n.midi,n.hand]).sort((a,b)=>a[0].localeCompare(b[0]))};
   return {id:score.id,reference,notation:result.notation,warnings:result.warnings};
 }
+async function cloudJSON(url){const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error('云端曲库暂时无法访问，请检查网络后重试。');return r.json();}
+async function syncCloudLibrary(){
+  if(state.cloudBusy)return;
+  state.cloudBusy=true;state.cloudError='';if(state.view==='library')render();
+  try{const data=STATIC_SITE?await cloudJSON(assetURL('/cloud-library/index.json')):await api('/api/cloud-library');
+    if(data.version!==1||!Array.isArray(data.scores))throw new Error('云端曲库目录格式无效。');
+    state.cloudScores=data.scores;state.cloudLoaded=true;
+  }catch(error){state.cloudError=error.message;}
+  finally{state.cloudBusy=false;if(state.view==='library')render();}
+}
+async function cloudAction(action){
+  if(state.cloudBusy)return;state.cloudBusy=true;render();
+  try{await action();}catch(error){toast(error.message,true);}
+  finally{state.cloudBusy=false;if(state.view==='library')render();}
+}
 let librarySync;
 function syncLocalLibrary() {
-  if(STATIC_SITE)return Promise.resolve();
+  if(STATIC_SITE)return listDownloadedScores().then(scores=>{state.shared=scores;state.downloadedIds=new Set(scores.map(s=>s.id));if(state.view==='library')render();}).catch(error=>toast('本地曲库读取失败：'+error.message,true));
   if(librarySync)return librarySync;
   librarySync=(async()=>{
     try {
-      const data=await api('/api/local-library');
-      state.shared=data.scores.map(entry=>validateScore(entry.score));
+      const [data,downloaded]=await Promise.all([api('/api/local-library'),api('/api/local-downloads')]);
+      state.shared=[...downloaded.scores,...data.scores].map(entry=>validateScore(entry.score));
+      state.downloadedIds=new Set(downloaded.scores.map(entry=>entry.score.id));
       state.sharedJobs=new Map(data.scores.map(entry=>[entry.score.id,entry.jobId]));
       if(state.view==='library') {
         const query=$('#library-query')?.value||'';

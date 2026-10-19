@@ -54,15 +54,16 @@ function hydrate(saved) {
 }
 
 /** Blobs live in IndexedDB; localStorage keeps only the compact playable score. */
-export async function savePracticeSource({ score: raw, sourceNotation, assets, reviewStatus, warnings=[] }) {
+export async function savePracticeSource({ score: raw, sourceNotation, assets, reviewStatus, warnings=[], downloaded=false }) {
   const score = validateScore(raw);
+  if(downloaded && !sourceNotation){await transaction('readwrite',store=>store.put({id:score.id,score,downloaded:true}));return null;}
   if (!sourceNotation?.systems?.length || !Array.isArray(assets) || !assets.length)
     throw new Error('完整原谱缺少图片或定位数据，未保存为可跟谱版本。');
   const storedAssets = assets.map(asset => {
     if (!(asset.blob instanceof Blob) || !asset.blob.size) throw new Error('原谱图片数据为空，请重新导入。');
     return { id: String(asset.id), page: asset.page, system: asset.system, blob: asset.blob };
   });
-  const saved = { id: score.id, reference: reference(score), notation: {
+  const saved = { id: score.id, ...(downloaded?{score,downloaded:true}:{}), reference: reference(score), notation: {
     ...sourceNotation, systems: sourceNotation.systems.map(system => ({ ...system, imageUrl: '' })),
   }, assets: storedAssets, reviewStatus: reviewStatus || {}, warnings:warnings.filter(warning=>typeof warning==='string').map(warning=>warning.slice(0,600)).slice(0,100), savedAt: Date.now() };
   // Validate without changing the currently displayed URLs. A failed disk write
@@ -86,3 +87,8 @@ export async function deletePracticeSource(id) {
 }
 
 export function releasePracticeSource(id) { release(id); }
+
+export async function listDownloadedScores(){
+  const records=await transaction('readonly',store=>store.getAll());
+  return records.filter(record=>record.downloaded===true&&record.score).map(record=>validateScore(record.score));
+}

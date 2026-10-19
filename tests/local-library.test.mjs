@@ -75,3 +75,10 @@ test('model-checked complete scores remain distinct from human confirmation and 
   f.job.result.review.checkedRegions=0;await f.save();assert.equal((await store.list()).scores.length,0);
   f.job.result.review.checkedRegions=1;f.job.result.review.humanConfirmed=true;await f.save();assert.equal((await store.list()).scores.length,0);
 });
+
+test('removing a local job score survives restart without destroying recognition history',async t=>{
+ const f=await fixture(t);f.job.status='complete';await f.save();const store=createLocalLibrary(f);
+ await store.remove(f.id);assert.equal((await createLocalLibrary(f).list()).scores.length,0);
+ await assert.rejects(store.source(f.id),{code:'SCORE_NOT_FOUND'});
+ assert.equal(JSON.parse(await (await import('node:fs/promises')).readFile(join(f.directory,f.id,'job.json'),'utf8')).status,'complete');
+});

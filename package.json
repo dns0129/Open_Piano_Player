@@ -19,7 +19,8 @@
     "scores:list": "node scripts/score-repo.mjs list",
     "scores:reread-five": "node scripts/reread-five-high.mjs",
     "scores:index": "node scripts/score-repo.mjs index",
-    "build:pages": "node scripts/prepare-assets.mjs && VITE_STATIC_SITE=1 vite build --base ${PAGES_BASE:-/Open_Piano_Player/} --outDir dist-pages"
+    "build:pages": "node scripts/prepare-assets.mjs && VITE_STATIC_SITE=1 vite build --base ${PAGES_BASE:-/Open_Piano_Player/} --outDir dist-pages",
+    "cloud:prepare": "node scripts/prepare-cloud-library.mjs"
   },
   "dependencies": {
     "@earendil-works/pi-agent-core": "1.1.0",

@@ -1,3 +1,5 @@
+import {createCloudLibrary} from './lib/cloud-library-admin.mjs';
+import {createDownloadLibrary} from './lib/download-library.mjs';
 import {createLocalLibrary} from './lib/local-library.mjs';
 import http from 'node:http';
 import {readFile, realpath, stat} from 'node:fs/promises';
@@ -16,7 +18,7 @@ const COOKIE='qinban_session';
 const contentTypes={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8','.xml':'application/xml','.musicxml':'application/vnd.recordare.musicxml+xml','.mxl':'application/vnd.recordare.musicxml','.mid':'audio/midi','.midi':'audio/midi','.svg':'image/svg+xml','.png':'image/png','.jpeg':'image/jpeg','.jpg':'image/jpeg','.webp':'image/webp','.ico':'image/x-icon','.woff2':'font/woff2','.woff':'font/woff','.ttf':'font/ttf','.otf':'font/otf','.pfb':'application/octet-stream','.bcmap':'application/octet-stream','.wasm':'application/wasm','.bin':'application/octet-stream','.txt':'text/plain; charset=utf-8','.mp3':'audio/mpeg','.wav':'audio/wav','.ogg':'audio/ogg','.pdf':'application/pdf'};
 function safeEqual(a,b){if(typeof a!=='string'||typeof b!=='string')return false;const x=Buffer.from(a),y=Buffer.from(b);return x.length===y.length && timingSafeEqual(x,y);}
 
-export function createAppServer({distDir=resolve('dist'),settingsStore=createSettingsStore(),generate=generateScore,statusReader=authStatus,publicDownloader=downloadPublicScore,scoreSearch=createScoreSearch(),fullScoreJobs,neteaseProvider,localLibrary=createLocalLibrary()}={}) {
+export function createAppServer({distDir=resolve('dist'),settingsStore=createSettingsStore(),generate=generateScore,statusReader=authStatus,publicDownloader=downloadPublicScore,scoreSearch=createScoreSearch(),fullScoreJobs,neteaseProvider,localLibrary=createLocalLibrary(),cloudLibrary=createCloudLibrary(),downloadLibrary=createDownloadLibrary()}={}) {
   const scoreJobs=fullScoreJobs||createFullScoreJobStore({settingsProvider:()=>settingsStore.read()});
   const netease=neteaseProvider||createNeteaseScoreProvider();
   const sessions=new Map();let activeGenerations=0;
@@ -75,7 +77,26 @@ export function createAppServer({distDir=resolve('dist'),settingsStore=createSet
         json(res,200,{csrfToken:current.csrfToken,pi,deepseek:{configured:Boolean(settings.deepseekApiKey || process.env.DEEPSEEK_API_KEY),model:settings.deepseekModel || defaultDeepseekModel,models:['deepseek-flash','deepseek-v4-pro','deepseek-chat','deepseek-reasoner'],vision:(settings.deepseekModel||defaultDeepseekModel)==='deepseek-flash'},fullScore:{...SCORE_RECOGNITION,deepseek:{available:Boolean(settings.deepseekApiKey||process.env.DEEPSEEK_API_KEY)&&(settings.deepseekModel||defaultDeepseekModel)==='deepseek-flash',ready:Boolean(settings.deepseekApiKey||process.env.DEEPSEEK_API_KEY)&&(settings.deepseekModel||defaultDeepseekModel)==='deepseek-flash',model:'deepseek-flash',reasoningEffort:'high'},pi:{available:pi.available===true,ready:pi.available===true,model:SCORE_RECOGNITION.model,reasoningEffort:SCORE_RECOGNITION.reasoningEffort},maxPages:200,maxPdfBytes:50*1024*1024},localOnly:true});return;
       }
       const current=session(req,res);if(!current)throw userError('会话已过期，请刷新页面。','SESSION_REQUIRED',403);
-      if(req.method==='POST' && !safeEqual(req.headers['x-csrf-token'],current.csrfToken))throw userError('请求校验失败，请刷新页面后重试。','CSRF',403);
+      if(['POST','PUT','DELETE','PATCH'].includes(req.method) && !safeEqual(req.headers['x-csrf-token'],current.csrfToken))throw userError('请求校验失败，请刷新页面后重试。','CSRF',403);
+      if(url.pathname==='/api/cloud-library'&&req.method==='GET'){json(res,200,await cloudLibrary.list());return;}
+      if(url.pathname==='/api/cloud-library'&&req.method==='POST'){json(res,200,await cloudLibrary.publish(await body(req,72*1024*1024)));return;}
+      const cloudRoute=/^\/api\/cloud-library\/([a-z0-9][a-z0-9_-]{0,79})(\/delete)?$/.exec(url.pathname);
+      if(cloudRoute){
+        if(req.method==='GET'&&!cloudRoute[2]){json(res,200,await cloudLibrary.download(cloudRoute[1]));return;}
+        if(req.method==='DELETE'&&!cloudRoute[2]||req.method==='POST'&&cloudRoute[2]){if(req.method==='POST')await body(req,16000);json(res,200,await cloudLibrary.remove(cloudRoute[1]));return;}
+      }
+      if(url.pathname==='/api/local-downloads'&&req.method==='GET'){json(res,200,await downloadLibrary.list());return;}
+      if(url.pathname==='/api/local-downloads'&&req.method==='POST'){json(res,200,await downloadLibrary.save(await body(req,72*1024*1024)));return;}
+      const downloadRoute=/^\/api\/local-downloads\/([a-z0-9][a-z0-9_-]{0,79})(?:\/(delete)|\/images\/([a-z0-9][a-z0-9_-]{0,79}))?$/.exec(url.pathname);
+      if(downloadRoute){
+        if(req.method==='DELETE'&&!downloadRoute[2]&&!downloadRoute[3]||req.method==='POST'&&downloadRoute[2]){if(req.method==='POST')await body(req,16000);json(res,200,await downloadLibrary.remove(downloadRoute[1]));return;}
+        if(req.method==='GET'&&!downloadRoute[2]){
+          if(downloadRoute[3]){const asset=await downloadLibrary.image(downloadRoute[1],downloadRoute[3]);res.writeHead(200,{'content-type':asset.mimeType,'cache-control':'no-store'});res.end(asset.buffer);}
+          else json(res,200,await downloadLibrary.source(downloadRoute[1]));return;
+        }
+      }
+      const removeLocal=/^\/api\/local-library\/([A-Za-z0-9_-]{1,80})\/delete$/.exec(url.pathname);
+      if(req.method==='POST'&&removeLocal){await body(req,16000);json(res,200,await localLibrary.remove(removeLocal[1]));return;}
       if(req.method==='GET' && url.pathname==='/api/local-library') {
         json(res,200,await localLibrary.list());return;
       }
