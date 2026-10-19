@@ -1,6 +1,8 @@
-import { Renderer, Stave, StaveNote, StaveConnector, Voice, Formatter, Accidental, Dot, StaveTie, Beam, Tuplet, Annotation, Fraction, VexFlow, Barline } from 'vexflow';
+import { Renderer, Stave, StaveNote, StaveConnector, Voice, Formatter, Accidental, Dot, StaveTie, Beam, Tuplet, Annotation, Fraction, VexFlow, Barline, Articulation, Ornament, Modifier } from 'vexflow';
 import { beatsPerMeasure, KEY_NAMES, midiName, scoreMeasureBounds, scoreMeasureIndex } from '../lib/score.mjs';
 import { measureSegments, spellMidi, numberedPitch, durationGlyph, planSystems } from '../lib/notation-layout.mjs';
+import { tonalityLabel } from '../lib/score-arrangement.mjs';
+import { tieChains, effectLabels, performanceNotes, ornamentAccidental } from '../lib/note-effects.mjs';
 
 const NS = 'http://www.w3.org/2000/svg';
 let fontsLoaded = false;
@@ -104,6 +106,7 @@ const css = `
 .notation-hit{fill:transparent;cursor:pointer;outline:none;stroke:none;pointer-events:all}
 .notation-hit:hover,.notation-hit:focus{fill:#dbeee6;fill-opacity:.7;stroke:#659c89;stroke-width:1}
 .notation-hit.is-active{fill:#a9d5bf;fill-opacity:.55}
+.notation-roll-note.is-active{stroke:#244e3b;stroke-width:2;filter:brightness(1.12)}
 .notation-cursor{stroke:#2b796b;stroke-width:1.65;pointer-events:none;opacity:0}
 .notation-pitch{pointer-events:none;fill:#263b35;font-family:Georgia,'Songti SC',serif;font-weight:600}
 .notation-rest{fill:#8d9891}.notation-barline{stroke:#657064;stroke-width:1;pointer-events:none}
@@ -121,14 +124,21 @@ function installStyles() {
 export function renderNotation(container, score, options = {}) {
   installStyles();
   const { mode = 'staff', onSeek = () => {}, showNoteNames = false } = options;
+  const chains=tieChains(score.notes), chain=n=>chains.get(n.id);
+  const sameTie=(a,b)=>a.id===b.id || (chain(a)?.head.id===chain(b)?.head.id && a.midi===b.midi && !!chain(a));
+  const sounding=mode==='roll'?performanceNotes(score):null;
+  const hasEffects=score.notes.some(n=>effectLabels(n).length);
   const barLength = beatsPerMeasure(score), measureCount = score.measureMap?.length || Math.max(1, Math.ceil(score.durationBeats / barLength));
   const root = document.createElement('div'); root.className = 'notation-root'; root.dataset.mode = mode;
   const help = document.createElement('p'); help.className = 'notation-help';
-  help.textContent = mode === 'numbered'
+  help.textContent = mode === 'roll'
+    ? '钢琴卷帘 · 横向为时间，纵向为实际音高；绿色为右手，蓝色为左手。条带长度保留精确时值，点击音符定位。'
+    : mode === 'numbered'
     ? `1 = ${KEY_NAMES[score.keySignature + 7].replace('b', '♭').replace('#', '♯')} · ${score.timeSignature.join('/')} · 上行为右手，下行为左手；上下点表示八度，下划线表示短时值。点击音符定位。`
     : '高音谱表为右手，低音谱表为左手。点击音符定位，播放位置会沿连续谱面前进。';
+  if (mode === 'numbered' && score.mode === 'minor') help.textContent += ` ${tonalityLabel(score)} · 以 6 为小调主音。`;
   if (options.onSelectNotes) help.textContent = '点击谱面选择音符；和弦内的单音也可在下方逐个选择。';
-  if (hasMergedVoices(score)) help.textContent += ' 复声部合并为和弦及延音线；原谱保留独立声部书写。';
+  if (mode !== 'roll' && hasMergedVoices(score)) help.textContent += ' 复声部合并为和弦及延音线；精确起止可切换钢琴卷帘查看。';
   if (score.notes.some(note => tripletDurations.some(([duration]) => closeTo(note.duration, duration)))) help.textContent += ' 括号 3 表示三连音。';
   const systemsHost = document.createElement('div'); systemsHost.className = 'notation-systems'; root.append(help, systemsHost); container.replaceChildren(root);
   let systems = [], measures = [], beatNow = 0, currentIndex = -1, destroyed = false, layoutWidth = 0, resizeFrame = 0, scrollFrame = 0, visibilityObserver;
@@ -136,14 +146,21 @@ export function renderNotation(container, score, options = {}) {
   const segments = (index, hand) => { const key = `${index}:${hand}`; if (!cache.has(key)) cache.set(key, notationMeasureSegments(score, index, hand)); return cache.get(key); };
 
   function systemDimensions(system) {
+    if (mode === 'roll') {
+      const start=system.bars[0].start,end=system.bars.at(-1).end;
+      const notes=sounding.filter(n=>n.beat<end&&n.beat+n.duration>start);
+      const low=Math.max(21,Math.min(60,...notes.map(n=>n.midi))-2),high=Math.min(108,Math.max(72,...notes.map(n=>n.midi))+2);
+      return {low,high,height:(high-low+1)*9+50};
+    }
     if (mode === 'numbered') {
       const maxChord = Math.max(1, ...system.bars.flatMap(i => ['right', 'left'].flatMap(h => segments(i.index, h).map(s => new Set(s.notes.map(n => n.midi)).size))));
-      const rowHeight = Math.max(105, maxChord * 31 + 48);
+      const rowHeight = Math.max(105, maxChord * 31 + 48)+(hasEffects?24:0);
       return { maxChord, rowHeight, height: rowHeight * 2 + 20 };
     }
     const upper = system.bars.flatMap(i => segments(i.index, 'right').flatMap(s => s.notes)), lower = system.bars.flatMap(i => segments(i.index, 'left').flatMap(s => s.notes));
     const topExtra = Math.max(0, Math.ceil((Math.max(77, ...upper.map(n => n.midi)) - 77) / 12) * 36), bottomExtra = Math.max(0, Math.ceil((43 - Math.min(43, ...lower.map(n => n.midi))) / 12) * 36);
-    return { topY: 28 + topExtra, bottomY: 137 + topExtra, height: 243 + topExtra + bottomExtra };
+    const effectExtra=hasEffects?22:0;
+    return { topY: 28 + topExtra+effectExtra, bottomY: 137 + topExtra+effectExtra, height: 243 + topExtra + bottomExtra+effectExtra };
   }
 
   function seekable(rect, segment) {
@@ -172,6 +189,16 @@ export function renderNotation(container, score, options = {}) {
       const note = new StaveNote({ clef, keys, duration: duration + (pitches.length ? '' : 'r'), dots, autoStem: true }).setStave(stave);
       if (dots) Dot.buildAndAttach([note], { all: true });
       if (showNoteNames && pitches.length) note.addModifier(new Annotation(pitches.map(n => midiName(n.midi, score.keySignature < 0)).join(' ')).setFont('Arial', 8).setVerticalJustification('top'));
+      pitches.forEach((n,index)=>{
+        if(!closeTo(n.beat,segment.beat) || (chain(n)&&chain(n).head.id!==n.id)) return;
+        if(n.accent) note.addModifier(new Articulation(n.accent==='accent'?'a>':'a^').setPosition(Modifier.Position.ABOVE),index);
+        if(n.articulation) note.addModifier(new Articulation(n.articulation==='staccato'?'a.':'a-').setPosition(Modifier.Position.ABOVE),index);
+        if(n.ornament) {
+          const ornament=new Ornament(({trill:'tr','mordent-upper':'mordent','mordent-lower':'mordentInverted'})[n.ornament]), accidental=ornamentAccidental(n,score.keySignature);
+          if(accidental) n.ornament==='mordent-lower'?ornament.setLowerAccidental(accidental):ornament.setUpperAccidental(accidental);
+          note.addModifier(ornament,index);
+        }
+      });
       return { ...segment, pitches, note, stave, info, hand };
     });
     // Attach tuplets before adding tickables: VexFlow then formats a true 3:2
@@ -185,12 +212,12 @@ export function renderNotation(container, score, options = {}) {
   }
   function drawStaffTies(objects, context, system) {
     for (let i = 1; i < objects.length; i++) {
-      const a = objects[i - 1], b = objects[i], common = b.pitches.filter(n => a.pitches.some(p => p.id === n.id));
+      const a = objects[i - 1], b = objects[i], common = b.pitches.filter(n => a.pitches.some(p => sameTie(p,n)));
       if (common.length) new StaveTie({ firstNote: a.note, lastNote: b.note, firstIndexes: common.map(n => a.pitches.findIndex(p => p.midi === n.midi)), lastIndexes: common.map(n => b.pitches.findIndex(p => p.midi === n.midi)) }).setContext(context).draw();
     }
     const first = objects[0], last = objects.at(-1);
-    const before = first?.pitches.filter(n => n.beat < scoreMeasureBounds(score,system.firstMeasure).start - .001) || [];
-    const after = last?.pitches.filter(n => n.beat + n.duration > scoreMeasureBounds(score,system.lastMeasure).end + .001) || [];
+    const before = first?.pitches.filter(n => (chain(n)?.start??n.beat) < scoreMeasureBounds(score,system.firstMeasure).start - .001) || [];
+    const after = last?.pitches.filter(n => (chain(n)?.end??n.beat+n.duration) > scoreMeasureBounds(score,system.lastMeasure).end + .001) || [];
     if (before.length) {
       const indexes = before.map(n => first.pitches.findIndex(p => p.midi === n.midi));
       new StaveTie({ lastNote: first.note, firstIndexes: indexes, lastIndexes: indexes }).setContext(context).draw();
@@ -232,6 +259,13 @@ export function renderNotation(container, score, options = {}) {
     const hitLayer = svgElement('g', { class: 'notation-hit-layer' }); svg.append(hitLayer);
     for (const item of rendered) {
       const ys = item.note.getYs(), x = item.note.getAbsoluteX(), y = Math.min(...ys) - 17;
+      const attacks=item.pitches.filter(n=>closeTo(n.beat,item.beat));
+      const marks=svgElement('g',{class:'notation-effects','pointer-events':'none','aria-label':attacks.flatMap(effectLabels).join('、')});
+      const dynamics=[...new Set(attacks.map(n=>n.dynamic).filter(Boolean))];
+      if(dynamics.length) marks.append(svgElement('text',{x,y:item.stave.getYForLine(4)+30,'font-family':'Georgia,serif','font-style':'italic','font-weight':'bold','font-size':15,'text-anchor':'middle',class:'notation-dynamic'},dynamics.join('/')));
+      const arp=attacks.find(n=>n.arpeggio);
+      if(arp){const arpYs=item.pitches.map((n,i)=>n.arpeggio&&closeTo(n.beat,item.beat)?ys[i]:null).filter(v=>v!==null), top=Math.min(...arpYs)-9,bottom=Math.max(...arpYs)+9,ax=x-22;let d=`M ${ax} ${top}`;for(let yy=top;yy<bottom;yy+=8)d+=` q -5 2 0 4 q 5 2 0 4`;marks.append(svgElement('path',{d,fill:'none',stroke:'#46534b','stroke-width':1.2,class:'notation-arpeggio'}));const ay=arp.arpeggio==='up'?top-2:bottom+2;marks.append(svgElement('path',{d:`M ${ax-3} ${ay+(arp.arpeggio==='up'?4:-4)} L ${ax} ${ay} L ${ax+3} ${ay+(arp.arpeggio==='up'?4:-4)}`,fill:'none',stroke:'#46534b','stroke-width':1.2}));}
+      if(attacks.some(n=>effectLabels(n).length)) svg.append(marks);
       const hit = svgElement('rect', { x: x - 11, y, width: 29, height: Math.max(43, Math.max(...ys) - y + 20), rx: 4 }); hitLayer.append(hit); item.info.hits.push(seekable(hit, item));
       const noteGroup = item.note.getSVGElement(); if (noteGroup) noteGroup.style.pointerEvents = 'none'; item.info.anchors.push({ beat: item.beat, x });
     }
@@ -240,15 +274,15 @@ export function renderNotation(container, score, options = {}) {
   }
   function drawNumberedTies(events, svg, system) {
     const arc = (x1, y1, x2, y2) => svg.append(svgElement('path', { d: `M ${x1} ${y1 - 29} Q ${(x1 + x2) / 2} ${Math.min(y1, y2) - 44} ${x2} ${y2 - 29}`, fill: 'none', stroke: '#637c68', 'stroke-width': 1.1, 'pointer-events': 'none', class: 'notation-tie' }));
-    for (let i = 1; i < events.length; i++) { const a = events[i - 1], b = events[i]; for (const p of b.pitches) { const prev = a.pitches.find(n => n.id === p.id); if (prev) arc(a.x + 8, prev.y, b.x - 8, p.y); } }
+    for (let i = 1; i < events.length; i++) { const a = events[i - 1], b = events[i]; for (const p of b.pitches) { const prev = a.pitches.find(n => sameTie(n,p)); if (prev) arc(a.x + 8, prev.y, b.x - 8, p.y); } }
     const first = events[0], last = events.at(-1);
-    if (first) for (const p of first.pitches) if (p.beat < scoreMeasureBounds(score,system.firstMeasure).start - .001) arc(system.bars[0].x + 33, p.y, first.x - 8, p.y);
-    if (last) for (const p of last.pitches) if (p.beat + p.duration > scoreMeasureBounds(score,system.lastMeasure).end + .001) arc(last.x + 8, p.y, system.width - 17, p.y);
+    if (first) for (const p of first.pitches) if ((chain(p)?.start??p.beat) < scoreMeasureBounds(score,system.firstMeasure).start - .001) arc(system.bars[0].x + 33, p.y, first.x - 8, p.y);
+    if (last) for (const p of last.pitches) if ((chain(p)?.end??p.beat+p.duration) > scoreMeasureBounds(score,system.lastMeasure).end + .001) arc(last.x + 8, p.y, system.width - 17, p.y);
   }
   function drawNumbered(system) {
     const { maxChord, rowHeight, height } = system.dimensions;
     const svg = svgElement('svg', { viewBox: `0 0 ${system.width} ${height}`, 'aria-label': `第 ${system.firstMeasure + 1} 至 ${system.lastMeasure + 1} 小节连续双手简谱` }); system.host.append(svg);
-    const events = { right: [], left: [] }, baselines = [52 + (maxChord - 1) * 31, 52 + (maxChord - 1) * 31 + rowHeight];
+    const events = { right: [], left: [] }, baselines = [52 + (maxChord - 1) * 31+(hasEffects?24:0), 52 + (maxChord - 1) * 31 + rowHeight+(hasEffects?24:0)];
     for (const [hand, row] of [['right', 0], ['left', 1]]) svg.append(svgElement('text', { x: 17, y: baselines[row], 'font-size': 11, fill: '#8c978d', class: 'notation-row-label' }, hand === 'right' ? '右手' : '左手'));
     for (let position = 0; position < system.bars.length; position++) {
       const info = system.bars[position], group = svgElement('g'); svg.append(group); prepareMeasure(info, group, height);
@@ -261,6 +295,8 @@ export function renderNotation(container, score, options = {}) {
           const engraving = notationDuration(segment.duration);
           const x = musicStart + 9 + (segment.beat - info.start) / info.length * span, durationWidth = Math.max(24, segment.duration / info.length * span);
           const pitches = [...new Map(segment.notes.map(n => [n.midi, n])).values()].sort((a, b) => a.midi - b.midi);
+          const labels=[...new Set(pitches.filter(n=>closeTo(n.beat,segment.beat)).flatMap(effectLabels).filter(l=>l!=='延音线'))];
+          if(labels.length) group.append(svgElement('text',{x,y:baseline-(pitches.length-1)*31-42,'font-size':11,'text-anchor':'middle',fill:'#52714e',class:'notation-effects','pointer-events':'none'},labels.join(' ')));
           const hit = svgElement('rect', { x: x - 14, y: baseline - (pitches.length - 1) * 31 - 32, width: Math.max(27, durationWidth - 3), height: Math.max(57, pitches.length * 31 + 22), rx: 4 }); group.append(hit); info.hits.push(seekable(hit, segment));
           const event = { x, pitches: [], beat: segment.beat, duration: segment.duration }; events[hand].push(event); measureEvents.push(event);
           (pitches.length ? pitches : [null]).forEach((note, j) => {
@@ -289,6 +325,29 @@ export function renderNotation(container, score, options = {}) {
     drawNumberedTies(events.right, svg, system); drawNumberedTies(events.left, svg, system);
     system.cursor = svgElement('line', { x1: 0, x2: 0, y1: 22, y2: height - 15, class: 'notation-cursor' }); svg.append(system.cursor);
   }
+  function drawRoll(system) {
+    const {low,high,height}=system.dimensions;
+    const svg=svgElement('svg',{viewBox:`0 0 ${system.width} ${height}`,'aria-label':`第 ${system.firstMeasure+1} 至 ${system.lastMeasure+1} 小节钢琴卷帘`});system.host.append(svg);
+    const top=26,row=9;
+    for(const info of system.bars){
+      const group=svgElement('g');svg.append(group);prepareMeasure(info,group,height);
+      const x0=info.x+(info===system.bars[0]?43:8),x1=info.endX-5,span=x1-x0;
+      info.anchors=[{beat:info.start,x:x0},{beat:info.end,x:x1}];
+      for(let midi=low;midi<=high;midi++){
+        const y=top+(high-midi)*row;
+        group.append(svgElement('rect',{x:x0,y,width:span,height:row,fill:[1,3,6,8,10].includes(midi%12)?'#edf1ed':'#fafbf7','pointer-events':'none'}));
+        if(midi%12===0&&info===system.bars[0]) group.append(svgElement('text',{x:info.x+3,y:y+8,'font-size':8,fill:'#7d8a80','pointer-events':'none'},midiName(midi)));
+      }
+      for(let beat=0;beat<info.length-1e-7;beat++)group.append(svgElement('line',{x1:x0+beat/info.length*span,x2:x0+beat/info.length*span,y1:top,y2:height-23,stroke:'#d7dfd6','stroke-width':.7,'pointer-events':'none'}));
+      group.append(svgElement('line',{x1:info.endX,x2:info.endX,y1:top,y2:height-23,class:'notation-barline'}));
+      for(const n of sounding.filter(n=>n.beat<info.end-1e-7&&n.beat+n.duration>info.start+1e-7)){
+        const start=Math.max(n.beat,info.start),end=Math.min(n.beat+n.duration,info.end);
+        const rect=svgElement('rect',{x:x0+(start-info.start)/info.length*span,y:top+(high-n.midi)*row+.8,width:Math.max(1,(end-start)/info.length*span),height:7.4,rx:1.8,class:'notation-roll-note','data-note-id':n.id,'data-midi':n.midi,'data-hand':n.hand,'data-start':n.beat,'data-duration':n.duration,style:`fill:${n.hand==='right'?'#549b77':'#6594ba'};fill-opacity:.9`});
+        group.append(rect);info.hits.push(seekable(rect,{beat:n.beat,duration:n.duration,notes:n.sourceIds.map(id=>score.notes.find(p=>p.id===id)||n)}));
+      }
+    }
+    system.cursor=svgElement('line',{x1:0,x2:0,y1:top,y2:height-22,class:'notation-cursor'});svg.append(system.cursor);
+  }
   function update(system) {
     if (!system?.drawn) return;
     const activeIndex = Math.min(measureCount - 1, scoreMeasureIndex(score,beatNow)); let activeInfo;
@@ -309,8 +368,8 @@ export function renderNotation(container, score, options = {}) {
   function paint(system) {
     if (!system || system.drawn || destroyed) return;
     if (mode === 'staff' && !fontsLoaded) { system.pending = true; return; } system.drawn = true;
-    try { if (system.layoutError) throw system.layoutError; mode === 'numbered' ? drawNumbered(system) : drawStaff(system); }
-    catch (error) { system.host.replaceChildren(); const message = document.createElement('p'); message.className = 'notation-error'; message.textContent = `此行五线谱排版失败，可切换简谱查看。${error.message}`; system.host.append(message); console.error('Score engraving failed:', error); }
+    try { if (system.layoutError) throw system.layoutError; mode === 'roll' ? drawRoll(system) : mode === 'numbered' ? drawNumbered(system) : drawStaff(system); }
+    catch (error) { system.host.replaceChildren(); const message = document.createElement('p'); message.className = 'notation-error'; message.textContent = `此行暂不能准确排版，可切换钢琴卷帘查看全部音符和精确时值。${error.message}`; system.host.append(message); console.error('Score engraving failed:', error); }
     system.host.style.minHeight = '0'; update(system);
   }
   function rebuild() {

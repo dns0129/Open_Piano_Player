@@ -2,6 +2,7 @@ import { DEFAULT_PIANO_INSTRUMENT, SAMPLE_BANK_URLS, pianoInstrument, pianoSampl
 import { assetURL } from '../lib/asset-url.mjs';
 import { createInstrumentRoom } from '../lib/instrument-room.mjs';
 import { INSTRUMENT_PREVIEW } from '../lib/instrument-demo.mjs';
+import { performanceNotes, tieChains } from '../lib/note-effects.mjs';
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
 const EPSILON = 1e-7;
@@ -64,13 +65,13 @@ export class PianoPlayer {
   setScore(score) {
     this.stop();
     this._score = score || null;
-    this._notes = (score?.notes || [])
+    this._notes = performanceNotes(score || {notes:[]})
       .filter((note) => Number.isFinite(note.midi) && Number.isFinite(note.beat) && note.duration > 0)
       .map((note, index) => ({ ...note, id: note.id ?? `note-${index}`, hand: note.hand === 'left' ? 'left' : 'right' }))
       .sort((a, b) => a.beat - b.beat);
     this._duration = Math.max(0, Number(score?.durationBeats) || 0,
       ...this._notes.map((note) => note.beat + note.duration));
-    this._config.tempo = clamp(score?.tempo || 88, 20, 240);
+    this._config.tempo = clamp(score?.tempo || 88, 20, 300);
     this._config.loopStart = 0;
     this._config.loopEnd = this._duration;
     this._config.loopEnabled = false;
@@ -134,7 +135,7 @@ export class PianoPlayer {
   configure(changes = {}) {
     const position = this.beat;
     const before = { ...this._config };
-    if ('tempo' in changes) this._config.tempo = clamp(changes.tempo, 20, 240);
+    if ('tempo' in changes) this._config.tempo = clamp(changes.tempo, 20, 300);
     if ('volume' in changes) this._config.volume = clamp(changes.volume, 0, 1);
     for (const key of ['rightEnabled', 'leftEnabled', 'metronome', 'loopEnabled']) {
       if (key in changes) this._config[key] = Boolean(changes[key]);
@@ -183,6 +184,25 @@ export class PianoPlayer {
       this._sampleBanks.set(instrument.bank, new PianoSampleBank(this._context, options));
     }
     return this._sampleBanks.get(instrument.bank);
+  }
+
+  async previewNotes(score,id) {
+    this.pause();
+    const request=this._previewGeneration=(this._previewGeneration||0)+1, generation=this._playGeneration||0;
+    await this._ensureAudio(); await this._context.resume(); await this._prepareInstrument();
+    if(request!==this._previewGeneration || generation!==(this._playGeneration||0)) return;
+    this._cancelVoices();
+    const selected=score.notes.find(n=>n.id===id); if(!selected) return;
+    const chain=tieChains(score.notes).get(id), start=chain?.start??selected.beat;
+    const ids=new Set(selected.arpeggio?score.notes.filter(n=>n.hand===selected.hand&&Math.abs(n.beat-selected.beat)<EPSILON).map(n=>n.id):[id]);
+    const seconds=60/this._config.tempo, end=start+8, now=this._context.currentTime+.018;
+    for(const n of performanceNotes(score)) if(n.sourceIds.some(key=>ids.has(key)) && n.beat<end)
+      this._piano(n.midi,now+(n.beat-start)*seconds,Math.min(n.duration,end-n.beat)*seconds,n.velocity);
+  }
+
+  stopPreview() {
+    this._previewGeneration=(this._previewGeneration||0)+1;
+    if(this._state!=='playing') this._cancelVoices();
   }
 
   setInstrument(id) {

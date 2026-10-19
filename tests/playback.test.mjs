@@ -78,6 +78,27 @@ const sampleOptions = (overrides = {}) => ({ instrument: 'piano',
   sampleManifest: { version: 1, samples: [48, 60, 63].map(midi => ({ midi, file: `${midi}.mp3` })) },
   sampleFetcher: async () => ({ ok: true, arrayBuffer: async () => new ArrayBuffer(16) }), ...overrides });
 
+test('performed effects drive real piano scheduling, and typed 300 BPM keeps the audio clock in sync',async()=>{
+  const h=harness(makeScore([
+    {id:'tie-a',beat:0,duration:1,midi:60,hand:'right',velocity:.28,tieTo:'tie-b'},
+    {id:'tie-b',beat:1,duration:1,midi:60,hand:'right'},
+    ...[60,64,67].map((midi,i)=>({id:`arp-${i}`,beat:2,duration:1,midi,hand:'right',arpeggio:'down'})),
+    {id:'trill',beat:3,duration:1,midi:64,hand:'right',ornament:'trill'},
+  ],{durationBeats:8}),sampleOptions());
+  await h.player.play();assert.equal(h.context.bufferSources.length,1,'tied heads use one sample attack');
+  for(let i=0;i<5;i++)h.advance(.1);assert.equal(h.context.bufferSources.length,1,'the second tied head must not strike again');
+  h.player.seek(2);const arp=h.context.bufferSources.slice(-3);assert.equal(arp.length,3);
+  assert.ok(arp[0].started<arp[1].started&&arp[1].started<arp[2].started);
+  assert.ok(arp[0].playbackRate.value>arp[1].playbackRate.value,'descending arpeggio starts on the highest pitch');
+  h.player.configure({tempo:300});const before=h.player.beat;h.advance(.218);
+  assert.ok(Math.abs(h.player.beat-before-1)<1e-8,'300 BPM advances five beats per second after the schedule anchor');
+  const previewStart=h.context.bufferSources.length;
+  await h.player.previewNotes(h.player._score,'trill');assert.equal(h.context.bufferSources.length-previewStart,8);
+  const previewSources=h.context.bufferSources.slice(previewStart);h.player.stopPreview();
+  assert.ok(previewSources.every(s=>s.stops.at(-1)<=h.context.currentTime+.016),'closing the editor cancels preview attacks without moving the practice beat');
+  await h.player.dispose();
+});
+
 test('sampled piano transposes the nearest root and shares decoded buffers across presets', async () => {
   const h = harness(makeScore([{ id: 'sample', beat: 0, duration: 8, midi: 61, hand: 'right' }]), sampleOptions());
   assert.equal(h.context.decodeCalls, 0, 'constructing and setting a score must not eagerly load audio');

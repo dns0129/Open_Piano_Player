@@ -68,3 +68,30 @@ test('editor controls change, preview, undo and save a copy through the visible 
     for (const [key,value] of Object.entries(previous)) { if(value===undefined) delete globalThis[key]; else globalThis[key]=value; }
   }
 });
+
+test('visible mode and chord controls update real saved pitches and support undo with a mixed meter preview',async()=>{
+ const dom=new JSDOM('<div id="host"></div>',{pretendToBeVisual:true});dom.window.HTMLCanvasElement.prototype.getContext=()=>({font:'',measureText:t=>({width:String(t).length*8,actualBoundingBoxAscent:8,actualBoundingBoxDescent:2})});const previous={};for(const key of ['window','document','HTMLElement','SVGElement','requestAnimationFrame','cancelAnimationFrame']){previous[key]=globalThis[key];globalThis[key]=typeof dom.window[key]==='function'&&key.includes('AnimationFrame')?dom.window[key].bind(dom.window):dom.window[key];}
+ let saved;const {mountNoteEditor}=await import('../src/note-editor.js');const root=document.querySelector('#host');const dispose=mountNoteEditor(root,{...raw,mode:'major',keySignature:0,notes:[{id:'a',beat:0,duration:4,midi:64,hand:'right'},{id:'l',beat:0,duration:4,midi:48,hand:'left'}]}, {onSave:s=>{saved=s;}});
+ try{
+  root.querySelector('[data-apply-mode]').click();assert.match(root.querySelector('[data-edit-notice]').textContent,/C小调/);assert.match(root.textContent,/D♯4/);
+  root.querySelector('[data-note="l"]').click();root.querySelector('[data-chord-root]').value='2';root.querySelector('[data-chord-quality]').value='minor';root.querySelector('[data-replace-chord]').click();
+  root.querySelector('[data-editor-mode="roll"]').click();assert.equal(root.querySelectorAll('.notation-roll-note').length,4);
+  root.querySelector('[data-save]').click();assert.deepEqual(saved.notes.filter(n=>n.hand==='left').map(n=>n.midi),[50,53,57]);assert.equal(saved.notes.find(n=>n.id==='a').midi,63);assert.equal(saved.mode,'minor');
+  root.querySelector('[data-undo]').click();root.querySelector('[data-save]').click();assert.equal(saved.notes.filter(n=>n.hand==='left').length,1);
+ }finally{dispose();dom.window.close();for(const[k,v]of Object.entries(previous)){if(v===undefined)delete globalThis[k];else globalThis[k]=v;}}
+});
+
+
+test('expression controls preview real settings and save them through undo/redo',async()=>{
+ const dom=new JSDOM('<div id="host"></div>',{pretendToBeVisual:true});dom.window.HTMLCanvasElement.prototype.getContext=()=>({font:'',measureText:t=>({width:String(t).length*8,actualBoundingBoxAscent:8,actualBoundingBoxDescent:2})});const previous={};for(const key of ['window','document','HTMLElement','SVGElement','requestAnimationFrame','cancelAnimationFrame']){previous[key]=globalThis[key];globalThis[key]=typeof dom.window[key]==='function'&&key.includes('AnimationFrame')?dom.window[key].bind(dom.window):dom.window[key];}
+ let saved,preview;const {mountNoteEditor}=await import('../src/note-editor.js');const root=document.querySelector('#host');const dispose=mountNoteEditor(root,{...raw,notes:[{id:'a',beat:0,duration:1,midi:60,hand:'right'},{id:'b',beat:1,duration:1,midi:60,hand:'right'}]}, {onSave:s=>{saved=s;},onPreview:(m,d,s,id)=>{preview={score:s,id};}});
+ try{
+  const click=s=>root.querySelector(s).click(), change=(s,v)=>{const el=root.querySelector(s);el.value=v;el.dispatchEvent(new dom.window.Event('change',{bubbles:true}));};
+  click('[data-dynamic="pp"]');click('[data-tie]');click('[data-preview]');assert.equal(preview.score.notes[0].tieTo,'b');assert.equal(preview.score.notes[0].velocity,.28);
+  change('[data-ornament]','mordent-upper');assert.equal(root.querySelector('[data-tie]').getAttribute('aria-pressed'),'false');change('[data-ornament-interval]','1');
+  change('[data-accent]','marcato');change('[data-articulation]','staccato');click('[data-undo]');click('[data-redo]');click('[data-save]');
+  const note=saved.notes.find(n=>n.id==='a');assert.equal(note.dynamic,'pp');assert.equal(note.ornament,'mordent-upper');assert.equal(note.ornamentInterval,1);assert.equal(note.accent,'marcato');assert.equal(note.articulation,'staccato');assert.equal(note.tieTo,undefined);
+  click('[data-clear-effects]');click('[data-save]');assert.equal(saved.notes[0].ornament,undefined);
+  assert.equal(root.querySelectorAll('.notation-error').length,0);
+ }finally{dispose();dom.window.close();for(const[k,v]of Object.entries(previous)){if(v===undefined)delete globalThis[k];else globalThis[k]=v;}}
+});
