@@ -152,8 +152,8 @@
       "file": "scores/full-score-9241860ef6cad1e3c0f17e48ca0d30ffdbff.json"
     },
     {
-      "id": "full-score-croatian-skill-high-20261019",
-      "title": "克罗地亚狂想曲 · Croatian Rhapsody · Skill 高档校对版",
+      "id": "full-score-croatian-reviewed-20261019",
+      "title": "克罗地亚狂想曲 · Croatian Rhapsody · 全谱审核通过版",
       "composer": "Tonči Huljić",
       "tempo": 95,
       "timeSignature": [
@@ -163,8 +163,9 @@
       "keySignature": -3,
       "notes": 1882,
       "hasOriginal": true,
-      "reviewRequired": true,
-      "file": "scores/full-score-croatian-skill-high-20261019.json"
+      "reviewApproved": true,
+      "reviewRequired": false,
+      "file": "scores/full-score-croatian-reviewed-20261019.json"
     },
     {
       "id": "full-score-feb36563796cd9a9b7f118a809ad559fe4dc",
@@ -422,6 +423,11 @@
       "file": "scores/twinkle.json"
     }
   ],
-  "deletedIds": [],
-  "updatedAt": "2026-10-19T05:10:07.022Z"
+  "deletedIds": [
+    "full-score-croatian-skill-high-20261019"
+  ],
+  "updatedAt": "2026-10-19T05:36:33.404Z",
+  "superseded": {
+    "full-score-croatian-skill-high-20261019": "full-score-croatian-reviewed-20261019"
+  }
 }
