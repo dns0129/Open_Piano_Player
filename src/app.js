@@ -34,7 +34,7 @@ import {
   FileAudio,
 } from "lucide";
 import { library } from "../lib/catalog.mjs";
-import { STATIC_SITE } from "../lib/asset-url.mjs";
+import { STATIC_SITE, assetURL } from "../lib/asset-url.mjs";
 // 网页版没有本机服务：/api 请求统一返回说明，沿用各功能原有的错误提示。
 const STATIC_NOTICE = "网页版只提供曲库练习、本地 MusicXML/MIDI/JSON 导入和音频转谱；联网找谱、图片/PDF识谱和网易云导入需要在本机运行琴伴。";
 if (STATIC_SITE) {
@@ -429,7 +429,7 @@ function instrumentStatusText() {
   return state.instrument === "synth" ? "轻量合成" : "首次播放时准备";
 }
 function instrumentControls() {
-  return `<div class="instrument-control"><label for="piano-instrument">音色</label><select id="piano-instrument" aria-label="钢琴音色">${PIANO_INSTRUMENTS.map((preset) => `<option value="${preset.id}" ${state.instrument === preset.id ? "selected" : ""}>${esc(preset.label)}</option>`).join("")}</select><button id="instrument-preview" class="instrument-preview" aria-label="试听钢琴音色" title="试听中央 C">${icon("volume-2")}</button><span id="instrument-status" class="instrument-status" role="status" aria-live="polite">${instrumentStatusText()}</span></div>`;
+  return `<div class="instrument-control"><label for="piano-instrument">音色</label><select id="piano-instrument" aria-label="乐器音色">${PIANO_INSTRUMENTS.map((preset) => `<option value="${preset.id}" ${state.instrument === preset.id ? "selected" : ""}>${esc(preset.label)}</option>`).join("")}</select><button id="instrument-preview" class="instrument-preview" aria-label="试听当前音色的旋律" title="试听一小段旋律">${icon("volume-2")}<span>试听</span></button><span id="instrument-status" class="instrument-status" role="status" aria-live="polite">${instrumentStatusText()}</span></div>`;
 }
 function refreshInstrumentUI() {
   const select = $("#piano-instrument"),
@@ -471,9 +471,8 @@ function bindPractice() {
     }
   };
   $("#instrument-preview").onclick = async () => {
-    player.pause();
     try {
-      await player.notePreview(60, 0.75);
+      await player.previewInstrument();
     } catch (error) {
       toast(error.message || "音色试听失败，请重试。", true);
     }
@@ -611,7 +610,7 @@ function updatePlayback(playState) {
   );
   $("#play").setAttribute(
     "aria-label",
-    loading ? "正在准备钢琴音色" : active ? "暂停" : "播放",
+    loading ? "正在准备乐器音色" : active ? "暂停" : "播放",
   );
   $("#play").classList.toggle("playing", active);
   if ($("#playback-label"))
@@ -1399,7 +1398,7 @@ async function openSettings() {
     ds = state.status?.deepseek;
   modal(
     "AI 与设置",
-    `<div class="provider-card"><div class="provider-heading"><span class="provider-logo">π</span><div><h3>Pi Agent / ChatGPT</h3><p>${pi?.available ? "已发现本机登录 · 可发起请求验证" : "尚未发现可用本机登录"}</p></div><span class="connection-dot ${pi?.available ? "connected" : ""}"></span></div><p class="form-note">复用本机 Pi / Codex 的登录。登录凭据仅在本机服务端使用，实际可用额度由账户决定。</p></div><form id="settings-form"><label class="field">谱面识别模型<input name="piModel" value="gpt-6.1-sol" readonly aria-label="固定识谱模型"></label><p class="form-note">GPT-6.1 Sol · high。识别与独立核对均使用此模型，通过 Pi Agent 使用你的 ChatGPT 订阅额度。</p><div class="provider-card"><div class="provider-heading"><span class="provider-logo deepseek">D</span><div><h3>DeepSeek</h3><p>${ds?.configured ? "已配置 API Key" : "等待配置 API Key"}</p></div></div><label class="field">API Key<input type="password" name="deepseekApiKey" placeholder="${ds?.configured ? "留空保留已保存的密钥" : "输入你的 DeepSeek API Key"}" autocomplete="off"></label><label class="field">模型<input name="deepseekModel" value="${esc(ds?.model || "deepseek-flash")}" maxlength="120"></label><p class="form-note">密钥保存在本机私有配置中，不写入浏览器存储。DeepSeek Flash high 与 Pi 共用识谱、独立核对与人工校对流程；DeepSeek 使用 API 余额。</p>${ds?.configured ? '<button id="clear-key" class="text-button danger" type="button">移除已保存的 Key</button>' : ""}</div><div id="settings-error" class="form-error"></div><button class="button primary full" type="submit">${icon("check")}保存设置</button></form><div class="piano-credit"><strong>钢琴采样</strong><p>Salamander Grand Piano · Alexander Holm</p><p>标准、柔和、明亮共用同一录音采样，按听感调整。<a href="/audio/piano/ATTRIBUTION.txt" target="_blank" rel="noopener">音源说明</a> · <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener">CC BY 3.0</a></p></div>`,
+    `<div class="provider-card"><div class="provider-heading"><span class="provider-logo">π</span><div><h3>Pi Agent / ChatGPT</h3><p>${pi?.available ? "已发现本机登录 · 可发起请求验证" : "尚未发现可用本机登录"}</p></div><span class="connection-dot ${pi?.available ? "connected" : ""}"></span></div><p class="form-note">复用本机 Pi / Codex 的登录。登录凭据仅在本机服务端使用，实际可用额度由账户决定。</p></div><form id="settings-form"><label class="field">谱面识别模型<input name="piModel" value="gpt-6.1-sol" readonly aria-label="固定识谱模型"></label><p class="form-note">GPT-6.1 Sol · high。识别与独立核对均使用此模型，通过 Pi Agent 使用你的 ChatGPT 订阅额度。</p><div class="provider-card"><div class="provider-heading"><span class="provider-logo deepseek">D</span><div><h3>DeepSeek</h3><p>${ds?.configured ? "已配置 API Key" : "等待配置 API Key"}</p></div></div><label class="field">API Key<input type="password" name="deepseekApiKey" placeholder="${ds?.configured ? "留空保留已保存的密钥" : "输入你的 DeepSeek API Key"}" autocomplete="off"></label><label class="field">模型<input name="deepseekModel" value="${esc(ds?.model || "deepseek-flash")}" maxlength="120"></label><p class="form-note">密钥保存在本机私有配置中，不写入浏览器存储。DeepSeek Flash high 与 Pi 共用识谱、独立核对与人工校对流程；DeepSeek 使用 API 余额。</p>${ds?.configured ? '<button id="clear-key" class="text-button danger" type="button">移除已保存的 Key</button>' : ""}</div><div id="settings-error" class="form-error"></div><button class="button primary full" type="submit">${icon("check")}保存设置</button></form><div class="piano-credit"><strong>乐器音源</strong><p>钢琴：Salamander Grand Piano · Alexander Holm · CC BY 3.0。醇厚预设参考 Steinway 听感，以温暖共鸣和圆润触键调音。<a href="${assetURL("/audio/piano/ATTRIBUTION.txt")}" target="_blank" rel="noopener">钢琴音源说明</a></p><p>小提琴与弦乐合奏：VSCO 2 Community Edition · Sam Gossner / Simon Dalzell · CC0。<a href="${assetURL("/audio/violin/ATTRIBUTION.txt")}" target="_blank" rel="noopener">小提琴说明</a> · <a href="${assetURL("/audio/strings/ATTRIBUTION.txt")}" target="_blank" rel="noopener">弦乐说明</a></p></div>`,
   );
   $("#settings-form").onsubmit = async (e) => {
     e.preventDefault();

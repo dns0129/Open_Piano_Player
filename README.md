@@ -112,13 +112,19 @@ npm run scores:reread-five -- --run --import --publish
 
 2026-10-17通用修复后再次用BWV846原PDF验证：本轮完全采用本机OMR和原图人工校对，Pi调用0次。新校对结果549个播放事件与发布者同版本MIDI的音高、起点、时值逐个一致；真实浏览器重新扫描两页后导入、暂停、自然播放完整140拍至第35小节，全部12行可点击定位并跨页跟谱，刷新后原图保留。具体人工/自动边界、增强策略回退数据及截图见 `evidence/generic-omr/通用识谱修复与验证.md`。
 
-## 钢琴音色
+## 乐器音色
 
-练习设置栏的 **音色** 可选择原声钢琴、柔和钢琴、明亮钢琴或轻量合成钢琴，点击旁边的喇叭试听中央C。选择成功后保存在当前浏览器，下次打开继续使用。
+练习设置栏的 **音色** 新增 **醇厚三角钢琴**、**温暖小提琴** 和 **柔和弦乐合奏**，并保留标准、柔和、明亮钢琴和轻量合成。点击旁边的 **试听**，用同一小段原创旋律比较音色。选择成功后保存在当前浏览器，下次打开继续使用；未保存过选择时默认醇厚三角钢琴。
 
-默认原声钢琴使用 [Salamander Grand Piano](https://github.com/Tonejs/audio/tree/869b6f8d9cddb47d966238c012041480b1ce517a/salamander) 的30个真实MP3录音采样（Alexander Holm，[CC BY 3.0](https://creativecommons.org/licenses/by/3.0/)），约2.01MB，从A0到C8按小三度采样，以最近根音移调覆盖88键。柔和与明亮是同一采样库的EQ/包络预设；当前为单层采样，通过增益处理力度，并非16层完整采样器。
+钢琴使用 [Salamander Grand Piano](https://github.com/Tonejs/audio/tree/869b6f8d9cddb47d966238c012041480b1ce517a/salamander) 的30个真实MP3录音采样（Alexander Holm，[CC BY 3.0](https://creativecommons.org/licenses/by/3.0/)），约2.01MB，从A0到C8按小三度采样，以最近根音移调覆盖88键。醇厚三角钢琴参考 Steinway 的温暖听感，基于 Salamander Yamaha C5 录音加入低中频共鸣、随力度变化的高频、圆润起音、延长释音与短立体声空间混响。柔和与明亮是同一采样库的EQ/包络预设；当前为单层采样，通过增益与滤波处理力度。
 
-全部MP3和作者/许可说明均随源码放在 `public/audio/piano/`，构建前校验SHA256，运行时只从本机服务读取。首次播放或试听时准备音色，显示加载进度；同一页面解码后共用缓存。文件缺失或损坏会明确报错，可重试或手动选择轻量合成钢琴。音色切换继续使用同一播放时钟，保留当前播放位置、左右手和循环设置；不会改变乐谱音高或导出的MIDI。
+小提琴使用14个独奏录音，弦乐合奏使用20个分音区录音（低音提琴、大提琴组、中提琴组、小提琴组），合计约2.93MB，来源为 [VSCO 2 Community Edition](https://github.com/sgossner/VSCO-2-CE/tree/440300901dfe9275fd84e0b7763af1f8443ae62e)（Sam Gossner、Simon Dalzell；剪辑 Elan Hickler / Soundemote，[CC0](https://creativecommons.org/publicdomain/zero/1.0/)）。保留真实弓弦和揉弦，经过起音修整、音量匹配和180ms交叉淡化循环，支持持续长音；乐器自然音域之外以最近根音移调延伸。独奏小提琴沿用标准科学音高，其他源文件的八度命名已按 C3=中央C 转换。
+
+全部MP3和作者/许可说明均随源码放在 `public/audio/piano/`、`public/audio/violin/` 和 `public/audio/strings/`，构建前校验SHA256，运行时只从应用自身资源读取，也支持 GitHub Pages 子路径。首次播放或试听时按需准备所选音源，显示加载进度；钢琴预设共用一套缓存，小提琴与合奏各自缓存。文件缺失或损坏会明确报错，可重试或手动选择轻量合成。音色切换继续使用同一播放时钟，保留当前播放位置、左右手和循环设置；跳转进弦乐长音时从循环内继续。自然播完保留释音与空间尾音，手动暂停和停止同时淡出混响。
+
+`python3 scripts/prepare-string-assets.py` 可重新制作弦乐素材（需要 numpy、scipy、ffmpeg 和网络）；普通安装、构建和播放使用已经打包的文件，无需重新下载。素材清单记录固定源版本、原始路径与处理前后SHA256。
+
+`output/timbres/` 中保留三段约21秒的MP3试听。开发时可用 `node node_modules/vite/bin/vite.js --host 127.0.0.1 --port 5173` 启动源码服务，再运行 `node scripts/render-instrument-demos.mjs` 重新导出；此可选工具需要额外提供 Playwright、Chromium 和 ffmpeg。也可用 `QINBAN_PLAYWRIGHT_MODULE` 指定 Playwright 模块路径、`QINBAN_CHROMIUM` 指定浏览器路径。
 
 ## 按歌名联网找谱
 

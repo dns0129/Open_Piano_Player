@@ -1,9 +1,12 @@
-import { DEFAULT_PIANO_INSTRUMENT, pianoInstrument, pianoSampleProfile, PianoSampleBank } from '../lib/piano-voices.mjs';
+import { DEFAULT_PIANO_INSTRUMENT, SAMPLE_BANK_URLS, pianoInstrument, pianoSampleProfile, PianoSampleBank } from '../lib/piano-voices.mjs';
+import { assetURL } from '../lib/asset-url.mjs';
+import { createInstrumentRoom } from '../lib/instrument-room.mjs';
+import { INSTRUMENT_PREVIEW } from '../lib/instrument-demo.mjs';
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
 const EPSILON = 1e-7;
 
-/** Web Audio piano transport. Beats are always quarter notes, including in 6/8. */
+/** Web Audio score transport. Beats are always quarter notes, including in 6/8. */
 export class PianoPlayer {
   constructor(options = {}) {
     this.onFrame = options.onFrame || (() => {});
@@ -14,8 +17,11 @@ export class PianoPlayer {
     this._activeInstrument = initialInstrument.engine === 'synth' ? 'synth' : null;
     this._instrumentState = { id: this._instrumentId, status: this._activeInstrument ? 'ready' : 'idle',
       engine: initialInstrument.engine, progress: this._activeInstrument ? 1 : 0, loaded: 0, total: 0,
-      message: this._activeInstrument ? '轻量合成已就绪' : '首次播放时加载本机钢琴采样' };
+      message: this._activeInstrument ? '轻量合成已就绪' : '首次播放时加载本机乐器采样' };
     this._sampleOptions = { manifestURL: options.sampleManifestURL, manifest: options.sampleManifest, fetcher: options.sampleFetcher };
+    this._bankOptions = options.sampleBanks || {};
+    this._sampleBanks = new Map();
+    this._retiredRooms = new Map();
     this._instrumentGeneration = 0;
     this._disposed = false;
     this._contextFactory = options.audioContextFactory || (() => {
@@ -156,6 +162,29 @@ export class PianoPlayer {
     this._piano(clamp(midi, 21, 108), this._context.currentTime + 0.005, 0.65, velocity);
   }
 
+  async previewInstrument() {
+    this.pause();
+    this._cancelVoices();
+    const generation = this._playGeneration;
+    await this._ensureAudio();
+    await this._context.resume();
+    await this._prepareInstrument();
+    if (generation !== this._playGeneration) return;
+    const start = this._context.currentTime + 0.015;
+    for (const note of INSTRUMENT_PREVIEW) {
+      this._piano(note.midi, start + note.beat * 60 / 96, note.duration * 60 / 96, note.velocity);
+    }
+  }
+
+  _bankFor(instrument) {
+    if (!this._sampleBanks.has(instrument.bank)) {
+      const options = { ...(instrument.bank === 'piano' ? this._sampleOptions : {}), ...this._bankOptions[instrument.bank] };
+      options.manifestURL ||= assetURL(SAMPLE_BANK_URLS[instrument.bank]);
+      this._sampleBanks.set(instrument.bank, new PianoSampleBank(this._context, options));
+    }
+    return this._sampleBanks.get(instrument.bank);
+  }
+
   setInstrument(id) {
     if (this._disposed) return Promise.reject(new DOMException('播放器已关闭。', 'AbortError'));
     const instrument = pianoInstrument(id);
@@ -168,26 +197,26 @@ export class PianoPlayer {
       this._setInstrumentState({ id, status: 'ready', engine: 'synth', progress: 1, loaded: 0, total: 0, message: '轻量合成已就绪' });
       return Promise.resolve(this.instrumentState);
     }
-    this._setInstrumentState({ id, status: 'loading', engine: 'samples', progress: 0, loaded: 0, total: 0, message: '正在加载本机钢琴采样…' });
+    this._setInstrumentState({ id, status: 'loading', engine: 'samples', progress: 0, loaded: 0, total: 0, message: `正在准备${instrument.label}…` });
     const pending = (async () => {
       try {
         await this._ensureAudio();
-        if (!this._sampleBank) this._sampleBank = new PianoSampleBank(this._context, this._sampleOptions);
-        await this._sampleBank.load(progress => {
+        const bank = this._bankFor(instrument);
+        await bank.load(progress => {
           if (generation !== this._instrumentGeneration) return;
           this._setInstrumentState({ id, status: 'loading', engine: 'samples', ...progress,
-            message: `正在加载钢琴采样 ${progress.loaded} / ${progress.total || '…'}` });
+            message: `正在加载${instrument.label} ${progress.loaded} / ${progress.total || '…'}` });
         });
         if (generation !== this._instrumentGeneration) return this.instrumentState;
         this._activateInstrument(id);
         this._setInstrumentState({ id, status: 'ready', engine: 'samples', progress: 1,
-          loaded: this._sampleBank._progress.loaded, total: this._sampleBank._progress.total,
+          loaded: bank._progress.loaded, total: bank._progress.total,
           message: `${instrument.label} · 真实采样已就绪` });
         return this.instrumentState;
       } catch (error) {
         if (generation !== this._instrumentGeneration) return this.instrumentState;
         this._setInstrumentState({ id, status: 'error', engine: 'samples', progress: 0, loaded: 0, total: 0,
-          error: error.message, message: error.message || '钢琴采样加载失败，请重试或选择轻量合成。' });
+          error: error.message, message: error.message || '音色采样加载失败，请重试或选择轻量合成。' });
         throw error;
       } finally {
         if (this._instrumentPromise === pending) this._instrumentPromise = null;
@@ -205,6 +234,7 @@ export class PianoPlayer {
   _activateInstrument(id) {
     const position = this.beat;
     this._activeInstrument = id;
+    this._sampleBank = this._sampleBanks.get(pianoInstrument(id).bank);
     if (this._state === 'playing') this._resetSchedule(position);
     else this._cancelVoices();
   }
@@ -221,8 +251,14 @@ export class PianoPlayer {
     this.stop();
     this._disposed = true;
     this._instrumentGeneration++;
-    this._sampleBank?.dispose();
+    for (const bank of this._sampleBanks.values()) bank.dispose();
+    this._sampleBanks.clear();
     this._sampleBank = null;
+    for (const [room, timer] of this._retiredRooms) {
+      globalThis.clearTimeout(timer);
+      room.dispose();
+    }
+    this._retiredRooms.clear();
     globalThis.document?.removeEventListener('visibilitychange', this._visibilityHandler);
     if (this._context && this._context.state !== 'closed') await this._context.close();
     this._context = null;
@@ -278,7 +314,9 @@ export class PianoPlayer {
     const loop = this._loopBounds();
     if (!loop && absoluteNow >= this._duration - EPSILON) {
       this._beat = this._duration;
-      this._halt();
+      // Voices already end at the score boundary plus their release. Let their
+      // dampers and room decay naturally; explicit pause/stop still fades all.
+      this._halt(false);
       this._state = 'stopped';
       this.onStateChange(this._state);
       this.onFrame(this._beat, []);
@@ -408,18 +446,27 @@ export class PianoPlayer {
   _samplePiano(midi, start, duration, velocity, elapsed) {
     const ctx = this._context;
     const profile = pianoSampleProfile(this._activeInstrument);
-    if (!profile || !this._sampleBank?.ready) throw new Error('真实钢琴采样尚未准备好。');
+    if (!profile || !this._sampleBank?.ready) throw new Error('乐器采样尚未准备好。');
     const sample = this._sampleBank.sampleFor(midi);
     const rate = 2 ** ((midi - sample.midi) / 12);
-    const offset = elapsed * rate;
-    if (offset >= sample.buffer.duration - 0.004) return;
+    const looping = Number.isFinite(sample.loopEnd);
+    let offset = elapsed * rate;
+    if (looping && offset >= sample.loopEnd) {
+      offset = sample.loopStart + (offset - sample.loopStart) % (sample.loopEnd - sample.loopStart);
+    }
+    if (!looping && offset >= sample.buffer.duration - 0.004) return;
     const source = ctx.createBufferSource();
     source.buffer = sample.buffer;
     source.playbackRate.value = rate;
+    if (looping) {
+      source.loop = true;
+      source.loopStart = sample.loopStart;
+      source.loopEnd = sample.loopEnd;
+    }
     const output = ctx.createGain();
     const lowpass = ctx.createBiquadFilter();
     lowpass.type = 'lowpass';
-    lowpass.frequency.value = Math.min(ctx.sampleRate * 0.45, profile.cutoff);
+    lowpass.frequency.value = Math.min(ctx.sampleRate * 0.45, profile.cutoff - (profile.velocityCutoff || 0) * (1 - clamp(velocity, 0, 1)));
     lowpass.Q.value = 0.45;
     const shelf = ctx.createBiquadFilter();
     shelf.type = 'highshelf';
@@ -427,21 +474,38 @@ export class PianoPlayer {
     shelf.gain.value = profile.shelf;
     source.connect(lowpass);
     lowpass.connect(shelf);
-    shelf.connect(output);
-    output.connect(this._master);
+    const nodes = [source, lowpass, shelf];
+    let tail = shelf;
+    if (profile.body) {
+      const body = ctx.createBiquadFilter();
+      body.type = 'peaking';
+      body.frequency.value = 320;
+      body.Q.value = 0.7;
+      body.gain.value = profile.body;
+      tail.connect(body); tail = body; nodes.push(body);
+    }
+    if (sample.pan) {
+      const panner = ctx.createStereoPanner();
+      panner.pan.value = sample.pan;
+      tail.connect(panner); tail = panner; nodes.push(panner);
+    }
+    tail.connect(output);
+    if (profile.room && !this._room) this._room = createInstrumentRoom(ctx, this._master, profile.room);
+    output.connect(this._room?.input || this._master);
     const amplitude = profile.gain * clamp(velocity, 0.01, 1) ** profile.velocityExponent;
-    const naturalDuration = (sample.buffer.duration - offset) / rate;
+    const naturalDuration = looping ? duration + profile.release : (sample.buffer.duration - offset) / rate;
     const releaseAt = start + Math.min(duration, naturalDuration);
     const stopAt = Math.min(start + naturalDuration, releaseAt + profile.release);
-    const attack = Math.min(profile.attack, duration / 4, (stopAt - start) / 4);
+    const attack = Math.min(elapsed > 0 ? 0.006 : profile.attack, duration / 4, (stopAt - start) / 4);
     output.gain.setValueAtTime(0, start);
     output.gain.linearRampToValueAtTime(amplitude, start + attack);
     output.gain.setValueAtTime(amplitude, Math.max(start + attack, releaseAt));
     output.gain.linearRampToValueAtTime(0, Math.max(start + attack + 0.001, stopAt));
-    const voice = { output, nodes: [source, lowpass, shelf], end: stopAt, cancelled: false };
+    const voice = { output, nodes, end: stopAt, cancelled: false };
     this._voices.add(voice);
     source.onended = () => {
-      source.disconnect(); lowpass.disconnect(); shelf.disconnect(); output.disconnect();
+      for (const node of nodes) node.disconnect();
+      output.disconnect();
       this._voices.delete(voice);
     };
     source.start(start, offset);
@@ -487,14 +551,24 @@ export class PianoPlayer {
       }
     }
     this._voices.clear();
+    if (this._room) {
+      const room = this._room;
+      this._room = null;
+      room.fadeOut(now);
+      const timer = globalThis.setTimeout(() => {
+        room.dispose();
+        this._retiredRooms.delete(room);
+      }, 30);
+      this._retiredRooms.set(room, timer);
+    }
   }
 
-  _halt() {
+  _halt(cancelVoices = true) {
     if (this._timer !== null) this._clearInterval(this._timer);
     if (this._raf !== null) this._cancelFrame(this._raf);
     this._timer = null;
     this._raf = null;
-    this._cancelVoices();
+    if (cancelVoices) this._cancelVoices();
   }
 
   _frame() {

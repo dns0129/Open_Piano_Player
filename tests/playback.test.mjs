@@ -18,7 +18,7 @@ class FakeParam {
 
 class FakeNode {
   gain = new FakeParam(); frequency = new FakeParam(); detune = new FakeParam();
-  playbackRate = new FakeParam(); Q = new FakeParam();
+  playbackRate = new FakeParam(); Q = new FakeParam(); pan = new FakeParam();
   threshold = new FakeParam(); knee = new FakeParam(); ratio = new FakeParam();
   attack = new FakeParam(); release = new FakeParam();
   stops = [];
@@ -35,6 +35,7 @@ class FakeContext {
   oscillators = [];
   bufferSources = [];
   filters = [];
+  convolvers = [];
   decodeCalls = 0;
   state = 'running';
   createGain() { return new FakeNode(); }
@@ -42,6 +43,12 @@ class FakeContext {
   createOscillator() { const node = new FakeNode(); this.oscillators.push(node); return node; }
   createBufferSource() { const node = new FakeNode(); this.bufferSources.push(node); return node; }
   createBiquadFilter() { const node = new FakeNode(); this.filters.push(node); return node; }
+  createStereoPanner() { return new FakeNode(); }
+  createConvolver() { const node = new FakeNode(); this.convolvers.push(node); return node; }
+  createBuffer(channels, length, sampleRate) {
+    const data = Array.from({ length: channels }, () => new Float32Array(length));
+    return { length, sampleRate, duration: length / sampleRate, getChannelData: channel => data[channel] };
+  }
   async decodeAudioData() { this.decodeCalls++; return { duration: 8, length: 384000, sampleRate: 48000, numberOfChannels: 2 }; }
   async resume() {}
   async close() { this.state = 'closed'; }
@@ -91,6 +98,104 @@ test('sampled piano transposes the nearest root and shares decoded buffers acros
   await h.player.setInstrument('bright');
   assert.equal(h.context.decodeCalls, 3);
   assert.ok(h.context.filters.some(filter => filter.type === 'highshelf' && filter.gain.value > 0));
+  await h.player.dispose();
+});
+
+const bowedBank = (roots = [69], overrides = {}) => ({
+  manifest: { samples: roots.map(midi => ({ midi, file: `${midi}.mp3`, loopStart: 0.9, loopEnd: 4.1, pan: -0.1 })) },
+  fetcher: async () => ({ ok: true, arrayBuffer: async () => new ArrayBuffer(16) }), ...overrides,
+});
+
+test('warm grand reuses piano recordings and shares one room across chord voices', async () => {
+  const h = harness(makeScore([60, 64, 67].map((midi, i) => ({ id: `chord-${i}`, beat: 0, duration: 4, midi }))), sampleOptions({ instrument: 'warm' }));
+  await h.player.play();
+  assert.equal(h.context.decodeCalls, 3);
+  assert.equal(h.context.bufferSources.length, 3);
+  assert.equal(h.context.convolvers.length, 1);
+  assert.ok(h.context.filters.some(filter => filter.type === 'peaking' && filter.gain.value > 0));
+  const room = h.player._room;
+  await h.player.setInstrument('piano');
+  assert.equal(h.context.decodeCalls, 3);
+  assert.equal(h.player._room, null, 'the previous room must stop on instrument changes');
+  assert.ok(h.player._retiredRooms.has(room));
+  await h.player.dispose();
+  assert.equal(room.input.disconnected, true);
+});
+
+test('bowed strings sustain beyond the recording and seek into the transposed loop', async () => {
+  const h = harness(makeScore([{ id: 'long', beat: 0, duration: 40, midi: 70 }]), {
+    instrument: 'violin', sampleBanks: { violin: bowedBank() },
+  });
+  await h.player.play();
+  const source = h.context.bufferSources[0];
+  const rate = 2 ** (1 / 12);
+  assert.equal(source.loop, true);
+  assert.equal(source.loopStart, 0.9);
+  assert.equal(source.loopEnd, 4.1);
+  assert.ok(source.stops[0] > 20, 'a held note must not end at the eight-second source duration');
+  h.player.seek(24);
+  const resumed = h.context.bufferSources.at(-1);
+  const expected = 0.9 + (12 * rate - 0.9) % 3.2;
+  assert.ok(Math.abs(resumed.offset - expected) < 1e-9);
+  assert.ok(resumed.offset >= resumed.loopStart && resumed.offset < resumed.loopEnd);
+  await h.player.dispose();
+});
+
+test('piano, solo violin and ensemble keep independent caches and preserve transport on switches', async () => {
+  const h = harness(makeScore([{ id: 'low', beat: 0, duration: 20, midi: 37, hand: 'left' }]), sampleOptions({
+    sampleBanks: { violin: bowedBank(), strings: bowedBank([36, 60]) },
+  }));
+  await h.player.play();
+  h.advance(0.4);
+  const beat = h.player.beat;
+  await h.player.setInstrument('violin');
+  const violinBuffer = h.context.bufferSources.at(-1).buffer;
+  await h.player.setInstrument('strings');
+  assert.equal(h.player.beat, beat);
+  assert.equal(h.player.state, 'playing');
+  assert.equal(h.context.bufferSources.at(-1).playbackRate.value, 2 ** (1 / 12), 'low ensemble note uses its cello root');
+  assert.notEqual(h.context.bufferSources.at(-1).buffer, violinBuffer);
+  assert.equal(h.context.decodeCalls, 6);
+  await h.player.setInstrument('warm');
+  await h.player.setInstrument('violin');
+  assert.equal(h.context.decodeCalls, 6);
+  assert.equal(h.context.bufferSources.at(-1).buffer, violinBuffer);
+  await h.player.dispose();
+});
+
+test('a slower bank load cannot replace the most recently selected instrument', async () => {
+  let release;
+  const waiting = new Promise(resolve => { release = resolve; });
+  const h = harness(makeScore([{ beat: 0, duration: 12, midi: 69 }]), {
+    sampleBanks: {
+      violin: bowedBank([69], { fetcher: async () => { await waiting; return { ok: true, arrayBuffer: async () => new ArrayBuffer(16) }; } }),
+      strings: bowedBank([60]),
+    },
+  });
+  await h.player.play();
+  const pending = h.player.setInstrument('violin');
+  await Promise.resolve();
+  await h.player.setInstrument('strings');
+  const selectedBuffer = h.context.bufferSources.at(-1).buffer;
+  release();
+  await pending;
+  assert.equal(h.player.instrumentState.activeId, 'strings');
+  assert.equal(h.player.instrumentState.id, 'strings');
+  h.player.seek(1);
+  assert.equal(h.context.bufferSources.at(-1).buffer, selectedBuffer);
+  await h.player.dispose();
+});
+
+test('stop cancels every future attack of an instrument preview and its room', async () => {
+  const h = harness(makeScore([{ beat: 0, duration: 4, midi: 69 }]), {
+    instrument: 'violin', sampleBanks: { violin: bowedBank() },
+  });
+  await h.player.previewInstrument();
+  assert.equal(h.context.bufferSources.length, 6);
+  assert.ok(h.context.bufferSources.at(-1).started > 2);
+  h.player.stop();
+  assert.ok(h.context.bufferSources.every(source => source.stops.at(-1) <= 0.016));
+  assert.equal(h.player._room, null);
   await h.player.dispose();
 });
 
@@ -225,15 +330,19 @@ test('loop wraps on audio time and pre-schedules the next iteration without a ti
   await h.player.dispose();
 });
 
-test('end preserves the last beat, cancels sound, and restart begins at zero', async () => {
+test('natural end preserves the last beat and scheduled release; restart begins at zero', async () => {
   const h = harness(makeScore([{ id: 'end', beat: 0, duration: 1, midi: 60, hand: 'right' }]));
   await h.player.play();
+  const voices = h.context.oscillators.slice();
+  const scheduledStops = voices.map(node => node.stops[0]);
   h.advance(0.7);
   assert.equal(h.player.state, 'stopped');
   assert.equal(h.player.beat, 1);
+  assert.deepEqual(voices.map(node => node.stops), scheduledStops.map(time => [time]), 'natural completion must preserve the release envelope');
   assert.deepEqual(h.frames.at(-1), { beat: 1, notes: [] });
   await h.player.play();
   assert.equal(h.player.beat, 0);
+  assert.ok(voices.every(node => node.stops.at(-1) <= 0.716), 'restarting cancels any previous tail');
   await h.player.dispose();
 });
 

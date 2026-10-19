@@ -480,16 +480,24 @@ main.view-practice {
   font-size: 11px;
 }
 .instrument-preview {
-  display: grid;
-  place-items: center;
-  width: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 53px;
   height: 27px;
+  flex-shrink: 0;
+  font-size: 10px;
   border-radius: 5px;
   color: #698259;
   background: #e8eedf;
 }
 .instrument-preview:hover {
   background: #dfe8d5;
+}
+.instrument-preview:disabled {
+  opacity: 0.5;
+  cursor: wait;
 }
 .instrument-preview svg {
   width: 14px;

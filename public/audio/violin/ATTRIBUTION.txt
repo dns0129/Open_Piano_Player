@@ -1,0 +1,8 @@
+VS Chamber Orchestra 2: Community Edition (VSCO 2 CE)
+Recorded by Sam Gossner & Simon Dalzell. Sample cutting: Elan Hickler / Soundemote.
+License: CC0 1.0 Universal — https://creativecommons.org/publicdomain/zero/1.0/
+Source: https://github.com/sgossner/VSCO-2-CE/tree/440300901dfe9275fd84e0b7763af1f8443ae62e
+
+Qinban edits: silence trimming, level matching, crossfaded sustain loops, MP3 encoding.
+See manifest.json for each original filename and SHA-256. No runtime CDN is used.
+Strings combines recorded violin, viola and cello sections with solo contrabass by register.

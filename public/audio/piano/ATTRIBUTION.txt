@@ -9,4 +9,8 @@ Original collection: https://archive.org/details/SalamanderGrandPianoV3
 The 30 MP3 files are distributed unchanged from the above commit.
 Qinban selects nearest recorded notes and pitch-shifts them for playback.
 Soft and bright presets apply playback EQ/envelopes to the same sample set.
+The warm grand preset also applies velocity-sensitive filtering, low-mid EQ,
+a rounded attack, a longer release and a synthesized stereo room.
+Its tonal reference is the warmth of a Steinway grand; the source recordings
+remain the Salamander Yamaha C5 recordings described above.
 No claim of endorsement by the sample author or Tone.js.
