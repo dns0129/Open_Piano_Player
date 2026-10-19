@@ -16,10 +16,10 @@ test('compact full read retains every head, position and tie; independent read o
 test('compact format rejects partial coverage, invented indices, missing coordinates and handless voices',()=>{
  for(const mutate of [r=>r.complete=false,r=>r.notes[0][3]=0,r=>r.notes[0].pop(),r=>r.ties=[[0,99]],r=>r.notes[0][4]=1.2]){const input=structuredClone(raw);mutate(input);assert.throws(()=>decodeCompactRegion(input,request));}
 });
-test('written grace notes borrow a fixed amount from preceding rests or chord tones without moving main beats',()=>{
+test('grace heads remain attached to unchanged written principal notes and rests',()=>{
  const input={...raw,notes:[[69,2,0,1,.4,.2,.75],[70,2,2,1,.5,.2,.75],[48,0,4,-1,.2,.8,.55]],rests:[[0,2,1]],ties:[],graces:[[0,1]]};
  const a=validateRegionResult(decodeCompactRegion(input,request),region,request.metadata);
- assert.equal(a.checks.passed,true);assert.equal(a.score.notes.find(n=>n.midi===69).beat,1.9375);assert.equal(a.score.notes.find(n=>n.midi===70).beat,2);assert.equal(a.rests[0].duration,1.9375);
+ assert.equal(a.checks.passed,true);assert.deepEqual(a.score.notes.find(n=>n.midi===70).grace.notes,[{midi:69,velocity:.75}]);assert.equal(a.score.notes.find(n=>n.midi===70).beat,2);assert.equal(a.rests[0].duration,2);
  const atStart={...input,notes:[[69,0,0,1,.1,.2,.75],[70,0,4,1,.2,.2,.75],[48,0,4,-1,.2,.8,.55]],rests:[]};
- const b=validateRegionResult(decodeCompactRegion(atStart,request),region,request.metadata);assert.equal(b.checks.passed,true);assert.equal(b.score.notes.find(n=>n.midi===70).duration,3.9375);
+ const b=validateRegionResult(decodeCompactRegion(atStart,request),region,request.metadata);assert.equal(b.checks.passed,true);assert.equal(b.score.notes.find(n=>n.midi===70).duration,4);
 });

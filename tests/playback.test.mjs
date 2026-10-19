@@ -424,3 +424,36 @@ test('MusicXML round-trips polyphony, chord, rests, crossed bar ties and tuplets
     .sort((a, b) => a[0] - b[0] || a[2] - b[2]);
   assert.deepEqual(signature(imported.notes), signature(score.notes));
 });
+
+test('tempo steps schedule exact attacks and keep seek, speed scaling and audio progress aligned',async()=>{
+ const h=harness(makeScore([{id:'a',beat:0,duration:4,midi:60,hand:'right'},{id:'b',beat:4,duration:4,midi:64,hand:'right'}],{durationBeats:8,tempoMap:[{beat:2,bpm:60,curve:'step'}]}));
+ const attacks=[];h.player._piano=(midi,time,duration,velocity,elapsed)=>attacks.push({midi,time,duration,elapsed});
+ await h.player.play();assert.equal(h.player.durationSeconds,7);assert.ok(Math.abs(attacks[0].duration-3)<1e-8);
+ h.advance(1.518);assert.ok(Math.abs(h.player.beat-2.5)<1e-8);
+ h.player.seek(4);assert.equal(h.player.beat,4);assert.equal(attacks.at(-1).midi,64);assert.ok(Math.abs(attacks.at(-1).duration-4)<1e-8);
+ h.player.configure({tempo:60});assert.equal(h.player.durationSeconds,14);h.advance(1.018);assert.ok(Math.abs(h.player.beat-4.5)<1e-8);
+ await h.player.dispose();
+});
+
+test('fermata freezes written position while elapsed time advances; pause/resume and loops retain the hold',async()=>{
+ const h=harness(makeScore([{id:'held',beat:0,duration:2,midi:60,hand:'right',fermata:{holdBeats:2}},{id:'after',beat:2,duration:2,midi:64,hand:'right'}],{durationBeats:4}));
+ const attacks=[];h.player._piano=(midi,time,duration,velocity,elapsed)=>attacks.push({midi,time,duration,elapsed});
+ await h.player.play();assert.equal(h.player.durationSeconds,3);assert.equal(attacks[0].duration,2);
+ h.advance(1.518);assert.equal(h.player.beat,2);const seconds=h.player.elapsedSeconds;h.player.pause();h.advance(8);assert.equal(h.player.elapsedSeconds,seconds);
+ await h.player.play();h.advance(.218);assert.equal(h.player.beat,2);h.advance(.4);assert.ok(h.player.beat>2);
+ h.player.pause();h.player.configure({loopEnabled:true,loopStart:0,loopEnd:2});h.player.seek(0);await h.player.play();
+ const initial=attacks.at(-1).time;h.advance(1.95);assert.ok(Math.abs(attacks.at(-1).time-initial-2)<1e-8,'next loop includes the full final fermata');h.advance(.2);assert.ok(h.player.beat<1);
+ await h.player.dispose();
+});
+
+test('linear ramp and grace actual audio events match MIDI timing without rewriting written score',async()=>{
+ const score=makeScore([{id:'main',beat:0,duration:4,midi:60,hand:'right',grace:{notes:[{midi:62},{midi:64}],placement:'on',slash:true,stealBeats:.25}},{id:'left',beat:0,duration:4,midi:48,hand:'left'}],{tempoMap:[{beat:0,bpm:120,curve:'linear'},{beat:4,bpm:60,curve:'step'}]});
+ const h=harness(score),attacks=[];h.player._piano=(midi,time,duration)=>attacks.push({midi,time,duration});await h.player.play();
+ for(let i=0;i<10;i++)h.advance(.1);
+ const midi=new Midi(exportMidi(score)),notes=midi.tracks.flatMap(t=>t.notes);for(const a of attacks){const n=notes.find(n=>n.midi===a.midi);assert.ok(n);assert.ok(Math.abs(a.time-.018-n.time)<.003);assert.ok(Math.abs(a.duration-n.duration)<.003);}
+ assert.equal(score.notes[0].beat,0);assert.equal(score.notes[0].duration,4);await h.player.dispose();
+});
+
+test('previewing a before-beat grace group starts at its first grace instead of scheduling in the past',async()=>{
+ const score=makeScore([{id:'main',beat:4,duration:2,midi:60,hand:'right',grace:{notes:[{midi:62},{midi:64}],placement:'before',slash:true,stealBeats:.25}}]);const h=harness(score),events=[];h.player._piano=(midi,time,duration)=>events.push({midi,time,duration});await h.player.previewNotes(score,'main');assert.equal(events.length,3);assert.equal(events[0].midi,62);assert.ok(events.every(e=>e.time>=h.context.currentTime+.018));assert.ok(events[0].time<events[1].time&&events[1].time<events[2].time);await h.player.dispose();
+});

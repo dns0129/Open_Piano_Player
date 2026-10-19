@@ -1,4 +1,4 @@
-import { Renderer, Stave, StaveNote, StaveConnector, Voice, Formatter, Accidental, Dot, StaveTie, Beam, Tuplet, Annotation, Fraction, VexFlow, Barline, Articulation, Ornament, Modifier } from 'vexflow';
+import { Renderer, Stave, StaveNote, StaveConnector, Voice, Formatter, Accidental, Dot, StaveTie, Beam, Tuplet, Annotation, Fraction, VexFlow, Barline, Articulation, Ornament, Modifier, GraceNote, GraceNoteGroup } from 'vexflow';
 import { beatsPerMeasure, KEY_NAMES, midiName, scoreMeasureBounds, scoreMeasureIndex } from '../lib/score.mjs';
 import { measureSegments, spellMidi, numberedPitch, durationGlyph, planSystems } from '../lib/notation-layout.mjs';
 import { tonalityLabel } from '../lib/score-arrangement.mjs';
@@ -140,6 +140,8 @@ export function renderNotation(container, score, options = {}) {
   if (options.onSelectNotes) help.textContent = '点击谱面选择音符；和弦内的单音也可在下方逐个选择。';
   if (mode !== 'roll' && hasMergedVoices(score)) help.textContent += ' 复声部合并为和弦及延音线；精确起止可切换钢琴卷帘查看。';
   if (score.notes.some(note => tripletDurations.some(([duration]) => closeTo(note.duration, duration)))) help.textContent += ' 括号 3 表示三连音。';
+  if(score.tempoMap?.length)help.textContent+=' 速度变化：'+score.tempoMap.map(e=>`第${e.beat}拍 ♩=${e.bpm}${e.curve==='linear'?' 渐变至下一点':''}`).join('；')+'。';
+  if(score.fermatas?.length)help.textContent+=' 停留：'+score.fermatas.map(e=>`第${e.beat}拍额外${e.holdBeats}拍`).join('；')+'。';
   const systemsHost = document.createElement('div'); systemsHost.className = 'notation-systems'; root.append(help, systemsHost); container.replaceChildren(root);
   let systems = [], measures = [], beatNow = 0, currentIndex = -1, destroyed = false, layoutWidth = 0, resizeFrame = 0, scrollFrame = 0, visibilityObserver;
   const cache = new Map();
@@ -191,6 +193,11 @@ export function renderNotation(container, score, options = {}) {
       if (showNoteNames && pitches.length) note.addModifier(new Annotation(pitches.map(n => midiName(n.midi, score.keySignature < 0)).join(' ')).setFont('Arial', 8).setVerticalJustification('top'));
       pitches.forEach((n,index)=>{
         if(!closeTo(n.beat,segment.beat) || (chain(n)&&chain(n).head.id!==n.id)) return;
+        if(n.grace){
+          const graces=n.grace.notes.map(g=>{const p=spellMidi(g.midi,score.keySignature);const grace=new GraceNote({clef,keys:[`${p.letter.toLowerCase()}${['bb','b','','#','##'][p.accidental+2]}/${p.octave}`],duration:'16',slash:n.grace.slash});if(p.accidental)grace.addModifier(new Accidental(['bb','b','','#','##'][p.accidental+2]),0);return grace;});
+          note.addModifier(new GraceNoteGroup(graces,true).beamNotes(),index);
+        }
+        if(n.fermata)note.addModifier(new Annotation(`𝄐 +${n.fermata.holdBeats}拍`).setFont('Arial',10).setVerticalJustification('top'));
         if(n.accent) note.addModifier(new Articulation(n.accent==='accent'?'a>':'a^').setPosition(Modifier.Position.ABOVE),index);
         if(n.articulation) note.addModifier(new Articulation(n.articulation==='staccato'?'a.':'a-').setPosition(Modifier.Position.ABOVE),index);
         if(n.ornament) {

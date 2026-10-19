@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "id": "qinban-expressive-timing-demo",
+  "title": "倚音、延长与变速示例",
+  "composer": "琴伴功能示例",
+  "tempo": 120,
+  "timeSignature": [4, 4],
+  "keySignature": 0,
+  "durationBeats": 8,
+  "tempoMap": [
+    { "beat": 0, "bpm": 120, "curve": "linear" },
+    { "beat": 4, "bpm": 60, "curve": "step" },
+    { "beat": 6, "bpm": 120, "curve": "step" }
+  ],
+  "fermatas": [{ "beat": 8, "holdBeats": 1 }],
+  "source": { "kind": "original", "label": "演奏时间轴功能示例；借时与延长均为演奏设置" },
+  "notes": [
+    { "id": "r1", "midi": 60, "hand": "right", "voice": "right-1", "beat": 0, "duration": 2, "grace": { "placement": "on", "slash": true, "stealBeats": 0.25, "notes": [{ "midi": 62 }, { "midi": 64 }] } },
+    { "id": "r2", "midi": 67, "hand": "right", "voice": "right-1", "beat": 2, "duration": 2, "fermata": { "holdBeats": 2 } },
+    { "id": "r3", "midi": 65, "hand": "right", "voice": "right-1", "beat": 4, "duration": 2 },
+    { "id": "r4", "midi": 60, "hand": "right", "voice": "right-1", "beat": 6, "duration": 2, "grace": { "placement": "before", "slash": false, "stealBeats": 0.5, "notes": [{ "midi": 62 }] } },
+    { "id": "l1", "midi": 48, "hand": "left", "beat": 0, "duration": 4 },
+    { "id": "l2", "midi": 43, "hand": "left", "beat": 4, "duration": 4 }
+  ]
+}

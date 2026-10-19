@@ -207,8 +207,8 @@ function measureIndexAtBeat(beat) {
   while(low<=high){const middle=(low+high)>>1,item=map[middle];if(beat<item.beat)high=middle-1;else if(beat>=item.beat+item.duration)low=middle+1;else return middle;}
   return Math.max(0,Math.min(map.length-1,low));
 }
-const durationText = (beats, tempo = state.tempo) => {
-  let seconds = Math.round((beats * 60) / tempo);
+const durationText = beats => {
+  let seconds = Math.round(player.timeAtBeat(beats));
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 };
 function toast(text, error = false) {
@@ -637,7 +637,7 @@ function updateFrame(beat, active = []) {
   state.beat = beat;
   if (!$("#seek")) return;
   $("#seek").value = beat;
-  $("#elapsed").textContent = durationText(beat);
+  $("#elapsed").textContent = `${Math.floor(player.elapsedSeconds/60)}:${String(Math.floor(player.elapsedSeconds)%60).padStart(2,"0")}`;
   if (player.state !== "playing" && state.instrumentInfo.status !== "loading")
     $("#playback-label").textContent = beat >= state.score.durationBeats - 0.00001
       ? "播放完成" : player.state === "paused" ? "已暂停" : "准备练习";

@@ -3,6 +3,7 @@ import { assetURL } from '../lib/asset-url.mjs';
 import { createInstrumentRoom } from '../lib/instrument-room.mjs';
 import { INSTRUMENT_PREVIEW } from '../lib/instrument-demo.mjs';
 import { performanceNotes, tieChains } from '../lib/note-effects.mjs';
+import { createScoreTimeline } from '../lib/score-timing.mjs';
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
 const EPSILON = 1e-7;
@@ -58,19 +59,30 @@ export class PianoPlayer {
   get state() { return this._state; }
   get instrument() { return this._instrumentId; }
   get instrumentState() { return { ...this._instrumentState, activeId: this._activeInstrument }; }
-  get beat() {
+  get _performanceBeat() {
     return this._state === 'playing' ? this._positionAt(this._context.currentTime) : this._beat;
   }
+
+  get beat() { return this._writtenBeat(this._performanceBeat); }
+  get elapsedSeconds() { return this._performanceBeat * 60 / this._config.tempo; }
+  get durationSeconds() { return (this._duration||0) * 60 / this._config.tempo; }
+  timeAtBeat(beat) { return this._performedBeat(beat) * 60 / this._config.tempo; }
+  _performedBeat(beat) { return this._timeline ? this._timeline.secondsAt(beat)*this._baseTempo/60 : beat; }
+  _writtenBeat(beat) { return this._timeline ? this._timeline.beatAt(beat*60/this._baseTempo) : beat; }
 
   setScore(score) {
     this.stop();
     this._score = score || null;
+    this._baseTempo = score?.tempo || 88;
+    this._timeline = createScoreTimeline(score || {notes:[],tempo:88,durationBeats:0});
     this._notes = performanceNotes(score || {notes:[]})
       .filter((note) => Number.isFinite(note.midi) && Number.isFinite(note.beat) && note.duration > 0)
-      .map((note, index) => ({ ...note, id: note.id ?? `note-${index}`, hand: note.hand === 'left' ? 'left' : 'right' }))
+      .map((note, index) => ({ ...note, writtenBeat:note.beat, beat:this._performedBeat(note.beat), duration:this._performedBeat(note.beat+note.duration)-this._performedBeat(note.beat), id: note.id ?? `note-${index}`, hand: note.hand === 'left' ? 'left' : 'right' }))
       .sort((a, b) => a.beat - b.beat);
-    this._duration = Math.max(0, Number(score?.durationBeats) || 0,
-      ...this._notes.map((note) => note.beat + note.duration));
+    this._duration = this._timeline.durationSeconds*this._baseTempo/60;
+    this._clicks=[];
+    const unit=4/(score?.timeSignature?.[1]||4),numerator=score?.timeSignature?.[0]||4;
+    for(let tick=0;tick*unit<(score?.durationBeats||0);tick++)this._clicks.push({beat:this._performedBeat(tick*unit),accent:tick%numerator===0});
     this._config.tempo = clamp(score?.tempo || 88, 20, 300);
     this._config.loopStart = 0;
     this._config.loopEnd = this._duration;
@@ -106,7 +118,7 @@ export class PianoPlayer {
   pause() {
     this._playGeneration = (this._playGeneration || 0) + 1;
     if (this._state !== 'playing') return;
-    this._beat = this.beat;
+    this._beat = this._performanceBeat;
     this._halt();
     this._state = 'paused';
     this.onStateChange(this._state);
@@ -124,7 +136,7 @@ export class PianoPlayer {
   }
 
   seek(beat) {
-    let position = clamp(beat, 0, this._duration || 0);
+    let position = clamp(this._performedBeat(beat), 0, this._duration || 0);
     const loop = this._loopBounds();
     if (loop && (position < loop.start || position >= loop.end)) position = loop.start;
     this._beat = position;
@@ -133,15 +145,15 @@ export class PianoPlayer {
   }
 
   configure(changes = {}) {
-    const position = this.beat;
+    const position = this._performanceBeat;
     const before = { ...this._config };
     if ('tempo' in changes) this._config.tempo = clamp(changes.tempo, 20, 300);
     if ('volume' in changes) this._config.volume = clamp(changes.volume, 0, 1);
     for (const key of ['rightEnabled', 'leftEnabled', 'metronome', 'loopEnabled']) {
       if (key in changes) this._config[key] = Boolean(changes[key]);
     }
-    if ('loopStart' in changes) this._config.loopStart = clamp(changes.loopStart, 0, this._duration || 0);
-    if ('loopEnd' in changes) this._config.loopEnd = clamp(changes.loopEnd, 0, this._duration || 0);
+    if ('loopStart' in changes) this._config.loopStart = clamp(this._performedBeat(changes.loopStart), 0, this._duration || 0);
+    if ('loopEnd' in changes) this._config.loopEnd = clamp(this._performedBeat(changes.loopEnd), 0, this._duration || 0);
     if (this._master && before.volume !== this._config.volume) {
       this._master.gain.setTargetAtTime(this._config.volume * 0.72, this._context.currentTime, 0.015);
     }
@@ -193,11 +205,13 @@ export class PianoPlayer {
     if(request!==this._previewGeneration || generation!==(this._playGeneration||0)) return;
     this._cancelVoices();
     const selected=score.notes.find(n=>n.id===id); if(!selected) return;
-    const chain=tieChains(score.notes).get(id), start=chain?.start??selected.beat;
+    const chain=tieChains(score.notes).get(id);
     const ids=new Set(selected.arpeggio?score.notes.filter(n=>n.hand===selected.hand&&Math.abs(n.beat-selected.beat)<EPSILON).map(n=>n.id):[id]);
-    const seconds=60/this._config.tempo, end=start+8, now=this._context.currentTime+.018;
-    for(const n of performanceNotes(score)) if(n.sourceIds.some(key=>ids.has(key)) && n.beat<end)
-      this._piano(n.midi,now+(n.beat-start)*seconds,Math.min(n.duration,end-n.beat)*seconds,n.velocity);
+    const events=performanceNotes(score).filter(n=>n.sourceIds.some(key=>ids.has(key)));
+    const start=Math.min(chain?.start??selected.beat,...events.map(n=>n.beat));
+    const timeline=createScoreTimeline(score), scale=score.tempo/this._config.tempo, end=start+8, now=this._context.currentTime+.018;
+    for(const n of events) if(n.beat<end)
+      this._piano(n.midi,now+(timeline.secondsAt(n.beat)-timeline.secondsAt(start))*scale,(timeline.secondsAt(Math.min(n.beat+n.duration,end))-timeline.secondsAt(n.beat))*scale,n.velocity);
   }
 
   stopPreview() {
@@ -252,7 +266,7 @@ export class PianoPlayer {
   }
 
   _activateInstrument(id) {
-    const position = this.beat;
+    const position = this._performanceBeat;
     this._activeInstrument = id;
     this._sampleBank = this._sampleBanks.get(pianoInstrument(id).bank);
     if (this._state === 'playing') this._resetSchedule(position);
@@ -339,7 +353,7 @@ export class PianoPlayer {
       this._halt(false);
       this._state = 'stopped';
       this.onStateChange(this._state);
-      this.onFrame(this._beat, []);
+      this.onFrame(this._writtenBeat(this._beat), []);
       return;
     }
     const lookAhead = globalThis.document?.hidden ? 5 : 0.16;
@@ -392,13 +406,7 @@ export class PianoPlayer {
         (start - note.beat) * secondsPerBeat);
     }
     if (this._config.metronome) {
-      const denominator = this._score.timeSignature?.[1] || 4;
-      const beatUnit = 4 / denominator;
-      const numerator = this._score.timeSignature?.[0] || 4;
-      const firstTick = Math.ceil((from - EPSILON) / beatUnit);
-      for (let tick = firstTick; tick * beatUnit < to - EPSILON; tick++) {
-        this._click(timeFor(tick * beatUnit), tick % numerator === 0);
-      }
+      for(const tick of this._clicks)if(tick.beat>=from-EPSILON&&tick.beat<to-EPSILON)this._click(timeFor(tick.beat),tick.accent);
     }
   }
 
@@ -598,9 +606,9 @@ export class PianoPlayer {
   }
 
   _emitFrame() {
-    const beat = this.beat;
+    const beat = this._performanceBeat;
     const active = this._notes.filter((note) => this._config[`${note.hand}Enabled`]
       && note.beat <= beat + EPSILON && note.beat + note.duration > beat + EPSILON);
-    this.onFrame(beat, active);
+    this.onFrame(this._writtenBeat(beat), active.map(n=>({...n,beat:n.writtenBeat??n.beat})));
   }
 }

@@ -95,3 +95,16 @@ test('expression controls preview real settings and save them through undo/redo'
   assert.equal(root.querySelectorAll('.notation-error').length,0);
  }finally{dispose();dom.window.close();for(const[k,v]of Object.entries(previous)){if(v===undefined)delete globalThis[k];else globalThis[k]=v;}}
 });
+
+test('visible grace, fermata and tempo tables save structured expression and render grace glyphs',async()=>{
+ const dom=new JSDOM('<div id="host"></div>',{pretendToBeVisual:true});dom.window.HTMLCanvasElement.prototype.getContext=()=>({font:'',measureText:t=>({width:String(t).length*8,actualBoundingBoxAscent:8,actualBoundingBoxDescent:2})});const previous={};for(const key of ['window','document','HTMLElement','SVGElement','requestAnimationFrame','cancelAnimationFrame']){previous[key]=globalThis[key];globalThis[key]=typeof dom.window[key]==='function'&&key.includes('AnimationFrame')?dom.window[key].bind(dom.window):dom.window[key];}
+ let saved;const {mountNoteEditor}=await import('../src/note-editor.js');const root=document.querySelector('#host');const dispose=mountNoteEditor(root,raw,{onSave:s=>{saved=s;}});
+ try{
+  const baseGlyphs=root.querySelectorAll('.vf-stavenote').length;
+  root.querySelector('[data-grace-pitches]').value='62 64';root.querySelector('[data-grace-steal]').value='.25';root.querySelector('[data-apply-grace]').click();
+  assert.equal(root.querySelectorAll('.notation-error').length,0);assert.ok(root.querySelectorAll('.vf-stavenote').length>=baseGlyphs+2,'grace glyphs are visible instead of ordinary written durations');
+  const hold=root.querySelector('[data-fermata]');hold.value='2';hold.dispatchEvent(new dom.window.Event('change'));
+  const rows=root.querySelectorAll('[data-tempo-rows] tr');rows[0].querySelector('[data-tempo-beat]').value='0';rows[0].querySelector('[data-tempo-bpm]').value='80';rows[0].querySelector('[data-tempo-curve]').value='linear';rows[1].querySelector('[data-tempo-beat]').value='4';rows[1].querySelector('[data-tempo-bpm]').value='60';root.querySelector('[data-apply-timing]').click();
+  root.querySelector('[data-save]').click();assert.deepEqual(saved.tempoMap,[{beat:0,bpm:80,curve:'linear'},{beat:4,bpm:60,curve:'step'}]);assert.equal(saved.notes.find(n=>n.id==='a').grace.notes.length,2);assert.equal(saved.notes.find(n=>n.id==='a').fermata.holdBeats,2);
+ }finally{dispose();dom.window.close();for(const[k,v]of Object.entries(previous)){if(v===undefined)delete globalThis[k];else globalThis[k]=v;}}
+});
