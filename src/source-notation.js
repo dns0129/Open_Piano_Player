@@ -183,7 +183,25 @@ function installStyles() {
  * Display verified source-system crops as one continuous score with timed
  * overlays. Its lifecycle matches renderNotation: setBeat(beat), destroy().
  */
+function renderSourceReference(container, manifest) {
+  if (!manifest.systems?.length || manifest.systems.some(s => typeof s.imageUrl !== 'string' || !s.imageUrl.trim())) throw new Error('原谱参考图片缺失。');
+  installStyles();
+  const root = document.createElement('div'); root.className = 'source-notation-root'; root.dataset.mode = 'source-reference';
+  const help = document.createElement('p'); help.className = 'source-notation-help';
+  help.textContent = '此版本尚无逐音定位，原谱图片仅供对照；请使用数字乐谱跟随练习。'; root.append(help);
+  for (const system of manifest.systems) {
+    const figure = document.createElement('figure'); figure.className = 'source-notation-system';
+    const caption = document.createElement('figcaption'); caption.className = 'source-notation-caption'; caption.textContent = `原谱第 ${system.page} 页 · 第 ${system.system} 行`;
+    const image = document.createElement('img'); image.className = 'source-notation-reference-image'; image.src = assetURL(system.imageUrl); image.alt = caption.textContent; image.style.width = '100%'; image.style.display = 'block'; image.loading = 'lazy';
+    figure.append(caption, image); root.append(figure);
+  }
+  container.replaceChildren(root);
+  return { setBeat() {}, setHands() {}, destroy() { root.remove(); } };
+}
+
 export function renderSourceNotation(container, score, options = {}) {
+  const manifest = options.sourceNotation ?? score.sourceNotation;
+  if (manifest?.notePositionsComplete === false && !manifest.notes?.length) return renderSourceReference(container, manifest);
   const layout = normalizeSourceNotation(score, options.sourceNotation ?? score.sourceNotation);
   installStyles();
   const onSeek = typeof options.onSeek === 'function' ? options.onSeek : () => {};
