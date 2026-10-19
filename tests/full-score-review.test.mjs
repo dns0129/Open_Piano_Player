@@ -209,3 +209,12 @@ test('intentionally excluded music is named as a selected excerpt and never a co
   assert.match(imported.score.title, /所选谱段$/);
   assert.equal(imported.reviewStatus.complete, false);
 });
+
+test('positionless digital results can be reviewed without inventing original-head coordinates',()=>{
+  const raw={score:{durationBeats:4,timeSignature:[4,4],notes:[{id:'r',midi:60,beat:0,duration:4,hand:'right'},{id:'l',midi:48,beat:0,duration:4,hand:'left'}]},positions:[],positionlessSource:true,coverage:{complete:true,measureCount:1,measureDurations:[4]}};
+  const base={id:'digital',page:1,system:1,selected:true,rect:{x:0,y:0,width:300,height:200}};
+  const region=normalizeFullScoreRegionResult(base,raw);
+  assert.deepEqual(fullScoreRegionIssues(region),[]);assert.equal(region.notes[0].x,null);
+  const required=normalizeFullScoreRegionResult(base,{...raw,positionlessSource:false});
+  assert.ok(fullScoreRegionIssues(required).some(issue=>issue.code==='MISSING_POSITION'));
+});

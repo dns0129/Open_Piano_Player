@@ -1532,6 +1532,7 @@ function fullScoreApi() {
       if(!response.ok)throw new Error("原始PDF读取失败，请重新上传。");return response.blob();
     },
     retryRegion:(id,regionId,input={},options={})=>request(route(id,"retry",regionId),input,id,options),
+    retryRegions:(id,input={},options={})=>request(route(id,"retry-failed"),input,id,options),
     cancelJob:id=>request(route(id,"cancel"),{},id),
     confirmRegion:async(id,regionId,result)=>{const job=await request(route(id,"confirm-region",regionId),{result},id);if(job.status==="complete")await syncLocalLibrary();return job;},
     exportDraft:(id,input={})=>request(route(id,"draft"),input,id),

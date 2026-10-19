@@ -275,3 +275,24 @@ test('an explicit in-row 2/4 bar is not treated as a 4/4 pickup',async t=>{
  const raw=rawJob(1);raw.regions[0].measureCount=2;const {id}=await store.createJob(raw,auth);await store.startJob(id,auth);await store.waitForIdle(id,auth);
  const job=await store.exportDraft(id,auth,{scopeConfirmed:true});assert.deepEqual(job.result.score.measureMap.map(b=>[b.duration,b.timeSignature,b.implicit]),[[2,[2,4],false],[4,[4,4],false]]);
 });
+
+test('batch retry switches provider only for failed/invalid rows and preserves successful and confirmed rows',async t=>{
+  let fail=true;const seen=[];
+  const {store}=await fixture(t,{recognizeRegion:async({region,engine})=>{seen.push([region.id,engine]);if(fail&&region.id==='row-2')throw new Error('read failed');if(fail&&region.id==='row-4'){const invalid=regionResult(region);invalid.score.notes.forEach(n=>n.duration=2);return invalid;}return regionResult(region,{model:engine==='deepseek'?'deepseek-flash':'gpt-6.1-sol'});}});
+  const {id}=await store.createJob(rawJob(4),auth);await store.startJob(id,auth);let job=await store.waitForIdle(id,auth);
+  await store.confirmRegion(id,'row-1',null,auth);const before=await store.getJob(id,auth);
+  fail=false;await store.retryRegions(id,auth,{engine:'deepseek',expectedVersion:job.runVersion});job=await store.waitForIdle(id,auth);
+  assert.deepEqual(seen.slice(4).sort(),[['row-2','deepseek'],['row-4','deepseek']]);assert.equal(job.engine,'deepseek');
+  assert.deepEqual(job.regions[0],before.regions[0]);assert.deepEqual(job.regions[2],before.regions[2]);
+  await assert.rejects(store.retryRegions(id,auth,{regionIds:['row-2','row-1'],engine:'pi'}),{code:'REGION_CONFIRMED'});
+  assert.deepEqual((await store.getJob(id,auth)).regions,job.regions);
+  await assert.rejects(store.retryRegions(id,auth,{regionIds:[]}),{code:'INVALID_REGIONS'});
+  await assert.rejects(store.retryRegions(id,auth,{expectedVersion:job.runVersion-1}),{code:'STALE_JOB_INTENT'});
+});
+
+test('review of trusted digital fallback keeps missing positions explicit and persists a complete reviewed score',async t=>{
+  const {store}=await fixture(t,{recognizeRegion:async({region})=>({...regionResult(region),positions:[],positionlessReview:true,wireFormat:'compact-json-v2'})});
+  const {id}=await store.createJob(rawJob(1),auth);await store.startJob(id,auth);await store.waitForIdle(id,auth);
+  await store.confirmRegion(id,'row-1',null,auth);const job=await store.confirmJob(id,auth,{scopeConfirmed:true});
+  assert.equal(job.status,'complete');assert.equal(job.result.reviewStatus,'human-confirmed');assert.equal(job.result.sourceNotation.notePositionsComplete,false);assert.deepEqual(job.result.sourceNotation.notes,[]);
+});

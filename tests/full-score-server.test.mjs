@@ -12,7 +12,7 @@ test('full-document HTTP routes preserve session/CSRF boundaries and explicit re
     uploadDocument:record('pdf',{id:'test-job'}),uploadRegion:record('image',{id:'test-job'}),
     readDocument:record('read-pdf',{buffer:Buffer.from('%PDF-test'),mimeType:'application/pdf',name:'source.pdf'}),
     readRegionImage:record('read-image',{buffer:Buffer.from('png'),mimeType:'image/png'}),
-    startJob:record('start',{status:'running'}),retryRegion:record('retry',{status:'running'}),
+    startJob:record('start',{status:'running'}),retryRegion:record('retry',{status:'running'}),retryRegions:record('retry-failed',{status:'running'}),
     cancelJob:record('cancel',{status:'cancelled'}),confirmRegion:record('review',{status:'needs-review'}),
     confirmJob:record('confirm',{status:'complete'}),close:record('close',undefined),
   };
@@ -32,6 +32,8 @@ test('full-document HTTP routes preserve session/CSRF boundaries and explicit re
   const started=calls.find(c=>c.method==='start');assert.equal(started.args[1].token,'private-test-token');assert.notEqual(started.args[1].sessionId,'untrusted');assert.equal(started.args[1].autoContinue,true);
   await post('/api/full-score-jobs/test-job/retry/page-2-row-1',{engine:'pi',expectedVersion:3},headers);
   assert.deepEqual(calls.find(c=>c.method==='retry').args[3],{engine:'pi',expectedVersion:3});
+  assert.equal((await post('/api/full-score-jobs/test-job/retry-failed',{engine:'deepseek',expectedVersion:4,regionIds:['row-2']},headers)).status,200);
+  assert.deepEqual(calls.find(c=>c.method==='retry-failed').args[2],{engine:'deepseek',expectedVersion:4,regionIds:['row-2']});
   await post('/api/full-score-jobs/test-job/confirm',{scopeConfirmed:true},headers);
   assert.deepEqual(calls.find(c=>c.method==='confirm').args[2],{scopeConfirmed:true});
   const pdf=await fetch(url+'/api/full-score-jobs/test-job/document',{headers});assert.equal(pdf.headers.get('content-type'),'application/pdf');assert.equal(await pdf.text(),'%PDF-test');

@@ -139,6 +139,7 @@ export function createAppServer({distDir=resolve('dist'),settingsStore=createSet
           else if(action==='document')result=await scoreJobs.uploadDocument(id,input,auth);
           else if(action==='start')result=await scoreJobs.startJob(id,{...input,...auth});
           else if(action==='retry'&&regionId)result=await scoreJobs.retryRegion(id,regionId,auth,{engine:input.engine,expectedVersion:input.expectedVersion,...(input.phase!==undefined?{phase:input.phase}:{})});
+          else if(action==='retry-failed')result=await scoreJobs.retryRegions(id,auth,{engine:input.engine,expectedVersion:input.expectedVersion,regionIds:input.regionIds});
           else if(action==='cancel')result=await scoreJobs.cancelJob(id,auth);
           else if(action==='confirm-region'&&regionId)result=await scoreJobs.confirmRegion(id,regionId,input.result||input,auth);
           else if(action==='draft')result=await scoreJobs.exportDraft(id,auth,{scopeConfirmed:input.scopeConfirmed===true});
