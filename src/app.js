@@ -1,5 +1,4 @@
 import {saveCloudDownload,packageLocalScore} from './cloud-library.js';
-import { hantingNotation, hantingNotationMatched } from '../lib/scores/hanting.mjs';
 import {findReviewedPdf} from '../lib/reviewed-pdf-reuse.mjs';
 import {
   createIcons,
@@ -34,7 +33,8 @@ import {
   AudioLines,
   FileAudio,
 } from "lucide";
-import { library } from "../lib/catalog.mjs";
+import { starterScore } from "../lib/starter-score.mjs";
+const library = [starterScore];
 import { STATIC_SITE, assetURL } from "../lib/asset-url.mjs";
 // 网页版没有本机服务：/api 请求统一返回说明，沿用各功能原有的错误提示。
 const STATIC_NOTICE = "网页版只提供曲库练习、本地 MusicXML/MIDI/JSON 导入和音频转谱；联网找谱、图片/PDF识谱和网易云导入需要在本机运行琴伴。";
@@ -57,7 +57,6 @@ import { decodeFullScoreRecovery } from "../lib/full-score-recovery.mjs";
 import { mountSourceBrowser } from "./source-browser.js";
 import { mountNeteaseImport } from "./netease-import.js";
 import { savePracticeSource, loadPracticeSource, listDownloadedScores, deletePracticeSource, sourceMatchesScore, releasePracticeSource } from "./source-library.js";
-import { bumblebeeYeungNotation, sourceNotationMatched } from "../lib/scores/bumblebee-yeung-notation.mjs";
 import { PianoPlayer } from "./audio.js";
 import {
   PIANO_INSTRUMENTS,
@@ -125,7 +124,7 @@ const state = {
   instrumentInfo: { status: "idle", progress: 0 },
   view: "practice",
   mode: "staff",
-  score: library.find((score) => score.id === "bumblebee-yeung-complete") || library[0],
+  score: starterScore,
   saved: read("qinban-scores", []),
   shared: [],
   sharedJobs: new Map(),
@@ -266,7 +265,7 @@ function sourceLabel(score) {
 }
 function originalNotation(score = state.score) {
   if(state.notationScore===score)return state.currentNotation;
-  const notation=sourceMatchesScore(score,state.sourceRecord)?state.sourceRecord.notation:hantingNotationMatched(score)?hantingNotation:sourceNotationMatched(score)?bumblebeeYeungNotation:sourceMatchesScore(score,state.sourceRecord)?state.sourceRecord.notation:null;
+  const notation=sourceMatchesScore(score,state.sourceRecord)?state.sourceRecord.notation:null;
   if(score===state.score){state.notationScore=score;state.currentNotation=notation;}
   return notation;
 }
@@ -340,7 +339,7 @@ function practiceView() {
 <div class="loop-controls"><label class="compact-toggle" for="loop"><input id="loop" type="checkbox" ${state.loopEnabled ? "checked" : ""}>${icon("repeat-2")}循环</label><input id="loop-start" aria-label="循环起始小节" type="number" min="1" max="${measureCount()}" value="${measureIndexAtBeat(state.loopStart) + 1}"><span>—</span><input id="loop-end" aria-label="循环结束小节" type="number" min="1" max="${measureCount()}" value="${measureIndexAtBeat(Math.max(0,state.loopEnd-0.00001)) + 1}"><small>小节</small></div>
 <div class="console-spacer"></div><div class="volume-control">${icon("volume-2")}<input id="volume" aria-label="音量" type="range" min="0" max="1" step="0.01" value="${state.volume}"></div></div>
 <div class="console-bottom">${instrumentControls()}<div class="progress-row"><span id="elapsed">0:00</span><input id="seek" type="range" aria-label="播放进度" min="0" max="${s.durationBeats}" step="0.01" value="${state.beat}"><span id="total-time">${durationText(s.durationBeats)}</span></div><span class="space-hint">空格 播放 / 暂停</span><div class="score-view-tools"><div class="notation-switch">${originalNotation(s) ? `<button data-mode="source" class="${state.mode === "source" ? "selected" : ""}">原图参考</button>` : ""}<button data-mode="staff" class="${state.mode === "staff" ? "selected" : ""}">五线谱</button><button data-mode="numbered" class="${state.mode === "numbered" ? "selected" : ""}">简谱</button><button data-mode="roll" class="${state.mode === "roll" ? "selected" : ""}">钢琴卷帘</button></div><label class="compact-toggle" for="follow"><input id="follow" type="checkbox" ${state.follow ? "checked" : ""}>跟随</label><div class="transpose-control"><button id="transpose-down" aria-label="降低半音">−</button><span>移调</span><button id="transpose-up" aria-label="升高半音">＋</button></div><button class="button secondary" data-edit-notes>编辑与改编</button><button class="icon-button" data-export aria-label="导出乐谱" title="导出乐谱">${icon("download")}</button></div></div>
-</section><section class="score-stage" aria-label="乐谱练习区域"><div class="score-document-heading"><div><h1>${esc(s.title)}</h1><p>${esc(s.composer || "钢琴谱")}<span>♩ = <b id="paper-tempo">${state.tempo}</b></span><span>${s.timeSignature.join("/")} 拍</span><span>${s.mode ? esc(tonalityLabel(s)) : keyName(s.keySignature) + " 调号"}</span></p></div><div class="score-provenance"><span class="arrangement-tag">${hantingNotationMatched(s) ? "6页完整钢琴谱" : s.source?.kind === "full-score-model-reviewed" ? "AI全谱校对版 · 待人工确认" : s.source?.reviewRequired || s.source?.kind === "full-score-ai-draft" ? "数字谱 · 待校对" : s.source?.kind === "full-pdf-reviewed" ? "完整PDF · 已复核" : s.source?.kind === "pdf-transcription-checked" ? "7页全谱 · 已核对" : s.source?.kind === "audio-transcription" ? "音频转写 · 待校对" : s.source?.kind === "image-ai" ? "AI 识谱 · 待校对" : s.source?.kind === "public-domain-arrangement" ? "简易练习编配" : "钢琴乐谱"}</span><div class="source-line"><span>${esc(sourceLabel(s))}</span>${safeLink(s.source?.url, "来源")}${state.warnings.length ? `<button id="show-warnings">${state.warnings.length} 条提示</button>` : ""}</div></div></div><div id="notation" class="notation-area" aria-label="可点击定位的连续钢琴乐谱"></div><div class="score-status"><span>${icon("music-2")} ${measureCount()} 小节 · 点击音符定位</span><span>左右手同步播放 · 乐谱本地保存</span></div></section>`;
+</section><section class="score-stage" aria-label="乐谱练习区域"><div class="score-document-heading"><div><h1>${esc(s.title)}</h1><p>${esc(s.composer || "钢琴谱")}<span>♩ = <b id="paper-tempo">${state.tempo}</b></span><span>${s.timeSignature.join("/")} 拍</span><span>${s.mode ? esc(tonalityLabel(s)) : keyName(s.keySignature) + " 调号"}</span></p></div><div class="score-provenance"><span class="arrangement-tag">${s.source?.kind === "full-score-model-reviewed" ? "AI全谱校对版 · 待人工确认" : s.source?.reviewRequired || s.source?.kind === "full-score-ai-draft" ? "数字谱 · 待校对" : s.source?.kind === "full-pdf-reviewed" ? "完整PDF · 已复核" : s.source?.kind === "pdf-transcription-checked" ? "7页全谱 · 已核对" : s.source?.kind === "audio-transcription" ? "音频转写 · 待校对" : s.source?.kind === "image-ai" ? "AI 识谱 · 待校对" : s.source?.kind === "public-domain-arrangement" ? "简易练习编配" : "钢琴乐谱"}</span><div class="source-line"><span>${esc(sourceLabel(s))}</span>${safeLink(s.source?.url, "来源")}${state.warnings.length ? `<button id="show-warnings">${state.warnings.length} 条提示</button>` : ""}</div></div></div><div id="notation" class="notation-area" aria-label="可点击定位的连续钢琴乐谱"></div><div class="score-status"><span>${icon("music-2")} ${measureCount()} 小节 · 点击音符定位</span><span>左右手同步播放 · 乐谱本地保存</span></div></section>`;
 }
 function keyName(fifths = 0) {
   return (
@@ -388,7 +387,7 @@ function scoreCards(scores) {
   return scores
     .map(
       (s, i) =>
-        `<article class="score-card" data-card="${esc(s.id)}"><div class="card-art tone-${i % 4}"><span class="card-note">${["𝄞", "♫", "♩", "♬"][i % 4]}</span><span class="card-type">${hantingNotationMatched(s) ? "6页完整钢琴谱" : s.source?.kind === "full-score-model-reviewed" ? "AI全谱校对版 · 待人工确认" : s.source?.reviewRequired || s.source?.kind === "full-score-ai-draft" ? "数字谱 · 待校对" : s.source?.kind === "full-pdf-reviewed" ? "完整PDF钢琴谱" : s.source?.kind === "pdf-transcription-checked" ? "7页完整钢琴谱" : library.some((x) => x.id === s.id) ? "精选练习曲" : "我的乐谱"}</span><button data-open="${esc(s.id)}" class="card-play" aria-label="打开 ${esc(s.title)}">${icon("play")}</button></div><div class="card-info"><h3>${esc(s.title)}</h3><p>${esc(s.composer || "钢琴练习曲")}</p><div class="card-details"><span>${s.mode ? esc(tonalityLabel(s)) : keyName(s.keySignature) + " 调"} · ${s.timeSignature.join("/")}</span><span>${s.tempo} BPM</span></div></div>${!STATIC_SITE ? `<button class="button quiet cloud-upload" data-cloud-upload="${esc(s.id)}" ${state.cloudBusy?'disabled':''}>上传云端</button>` : ""}<button class="button quiet cloud-delete-local" data-delete="${esc(s.id)}" aria-label="本地删除 ${esc(s.title)}" title="仅删除本地副本">${icon("trash-2")}删除本地</button></article>`,
+        `<article class="score-card" data-card="${esc(s.id)}"><div class="card-art tone-${i % 4}"><span class="card-note">${["𝄞", "♫", "♩", "♬"][i % 4]}</span><span class="card-type">${s.source?.kind === "full-score-model-reviewed" ? "AI全谱校对版 · 待人工确认" : s.source?.reviewRequired || s.source?.kind === "full-score-ai-draft" ? "数字谱 · 待校对" : s.source?.kind === "full-pdf-reviewed" ? "完整PDF钢琴谱" : s.source?.kind === "pdf-transcription-checked" ? "7页完整钢琴谱" : library.some((x) => x.id === s.id) ? "精选练习曲" : "我的乐谱"}</span><button data-open="${esc(s.id)}" class="card-play" aria-label="打开 ${esc(s.title)}">${icon("play")}</button></div><div class="card-info"><h3>${esc(s.title)}</h3><p>${esc(s.composer || "钢琴练习曲")}</p><div class="card-details"><span>${s.mode ? esc(tonalityLabel(s)) : keyName(s.keySignature) + " 调"} · ${s.timeSignature.join("/")}</span><span>${s.tempo} BPM</span></div></div>${!STATIC_SITE ? `<button class="button quiet cloud-upload" data-cloud-upload="${esc(s.id)}" ${state.cloudBusy?'disabled':''}>上传云端</button>` : ""}<button class="button quiet cloud-delete-local" data-delete="${esc(s.id)}" aria-label="本地删除 ${esc(s.title)}" title="仅删除本地副本">${icon("trash-2")}删除本地</button></article>`,
     )
     .join("");
 }
@@ -983,7 +982,7 @@ function bindLibrary() {
   }));
   $$('[data-delete]').forEach(b=>b.onclick=()=>void cloudAction(async()=>{
     const id=b.dataset.delete;
-    if(!confirm('仅删除这首曲子的本地副本？云端曲目不受影响，可以重新下载。'))return;
+    if(!confirm(state.sharedJobs.has(id)?'从本地曲库移除这首曲子？识别任务历史和原谱会保留，云端曲目不受影响。':'仅删除这首曲子的本地副本？云端曲目不受影响，可以重新下载。'))return;
     // Complete server persistence changes before changing the visible library.
     if(state.sharedJobs.has(id))await api(`/api/local-library/${state.sharedJobs.get(id)}/delete`,{});
     if(!STATIC_SITE&&state.downloadedIds.has(id))await api(`/api/local-downloads/${id}/delete`,{});
@@ -992,7 +991,7 @@ function bindLibrary() {
     if(!saveLibrary()){state.saved=previous;throw new Error('本地曲库删除未能保存，请重试。');}
     await deletePracticeSource(id);
     state.shared=state.shared.filter(s=>s.id!==id);state.sharedJobs.delete(id);state.downloadedIds.delete(id);
-    if(state.score.id===id){player.stop();sourceLoadEpoch++;releasePracticeSource(id);state.sourceRecord=null;localStorage.removeItem('qinban-active-score');state.view='library';}
+    if(state.score.id===id){releasePracticeSource(id);setScore(starterScore);localStorage.removeItem('qinban-active-score');state.view='library';}
     toast('已删除本地副本，云端曲目保留。');
   }));
   $("#library-query").oninput = (e) => {
@@ -1707,7 +1706,7 @@ const restoredScore=availableScores().find(score=>score.id===startupActiveId);
 setScore(restoredScore||state.score);
 void syncLocalLibrary().then(()=>{
   const restored=state.shared.find(score=>score.id===startupActiveId);
-  if(restored&&state.score.id===(restoredScore||library.find(score=>score.id==="bumblebee-yeung-complete")||library[0]).id)setScore(restored);
+  if(restored&&state.score.id===(restoredScore||starterScore).id)setScore(restored);
 });
 window.addEventListener('focus',()=>void syncLocalLibrary());
 if(STATIC_SITE)toast(STATIC_NOTICE);
