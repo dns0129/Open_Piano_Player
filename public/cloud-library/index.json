@@ -48,7 +48,7 @@
     },
     {
       "id": "full-score-3a9bbbda8e36a4e4bdd1bd5f3a5d1cbbbd5d",
-      "title": "生日快乐 · GPT high 双页验证 · 全谱",
+      "title": "生日快乐 · GPT high 双页验证",
       "composer": "未知",
       "tempo": 90,
       "timeSignature": [
@@ -57,13 +57,13 @@
       ],
       "keySignature": 0,
       "notes": 52,
-      "hasOriginal": false,
+      "hasOriginal": true,
       "reviewRequired": false,
       "file": "scores/full-score-3a9bbbda8e36a4e4bdd1bd5f3a5d1cbbbd5d.json"
     },
     {
       "id": "full-score-3cfc9015e3c9659ed09b9da473df64d23709",
-      "title": "幻听 · GPT low 六页重识别 · 全谱",
+      "title": "幻听 · GPT low 六页重识别",
       "composer": "未知",
       "tempo": 90,
       "timeSignature": [
@@ -72,13 +72,13 @@
       ],
       "keySignature": 7,
       "notes": 982,
-      "hasOriginal": false,
+      "hasOriginal": true,
       "reviewRequired": false,
       "file": "scores/full-score-3cfc9015e3c9659ed09b9da473df64d23709.json"
     },
     {
       "id": "full-score-3ebe23e0ff3d04f304d36ed9ad54a03e15a0",
-      "title": "幻听 · 全谱",
+      "title": "幻听",
       "composer": "原谱未署名",
       "tempo": 90,
       "timeSignature": [
@@ -87,13 +87,28 @@
       ],
       "keySignature": 7,
       "notes": 983,
-      "hasOriginal": false,
+      "hasOriginal": true,
       "reviewRequired": false,
       "file": "scores/full-score-3ebe23e0ff3d04f304d36ed9ad54a03e15a0.json"
     },
     {
+      "id": "full-score-42cde38893c4084ae5bb947ccfe4e6d296a2",
+      "title": "诀别书",
+      "composer": "未知",
+      "tempo": 86,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": -1,
+      "notes": 1825,
+      "hasOriginal": true,
+      "reviewRequired": false,
+      "file": "scores/full-score-42cde38893c4084ae5bb947ccfe4e6d296a2.json"
+    },
+    {
       "id": "full-score-483da5cbff9d2b5ec2e86e6c6ba0f3cb267a",
-      "title": "巴赫 C大调前奏曲 BWV846 · 全谱",
+      "title": "巴赫前奏曲 · 全页校对任务",
       "composer": "未知",
       "tempo": 120,
       "timeSignature": [
@@ -102,13 +117,13 @@
       ],
       "keySignature": 0,
       "notes": 549,
-      "hasOriginal": false,
+      "hasOriginal": true,
       "reviewRequired": false,
       "file": "scores/full-score-483da5cbff9d2b5ec2e86e6c6ba0f3cb267a.json"
     },
     {
       "id": "full-score-7e87728f60040aa1f7178325cebffac4e8ad",
-      "title": "C大调前奏曲 · BWV846 · 全谱",
+      "title": "C大调前奏曲 · BWV846",
       "composer": "J. S. Bach",
       "tempo": 96,
       "timeSignature": [
@@ -117,13 +132,13 @@
       ],
       "keySignature": 0,
       "notes": 549,
-      "hasOriginal": false,
+      "hasOriginal": true,
       "reviewRequired": false,
       "file": "scores/full-score-7e87728f60040aa1f7178325cebffac4e8ad.json"
     },
     {
       "id": "full-score-9241860ef6cad1e3c0f17e48ca0d30ffdbff",
-      "title": "幻听 · DeepSeek high 六页重识别 · 全谱",
+      "title": "幻听 · DeepSeek high 六页重识别",
       "composer": "未知",
       "tempo": 90,
       "timeSignature": [
@@ -132,13 +147,28 @@
       ],
       "keySignature": 7,
       "notes": 982,
-      "hasOriginal": false,
+      "hasOriginal": true,
       "reviewRequired": false,
       "file": "scores/full-score-9241860ef6cad1e3c0f17e48ca0d30ffdbff.json"
     },
     {
+      "id": "full-score-croatian-skill-high-20261019",
+      "title": "克罗地亚狂想曲 · Croatian Rhapsody · Skill 高档校对版",
+      "composer": "Tonči Huljić",
+      "tempo": 95,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": -3,
+      "notes": 1882,
+      "hasOriginal": true,
+      "reviewRequired": true,
+      "file": "scores/full-score-croatian-skill-high-20261019.json"
+    },
+    {
       "id": "full-score-feb36563796cd9a9b7f118a809ad559fe4dc",
-      "title": "幻听 · GPT high 六页重识别 · 全谱",
+      "title": "幻听 · GPT high 六页重识别",
       "composer": "未知",
       "tempo": 90,
       "timeSignature": [
@@ -147,7 +177,7 @@
       ],
       "keySignature": 7,
       "notes": 982,
-      "hasOriginal": false,
+      "hasOriginal": true,
       "reviewRequired": false,
       "file": "scores/full-score-feb36563796cd9a9b7f118a809ad559fe4dc.json"
     },
@@ -393,5 +423,5 @@
     }
   ],
   "deletedIds": [],
-  "updatedAt": "2026-10-19T04:36:40.172Z"
+  "updatedAt": "2026-10-19T05:10:07.022Z"
 }

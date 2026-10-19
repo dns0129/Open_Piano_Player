@@ -1,0 +1,72 @@
+{
+  "version": 1,
+  "authorizedOn": "2026-10-19",
+  "destination": "dns0129/Open_Piano_Player/main and GitHub Pages",
+  "scores": [
+    {
+      "id": "full-score-3a9bbbda8e36a4e4bdd1bd5f3a5d1cbbbd5d",
+      "images": 2,
+      "sha256": "4dceb99b329170f247d9957324da9ccd41aae6bc74c6096ba60dee4c46ac41f5",
+      "bytes": 275214,
+      "title": "生日快乐 · GPT high 双页验证"
+    },
+    {
+      "id": "full-score-3cfc9015e3c9659ed09b9da473df64d23709",
+      "images": 28,
+      "sha256": "a00ec7031b6c921b3cf2ea9bfb4d5b10f21d567a447d4a9d86ea90088bbaa7e7",
+      "bytes": 7803472,
+      "title": "幻听 · GPT low 六页重识别"
+    },
+    {
+      "id": "full-score-3ebe23e0ff3d04f304d36ed9ad54a03e15a0",
+      "images": 28,
+      "sha256": "e3f6d8e1b7cb9ed28963ce0b6c0d33bc4b27d3c3d42f500affe940c4cf3ae731",
+      "bytes": 6517188,
+      "title": "幻听"
+    },
+    {
+      "id": "full-score-42cde38893c4084ae5bb947ccfe4e6d296a2",
+      "images": 30,
+      "sha256": "05461daaf9f9be6a67026cb322b61d27101bf566fb771a0ea5d07e19a6ed291e",
+      "bytes": 7836979,
+      "title": "诀别书"
+    },
+    {
+      "id": "full-score-483da5cbff9d2b5ec2e86e6c6ba0f3cb267a",
+      "images": 12,
+      "sha256": "6ff46bb429c380062c55e0d86aeaacfba4d3219458a3065f53c36726f6c8620b",
+      "bytes": 1066442,
+      "title": "巴赫前奏曲 · 全页校对任务"
+    },
+    {
+      "id": "full-score-7e87728f60040aa1f7178325cebffac4e8ad",
+      "images": 12,
+      "sha256": "d055ce7b0d1b09a44bc5103d2ed74dfafcfe7e6b84534ca04629fe4ce90c82c7",
+      "bytes": 1031317,
+      "title": "C大调前奏曲 · BWV846"
+    },
+    {
+      "id": "full-score-9241860ef6cad1e3c0f17e48ca0d30ffdbff",
+      "images": 28,
+      "sha256": "1db2f39d3f3bfd5d2e530be630cb437193aaa9bf4ae054e5561efd1cc64effaa",
+      "bytes": 8798833,
+      "title": "幻听 · DeepSeek high 六页重识别"
+    },
+    {
+      "id": "full-score-croatian-skill-high-20261019",
+      "images": 29,
+      "sha256": "b99b872113050c30db4594f0477c07e1a48ddfdd3ad6c093443ef9345106004b",
+      "bytes": 5214261,
+      "title": "克罗地亚狂想曲 · Croatian Rhapsody · Skill 高档校对版"
+    },
+    {
+      "id": "full-score-feb36563796cd9a9b7f118a809ad559fe4dc",
+      "images": 28,
+      "sha256": "e06551e925e4867de30ae1a9fc8afb6dc774810752e13ef33afed19f9dda586c",
+      "bytes": 7804238,
+      "title": "幻听 · GPT high 六页重识别"
+    }
+  ],
+  "totalScores": 9,
+  "totalImages": 197
+}
