@@ -61,3 +61,17 @@ test('two independent browser sessions see the same completed score and original
   assert.notEqual(cookies[0],cookies[1]);
   assert.equal((await fetch(url+'/api/local-library',{headers:{cookie:cookies[0],origin:'https://untrusted.example'}})).status,403);
 });
+
+test('model-checked complete scores remain distinct from human confirmation and require full review evidence',async t=>{
+  const f=await fixture(t),store=createLocalLibrary(f);
+  f.job.status='complete';f.job.regions[0].status='model-reviewed';f.job.result.reviewStatus='model-reviewed';await f.save();
+  assert.equal((await store.list()).scores.length,0);
+  f.job.result.review={method:'source-image-check',model:'gpt-6.1-sol',reasoning:'high',humanConfirmed:false,checkedRegions:1,completedAt:'2026-10-19T00:00:00Z'};await f.save();
+  const listed=await store.list();assert.equal(listed.scores.length,1);
+  assert.equal(listed.scores[0].score.source.kind,'full-score-model-reviewed');
+  assert.equal(listed.scores[0].score.source.reviewRequired,true);
+  const source=await store.source(f.id);assert.equal(source.reviewStatus,'model-reviewed');assert.equal(source.review.humanConfirmed,false);
+  assert(!JSON.stringify(source).includes('PRIVATE'));
+  f.job.result.review.checkedRegions=0;await f.save();assert.equal((await store.list()).scores.length,0);
+  f.job.result.review.checkedRegions=1;f.job.result.review.humanConfirmed=true;await f.save();assert.equal((await store.list()).scores.length,0);
+});

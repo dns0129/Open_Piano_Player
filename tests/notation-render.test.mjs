@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {JSDOM} from 'jsdom';
-import {Element} from 'vexflow';
+import {Element,Articulation} from 'vexflow';
 import {fontsReady,renderNotation} from '../src/notation.js';
 
 test('multi-note chord ties at both system boundaries render without dropping either staff', async () => {
@@ -65,5 +65,28 @@ test('effects engrave on both written formats; the roll shows actual ornament pi
   assert.ok(host.querySelector('.notation-roll-note[data-midi="66"]'),'the custom trill auxiliary F sharp is an actual played note');
   const arp=host.querySelector('[data-note-id="arp2"]');assert.equal(Number(arp.dataset.start),4.24);
   assert.equal(host.querySelectorAll('[data-note-id="b"]').length,0,'the tied continuation has no new attack');
+ }finally{renderer?.destroy();Element.setTextMeasurementCanvas(canvas);for(const[k,v]of Object.entries(saved)){if(v===undefined)delete globalThis[k];else globalThis[k]=v;}dom.window.close();}
+});
+
+
+test('both written formats follow a mid-system key change and repeat the active key on the next system',async()=>{
+ await fontsReady;
+ const dom=new JSDOM('<div id="host"></div>'),saved={document:globalThis.document,window:globalThis.window,cancelAnimationFrame:globalThis.cancelAnimationFrame};
+ const canvas=Element.getTextMeasurementCanvas();let renderer;
+ try{
+  globalThis.document=dom.window.document;globalThis.window=dom.window;globalThis.cancelAnimationFrame=()=>{};
+  dom.window.HTMLCanvasElement.prototype.getContext=()=>({font:'',measureText:text=>({width:String(text).length*8,actualBoundingBoxAscent:8,actualBoundingBoxDescent:2})});Element.setTextMeasurementCanvas(document.createElement('canvas'));
+  const host=document.querySelector('#host');Object.defineProperty(host,'clientWidth',{value:800});
+  const score={tempo:95,timeSignature:[4,4],keySignature:-3,durationBeats:20,measureMap:Array.from({length:5},(_,i)=>({beat:i*4,duration:4,...(i===1?{keySignature:4}:{})})),notes:Array.from({length:5},(_,i)=>[70,74].map(midi=>({id:'n'+i+'_'+midi,midi,beat:i*4,duration:4,hand:'right',accent:'accent'}))).flat()};
+  for(const mode of ['staff','numbered']){
+   renderer=renderNotation(host,score,{mode,showNoteNames:true,autoScroll:false});
+   assert.equal(host.querySelectorAll('.notation-error').length,0,host.textContent);
+   assert.deepEqual([...host.querySelectorAll('.notation-measure')].map(e=>e.dataset.keySignature),['-3','4','4','4','4']);
+   assert.match(host.querySelector('[data-measure="0"]').textContent,/B♭4/);
+   assert.match(host.querySelector('[data-measure="1"]').textContent,/A♯4/);
+   if(mode==='staff')assert.equal([...host.querySelectorAll('svg text')].filter(t=>t.textContent===new Articulation('a>').getText()).length,5,'one printed accent per chord, while both notes retain accented playback');
+   if(mode==='numbered')assert.match(host.querySelector('[data-measure="1"] .notation-key-label').textContent,/1 = E/);
+   renderer.destroy();
+  }
  }finally{renderer?.destroy();Element.setTextMeasurementCanvas(canvas);for(const[k,v]of Object.entries(saved)){if(v===undefined)delete globalThis[k];else globalThis[k]=v;}dom.window.close();}
 });
