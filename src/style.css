@@ -3124,3 +3124,21 @@ main.view-practice {
 .print-score-actions { display:flex; flex-wrap:wrap; gap:12px; margin-top:20px; }
 
 .score-provenance [data-print-score] { display:flex; margin:0 0 8px auto; padding:7px 10px; white-space:nowrap; font-size:12px; }
+
+.score-print-modal { width:min(1080px,calc(100vw - 32px)); max-width:1080px; }
+.score-print-workspace { display:grid; grid-template-columns:minmax(280px,1fr) minmax(260px,1fr); gap:28px; align-items:start; }
+.print-settings-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.print-settings-grid .field { margin:0; min-width:0; }
+.print-settings-grid .field input,.print-settings-grid .field select { width:100%; min-width:0; }
+.print-settings-grid .print-wide { grid-column:1 / -1; }
+.print-settings-grid .compact-toggle { font-size:12px; }
+.score-print-preview { position:sticky; top:0; min-width:0; padding:14px; border-radius:10px; background:#eef0e9; }
+.print-preview-caption { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:8px; font-size:12px; margin-bottom:12px; }
+#print-preview-status { font-size:11px; color:#697666; }
+#print-preview-paper { aspect-ratio:210 / 297; background:white; box-shadow:0 2px 12px #21312518; }
+#print-preview-paper canvas { display:block; width:100%; height:auto; }
+@media(max-width:680px) {
+  .score-print-workspace { grid-template-columns:1fr; gap:20px; }
+  .score-print-preview { position:static; }
+  .print-settings-grid .field input,.print-settings-grid .field select { font-size:16px; }
+}
