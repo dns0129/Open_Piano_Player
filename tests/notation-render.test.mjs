@@ -90,3 +90,33 @@ test('both written formats follow a mid-system key change and repeat the active 
   }
  }finally{renderer?.destroy();Element.setTextMeasurementCanvas(canvas);for(const[k,v]of Object.entries(saved)){if(v===undefined)delete globalThis[k];else globalThis[k]=v;}dom.window.close();}
 });
+
+test('paper rendering includes every offscreen system without waiting for intersections', async () => {
+  await fontsReady;
+  const dom = new JSDOM('<div id="host"></div>');
+  const saved = Object.fromEntries(['document', 'window', 'cancelAnimationFrame', 'IntersectionObserver'].map(key => [key, globalThis[key]]));
+  let renderer;
+  try {
+    globalThis.document = dom.window.document; globalThis.window = dom.window;
+    globalThis.cancelAnimationFrame = () => {};
+    // Never fire an intersection: print rendering must explicitly include the end.
+    globalThis.IntersectionObserver = class { observe() {} unobserve() {} disconnect() {} };
+    const host = document.querySelector('#host');
+    Object.defineProperty(host, 'clientWidth', { value: 694 });
+    const score = { tempo: 80, timeSignature: [4, 4], keySignature: 0, durationBeats: 160,
+      notes: Array.from({ length: 40 }, (_, i) => ({ id: `note-${i}`, beat: i * 4, duration: 4, midi: 60, hand: 'right' })) };
+    renderer = renderNotation(host, score, { mode: 'numbered', autoScroll: false });
+    const count = host.querySelectorAll('.notation-system').length;
+    assert.ok(count > 3);
+    assert.equal(host.querySelectorAll('.notation-system > svg').length, 3);
+    renderer.destroy();
+    renderer = renderNotation(host, score, { mode: 'numbered', autoScroll: false, renderAll: true });
+    assert.equal(host.querySelectorAll('.notation-system > svg').length, count);
+    assert.equal(host.querySelector('.notation-system:last-child').dataset.lastMeasure, '39');
+    assert.equal(host.querySelectorAll('.notation-error').length, 0);
+  } finally {
+    renderer?.destroy();
+    for (const [key, value] of Object.entries(saved)) { if (value === undefined) delete globalThis[key]; else globalThis[key] = value; }
+    dom.window.close();
+  }
+});

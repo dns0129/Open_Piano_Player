@@ -36,6 +36,7 @@ import {
   Minimize2,
   AudioLines,
   FileAudio,
+  Printer,
 } from "lucide";
 import { starterScore } from "../lib/starter-score.mjs";
 const library = [starterScore];
@@ -105,6 +106,7 @@ const icons = {
   Minimize2,
   AudioLines,
   FileAudio,
+  Printer,
 };
 const $ = (s, root = document) => root.querySelector(s);
 const $$ = (s, root = document) => [...root.querySelectorAll(s)];
@@ -359,7 +361,7 @@ function practiceView() {
 <div class="sidebar-section"><h3>乐谱显示</h3><div class="notation-switch">${originalNotation(s) ? `<button data-mode="source" class="${state.mode === "source" ? "selected" : ""}">原图参考</button>` : ""}<button data-mode="staff" class="${state.mode === "staff" ? "selected" : ""}">五线谱</button><button data-mode="numbered" class="${state.mode === "numbered" ? "selected" : ""}">简谱</button><button data-mode="roll" class="${state.mode === "roll" ? "selected" : ""}">钢琴卷帘</button></div><label class="compact-toggle" for="follow"><input id="follow" type="checkbox" ${state.follow ? "checked" : ""}>播放时自动跟随</label><div class="transpose-control"><span>移调</span><button id="transpose-down" aria-label="降低半音">−</button><span>${esc(s.mode ? tonalityLabel(s) : keyName(s.keySignature) + " 调")}</span><button id="transpose-up" aria-label="升高半音">＋</button></div></div>
 <div class="sidebar-section sidebar-instrument"><h3>钢琴音色</h3>${instrumentControls()}<div class="volume-control">${icon("volume-2")}<input id="volume" aria-label="音量" type="range" min="0" max="1" step="0.01" value="${state.volume}"></div></div>
 <div class="sidebar-footer"><button class="button secondary" data-edit-notes>编辑与改编</button><button class="icon-button" data-export aria-label="导出乐谱" title="导出乐谱">${icon("download")}</button></div></aside>
-<section class="score-stage" aria-label="乐谱练习区域"><div class="score-document-heading"><div><h1>${esc(s.title)}</h1><p>${esc(s.composer || "钢琴谱")}<span>♩ = <b id="paper-tempo">${state.tempo}</b></span><span>${s.timeSignature.join("/")} 拍</span><span>${s.mode ? esc(tonalityLabel(s)) : keyName(s.keySignature) + " 调号"}</span></p></div><div class="score-provenance"><span class="arrangement-tag">${s.source?.kind === "full-score-agent-approved" ? "已审核 · AI逐谱校对" : s.source?.kind === "full-score-model-reviewed" ? "AI全谱校对版 · 待人工确认" : s.source?.reviewRequired || s.source?.kind === "full-score-ai-draft" ? "数字谱 · 待校对" : s.source?.kind === "full-pdf-reviewed" ? "完整PDF · 已复核" : s.source?.kind === "pdf-transcription-checked" ? "7页全谱 · 已核对" : s.source?.kind === "audio-transcription" ? "音频转写 · 待校对" : s.source?.kind === "image-ai" ? "AI 识谱 · 待校对" : s.source?.kind === "public-domain-arrangement" ? "简易练习编配" : "钢琴乐谱"}</span><div class="source-line"><span>${esc(sourceLabel(s))}</span>${safeLink(s.source?.url, "来源")}${state.warnings.length ? `<button id="show-warnings">${state.warnings.length} 条提示</button>` : ""}</div></div></div><div id="notation" class="notation-area" aria-label="可点击定位的连续钢琴乐谱"></div><div class="score-status"><span>${icon("music-2")} ${measureCount()} 小节 · 点击音符定位</span><span>左右手同步播放 · 乐谱本地保存</span></div></section>
+<section class="score-stage" aria-label="乐谱练习区域"><div class="score-document-heading"><div><h1>${esc(s.title)}</h1><p>${esc(s.composer || "钢琴谱")}<span>♩ = <b id="paper-tempo">${state.tempo}</b></span><span>${s.timeSignature.join("/")} 拍</span><span>${s.mode ? esc(tonalityLabel(s)) : keyName(s.keySignature) + " 调号"}</span></p></div><div class="score-provenance"><button class="button secondary" data-print-score>${icon("printer")}打印乐谱</button><span class="arrangement-tag">${s.source?.kind === "full-score-agent-approved" ? "已审核 · AI逐谱校对" : s.source?.kind === "full-score-model-reviewed" ? "AI全谱校对版 · 待人工确认" : s.source?.reviewRequired || s.source?.kind === "full-score-ai-draft" ? "数字谱 · 待校对" : s.source?.kind === "full-pdf-reviewed" ? "完整PDF · 已复核" : s.source?.kind === "pdf-transcription-checked" ? "7页全谱 · 已核对" : s.source?.kind === "audio-transcription" ? "音频转写 · 待校对" : s.source?.kind === "image-ai" ? "AI 识谱 · 待校对" : s.source?.kind === "public-domain-arrangement" ? "简易练习编配" : "钢琴乐谱"}</span><div class="source-line"><span>${esc(sourceLabel(s))}</span>${safeLink(s.source?.url, "来源")}${state.warnings.length ? `<button id="show-warnings">${state.warnings.length} 条提示</button>` : ""}</div></div></div><div id="notation" class="notation-area" aria-label="可点击定位的连续钢琴乐谱"></div><div class="score-status"><span>${icon("music-2")} ${measureCount()} 小节 · 点击音符定位</span><span>左右手同步播放 · 乐谱本地保存</span></div></section>
 <section class="playback-dock" aria-label="播放控制"><div class="transport-group"><button id="restart" class="icon-button" aria-label="回到开头" title="回到开头">${icon("rotate-ccw")}</button><button id="prev-measure" class="icon-button" aria-label="上一小节" title="上一小节">${icon("skip-back")}</button><button id="play" class="play-button" aria-label="播放">${icon("play")}</button><div class="playback-status"><strong id="playback-label">准备练习</strong><span id="transport-position">第 1 / ${measureCount()} 小节</span></div></div><div class="progress-row"><span id="elapsed">0:00</span><input id="seek" type="range" aria-label="播放进度" min="0" max="${s.durationBeats}" step="0.01" value="${state.beat}"><span id="total-time">${durationText(s.durationBeats)}</span></div><div class="dock-tempo"><button class="icon-button" data-tempo-step="-4" aria-label="减慢速度">−</button><span><b data-tempo-display>${state.tempo}</b> BPM</span><button class="icon-button" data-tempo-step="4" aria-label="加快速度">＋</button></div><div class="dock-shortcuts"><button data-quick-hand="right" aria-pressed="${state.rightEnabled}">右手</button><button data-quick-hand="left" aria-pressed="${state.leftEnabled}">左手</button><button data-quick-loop aria-pressed="${state.loopEnabled}">${icon("repeat-2")}循环</button><button data-layout="sidebar" aria-controls="practice-sidebar" aria-label="打开练习设置">${icon("sliders-horizontal")}设置</button></div></section>
 ${practiceKeyboard()}<button class="layout-restore icon-button" data-layout="focus" aria-label="退出专注模式" title="退出专注模式">${icon("minimize-2")}</button>`;
 }
@@ -595,6 +597,7 @@ function bindPractice() {
       }),
   );
   $("[data-export]").onclick = openExport;
+  $("[data-print-score]").onclick = openPrintScore;
   $("[data-edit-notes]").onclick = openNoteEditor;
   $("#show-warnings")?.addEventListener("click", () =>
     modal(
@@ -1682,10 +1685,36 @@ function download(content, name, type) {
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
+function openPrintScore() {
+  const score = structuredClone(state.score), sourceNotation = originalNotation();
+  const initialMode = state.mode === "source" && sourceNotation ? "source" : state.mode === "numbered" ? "numbered" : "staff";
+  modal("打印乐谱", `<p class="form-note">整首乐谱按 A4 纵向分页，可直接下载 PDF 或使用打印机打印。导出保留当前移调和编配，速度采用乐谱原速。</p><label class="field">乐谱形式<select id="print-score-mode"><option value="staff">五线谱</option><option value="numbered">简谱</option>${sourceNotation ? '<option value="source">原图参考</option>' : ''}</select></label><p class="form-note">${esc(score.title)}${score.source?.reviewRequired || /draft|^audio-transcription$|^image-ai$|^full-score-model-reviewed$/.test(score.source?.kind || "") ? ' · 待校对草稿，请核对后使用。' : ''}</p><div class="print-score-actions"><button class="button primary" data-score-output="pdf">${icon("download")}下载 PDF</button><button class="button secondary" data-score-output="print">${icon("printer")}打印乐谱</button></div><p id="print-score-status" class="form-note" role="status" aria-live="polite"></p>`);
+  const select = $("#print-score-mode"), status = $("#print-score-status"), buttons = $$("[data-score-output]");
+  select.value = initialMode;
+  buttons.forEach(button => button.onclick = async () => {
+    buttons.forEach(b => b.disabled = true); select.disabled = true;
+    status.textContent = "正在排版整首乐谱，请稍候…";
+    try {
+      const { createScorePages, scorePagesPDF, printScorePages } = await import("./score-print.js");
+      const pages = await createScorePages(score, { mode: select.value, sourceNotation });
+      if (!status.isConnected) return;
+      if (button.dataset.scoreOutput === "pdf") {
+        const bytes = await scorePagesPDF(pages, score.title);
+        if (!status.isConnected) return;
+        download(bytes, score.title.replace(/[\\/:*?"<>|]/g, "_") + ".pdf", "application/pdf");
+        status.textContent = `PDF 已生成，共 ${pages.length} 页。`;
+      } else {
+        await printScorePages(pages, score.title);
+        status.textContent = `已打开打印窗口，共 ${pages.length} 页。`;
+      }
+    } catch (error) { status.textContent = `导出失败：${error.message || '请重试'}`; }
+    finally { buttons.forEach(b => b.disabled = false); select.disabled = false; }
+  });
+}
 function openExport() {
   modal(
     "带走你的练习谱",
-    `<p class="form-note">导出当前调式与编配。MusicXML 可在 MuseScore 等软件继续编辑。</p><div class="export-options"><button data-format="xml">${icon("file-music")}<span>MusicXML<small>双手五线谱 · 可编辑</small></span>${icon("download")}</button><button data-format="midi">${icon("piano")}<span>MIDI<small>钢琴音轨 · 原谱速度</small></span>${icon("download")}</button><button data-format="json">${icon("book-open")}<span>琴伴乐谱 JSON<small>完整备份 · 可重新导入</small></span>${icon("download")}</button><button data-format="print">${icon("download")}<span>打印 / 保存 PDF<small>当前数字谱面</small></span>${icon("arrow-up-right")}</button></div>`,
+    `<p class="form-note">导出当前调式与编配。MusicXML 可在 MuseScore 等软件继续编辑。</p><div class="export-options"><button data-format="xml">${icon("file-music")}<span>MusicXML<small>双手五线谱 · 可编辑</small></span>${icon("download")}</button><button data-format="midi">${icon("piano")}<span>MIDI<small>钢琴音轨 · 原谱速度</small></span>${icon("download")}</button><button data-format="json">${icon("book-open")}<span>琴伴乐谱 JSON<small>完整备份 · 可重新导入</small></span>${icon("download")}</button><button data-format="print">${icon("download")}<span>打印 / 保存 PDF<small>A4 分页 · 五线谱 / 简谱 / 原谱</small></span>${icon("arrow-up-right")}</button></div>`,
   );
   $$("[data-format]").forEach(
     (b) =>
@@ -1708,8 +1737,7 @@ function openExport() {
               "application/json",
             );
           if (format === "print") {
-            closeModal();
-            window.print();
+            openPrintScore();
           } else toast("已导出乐谱");
         } catch (e) {
           toast(e.message, true);

@@ -396,7 +396,7 @@ export function renderNotation(container, score, options = {}) {
       const host = document.createElement('div'); host.className = 'notation-system'; host.dataset.system = system.index; host.dataset.firstMeasure = system.firstMeasure; host.dataset.lastMeasure = system.lastMeasure; host.style.aspectRatio = `${system.width} / ${system.dimensions.height}`;
       system.host = host; system.drawn = false; system.cursor = null; systemsHost.append(host);
       for (const info of system.bars) { info.system = system; info.group = null; info.hits = []; info.anchors = []; measures[info.index] = info; }
-      if (system.index < 3 || !visibilityObserver) paint(system); else visibilityObserver.observe(host);
+      if (options.renderAll || system.index < 3 || !visibilityObserver) paint(system); else visibilityObserver.observe(host);
     }
     const index = Math.min(measureCount - 1, scoreMeasureIndex(score,beatNow)); paint(measures[index]?.system); update(measures[index]?.system);
     // A scrollbar or window resize can rebuild the layout after the first seek.
