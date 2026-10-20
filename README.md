@@ -142,7 +142,7 @@ npm run scores:reread-five -- --run --import --publish
 
 练习设置栏的 **音色** 新增 **醇厚三角钢琴**、**温暖小提琴** 和 **柔和弦乐合奏**，并保留标准、柔和、明亮钢琴和轻量合成。点击旁边的 **试听**，用同一小段原创旋律比较音色。选择成功后保存在当前浏览器，下次打开继续使用；未保存过选择时默认醇厚三角钢琴。
 
-钢琴使用 [Salamander Grand Piano](https://github.com/Tonejs/audio/tree/869b6f8d9cddb47d966238c012041480b1ce517a/salamander) 的30个真实MP3录音采样（Alexander Holm，[CC BY 3.0](https://creativecommons.org/licenses/by/3.0/)），约2.01MB，从A0到C8按小三度采样，以最近根音移调覆盖88键。醇厚三角钢琴参考 Steinway 的温暖听感，基于 Salamander Yamaha C5 录音加入低中频共鸣、随力度变化的高频、圆润起音、延长释音与短立体声空间混响。柔和与明亮是同一采样库的EQ/包络预设；当前为单层采样，通过增益与滤波处理力度。
+钢琴使用 [Salamander Grand Piano](https://github.com/Tonejs/audio/tree/869b6f8d9cddb47d966238c012041480b1ce517a/salamander) 的30个真实MP3录音采样（Alexander Holm，[CC BY 3.0](https://creativecommons.org/licenses/by/3.0/)），约2.01MB，从A0到C8按小三度采样，以最近根音移调覆盖88键。醇厚三角钢琴参考 Steinway 的温暖听感，基于 Salamander Yamaha C5 录音增强150Hz附近的低音分量与260Hz附近的宽频琴体共鸣，轻收650Hz箱体感与高频触键。低音释音最长0.96秒、高音缩至0.48秒，起音柔化至8ms；短立体声混响只保留160–4200Hz的主体频段，并补偿整体增益，避免只靠音量增加厚重感。柔和与明亮是同一采样库的EQ/包络预设；当前为单层采样，通过增益与滤波处理力度。
 
 小提琴使用14个独奏录音，弦乐合奏使用20个分音区录音（低音提琴、大提琴组、中提琴组、小提琴组），合计约2.93MB，来源为 [VSCO 2 Community Edition](https://github.com/sgossner/VSCO-2-CE/tree/440300901dfe9275fd84e0b7763af1f8443ae62e)（Sam Gossner、Simon Dalzell；剪辑 Elan Hickler / Soundemote，[CC0](https://creativecommons.org/publicdomain/zero/1.0/)）。保留真实弓弦和揉弦，经过起音修整、音量匹配和180ms交叉淡化循环，支持持续长音；乐器自然音域之外以最近根音移调延伸。独奏小提琴沿用标准科学音高，其他源文件的八度命名已按 C3=中央C 转换。
 

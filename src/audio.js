@@ -1,5 +1,5 @@
 import {createPerformanceTimeline} from '../lib/score-representations.ts';
-import { DEFAULT_PIANO_INSTRUMENT, SAMPLE_BANK_URLS, pianoInstrument, pianoSampleProfile, PianoSampleBank } from '../lib/piano-voices.mjs';
+import { DEFAULT_PIANO_INSTRUMENT, SAMPLE_BANK_URLS, pianoInstrument, pianoSampleProfile, pianoReleaseSeconds, PianoSampleBank } from '../lib/piano-voices.mjs';
 import { assetURL } from '../lib/asset-url.mjs';
 import { createInstrumentRoom } from '../lib/instrument-room.mjs';
 import { INSTRUMENT_PREVIEW } from '../lib/instrument-demo.mjs';
@@ -510,10 +510,18 @@ export class PianoPlayer {
     if (profile.body) {
       const body = ctx.createBiquadFilter();
       body.type = 'peaking';
-      body.frequency.value = 320;
-      body.Q.value = 0.7;
+      body.frequency.value = profile.bodyFrequency ?? 320;
+      body.Q.value = profile.bodyQ ?? 0.7;
       body.gain.value = profile.body;
       tail.connect(body); tail = body; nodes.push(body);
+    }
+    for (const band of profile.eq || []) {
+      const filter = ctx.createBiquadFilter();
+      filter.type = band.type;
+      filter.frequency.value = band.frequency;
+      if (band.Q !== undefined) filter.Q.value = band.Q;
+      if (band.gain !== undefined) filter.gain.value = band.gain;
+      tail.connect(filter); tail = filter; nodes.push(filter);
     }
     if (sample.pan) {
       const panner = ctx.createStereoPanner();
@@ -524,9 +532,10 @@ export class PianoPlayer {
     if (profile.room && !this._room) this._room = createInstrumentRoom(ctx, this._master, profile.room);
     output.connect(this._room?.input || this._master);
     const amplitude = profile.gain * clamp(velocity, 0.01, 1) ** profile.velocityExponent;
-    const naturalDuration = looping ? duration + profile.release : (sample.buffer.duration - offset) / rate;
+    const release = pianoReleaseSeconds(profile, midi);
+    const naturalDuration = looping ? duration + release : (sample.buffer.duration - offset) / rate;
     const releaseAt = start + Math.min(duration, naturalDuration);
-    const stopAt = Math.min(start + naturalDuration, releaseAt + profile.release);
+    const stopAt = Math.min(start + naturalDuration, releaseAt + release);
     const attack = Math.min(elapsed > 0 ? 0.006 : profile.attack, duration / 4, (stopAt - start) / 4);
     output.gain.setValueAtTime(0, start);
     output.gain.linearRampToValueAtTime(amplitude, start + attack);

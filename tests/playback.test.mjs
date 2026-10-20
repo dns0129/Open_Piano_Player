@@ -144,6 +144,22 @@ test('warm grand reuses piano recordings and shares one room across chord voices
   assert.equal(room.input.disconnected, true);
 });
 
+test('warm grand damps treble sooner than bass and cleans up its tone and room filters', async () => {
+  const h = harness(makeScore([{ id: 'key', beat: 0, duration: 1, midi: 60 }]), sampleOptions({ instrument: 'warm' }));
+  for (const midi of [36, 60, 84]) await h.player.notePreview(midi);
+  const ends = [...h.player._voices].map(voice => voice.end);
+  assert.ok(ends[0] > ends[1] && ends[1] > ends[2], 'bass resonance lasts longer without blurring the treble');
+  assert.ok(Math.abs((ends[0] - ends[2]) - 0.48) < 1e-8);
+  assert.ok(h.context.filters.some(filter => filter.type === 'lowshelf' && filter.gain.value > 0), 'weight includes the low fundamental region');
+  assert.ok(h.context.filters.some(filter => filter.type === 'peaking' && filter.gain.value < 0), 'low-mid boxiness is controlled separately');
+  assert.ok(h.context.filters.some(filter => filter.type === 'highpass' && filter.frequency.value === 160), 'room tail cannot accumulate the boosted low bass');
+  assert.equal(h.context.convolvers.length, 1, 'all registers share one room');
+  await h.player.dispose();
+  // The fake context does not dispatch the real AudioBufferSourceNode ended event.
+  for (const source of h.context.bufferSources) source.onended?.();
+  assert.ok(h.context.filters.every(filter => filter.disconnected), 'per-note EQ and shared room filters are all disconnected');
+});
+
 test('bowed strings sustain beyond the recording and seek into the transposed loop', async () => {
   const h = harness(makeScore([{ id: 'long', beat: 0, duration: 40, midi: 70 }]), {
     instrument: 'violin', sampleBanks: { violin: bowedBank() },
