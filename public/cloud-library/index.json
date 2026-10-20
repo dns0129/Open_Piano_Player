@@ -2,6 +2,186 @@
   "version": 1,
   "scores": [
     {
+      "id": "beginner-burgmuller-op100-01",
+      "title": "坦诉 · La Candeur · Op.100 No.1",
+      "composer": "Friedrich Burgmüller 布格缪勒",
+      "tempo": 152,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 0,
+      "notes": 241,
+      "hasOriginal": false,
+      "sourceLabel": "初级 · Mutopia MIDI · 排版：Bas Wassink",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=202",
+      "license": "Public Domain · https://www.mutopiaproject.org/legal.html · 排版：Bas Wassink；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/beginner-burgmuller-op100-01.json"
+    },
+    {
+      "id": "beginner-burgmuller-op100-02",
+      "title": "阿拉伯风格曲 · Arabesque · Op.100 No.2",
+      "composer": "Friedrich Burgmüller 布格缪勒",
+      "tempo": 152,
+      "timeSignature": [
+        2,
+        4
+      ],
+      "keySignature": 0,
+      "notes": 283,
+      "hasOriginal": false,
+      "sourceLabel": "初级进阶 · Mutopia MIDI · 排版：Bas Wassink",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=203",
+      "license": "Public Domain · https://www.mutopiaproject.org/legal.html · 排版：Bas Wassink；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/beginner-burgmuller-op100-02.json"
+    },
+    {
+      "id": "beginner-schumann-op68-01",
+      "title": "旋律 · Melodie · Op.68 No.1",
+      "composer": "Robert Schumann 舒曼",
+      "tempo": 60,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 0,
+      "notes": 303,
+      "hasOriginal": false,
+      "sourceLabel": "初级 · Mutopia MIDI · 排版：Philippe Hézaine",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=647",
+      "license": "CC BY-SA 2.5 · https://creativecommons.org/licenses/by-sa/2.5/ · 排版：Philippe Hézaine；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/beginner-schumann-op68-01.json"
+    },
+    {
+      "id": "beginner-schumann-op68-02",
+      "title": "士兵进行曲 · Soldiers March · Op.68 No.2",
+      "composer": "Robert Schumann 舒曼",
+      "tempo": 120,
+      "timeSignature": [
+        2,
+        4
+      ],
+      "keySignature": 1,
+      "notes": 312,
+      "hasOriginal": false,
+      "sourceLabel": "初级进阶 · Mutopia MIDI · 排版：Philippe Hézaine",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=650",
+      "license": "CC BY-SA 2.5 · https://creativecommons.org/licenses/by-sa/2.5/ · 排版：Philippe Hézaine；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/beginner-schumann-op68-02.json"
+    },
+    {
+      "id": "beginner-schumann-op68-03",
+      "title": "哼唱曲 · Humming Song · Op.68 No.3",
+      "composer": "Robert Schumann 舒曼",
+      "tempo": 60,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 0,
+      "notes": 277,
+      "hasOriginal": false,
+      "sourceLabel": "初级 · Mutopia MIDI · 排版：Philippe Hézaine",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=651",
+      "license": "CC BY-SA 3.0 · https://creativecommons.org/licenses/by-sa/3.0/ · 排版：Philippe Hézaine；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/beginner-schumann-op68-03.json"
+    },
+    {
+      "id": "beginner-schumann-op68-04",
+      "title": "圣咏 · Chorale · Op.68 No.4",
+      "composer": "Robert Schumann 舒曼",
+      "tempo": 92,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 1,
+      "notes": 230,
+      "hasOriginal": false,
+      "sourceLabel": "初级 · Mutopia MIDI · 排版：Philippe Hézaine",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=782",
+      "license": "CC BY-SA 2.5 · https://creativecommons.org/licenses/by-sa/2.5/ · 排版：Philippe Hézaine；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/beginner-schumann-op68-04.json"
+    },
+    {
+      "id": "beginner-schumann-op68-05",
+      "title": "小曲 · A Little Piece · Op.68 No.5",
+      "composer": "Robert Schumann 舒曼",
+      "tempo": 68,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 0,
+      "notes": 279,
+      "hasOriginal": false,
+      "sourceLabel": "初级 · Mutopia MIDI · 排版：Philippe Hézaine",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=653",
+      "license": "CC BY-SA 2.5 · https://creativecommons.org/licenses/by-sa/2.5/ · 排版：Philippe Hézaine；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/beginner-schumann-op68-05.json"
+    },
+    {
+      "id": "beginner-schumann-op68-06",
+      "title": "可怜的孤儿 · The Poor Orphan · Op.68 No.6",
+      "composer": "Robert Schumann 舒曼",
+      "tempo": 40,
+      "timeSignature": [
+        2,
+        4
+      ],
+      "keySignature": 0,
+      "notes": 373,
+      "hasOriginal": false,
+      "sourceLabel": "初级 · Mutopia MIDI · 排版：Philippe Hézaine",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=687",
+      "license": "CC BY-SA 2.5 · https://creativecommons.org/licenses/by-sa/2.5/ · 排版：Philippe Hézaine；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/beginner-schumann-op68-06.json"
+    },
+    {
+      "id": "beginner-schumann-op68-09",
+      "title": "民歌 · Folk Song · Op.68 No.9",
+      "composer": "Robert Schumann 舒曼",
+      "tempo": 60,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": -1,
+      "notes": 329,
+      "hasOriginal": false,
+      "sourceLabel": "初级进阶 · Mutopia MIDI · 排版：Philippe Hézaine",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=675",
+      "license": "CC BY-SA 2.5 · https://creativecommons.org/licenses/by-sa/2.5/ · 排版：Philippe Hézaine；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/beginner-schumann-op68-09.json"
+    },
+    {
+      "id": "beginner-schumann-op68-10",
+      "title": "快乐的农夫 · The Happy Farmer · Op.68 No.10",
+      "composer": "Robert Schumann 舒曼",
+      "tempo": 100,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": -1,
+      "notes": 352,
+      "hasOriginal": false,
+      "sourceLabel": "初级进阶 · Mutopia MIDI · 排版：Philippe Hézaine",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=659",
+      "license": "CC BY-SA 2.5 · https://creativecommons.org/licenses/by-sa/2.5/ · 排版：Philippe Hézaine；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/beginner-schumann-op68-10.json"
+    },
+    {
       "id": "bumblebee-yeung-complete",
       "title": "野蜂飞舞 · Yeung钢琴独奏版（7页全谱）",
       "composer": "Nikolai Rimsky-Korsakov",
@@ -426,7 +606,7 @@
   "deletedIds": [
     "full-score-croatian-skill-high-20261019"
   ],
-  "updatedAt": "2026-10-19T05:36:33.404Z",
+  "updatedAt": "2026-10-20T04:35:32.527Z",
   "superseded": {
     "full-score-croatian-skill-high-20261019": "full-score-croatian-reviewed-20261019"
   }

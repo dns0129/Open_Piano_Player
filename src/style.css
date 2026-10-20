@@ -3108,6 +3108,17 @@ main.view-practice {
 .cloud-card-actions .button{padding:8px 10px;font-size:12px}.cloud-upload{margin:0 16px 12px;font-size:12px}
 .cloud-library-error{padding:12px;border-radius:8px;color:#a04d39;background:#fff2ea}
 .cloud-library-empty{padding:32px 0;color:var(--muted)}
+.cloud-library-search{display:flex;align-items:center;gap:12px}
+.cloud-library-search .search-input{flex:1;min-width:0}
+.cloud-search-summary{color:var(--muted);font-size:13px;margin:4px 0 18px}
+.cloud-score-list{display:flex;flex-direction:column;gap:0}
+.cloud-score-row{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:18px 4px;border-bottom:1px solid var(--line,#e4e9e2)}
+.cloud-score-copy{min-width:0;flex:1}
+.cloud-score-copy h3{margin:0 0 7px;font-size:17px;overflow-wrap:anywhere}
+.cloud-score-copy p{margin:0 0 5px;font-size:13px;color:var(--muted)}
+.cloud-score-copy small{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.cloud-score-row .cloud-card-actions{flex-shrink:0;margin:0;justify-content:flex-end}
+@media(max-width:640px){.cloud-score-row{align-items:flex-start;gap:12px;flex-direction:column;padding:16px 0}.cloud-score-row .cloud-card-actions{justify-content:flex-start}.cloud-library-search{gap:8px}.cloud-library-search .button{padding:10px 16px}}
 .cloud-delete-local{margin:0 16px 12px;padding:8px 10px;font-size:12px;color:#9b674d}.cloud-delete-local svg{width:13px;height:13px}
 
 .print-score-actions { display:flex; flex-wrap:wrap; gap:12px; margin-top:20px; }

@@ -1,0 +1,328 @@
+{
+  "version": 1,
+  "provider": "Mutopia Project",
+  "retrievedAt": "2026-10-20",
+  "conversion": "Original typeset MIDI to Qinban v2; hand/staff from named upper/lower tracks; spelling, voices, rests and tie heads are inferred. MIDI microsecond tempo rounding within 0.001 BPM is normalized to integer BPM. Not a facsimile of the PDF.",
+  "scores": [
+    {
+      "id": "beginner-schumann-op68-01",
+      "title": "旋律 · Melodie",
+      "opus": "Op.68 No.1",
+      "level": "初级",
+      "mutopiaId": 647,
+      "composer": "Robert Schumann 舒曼",
+      "maintainer": "Philippe Hézaine",
+      "license": "CC BY-SA 2.5",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.5/",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=647",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-01-melodie/schumann-op68-01-melodie.mid",
+          "path": "public/beginner-sources/beginner-schumann-op68-01/original.mid",
+          "bytes": 2883,
+          "sha256": "f05a2e1f1fa397f4617d13d6b7bf679550ad9ae8032ed8c6b0f8446d519f5419"
+        },
+        "ly": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-01-melodie/schumann-op68-01-melodie.ly",
+          "path": "public/beginner-sources/beginner-schumann-op68-01/original.ly",
+          "bytes": 5250,
+          "sha256": "b43629f999e5a2af407d048df5538c97a42e5e467b5472fac7afbb7153bff2b9"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-01-melodie/schumann-op68-01-melodie-a4.pdf",
+          "path": "public/beginner-sources/beginner-schumann-op68-01/original.pdf",
+          "bytes": 58683,
+          "sha256": "be5fbd28ff8b3abf3c594b1562ef1808d4ef8d01634371d4730ca5f2b32f6f63"
+        }
+      }
+    },
+    {
+      "id": "beginner-schumann-op68-02",
+      "title": "士兵进行曲 · Soldiers March",
+      "opus": "Op.68 No.2",
+      "level": "初级进阶",
+      "mutopiaId": 650,
+      "composer": "Robert Schumann 舒曼",
+      "maintainer": "Philippe Hézaine",
+      "license": "CC BY-SA 2.5",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.5/",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=650",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-02-marche-militaire/schumann-op68-02-marche-militaire.mid",
+          "path": "public/beginner-sources/beginner-schumann-op68-02/original.mid",
+          "bytes": 3061,
+          "sha256": "7af6c1c20db09d34963adf9e18d99266e51b6b26c361f0ba8d0d09d001a46bb7"
+        },
+        "ly": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-02-marche-militaire/schumann-op68-02-marche-militaire.ly",
+          "path": "public/beginner-sources/beginner-schumann-op68-02/original.ly",
+          "bytes": 5337,
+          "sha256": "bb168c924302899bc09ba19223bba679db9d0d0189758d82a8f2692d1a0115dd"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-02-marche-militaire/schumann-op68-02-marche-militaire-a4.pdf",
+          "path": "public/beginner-sources/beginner-schumann-op68-02/original.pdf",
+          "bytes": 55249,
+          "sha256": "ed9b08914cc32a834d543135c74683895b5f428ecd1cee770a8449ab85686474"
+        }
+      }
+    },
+    {
+      "id": "beginner-schumann-op68-03",
+      "title": "哼唱曲 · Humming Song",
+      "opus": "Op.68 No.3",
+      "level": "初级",
+      "mutopiaId": 651,
+      "composer": "Robert Schumann 舒曼",
+      "maintainer": "Philippe Hézaine",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=651",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-03-chanson-fredonnee/schumann-op68-03-chanson-fredonnee.mid",
+          "path": "public/beginner-sources/beginner-schumann-op68-03/original.mid",
+          "bytes": 2673,
+          "sha256": "9d8872ff88f556e4426b1c304947e8eb396807d06d593bc3e9a5e29c364c1462"
+        },
+        "ly": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-03-chanson-fredonnee/schumann-op68-03-chanson-fredonnee.ly",
+          "path": "public/beginner-sources/beginner-schumann-op68-03/original.ly",
+          "bytes": 7366,
+          "sha256": "f6577f20a86b7728484d0af862581e0d68bfd82f63600f7251c8f0dd0ff9f03f"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-03-chanson-fredonnee/schumann-op68-03-chanson-fredonnee-a4.pdf",
+          "path": "public/beginner-sources/beginner-schumann-op68-03/original.pdf",
+          "bytes": 58933,
+          "sha256": "fe4955c234d6170d9324166320b6d56af68a0d8e08cd783288bcb86f0d8ca811"
+        }
+      }
+    },
+    {
+      "id": "beginner-schumann-op68-04",
+      "title": "圣咏 · Chorale",
+      "opus": "Op.68 No.4",
+      "level": "初级",
+      "mutopiaId": 782,
+      "composer": "Robert Schumann 舒曼",
+      "maintainer": "Philippe Hézaine",
+      "license": "CC BY-SA 2.5",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.5/",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=782",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-04-choral/schumann-op68-04-choral.mid",
+          "path": "public/beginner-sources/beginner-schumann-op68-04/original.mid",
+          "bytes": 2237,
+          "sha256": "bd9d599df0929ae20a211fb40e528a1e17125c656ad979cebad2ad37499f2c86"
+        },
+        "ly": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-04-choral/schumann-op68-04-choral.ly",
+          "path": "public/beginner-sources/beginner-schumann-op68-04/original.ly",
+          "bytes": 5561,
+          "sha256": "657ee774a74ac536c7d134b752a3bdb32c8fd5c3fee3fbbc559bc5963a774eb3"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-04-choral/schumann-op68-04-choral-a4.pdf",
+          "path": "public/beginner-sources/beginner-schumann-op68-04/original.pdf",
+          "bytes": 52694,
+          "sha256": "319037440382f8c0f5125b38be6c0399b2f734f42536b386fae81b932fba5fc1"
+        }
+      }
+    },
+    {
+      "id": "beginner-schumann-op68-05",
+      "title": "小曲 · A Little Piece",
+      "opus": "Op.68 No.5",
+      "level": "初级",
+      "mutopiaId": 653,
+      "composer": "Robert Schumann 舒曼",
+      "maintainer": "Philippe Hézaine",
+      "license": "CC BY-SA 2.5",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.5/",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=653",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-05-petite-piece/schumann-op68-05-petite-piece.mid",
+          "path": "public/beginner-sources/beginner-schumann-op68-05/original.mid",
+          "bytes": 2677,
+          "sha256": "85e286ab96e4929d6d2c1fd340f57ce9452f21cedfed84504e9ad01d05577193"
+        },
+        "ly": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-05-petite-piece/schumann-op68-05-petite-piece.ly",
+          "path": "public/beginner-sources/beginner-schumann-op68-05/original.ly",
+          "bytes": 6621,
+          "sha256": "f1f6e3d2a53132bf96e1c703df3131b2d3c34cf43f920fa5bd6088bd691ee8c0"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-05-petite-piece/schumann-op68-05-petite-piece-a4.pdf",
+          "path": "public/beginner-sources/beginner-schumann-op68-05/original.pdf",
+          "bytes": 58338,
+          "sha256": "b621f17d0b23d082d1774823c2ca0f0696c22ba716c5449b2312e925aa3ef780"
+        }
+      }
+    },
+    {
+      "id": "beginner-schumann-op68-06",
+      "title": "可怜的孤儿 · The Poor Orphan",
+      "opus": "Op.68 No.6",
+      "level": "初级",
+      "mutopiaId": 687,
+      "composer": "Robert Schumann 舒曼",
+      "maintainer": "Philippe Hézaine",
+      "license": "CC BY-SA 2.5",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.5/",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=687",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-06-pauvre-orpheline/schumann-op68-06-pauvre-orpheline.mid",
+          "path": "public/beginner-sources/beginner-schumann-op68-06/original.mid",
+          "bytes": 3763,
+          "sha256": "e69b6b3a8bd76079bd3550e233b31c1bf49018e34352dfe9245e2903b9a3a509"
+        },
+        "ly": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-06-pauvre-orpheline/schumann-op68-06-pauvre-orpheline.ly",
+          "path": "public/beginner-sources/beginner-schumann-op68-06/original.ly",
+          "bytes": 6326,
+          "sha256": "fbad0bf993ef0bf5d70d2069acfc8f0d95b7b04b89fbba581acc1a99af02d2d1"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-06-pauvre-orpheline/schumann-op68-06-pauvre-orpheline-a4.pdf",
+          "path": "public/beginner-sources/beginner-schumann-op68-06/original.pdf",
+          "bytes": 60329,
+          "sha256": "db4c7f6edb159a420909e9ca56f60ab22f2dca4d0eb29e9506963f0cacb1567e"
+        }
+      }
+    },
+    {
+      "id": "beginner-schumann-op68-09",
+      "title": "民歌 · Folk Song",
+      "opus": "Op.68 No.9",
+      "level": "初级进阶",
+      "mutopiaId": 675,
+      "composer": "Robert Schumann 舒曼",
+      "maintainer": "Philippe Hézaine",
+      "license": "CC BY-SA 2.5",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.5/",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=675",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-09-chanson-populaire/schumann-op68-09-chanson-populaire.mid",
+          "path": "public/beginner-sources/beginner-schumann-op68-09/original.mid",
+          "bytes": 3003,
+          "sha256": "97d723d1349f461d83a5744dec1151efd9f53b9d1e9fbe5ba4d4de7facf78908"
+        },
+        "ly": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-09-chanson-populaire/schumann-op68-09-chanson-populaire.ly",
+          "path": "public/beginner-sources/beginner-schumann-op68-09/original.ly",
+          "bytes": 7009,
+          "sha256": "7c076c071c9c1c102d386b8977d1fd447de9265acc35f48ff3cebe839537f01b"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-09-chanson-populaire/schumann-op68-09-chanson-populaire-a4.pdf",
+          "path": "public/beginner-sources/beginner-schumann-op68-09/original.pdf",
+          "bytes": 70717,
+          "sha256": "b3c011a44b5b360a18b1de85b9c71c2b0686759348e994ae34ddad6fc4efb5c2"
+        }
+      }
+    },
+    {
+      "id": "beginner-schumann-op68-10",
+      "title": "快乐的农夫 · The Happy Farmer",
+      "opus": "Op.68 No.10",
+      "level": "初级进阶",
+      "mutopiaId": 659,
+      "composer": "Robert Schumann 舒曼",
+      "maintainer": "Philippe Hézaine",
+      "license": "CC BY-SA 2.5",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.5/",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=659",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-10-gai-laboureur/schumann-op68-10-gai-laboureur.mid",
+          "path": "public/beginner-sources/beginner-schumann-op68-10/original.mid",
+          "bytes": 3299,
+          "sha256": "2cdada01ea988df090bfd0ab4bc377b28d97c7dee390a862822e541a47d921de"
+        },
+        "ly": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-10-gai-laboureur/schumann-op68-10-gai-laboureur.ly",
+          "path": "public/beginner-sources/beginner-schumann-op68-10/original.ly",
+          "bytes": 6364,
+          "sha256": "288dd52e0bbfd04a89e737300499ca687e5a05686b30ee3e93bca3d3d5daabc0"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-10-gai-laboureur/schumann-op68-10-gai-laboureur-a4.pdf",
+          "path": "public/beginner-sources/beginner-schumann-op68-10/original.pdf",
+          "bytes": 59274,
+          "sha256": "ebce5486a3a279cf6e49662b341b392e5d6f2c6abd9f6058efc987314323c416"
+        }
+      }
+    },
+    {
+      "id": "beginner-burgmuller-op100-01",
+      "title": "坦诉 · La Candeur",
+      "opus": "Op.100 No.1",
+      "level": "初级",
+      "mutopiaId": 202,
+      "composer": "Friedrich Burgmüller 布格缪勒",
+      "maintainer": "Bas Wassink",
+      "license": "Public Domain",
+      "licenseUrl": "https://www.mutopiaproject.org/legal.html",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=202",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/BurgmullerJFF/O100/25EF-01/25EF-01.mid",
+          "path": "public/beginner-sources/beginner-burgmuller-op100-01/original.mid",
+          "bytes": 2564,
+          "sha256": "ad185dbf3cb7e3e187cbe6e38c5ead706cf375b9d441f7191429027436b2a8e4"
+        },
+        "ly": {
+          "url": "https://www.mutopiaproject.org/ftp/BurgmullerJFF/O100/25EF-01/25EF-01.ly",
+          "path": "public/beginner-sources/beginner-burgmuller-op100-01/original.ly",
+          "bytes": 3594,
+          "sha256": "d1720877ca1b813148cb3c09cc0f26ca5e88c63aab321d2765efde0dd91ec6d6"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/BurgmullerJFF/O100/25EF-01/25EF-01-a4.pdf",
+          "path": "public/beginner-sources/beginner-burgmuller-op100-01/original.pdf",
+          "bytes": 64659,
+          "sha256": "d65e0d8132da464b7c2f1e2f1c7b649946f89b8596b95e7373c454d0d223d319"
+        }
+      }
+    },
+    {
+      "id": "beginner-burgmuller-op100-02",
+      "title": "阿拉伯风格曲 · Arabesque",
+      "opus": "Op.100 No.2",
+      "level": "初级进阶",
+      "mutopiaId": 203,
+      "composer": "Friedrich Burgmüller 布格缪勒",
+      "maintainer": "Bas Wassink",
+      "license": "Public Domain",
+      "licenseUrl": "https://www.mutopiaproject.org/legal.html",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=203",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/BurgmullerJFF/O100/25EF-02/25EF-02.mid",
+          "path": "public/beginner-sources/beginner-burgmuller-op100-02/original.mid",
+          "bytes": 2643,
+          "sha256": "9b689a9b3f178e7bb2b5899d0559e223e9d8de7081d83fc087760ac2b4d378e1"
+        },
+        "ly": {
+          "url": "https://www.mutopiaproject.org/ftp/BurgmullerJFF/O100/25EF-02/25EF-02.ly",
+          "path": "public/beginner-sources/beginner-burgmuller-op100-02/original.ly",
+          "bytes": 3921,
+          "sha256": "9ee203a6c2059700b10d45a7a1fd7a122803793af9a2e328d634bee538819a94"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/BurgmullerJFF/O100/25EF-02/25EF-02-a4.pdf",
+          "path": "public/beginner-sources/beginner-burgmuller-op100-02/original.pdf",
+          "bytes": 66907,
+          "sha256": "38e77d34af818774ff888a7ba64637b8820b0ace4e7ece5aa67c0d157cd2a661"
+        }
+      }
+    }
+  ]
+}

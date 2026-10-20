@@ -2,6 +2,186 @@
   "version": 1,
   "scores": [
     {
+      "id": "beginner-burgmuller-op100-01",
+      "title": "坦诉 · La Candeur · Op.100 No.1",
+      "composer": "Friedrich Burgmüller 布格缪勒",
+      "description": "初级 · Op.100 No.1 · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 0,
+      "tempo": 152,
+      "measures": 23,
+      "notes": 241,
+      "durationBeats": 92,
+      "sourceKind": "mutopia-midi",
+      "sha256": "911ef23ba68199380035288d153c90c3f76897fa39ccf1e2ed4828e9e2b81092",
+      "addedAt": "2026-10-20T04:31:57.269Z"
+    },
+    {
+      "id": "beginner-burgmuller-op100-02",
+      "title": "阿拉伯风格曲 · Arabesque · Op.100 No.2",
+      "composer": "Friedrich Burgmüller 布格缪勒",
+      "description": "初级进阶 · Op.100 No.2 · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        2,
+        4
+      ],
+      "keySignature": 0,
+      "tempo": 152,
+      "measures": 33,
+      "notes": 283,
+      "durationBeats": 66,
+      "sourceKind": "mutopia-midi",
+      "sha256": "465b346caa87924ad6f2b4ce1c820273ae30f5fd11abd986e35b6c6acceda1a5",
+      "addedAt": "2026-10-20T04:31:57.280Z"
+    },
+    {
+      "id": "beginner-schumann-op68-01",
+      "title": "旋律 · Melodie · Op.68 No.1",
+      "composer": "Robert Schumann 舒曼",
+      "description": "初级 · Op.68 No.1 · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 0,
+      "tempo": 60,
+      "measures": 24,
+      "notes": 303,
+      "durationBeats": 96,
+      "sourceKind": "mutopia-midi",
+      "sha256": "cebd10a4d8f810cc08488f23242bfee830aeac729f3642eb1f5a6fc379390cb5",
+      "addedAt": "2026-10-20T04:31:57.138Z"
+    },
+    {
+      "id": "beginner-schumann-op68-02",
+      "title": "士兵进行曲 · Soldiers March · Op.68 No.2",
+      "composer": "Robert Schumann 舒曼",
+      "description": "初级进阶 · Op.68 No.2 · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        2,
+        4
+      ],
+      "keySignature": 1,
+      "tempo": 120,
+      "measures": 48,
+      "notes": 312,
+      "durationBeats": 94.5,
+      "sourceKind": "mutopia-midi",
+      "sha256": "1bef52209f5d141f0ac4feb3d35d27a4e2929479fde9cfe2d5d74c6e87df8d36",
+      "addedAt": "2026-10-20T04:31:57.173Z"
+    },
+    {
+      "id": "beginner-schumann-op68-03",
+      "title": "哼唱曲 · Humming Song · Op.68 No.3",
+      "composer": "Robert Schumann 舒曼",
+      "description": "初级 · Op.68 No.3 · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 0,
+      "tempo": 60,
+      "measures": 24,
+      "notes": 277,
+      "durationBeats": 95,
+      "sourceKind": "mutopia-midi",
+      "sha256": "6244fa508c21c524e797e40c2bcfb88706d6aff5c880984949f276818805a6f1",
+      "addedAt": "2026-10-20T04:31:57.191Z"
+    },
+    {
+      "id": "beginner-schumann-op68-04",
+      "title": "圣咏 · Chorale · Op.68 No.4",
+      "composer": "Robert Schumann 舒曼",
+      "description": "初级 · Op.68 No.4 · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 1,
+      "tempo": 92,
+      "measures": 32,
+      "notes": 230,
+      "durationBeats": 128,
+      "sourceKind": "mutopia-midi",
+      "sha256": "f338556bfd88a5e45991e05e097ffdfaca9e9b0bf88c982181f37bb4135e4751",
+      "addedAt": "2026-10-20T04:31:57.204Z"
+    },
+    {
+      "id": "beginner-schumann-op68-05",
+      "title": "小曲 · A Little Piece · Op.68 No.5",
+      "composer": "Robert Schumann 舒曼",
+      "description": "初级 · Op.68 No.5 · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 0,
+      "tempo": 68,
+      "measures": 25,
+      "notes": 279,
+      "durationBeats": 97,
+      "sourceKind": "mutopia-midi",
+      "sha256": "6fa2241d5c1bcd11f911adeea26f78af5dc2316ebccd83c28c9b3aa106671eea",
+      "addedAt": "2026-10-20T04:31:57.214Z"
+    },
+    {
+      "id": "beginner-schumann-op68-06",
+      "title": "可怜的孤儿 · The Poor Orphan · Op.68 No.6",
+      "composer": "Robert Schumann 舒曼",
+      "description": "初级 · Op.68 No.6 · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        2,
+        4
+      ],
+      "keySignature": 0,
+      "tempo": 40,
+      "measures": 32,
+      "notes": 373,
+      "durationBeats": 64,
+      "sourceKind": "mutopia-midi",
+      "sha256": "80b900680c060a751ffb723013477329427657eef61d51e15e017c31053e1923",
+      "addedAt": "2026-10-20T04:31:57.229Z"
+    },
+    {
+      "id": "beginner-schumann-op68-09",
+      "title": "民歌 · Folk Song · Op.68 No.9",
+      "composer": "Robert Schumann 舒曼",
+      "description": "初级进阶 · Op.68 No.9 · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": -1,
+      "tempo": 60,
+      "measures": 24,
+      "notes": 329,
+      "durationBeats": 96,
+      "sourceKind": "mutopia-midi",
+      "sha256": "ed8556c1bd0d0aa6b99693c06dad892e9b074fdcf03540984b09ee27a99eb4ca",
+      "addedAt": "2026-10-20T04:31:57.244Z"
+    },
+    {
+      "id": "beginner-schumann-op68-10",
+      "title": "快乐的农夫 · The Happy Farmer · Op.68 No.10",
+      "composer": "Robert Schumann 舒曼",
+      "description": "初级进阶 · Op.68 No.10 · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": -1,
+      "tempo": 100,
+      "measures": 20,
+      "notes": 352,
+      "durationBeats": 80,
+      "sourceKind": "mutopia-midi",
+      "sha256": "4090f7315bc5be697af8f062bfacb5f1c7ac668968db0483cd7dd317b8759d79",
+      "addedAt": "2026-10-20T04:31:57.257Z"
+    },
+    {
       "id": "edited-8314396d-6190-40b0-8ef2-969ae6384e09",
       "title": "幻听 · GPT low 六页重识别（修改版）",
       "composer": "未知",

@@ -1,6 +1,7 @@
 import { $, $$, esc, icon } from "./ui.js";
 import { assetURL } from "../lib/asset-url.mjs";
 import { tonalityLabel } from "../lib/score-arrangement.mjs";
+import { searchCloudScores } from "../lib/library-search.mjs";
 
 export function createLibraryPanel({
   state,
@@ -100,20 +101,32 @@ export function createLibraryPanel({
   }
   function libraryView() {
     const cloud = state.libraryTab === "cloud",
-      scores = cloud ? state.cloudScores : availableScores();
+      scores = cloud
+        ? searchCloudScores(state.cloudScores, state.cloudLibraryQuery)
+        : availableScores();
     return `<section class="content-page"><div class="page-heading"><div><span class="eyebrow">YOUR MUSIC LIBRARY</span><h1>${cloud ? "云端曲库" : "本地曲库"}</h1><p>${cloud ? "下载到本地后即可练习；本地删除不影响云端。" : "下载和导入的曲谱保存在本地，可随时删除。"}</p></div><button class="button primary" data-ai>${icon("search")}按歌名找谱</button></div>
   ${!cloud ? `<div class="library-backup-actions"><button class="button secondary" data-library-backup>备份完整曲库</button><button class="button secondary" data-library-restore>恢复曲库</button></div><button class="continue-practice" data-nav="practice"><span class="continue-icon">${icon("file-music")}</span><span><small>继续练习</small><strong>${esc(state.score.title)}</strong><span>${esc(state.score.composer || "钢琴练习曲")} · ${state.tempo} BPM</span></span><span class="continue-play">${icon("play")}</span></button>` : ""}
   <div class="cloud-library-tabs"><button class="button ${!cloud ? "primary" : "secondary"}" data-library-tab="local">本地曲库</button><button class="button ${cloud ? "primary" : "secondary"}" data-library-tab="cloud">云端曲库</button>${cloud ? `<button class="button quiet" data-cloud-refresh ${state.cloudBusy ? "disabled" : ""}>${state.cloudBusy ? "正在处理…" : "刷新云端"}</button>` : ""}</div>
   ${cloud && state.cloudError ? `<p class="cloud-library-error" role="alert">${esc(state.cloudError)}</p>` : ""}
   ${!cloud && client.warnings.length ? `<p class="cloud-library-error" role="alert">${client.warnings.map(esc).join(" ")}</p>` : ""}
-  <div class="library-filter search-input">${icon("search")}<input id="library-query" aria-label="搜索曲库" placeholder="搜索歌名、作曲家…"><span>${scores.length} 份乐谱</span></div><div class="library-grid" id="library-grid">${cloud ? cloudCards(scores) : scoreCards(scores)}</div>${!scores.length ? `<p class="cloud-library-empty">${cloud ? (state.cloudLoaded ? "云端暂无曲目。" : "正在读取云端曲库…") : "本地暂无曲目，前往云端曲库下载，或导入自己的乐谱。"}</p>` : ""}</section>`;
+  ${cloud ? `<form id="cloud-library-search" class="library-filter cloud-library-search" role="search"><label class="search-input">${icon("search")}<input id="library-query" aria-label="搜索云端曲库" placeholder="输入曲名、作曲家，或“初级”" value="${esc(state.cloudLibraryDraft || "")}" maxlength="100"></label><button class="button primary" type="submit">搜索</button></form><p class="cloud-search-summary" id="cloud-search-summary" role="status">${!state.cloudLibraryQuery ? "输入关键词并搜索后显示曲目。" : !state.cloudLoaded && !state.cloudError ? "正在读取云端曲库…" : `找到 ${scores.length} 份乐谱`}</p>` : `<div class="library-filter search-input">${icon("search")}<input id="library-query" aria-label="搜索曲库" placeholder="搜索歌名、作曲家…"><span>${scores.length} 份乐谱</span></div>`}<div class="${cloud ? "cloud-score-list" : "library-grid"}" id="library-grid">${cloud ? cloudRows(scores) : scoreCards(scores)}</div>${!cloud && !scores.length ? '<p class="cloud-library-empty">本地暂无曲目，前往云端曲库下载，或导入自己的乐谱。</p>' : cloud && state.cloudLibraryQuery && state.cloudLoaded && !scores.length ? '<p class="cloud-library-empty" id="cloud-search-empty">没有匹配曲目，请换一个关键词。</p>' : ""}</section>`;
   }
-  function cloudCards(scores) {
+  function cloudRows(scores) {
     const localIds = new Set(availableScores().map((s) => s.id));
+    const sourceLink = (value) => {
+      try {
+        const url = new URL(value);
+        return ["http:", "https:"].includes(url.protocol)
+          ? ` · <a href="${esc(url.href)}" target="_blank" rel="noopener noreferrer">来源与授权</a>`
+          : "";
+      } catch {
+        return "";
+      }
+    };
     return scores
       .map(
-        (s, i) =>
-          `<article class="score-card" data-card="${esc(s.id)}"><div class="card-art tone-${i % 4}"><span class="card-note">𝄞</span><span class="card-type">${s.reviewApproved ? "已审核 · AI逐谱校对" : s.reviewRequired ? "待人工校对" : s.hasOriginal ? "含原谱图片" : "数字乐谱"}</span></div><div class="card-info"><h3>${esc(s.title)}</h3><p>${esc(s.composer)}</p><div class="card-details">${s.notes} 音符 · ${s.tempo} BPM</div><div class="cloud-card-actions"><button class="button primary" data-cloud-download="${esc(s.id)}" ${state.cloudBusy ? "disabled" : ""}>${icon("download")}${localIds.has(s.id) ? "重新下载" : "下载到本地"}</button>${!STATIC_SITE ? `<button class="button quiet" data-cloud-delete="${esc(s.id)}" ${state.cloudBusy ? "disabled" : ""}>删除云端</button>` : ""}</div></div></article>`,
+        (s) =>
+          `<article class="cloud-score-row" data-card="${esc(s.id)}"><div class="cloud-score-copy"><h3>${esc(s.title)}</h3><p>${esc(s.composer)} · ${s.notes} 音符 · ${s.tempo} BPM${s.timeSignature ? " · " + esc(s.timeSignature.join("/")) : ""}</p><small>${esc(s.sourceLabel || (s.reviewApproved ? "已审核 · AI逐谱校对" : s.reviewRequired ? "待人工校对" : s.hasOriginal ? "含原谱图片" : "数字乐谱"))}${sourceLink(s.sourceUrl)}</small></div><div class="cloud-card-actions"><button class="button primary" data-cloud-download="${esc(s.id)}" ${state.cloudBusy ? "disabled" : ""}>${icon("download")}${localIds.has(s.id) ? "重新下载" : "下载到本地"}</button>${!STATIC_SITE ? `<button class="button quiet" data-cloud-delete="${esc(s.id)}" ${state.cloudBusy ? "disabled" : ""}>删除云端</button>` : ""}</div></article>`,
       )
       .join("");
   }
@@ -329,6 +342,26 @@ export function createLibraryPanel({
           }
         }),
     );
+    if (state.libraryTab === "cloud") {
+      $("#cloud-library-search").onsubmit = (event) => {
+        event.preventDefault();
+        state.cloudLibraryDraft = $("#library-query").value;
+        state.cloudLibraryQuery = state.cloudLibraryDraft.trim();
+        render();
+        if (!state.cloudLoaded && !state.cloudBusy) void syncCloudLibrary();
+      };
+      $("#library-query").oninput = (event) => {
+        state.cloudLibraryDraft = event.target.value;
+        if (!event.target.value.trim()) {
+          state.cloudLibraryQuery = "";
+          $("#library-grid").innerHTML = "";
+          $("#cloud-search-summary").textContent =
+            "输入关键词并搜索后显示曲目。";
+          $("#cloud-search-empty")?.remove();
+        }
+      };
+      return;
+    }
     $("#library-query").oninput = (e) => {
       const query = e.target.value.toLowerCase();
       $$("[data-card]").forEach(
