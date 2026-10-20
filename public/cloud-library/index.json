@@ -573,6 +573,158 @@
       "file": "scores/golden-hour-netease-664959.json"
     },
     {
+      "instrument": "guitar",
+      "id": "guitar-beginner-c-am-arpeggio",
+      "title": "小步分解 · C与Am吉他入门",
+      "composer": "琴伴原创练习",
+      "tempo": 72,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 0,
+      "notes": 32,
+      "hasOriginal": false,
+      "sourceLabel": "吉他入门 · 第1批 · C、Am开放和弦分解 · 八分音符 · 无横按",
+      "sourceUrl": "https://dns0129.github.io/Open_Piano_Player/guitar-beginner-sources/README.txt",
+      "license": "琴伴原创，CC0-1.0；逐音按弦练习，无需同时按完整和弦。",
+      "reviewRequired": false,
+      "file": "scores/guitar-beginner-c-am-arpeggio.json"
+    },
+    {
+      "instrument": "guitar",
+      "id": "guitar-beginner-first-string",
+      "title": "一弦轻唱 · 吉他入门",
+      "composer": "琴伴原创练习",
+      "tempo": 72,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 0,
+      "notes": 13,
+      "hasOriginal": false,
+      "sourceLabel": "吉他入门 · 第1批 · 1弦0、1、3品 · 左手按弦",
+      "sourceUrl": "https://dns0129.github.io/Open_Piano_Player/guitar-beginner-sources/README.txt",
+      "license": "琴伴原创，CC0-1.0",
+      "reviewRequired": false,
+      "file": "scores/guitar-beginner-first-string.json"
+    },
+    {
+      "instrument": "guitar",
+      "id": "guitar-beginner-frere-jacques",
+      "title": "两只老虎 · 吉他入门单音版",
+      "composer": "法国传统轮唱曲 Frère Jacques",
+      "tempo": 84,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 0,
+      "notes": 32,
+      "hasOriginal": false,
+      "sourceLabel": "吉他入门 · 第1批 · Frère Jacques旋律 · 八分音符与跨弦低音",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Fr%C3%A8re_Jacques.svg",
+      "license": "传统 Frère Jacques 旋律；Mysid（2012）曲谱资料为 CC0。琴伴独立单音教学编配 CC0-1.0，不含中文或外文歌词；不编成轮唱。",
+      "reviewRequired": false,
+      "file": "scores/guitar-beginner-frere-jacques.json"
+    },
+    {
+      "instrument": "guitar",
+      "id": "guitar-beginner-mary-lamb",
+      "title": "玛丽有只小羊羔 · 吉他入门单音版",
+      "composer": "传统童谣 · Lowell Mason 曲调",
+      "tempo": 80,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 0,
+      "notes": 26,
+      "hasOriginal": false,
+      "sourceLabel": "吉他入门 · 第1批 · 高音弦单音旋律 · 四分与二分音符",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Mary_Had_a_Little_Lamb.pdf",
+      "license": "传统曲调公共领域；参考曲谱署名 Sarah Josepha Hale / Lowell Mason。琴伴独立单音教学编配 CC0-1.0，不含歌词及原版排版。",
+      "reviewRequired": false,
+      "file": "scores/guitar-beginner-mary-lamb.json"
+    },
+    {
+      "instrument": "guitar",
+      "id": "guitar-beginner-ode-to-joy",
+      "title": "欢乐颂 · 吉他入门主题前段",
+      "composer": "Ludwig van Beethoven 贝多芬",
+      "tempo": 84,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 0,
+      "notes": 30,
+      "hasOriginal": false,
+      "sourceLabel": "吉他入门 · 第1批 · 高音弦旋律 · 附点四分加八分节奏",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Hymne_joie_01.png",
+      "license": "贝多芬原作公共领域；参考曲谱信息 Kokin（2007）。琴伴独立C大调单音教学编配 CC0-1.0，不含歌词及原版排版；仅主题前段。",
+      "reviewRequired": false,
+      "file": "scores/guitar-beginner-ode-to-joy.json"
+    },
+    {
+      "instrument": "guitar",
+      "id": "guitar-beginner-open-strings",
+      "title": "空弦漫步 · 吉他入门",
+      "composer": "琴伴原创练习",
+      "tempo": 72,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 0,
+      "notes": 16,
+      "hasOriginal": false,
+      "sourceLabel": "吉他入门 · 第1批 · 六根空弦 · 稳定四分音符",
+      "sourceUrl": "https://dns0129.github.io/Open_Piano_Player/guitar-beginner-sources/README.txt",
+      "license": "琴伴原创，CC0-1.0",
+      "reviewRequired": false,
+      "file": "scores/guitar-beginner-open-strings.json"
+    },
+    {
+      "instrument": "guitar",
+      "id": "guitar-beginner-twinkle",
+      "title": "小星星 · 吉他入门单音版",
+      "composer": "法国传统民谣",
+      "tempo": 84,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 0,
+      "notes": 42,
+      "hasOriginal": false,
+      "sourceLabel": "吉他入门 · 第1批 · 中低音弦换弦 · C3–A3 · 0–3品",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Twinkle_Twinkle_Sheet_Music.png",
+      "license": "传统旋律公共领域；Fluteflute（2008）公开的公共领域 LilyPond 音符与节奏。琴伴降低一个八度、设置入门速度并编配为吉他单音，CC0-1.0。",
+      "reviewRequired": false,
+      "file": "scores/guitar-beginner-twinkle.json"
+    },
+    {
+      "instrument": "guitar",
+      "id": "guitar-beginner-two-strings",
+      "title": "两弦问答 · 吉他入门",
+      "composer": "琴伴原创练习",
+      "tempo": 76,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 0,
+      "notes": 15,
+      "hasOriginal": false,
+      "sourceLabel": "吉他入门 · 第1批 · 1、2弦换弦 · 0–3品",
+      "sourceUrl": "https://dns0129.github.io/Open_Piano_Player/guitar-beginner-sources/README.txt",
+      "license": "琴伴原创，CC0-1.0",
+      "reviewRequired": false,
+      "file": "scores/guitar-beginner-two-strings.json"
+    },
+    {
       "id": "hanting-complete",
       "title": "幻听 · 完整六页钢琴谱",
       "composer": "未知",
@@ -1146,7 +1298,7 @@
   "deletedIds": [
     "full-score-croatian-skill-high-20261019"
   ],
-  "updatedAt": "2026-10-20T08:05:03.987Z",
+  "updatedAt": "2026-10-20T14:35:02.801Z",
   "superseded": {
     "full-score-croatian-skill-high-20261019": "full-score-croatian-reviewed-20261019"
   }

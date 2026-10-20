@@ -270,6 +270,10 @@ npm run ai:check -- --live --image /absolute/path/to/score.png
 
 可打印六线谱或导出 PDF、JSON；MusicXML 导出单谱表的实际音高五线谱，MIDI 使用尼龙弦吉他音轨（GM program 24，从0计数）。
 
+吉他云端曲库的“吉他入门”按钮可查看第一批8首曲目：空弦漫步、一弦轻唱、两弦问答、玛丽有只小羊羔、欢乐颂主题前段、小星星、两只老虎和C/Am小步分解。采用标准调弦0–3品、72–84 BPM；4首原创练习和4首公共领域旋律的教学单音版，来源与CC0编配说明见 `public/guitar-beginner-sources/README.txt`。从云端下载后进入本地曲库打开练习。
+
+`node scripts/prepare-guitar-beginners.mjs` 可根据逐小节源稿离线重建8首云端曲目包及MusicXML/MIDI；附加 `--local` 仅安装本机缺少的版本，保留同ID现有曲目和云端删除标记。
+
 ### DeepSeek 与 Pi 共用识谱流程
 
 完整 PDF 导入完成逐页扫描后，在“识谱服务商”选择 Pi Agent / ChatGPT 或 DeepSeek。DeepSeek 使用本机保存的 API Key，固定 `deepseek-flash`、high 思考强度，按 DeepSeek API 用量计费。图片以原始清晰度发送到所选服务商，密钥只由本机服务端读取。
