@@ -1,3 +1,4 @@
+import {createDisplayRepresentation} from '../lib/score-representations.ts';
 import { PDFDocument } from 'pdf-lib';
 import { renderNotation, fontsReady } from './notation.js';
 import { assetURL } from '../lib/asset-url.mjs';
@@ -48,6 +49,7 @@ async function svgImage(svg) {
 
 /** Build every system at a fixed paper width, independent of screen size and lazy rendering. */
 export async function createScorePages(score, { mode = 'staff', sourceNotation } = {}) {
+  score=createDisplayRepresentation(score).score;
   const pages = []; let renderer, host;
   const newPage = () => {
     const page = canvas(WIDTH, HEIGHT); pages.push(page);

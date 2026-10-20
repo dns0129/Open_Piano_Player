@@ -1,3 +1,4 @@
+import {createPerformanceTimeline} from '../lib/score-representations.ts';
 import { DEFAULT_PIANO_INSTRUMENT, SAMPLE_BANK_URLS, pianoInstrument, pianoSampleProfile, PianoSampleBank } from '../lib/piano-voices.mjs';
 import { assetURL } from '../lib/asset-url.mjs';
 import { createInstrumentRoom } from '../lib/instrument-room.mjs';
@@ -72,10 +73,12 @@ export class PianoPlayer {
 
   setScore(score) {
     this.stop();
+    const performance=score?createPerformanceTimeline({...score,notes:score.notes.map(n=>({...n,hand:n.hand==='left'?'left':'right'}))}):null;
+    score=performance?.score || score;
     this._score = score || null;
     this._baseTempo = score?.tempo || 88;
-    this._timeline = createScoreTimeline(score || {notes:[],tempo:88,durationBeats:0});
-    this._notes = performanceNotes(score || {notes:[]})
+    this._timeline = performance?.timing || createScoreTimeline(score || {notes:[],tempo:88,durationBeats:0});
+    this._notes = (performance?.notes || [])
       .filter((note) => Number.isFinite(note.midi) && Number.isFinite(note.beat) && note.duration > 0)
       .map((note, index) => ({ ...note, writtenBeat:note.beat, beat:this._performedBeat(note.beat), duration:this._performedBeat(note.beat+note.duration)-this._performedBeat(note.beat), id: note.id ?? `note-${index}`, hand: note.hand === 'left' ? 'left' : 'right' }))
       .sort((a, b) => a.beat - b.beat);

@@ -92,3 +92,8 @@ export async function listDownloadedScores(){
   const records=await transaction('readonly',store=>store.getAll());
   return records.filter(record=>record.downloaded===true&&record.score).map(record=>validateScore(record.score));
 }
+
+/** Read-only migration source. Existing records and Blobs remain recoverable. */
+export async function readLegacySources() {
+  return transaction('readonly',store=>store.getAll());
+}

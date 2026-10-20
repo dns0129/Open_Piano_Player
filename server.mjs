@@ -1,3 +1,4 @@
+import {createLibraryStore} from './lib/library-store.mjs';
 import {createCloudLibrary} from './lib/cloud-library-admin.mjs';
 import {createDownloadLibrary} from './lib/download-library.mjs';
 import {createLocalLibrary} from './lib/local-library.mjs';
@@ -18,7 +19,8 @@ const COOKIE='qinban_session';
 const contentTypes={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8','.xml':'application/xml','.musicxml':'application/vnd.recordare.musicxml+xml','.mxl':'application/vnd.recordare.musicxml','.mid':'audio/midi','.midi':'audio/midi','.svg':'image/svg+xml','.png':'image/png','.jpeg':'image/jpeg','.jpg':'image/jpeg','.webp':'image/webp','.ico':'image/x-icon','.woff2':'font/woff2','.woff':'font/woff','.ttf':'font/ttf','.otf':'font/otf','.pfb':'application/octet-stream','.bcmap':'application/octet-stream','.wasm':'application/wasm','.bin':'application/octet-stream','.txt':'text/plain; charset=utf-8','.mp3':'audio/mpeg','.wav':'audio/wav','.ogg':'audio/ogg','.pdf':'application/pdf'};
 function safeEqual(a,b){if(typeof a!=='string'||typeof b!=='string')return false;const x=Buffer.from(a),y=Buffer.from(b);return x.length===y.length && timingSafeEqual(x,y);}
 
-export function createAppServer({distDir=resolve('dist'),settingsStore=createSettingsStore(),generate=generateScore,statusReader=authStatus,publicDownloader=downloadPublicScore,scoreSearch=createScoreSearch(),fullScoreJobs,neteaseProvider,localLibrary=createLocalLibrary(),cloudLibrary=createCloudLibrary(),downloadLibrary=createDownloadLibrary()}={}) {
+export function createAppServer({distDir=resolve('dist'),settingsStore=createSettingsStore(),generate=generateScore,statusReader=authStatus,publicDownloader=downloadPublicScore,scoreSearch=createScoreSearch(),fullScoreJobs,neteaseProvider,localLibrary=createLocalLibrary(),cloudLibrary=createCloudLibrary(),downloadLibrary=createDownloadLibrary(),libraryStore}={}) {
+  const scoreLibrary=libraryStore||createLibraryStore({legacyLibrary:localLibrary,legacyDownloads:downloadLibrary});
   const scoreJobs=fullScoreJobs||createFullScoreJobStore({settingsProvider:()=>settingsStore.read()});
   const netease=neteaseProvider||createNeteaseScoreProvider();
   const sessions=new Map();let activeGenerations=0;
@@ -78,6 +80,20 @@ export function createAppServer({distDir=resolve('dist'),settingsStore=createSet
       }
       const current=session(req,res);if(!current)throw userError('会话已过期，请刷新页面。','SESSION_REQUIRED',403);
       if(['POST','PUT','DELETE','PATCH'].includes(req.method) && !safeEqual(req.headers['x-csrf-token'],current.csrfToken))throw userError('请求校验失败，请刷新页面后重试。','CSRF',403);
+      if(url.pathname==='/api/library'&&req.method==='GET'){
+        const {records,warnings=[]}=await scoreLibrary.list();json(res,200,{records:records.map(({assets,history,originalFile,...record})=>record),warnings});return;
+      }
+      if(url.pathname==='/api/library'&&req.method==='POST'){
+        const input=await body(req,72*1024*1024);json(res,200,await scoreLibrary.save(input.record,{expectedRevision:input.expectedRevision}));return;
+      }
+      if(url.pathname==='/api/library/backup'&&req.method==='GET'){json(res,200,await scoreLibrary.backup());return;}
+      if(url.pathname==='/api/library/restore'&&req.method==='POST'){const input=await body(req,512*1024*1024);json(res,200,await scoreLibrary.restore(input.backup));return;}
+      const unifiedRoute=/^\/api\/library\/records\/([^/]+)(\/delete)?$/.exec(url.pathname);
+      if(unifiedRoute){
+        let id;try{id=decodeURIComponent(unifiedRoute[1]);}catch{throw userError('曲库 ID 编码无效。');}
+        if(req.method==='GET'&&!unifiedRoute[2]){json(res,200,await scoreLibrary.get(id));return;}
+        if(req.method==='POST'&&unifiedRoute[2]){await body(req,16000);json(res,200,await scoreLibrary.remove(id));return;}
+      }
       if(url.pathname==='/api/cloud-library'&&req.method==='GET'){json(res,200,await cloudLibrary.list());return;}
       if(url.pathname==='/api/cloud-library'&&req.method==='POST'){json(res,200,await cloudLibrary.publish(await body(req,72*1024*1024)));return;}
       const cloudRoute=/^\/api\/cloud-library\/([a-z0-9][a-z0-9_-]{0,79})(\/delete)?$/.exec(url.pathname);

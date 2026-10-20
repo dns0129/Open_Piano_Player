@@ -1,3 +1,4 @@
+import {createPerformanceTimeline} from '../lib/score-representations.ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import MidiPackage from '@tonejs/midi/build/Midi.js';
@@ -30,7 +31,7 @@ test('MusicXML preserves chord timing, backup, hands, key, tempo, metadata and t
   const {score,warnings}=importMusicXML(fixture);
   assert.equal(score.title,'双手测试');assert.equal(score.composer,'Tester');assert.equal(score.tempo,84);assert.equal(score.keySignature,1);
   assert.equal(score.durationBeats,8);assert.equal(warnings.length,0);
-  assert.deepEqual(score.notes.map(({beat,duration,midi,hand})=>({beat,duration,midi,hand})),[
+  assert.deepEqual(createPerformanceTimeline(score).notes.map(({beat,duration,midi,hand})=>({beat,duration,midi,hand})),[
     {beat:0,duration:2,midi:43,hand:'left'},
     {beat:0,duration:2,midi:66,hand:'right'},
     {beat:0,duration:1,midi:69,hand:'right'},
@@ -46,7 +47,7 @@ test('MusicXML pickup uses its true duration rather than inserting a full empty 
 
 test('MXL finds rootfile from container and parses compressed XML',async()=>{
   const zip=zipSync({'META-INF/container.xml':strToU8('<container><rootfiles><rootfile full-path="scores/main.musicxml"/></rootfiles></container>'),'scores/main.musicxml':strToU8(fixture)});
-  const {score}=await importScore(zip,'test.mxl');assert.equal(score.notes.length,5);assert.equal(score.tempo,84);
+  const {score}=await importScore(zip,'test.mxl');assert.equal(score.notes.length,6);assert.equal(createPerformanceTimeline(score).notes.length,5);assert.equal(score.tempo,84);
 });
 
 test('MIDI converts ticks to beats without losing independent tracks and chords',async()=>{

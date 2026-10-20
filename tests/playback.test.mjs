@@ -1,3 +1,4 @@
+import {createPerformanceTimeline} from '../lib/score-representations.ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import MidiPackage from '@tonejs/midi/build/Midi.js';
@@ -422,7 +423,7 @@ test('MusicXML round-trips polyphony, chord, rests, crossed bar ties and tuplets
   assert.equal(imported.durationBeats, 5.5);
   const signature = notes => notes.map(n => [n.beat, Number(n.duration.toFixed(5)), n.midi, n.hand])
     .sort((a, b) => a[0] - b[0] || a[2] - b[2]);
-  assert.deepEqual(signature(imported.notes), signature(score.notes));
+  assert.deepEqual(signature(createPerformanceTimeline(imported).notes), signature(createPerformanceTimeline(score).notes));
 });
 
 test('tempo steps schedule exact attacks and keep seek, speed scaling and audio progress aligned',async()=>{

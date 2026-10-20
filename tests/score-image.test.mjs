@@ -1,3 +1,4 @@
+import {existsSync} from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -139,7 +140,7 @@ async function originalScorePixels(filename='network-original-sheet.png') {
   return{width,height,data};
 }
 
-test('actual full-size grand staff keeps five systems and source verification still requires musical geometry',async()=>{
+test('actual full-size grand staff keeps five systems and source verification still requires musical geometry',{skip:!existsSync(new URL('../evidence/network-original-sheet.png',import.meta.url))&&'optional private image fixture is not present'},async()=>{
   const image=await originalScorePixels();
   await withPreparedImage(image,{pianoSourceVerified:true,sourceLabel:'Verified Piano Solo catalogue'},prepared=>{
     assert.equal(prepared.systems.length,5);assert.equal(prepared.assessment.hasGrandStaff,true);
@@ -151,7 +152,7 @@ test('actual full-size grand staff keeps five systems and source verification st
   await withPreparedImage(ruled,{pianoSourceVerified:true},prepared=>assert.throws(()=>prepared.getSelection({mode:'page',confirmedPiano:true}),/五线|谱面|双手/));
 });
 
-test('actual dense piano solo first system preserves both staffs when the left hand has full-bar rests',async()=>{
+test('actual dense piano solo first system preserves both staffs when the left hand has full-bar rests',{skip:!existsSync(new URL('../evidence/international-imslp-yeung-page1.png',import.meta.url))&&'optional private image fixture is not present'},async()=>{
   const image=await originalScorePixels('international-imslp-yeung-page1.png');
   await withPreparedImage(image,{pianoSourceVerified:true,sourceLabel:'Verified For Piano Solo heading'},prepared=>{
     assert.equal(prepared.systems.length,4);assert.ok(prepared.systems.every(system=>system.staffs.length===2));

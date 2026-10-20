@@ -63,10 +63,13 @@ test('removed verification retry fails without clearing the first reading',async
  await assert.rejects(store.retryRegion(id,'row',auth,{phase:'verify'}),{code:'VERIFICATION_REMOVED'});
  const second=await store.getJob(id,auth);assert.equal(reads,1);assert.deepEqual(second.regions[0].result,first.regions[0].result);
 });
-test('the shared request gate keeps four-call concurrency across two simultaneous full-score jobs',async t=>{
- const directory=await mkdtemp(join(tmpdir(),'qinban-concurrency-'));let active=0,maximum=0;
- const adapter=async()=>{active++;maximum=Math.max(maximum,active);await new Promise(r=>setTimeout(r,5));active--;return result();};
- const store=createFullScoreJobStore({directory,recognizeRegion:adapter,checkRegion:adapter,maxConcurrency:4});t.after(async()=>{await store.close();await rm(directory,{recursive:true,force:true});});
+test('the shared request gate keeps four-call concurrency across two simultaneous full-score jobs',{timeout:10000},async t=>{
+ const directory=await mkdtemp(join(tmpdir(),'qinban-concurrency-'));let active=0,maximum=0;const firstWave=[];
+ const adapter=async()=>{active++;maximum=Math.max(maximum,active);await new Promise(resolve=>{
+   if(firstWave.length<4){firstWave.push(resolve);if(firstWave.length===4)for(const release of firstWave)release();}
+   else setImmediate(resolve);
+ });active--;return result();};
+ const store=createFullScoreJobStore({directory,recognizeRegion:adapter,checkRegion:adapter,maxConcurrency:4});t.after(async()=>{for(const release of firstWave)release();await store.close();await rm(directory,{recursive:true,force:true});});
  const many=()=>({...manifest(),totalPages:6,regions:Array.from({length:6},(_,i)=>({...manifest().regions[0],id:'row-'+i,page:i+1}))});
  const a=await store.createJob(many(),auth),b=await store.createJob(many(),auth);await store.startJob(a.id,auth);await store.startJob(b.id,auth);const completed=await Promise.all([store.waitForIdle(a.id,auth),store.waitForIdle(b.id,auth)]);assert.equal(maximum,4);assert.ok(completed.every(j=>j.progress.needsReview===6));
 });

@@ -1,3 +1,4 @@
+import {createDisplayRepresentation,createPerformanceTimeline} from '../lib/score-representations.ts';
 import { Renderer, Stave, StaveNote, StaveConnector, Voice, Formatter, Accidental, Dot, StaveTie, Beam, Tuplet, Annotation, Fraction, VexFlow, Barline, Articulation, Ornament, Modifier, GraceNote, GraceNoteGroup } from 'vexflow';
 import { beatsPerMeasure, KEY_NAMES, midiName, scoreMeasureBounds, scoreMeasureIndex, scoreKeySignature } from '../lib/score.mjs';
 import { measureSegments, spellMidi, numberedPitch, durationGlyph, planSystems } from '../lib/notation-layout.mjs';
@@ -30,7 +31,7 @@ export function notationDuration(duration) {
 /** Preserve ordinary scores' layout, while never rounding a triplet to 16ths. */
 export function notationMeasureSegments(score, measureIndex, hand) {
   const {length,start,end}=scoreMeasureBounds(score,measureIndex);
-  const inMeasure = score.notes.filter(note => note.hand === hand && note.beat < end - RHYTHM_EPSILON && note.beat + note.duration > start + RHYTHM_EPSILON);
+  const inMeasure = score.notes.filter(note => (note.staff || (note.hand==='left'?2:1)) === (hand==='left'?2:1) && note.beat < end - RHYTHM_EPSILON && note.beat + note.duration > start + RHYTHM_EPSILON);
   if (inMeasure.every(note => closeTo(note.beat * 4, Math.round(note.beat * 4)) && closeTo((note.beat + note.duration) * 4, Math.round((note.beat + note.duration) * 4)))) return measureSegments(score, measureIndex, hand);
   const snap = value => {
     for (const grid of [4, 12, 8, 16, 32]) if (closeTo(value, Math.round(value * grid) / grid)) return Math.round(value * grid) / grid;
@@ -81,7 +82,7 @@ export function notationTupletGroups(segments) {
 function hasMergedVoices(score) {
   for (const hand of ['right', 'left']) {
     let previousBeat = -1, previousEnd = -1;
-    for (const note of score.notes.filter(note => note.hand === hand).sort((a, b) => a.beat - b.beat)) {
+    for (const note of score.notes.filter(note => (note.staff || (note.hand==='left'?2:1)) === (hand==='left'?2:1)).sort((a, b) => a.beat - b.beat)) {
       if (note.beat > previousBeat + RHYTHM_EPSILON && note.beat < previousEnd - RHYTHM_EPSILON) return true;
       previousBeat = note.beat; previousEnd = Math.max(previousEnd, note.beat + note.duration);
     }
@@ -122,11 +123,12 @@ function installStyles() {
 
 /** One SVG per continuous system. Adjacent bars share staff-line coordinates and barlines. */
 export function renderNotation(container, score, options = {}) {
+  score=createDisplayRepresentation(score).score;
   installStyles();
   const { mode = 'staff', onSeek = () => {}, showNoteNames = false } = options;
   const chains=tieChains(score.notes), chain=n=>chains.get(n.id);
   const sameTie=(a,b)=>a.id===b.id || (chain(a)?.head.id===chain(b)?.head.id && a.midi===b.midi && !!chain(a));
-  const sounding=mode==='roll'?performanceNotes(score):null;
+  const sounding=mode==='roll'?createPerformanceTimeline(score).notes:null;
   const hasEffects=score.notes.some(n=>effectLabels(n).length);
   const barLength = beatsPerMeasure(score), measureCount = score.measureMap?.length || Math.max(1, Math.ceil(score.durationBeats / barLength));
   const root = document.createElement('div'); root.className = 'notation-root'; root.dataset.mode = mode;
@@ -187,7 +189,7 @@ export function renderNotation(container, score, options = {}) {
     const clef = hand === 'right' ? 'treble' : 'bass', keySignature=scoreKeySignature(score,info.index);
     const objects = segments(info.index, hand).map(segment => {
       const { glyph: duration, dots } = notationDuration(segment.duration), pitches = [...new Map(segment.notes.map(n => [n.midi, n])).values()];
-      const keys = pitches.length ? pitches.map(n => { const p = spellMidi(n.midi, keySignature); return `${p.letter.toLowerCase()}${['bb', 'b', '', '#', '##'][p.accidental + 2]}/${p.octave}`; }) : [clef === 'treble' ? 'b/4' : 'd/3'];
+      const keys = pitches.length ? pitches.map(n => { const p = n.pitch?{letter:n.pitch.step,accidental:n.pitch.alter,octave:n.pitch.octave}:spellMidi(n.midi,keySignature); return `${p.letter.toLowerCase()}${['bb', 'b', '', '#', '##'][p.accidental + 2]}/${p.octave}`; }) : [clef === 'treble' ? 'b/4' : 'd/3'];
       const note = new StaveNote({ clef, keys, duration: duration + (pitches.length ? '' : 'r'), dots, autoStem: true }).setStave(stave);
       if (dots) Dot.buildAndAttach([note], { all: true });
       if (showNoteNames && pitches.length) note.addModifier(new Annotation(pitches.map(n => midiName(n.midi, keySignature < 0)).join(' ')).setFont('Arial', 8).setVerticalJustification('top'));
@@ -195,7 +197,7 @@ export function renderNotation(container, score, options = {}) {
       pitches.forEach((n,index)=>{
         if(!closeTo(n.beat,segment.beat) || (chain(n)&&chain(n).head.id!==n.id)) return;
         if(n.grace){
-          const graces=n.grace.notes.map(g=>{const p=spellMidi(g.midi,keySignature);const grace=new GraceNote({clef,keys:[`${p.letter.toLowerCase()}${['bb','b','','#','##'][p.accidental+2]}/${p.octave}`],duration:'16',slash:n.grace.slash});if(p.accidental)grace.addModifier(new Accidental(['bb','b','','#','##'][p.accidental+2]),0);return grace;});
+          const graces=n.grace.notes.map(g=>{const p=g.pitch?{letter:g.pitch.step,accidental:g.pitch.alter,octave:g.pitch.octave}:spellMidi(g.midi,keySignature);const grace=new GraceNote({clef,keys:[`${p.letter.toLowerCase()}${['bb','b','','#','##'][p.accidental+2]}/${p.octave}`],duration:'16',slash:n.grace.slash});if(p.accidental)grace.addModifier(new Accidental(['bb','b','','#','##'][p.accidental+2]),0);return grace;});
           note.addModifier(new GraceNoteGroup(graces,true).beamNotes(),index);
         }
         if(n.fermata)note.addModifier(new Annotation(`𝄐 +${n.fermata.holdBeats}拍`).setFont('Arial',10).setVerticalJustification('top'));
@@ -313,7 +315,7 @@ export function renderNotation(container, score, options = {}) {
           const hit = svgElement('rect', { x: x - 14, y: baseline - (pitches.length - 1) * 31 - 32, width: Math.max(27, durationWidth - 3), height: Math.max(57, pitches.length * 31 + 22), rx: 4 }); group.append(hit); info.hits.push(seekable(hit, segment));
           const event = { x, pitches: [], beat: segment.beat, duration: segment.duration }; events[hand].push(event); measureEvents.push(event);
           (pitches.length ? pitches : [null]).forEach((note, j) => {
-            const y = baseline - j * 31, p = note ? numberedPitch(note.midi, key) : null;
+            const y = baseline - j * 31, p = note ? numberedPitch(note.midi, key, note.pitch) : null;
             group.append(svgElement('text', { x, y, class: `notation-pitch${note ? '' : ' notation-rest'}`, 'font-size': 25, 'text-anchor': 'middle' }, p ? String(p.degree) : '0'));
             if (p?.accidental) group.append(svgElement('text', { x: x - 15, y: y - 8, 'font-size': 16, class: 'notation-pitch' }, symbol(p.accidental)));
             if (p?.octave) for (let k = 0; k < Math.min(4, Math.abs(p.octave)); k++) group.append(svgElement('circle', { cx: x, cy: p.octave > 0 ? y - 26 - k * 5 : y + 10 + k * 5, r: 1.45, fill: '#263b35', 'pointer-events': 'none' }));
