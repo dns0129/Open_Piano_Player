@@ -392,21 +392,6 @@
       "file": "scores/edited-ce75adef-be21-4f3d-83dd-307afae68b14.json"
     },
     {
-      "id": "full-score-3cfc9015e3c9659ed09b9da473df64d23709",
-      "title": "幻听 · GPT low 六页重识别",
-      "composer": "未知",
-      "tempo": 90,
-      "timeSignature": [
-        4,
-        4
-      ],
-      "keySignature": 7,
-      "notes": 982,
-      "hasOriginal": true,
-      "reviewRequired": false,
-      "file": "scores/full-score-3cfc9015e3c9659ed09b9da473df64d23709.json"
-    },
-    {
       "id": "full-score-3ebe23e0ff3d04f304d36ed9ad54a03e15a0",
       "title": "幻听",
       "composer": "原谱未署名",
@@ -1268,9 +1253,10 @@
   "deletedIds": [
     "full-score-croatian-skill-high-20261019",
     "edited-8314396d-6190-40b0-8ef2-969ae6384e09",
-    "full-score-3a9bbbda8e36a4e4bdd1bd5f3a5d1cbbbd5d"
+    "full-score-3a9bbbda8e36a4e4bdd1bd5f3a5d1cbbbd5d",
+    "full-score-3cfc9015e3c9659ed09b9da473df64d23709"
   ],
-  "updatedAt": "2026-10-20T15:52:59.532Z",
+  "updatedAt": "2026-10-20T15:53:07.887Z",
   "superseded": {
     "full-score-croatian-skill-high-20261019": "full-score-croatian-reviewed-20261019"
   }
