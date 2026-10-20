@@ -37,6 +37,7 @@ class FakeContext {
   bufferSources = [];
   filters = [];
   convolvers = [];
+  stereoNodes = [];
   decodeCalls = 0;
   state = 'running';
   createGain() { return new FakeNode(); }
@@ -45,6 +46,8 @@ class FakeContext {
   createBufferSource() { const node = new FakeNode(); this.bufferSources.push(node); return node; }
   createBiquadFilter() { const node = new FakeNode(); this.filters.push(node); return node; }
   createStereoPanner() { return new FakeNode(); }
+  createChannelSplitter() { const node = new FakeNode(); this.stereoNodes.push(node); return node; }
+  createChannelMerger() { const node = new FakeNode(); this.stereoNodes.push(node); return node; }
   createConvolver() { const node = new FakeNode(); this.convolvers.push(node); return node; }
   createBuffer(channels, length, sampleRate) {
     const data = Array.from({ length: channels }, () => new Float32Array(length));
@@ -158,6 +161,21 @@ test('warm grand damps treble sooner than bass and cleans up its tone and room f
   // The fake context does not dispatch the real AudioBufferSourceNode ended event.
   for (const source of h.context.bufferSources) source.onended?.();
   assert.ok(h.context.filters.every(filter => filter.disconnected), 'per-note EQ and shared room filters are all disconnected');
+});
+
+test('A3 reference shares recordings, preserves transport, and retires its focused stereo room', async () => {
+  const h = harness(makeScore([{ id: 'held', beat: 0, duration: 16, midi: 60 }]), sampleOptions({ instrument: 'warm' }));
+  await h.player.play(); h.advance(0.2);
+  const beat = h.player.beat;
+  await h.player.setInstrument('a3-reference');
+  assert.equal(h.player.state, 'playing'); assert.equal(h.player.beat, beat);
+  assert.equal(h.context.decodeCalls, 3, 'reference uses the existing piano bank');
+  assert.equal(h.context.stereoNodes.length, 2, 'one splitter/merger pair for the shared room');
+  assert.ok(h.context.filters.some(f => f.type === 'peaking' && f.frequency.value === 330));
+  await h.player.setInstrument('warm');
+  assert.equal(h.context.decodeCalls, 3);
+  await h.player.dispose();
+  assert.ok(h.context.stereoNodes.every(node => node.disconnected));
 });
 
 test('bowed strings sustain beyond the recording and seek into the transposed loop', async () => {

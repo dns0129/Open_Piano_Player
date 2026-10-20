@@ -146,6 +146,8 @@ npm run scores:reread-five -- --run --import --publish
 
 钢琴使用 [Salamander Grand Piano](https://github.com/Tonejs/audio/tree/869b6f8d9cddb47d966238c012041480b1ce517a/salamander) 的30个真实MP3录音采样（Alexander Holm，[CC BY 3.0](https://creativecommons.org/licenses/by/3.0/)），约2.01MB，从A0到C8按小三度采样，以最近根音移调覆盖88键。醇厚三角钢琴参考 Steinway 的温暖听感，基于 Salamander Yamaha C5 录音增强150Hz附近的低音分量与260Hz附近的宽频琴体共鸣，轻收650Hz箱体感与高频触键。低音释音最长0.96秒、高音缩至0.48秒，起音柔化至8ms；短立体声混响只保留160–4200Hz的主体频段，并补偿整体增益，避免只靠音量增加厚重感。柔和与明亮是同一采样库的EQ/包络预设；当前为单层采样，通过增益与滤波处理力度。
 
+**A3 参考三角钢琴** 是额外一版音色，参考用户指定的 [LivingPianosVideos《Hear Every Steinway Model》2:55–3:25 的 Model A3 演奏段](https://www.youtube.com/watch?v=y_ngIzKSC28&t=175s)。使用更集中的330Hz琴体共鸣、较轻的低音搁架、5ms起音与0.88–0.62秒的分音区释音，收敛混响，并以0.4声场宽度聚焦琴声。原醇厚版仍可选择，默认音色保持不变。这是基于 Salamander Yamaha C5 采样的参考调音，未使用视频音频作为应用采样，也不代表 Steinway A3 原琴采样或精确复刻；录音空间、麦克风与不同曲目的音高分布都会影响对比。
+
 小提琴使用14个独奏录音，弦乐合奏使用20个分音区录音（低音提琴、大提琴组、中提琴组、小提琴组），合计约2.93MB，来源为 [VSCO 2 Community Edition](https://github.com/sgossner/VSCO-2-CE/tree/440300901dfe9275fd84e0b7763af1f8443ae62e)（Sam Gossner、Simon Dalzell；剪辑 Elan Hickler / Soundemote，[CC0](https://creativecommons.org/publicdomain/zero/1.0/)）。保留真实弓弦和揉弦，经过起音修整、音量匹配和180ms交叉淡化循环，支持持续长音；乐器自然音域之外以最近根音移调延伸。独奏小提琴沿用标准科学音高，其他源文件的八度命名已按 C3=中央C 转换。
 
 全部MP3和作者/许可说明均随源码放在 `public/audio/piano/`、`public/audio/violin/` 和 `public/audio/strings/`，构建前校验SHA256，运行时只从应用自身资源读取，也支持 GitHub Pages 子路径。首次播放或试听时按需准备所选音源，显示加载进度；钢琴预设共用一套缓存，小提琴与合奏各自缓存。文件缺失或损坏会明确报错，可重试或手动选择轻量合成。音色切换继续使用同一播放时钟，保留当前播放位置、左右手和循环设置；跳转进弦乐长音时从循环内继续。自然播完保留释音与空间尾音，手动暂停和停止同时淡出混响。
