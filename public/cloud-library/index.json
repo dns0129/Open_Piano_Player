@@ -377,21 +377,6 @@
       "file": "scores/bumblebee-yeung-complete.json"
     },
     {
-      "id": "edited-8314396d-6190-40b0-8ef2-969ae6384e09",
-      "title": "幻听 · GPT low 六页重识别（修改版）",
-      "composer": "未知",
-      "tempo": 90,
-      "timeSignature": [
-        4,
-        4
-      ],
-      "keySignature": 4,
-      "notes": 984,
-      "hasOriginal": false,
-      "reviewRequired": false,
-      "file": "scores/edited-8314396d-6190-40b0-8ef2-969ae6384e09.json"
-    },
-    {
       "id": "edited-ce75adef-be21-4f3d-83dd-307afae68b14",
       "title": "小星星（修改版）",
       "composer": "法国传统民谣",
@@ -1296,9 +1281,10 @@
     }
   ],
   "deletedIds": [
-    "full-score-croatian-skill-high-20261019"
+    "full-score-croatian-skill-high-20261019",
+    "edited-8314396d-6190-40b0-8ef2-969ae6384e09"
   ],
-  "updatedAt": "2026-10-20T14:35:02.801Z",
+  "updatedAt": "2026-10-20T15:52:49.569Z",
   "superseded": {
     "full-score-croatian-skill-high-20261019": "full-score-croatian-reviewed-20261019"
   }
