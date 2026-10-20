@@ -392,21 +392,6 @@
       "file": "scores/edited-ce75adef-be21-4f3d-83dd-307afae68b14.json"
     },
     {
-      "id": "full-score-3a9bbbda8e36a4e4bdd1bd5f3a5d1cbbbd5d",
-      "title": "生日快乐 · GPT high 双页验证",
-      "composer": "未知",
-      "tempo": 90,
-      "timeSignature": [
-        3,
-        4
-      ],
-      "keySignature": 0,
-      "notes": 52,
-      "hasOriginal": true,
-      "reviewRequired": false,
-      "file": "scores/full-score-3a9bbbda8e36a4e4bdd1bd5f3a5d1cbbbd5d.json"
-    },
-    {
       "id": "full-score-3cfc9015e3c9659ed09b9da473df64d23709",
       "title": "幻听 · GPT low 六页重识别",
       "composer": "未知",
@@ -1282,9 +1267,10 @@
   ],
   "deletedIds": [
     "full-score-croatian-skill-high-20261019",
-    "edited-8314396d-6190-40b0-8ef2-969ae6384e09"
+    "edited-8314396d-6190-40b0-8ef2-969ae6384e09",
+    "full-score-3a9bbbda8e36a4e4bdd1bd5f3a5d1cbbbd5d"
   ],
-  "updatedAt": "2026-10-20T15:52:49.569Z",
+  "updatedAt": "2026-10-20T15:52:59.532Z",
   "superseded": {
     "full-score-croatian-skill-high-20261019": "full-score-croatian-reviewed-20261019"
   }
