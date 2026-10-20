@@ -8,7 +8,11 @@
 - lib/score-representations.ts：createPerformanceTimeline 从文档生成实际起音、装饰音、力度与速度时间轴；createDisplayRepresentation 生成供五线谱、简谱、卷帘和打印调用的书写表示。演奏展开不会改写文档。
 - lib/score.mjs：validateScore 为原有编辑器与调用方保留 v1 形状的兼容投影，附带书写信息；不要从演奏事件反推乐谱文档。MusicXML 导入、导出保留音名和延音音头；MIDI 使用实际演奏表示。
 
-现有 VexFlow 排版规则继续使用，复杂节奏、合并显示声部等既有限制仍须根据原谱核验。数据保留与排版能力是两个独立约束。
+lib/notation-rhythm.mjs 集中处理倍全至二百五十六分音符、0–3 附点及任意整数比例连音；notation-segments.mjs 处理小节边界、空隙和延续音头。VexFlow 与简谱共用时值、分组和嵌套比例，打印复用同一渲染器。布局按真实起音密度安排宽度，不把细分音压回十六分网格。
+
+音符和休止可带 `rhythm: {type, dots, tuplets?: [{actual, normal, group?}]}`。tuplets 按外至内记录，最多四层，比例 1–1024，group 可保留书写组；运行时校验其总拍数与 duration 一致。MusicXML 保留原类型、附点与标准 time-modification；嵌套书写信息附带 qinban-expression 扩展。直接修改拍数会清除过期的书写时值，旧 v1/v2 缺少 rhythm 时按时值推断，无需重写已有曲库。
+
+仅 MIDI 显示可闭合不超过 1/128 拍、通向相邻起音或小节末的松键间隙。既有演奏事件、文档、卷帘和音频均不改变；无明确书写信息的非常规比例会显示推导比例。复声部仍合并显示为和弦及延音线，不能据此宣称恢复了原版声部或装饰音排版。
 
 ## v1 迁移规则
 

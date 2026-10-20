@@ -120,3 +120,35 @@ test('paper rendering includes every offscreen system without waiting for inters
     dom.window.close();
   }
 });
+
+test('extended glyphs, rests, compound duplets, nested tuplets and real imported passages engrave in both formats',async()=>{
+ await fontsReady;
+ const {readFile}=await import('node:fs/promises');
+ const dom=new JSDOM('<div id="host"></div>'),saved={document:globalThis.document,window:globalThis.window,cancelAnimationFrame:globalThis.cancelAnimationFrame},canvas=Element.getTextMeasurementCanvas();let renderer;
+ const errors=[],priorError=console.error;
+ try{
+  globalThis.document=dom.window.document;globalThis.window=dom.window;globalThis.cancelAnimationFrame=()=>{};
+  dom.window.HTMLCanvasElement.prototype.getContext=()=>({font:'',measureText:t=>({width:String(t).length*8,actualBoundingBoxAscent:8,actualBoundingBoxDescent:2})});Element.setTextMeasurementCanvas(document.createElement('canvas'));console.error=(...e)=>errors.push(e.join(' '));
+  const host=document.querySelector('#host');Object.defineProperty(host,'clientWidth',{value:1100});
+  const fixtures=[];
+  for(const n of [3,5,7,9,11,13])fixtures.push({id:'group'+n,tempo:90,timeSignature:[1,4],durationBeats:1,notes:Array.from({length:n},(_,i)=>({id:'n'+i,beat:i/n,duration:1/n,midi:60+i%7,hand:'right'}))});
+  fixtures.push({id:'nested',tempo:90,timeSignature:[1,4],durationBeats:1,notes:Array.from({length:9},(_,i)=>({id:'n'+i,beat:i/9,duration:1/9,midi:60+i%7,hand:'right',rhythm:{type:'16th',dots:0,tuplets:[{actual:3,normal:2,group:'outer'},{actual:3,normal:2,group:'inner'+Math.floor(i/3)}]}}))});
+  fixtures.push({id:'duplet',tempo:90,timeSignature:[6,8],durationBeats:3,notes:Array.from({length:4},(_,i)=>({id:'d'+i,beat:i*.75,duration:.75,midi:60+i,hand:'right',rhythm:{type:'eighth',dots:0,tuplets:[{actual:2,normal:3}]}}))});
+  for(const duration of [8,7,3.5,1.875,.109375,.015625])fixtures.push({id:'duration'+duration,tempo:90,timeSignature:[4,4],durationBeats:duration,notes:[{id:'a',beat:0,duration,midi:60,hand:'right'}]});
+  for(const [id,measure] of [['intermediate-beethoven-op27-2-m1',0],['intermediate-beethoven-op13-m2',20],['beginner-schumann-op68-18',0],['intermediate-beethoven-op49-1-m2',3]]){
+   const {score}=JSON.parse(await readFile(new URL('../public/cloud-library/scores/'+id+'.json',import.meta.url)));
+   const {scoreMeasureBounds}=await import('../lib/score.mjs');const {start,end,length,timeSignature}=scoreMeasureBounds(score,measure);
+   fixtures.push({...score,id,timeSignature,measureMap:[{beat:0,duration:length,timeSignature}],durationBeats:length,notes:score.notes.filter(n=>n.beat<end&&n.beat+n.duration>start).map(n=>({...n,beat:Math.max(0,n.beat-start),duration:Math.min(end,n.beat+n.duration)-Math.max(start,n.beat)})),rests:[]});
+  }
+  for(const fixture of fixtures)for(const mode of ['staff','numbered']){
+   renderer=renderNotation(host,fixture,{mode,autoScroll:false,renderAll:true});
+   assert.equal(host.querySelectorAll('.notation-error').length,0,fixture.id+' '+mode+' '+errors.join('\n'));
+   const ids=new Set([...host.querySelectorAll('.notation-hit')].flatMap(el=>el.dataset.noteIds.split(' ')));
+   for(const note of fixture.notes)assert.ok(ids.has(note.id),fixture.id+' lost '+note.id);
+   if(fixture.id==='duplet'&&mode==='numbered')assert.match(host.querySelector('.notation-tuplet').textContent,/2:3/);
+   if(fixture.id==='nested'&&mode==='numbered')assert.equal(host.querySelectorAll('.notation-tuplet').length,4);
+   renderer.destroy();
+  }
+  assert.deepEqual(errors,[]);
+ }finally{renderer?.destroy();console.error=priorError;Element.setTextMeasurementCanvas(canvas);for(const[k,v]of Object.entries(saved)){if(v===undefined)delete globalThis[k];else globalThis[k]=v;}dom.window.close();}
+});

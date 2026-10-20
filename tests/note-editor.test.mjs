@@ -108,3 +108,28 @@ test('visible grace, fermata and tempo tables save structured expression and ren
   root.querySelector('[data-save]').click();assert.deepEqual(saved.tempoMap,[{beat:0,bpm:80,curve:'linear'},{beat:4,bpm:60,curve:'step'}]);assert.equal(saved.notes.find(n=>n.id==='a').grace.notes.length,2);assert.equal(saved.notes.find(n=>n.id==='a').fermata.holdBeats,2);
  }finally{dispose();dom.window.close();for(const[k,v]of Object.entries(previous)){if(v===undefined)delete globalThis[k];else globalThis[k]=v;}}
 });
+
+test('the complete rhythm panel saves compound duplets, multiple dots and nested ratios and clears stale spelling on custom timing',async()=>{
+ const dom=new JSDOM('<div id="host"></div>',{pretendToBeVisual:true});dom.window.HTMLCanvasElement.prototype.getContext=()=>({font:'',measureText:t=>({width:String(t).length*8,actualBoundingBoxAscent:8,actualBoundingBoxDescent:2})});const previous={};for(const key of ['window','document','HTMLElement','SVGElement','requestAnimationFrame','cancelAnimationFrame']){previous[key]=globalThis[key];globalThis[key]=typeof dom.window[key]==='function'&&key.includes('AnimationFrame')?dom.window[key].bind(dom.window):dom.window[key];}
+ let saved;const {mountNoteEditor}=await import('../src/note-editor.js');const root=document.querySelector('#host');const dispose=mountNoteEditor(root,raw,{onSave:s=>{saved=s;}});
+ try{
+  const set=(s,v)=>{root.querySelector(s).value=String(v);},click=s=>root.querySelector(s).click();
+  assert.equal(root.querySelector('[data-rhythm-type]').options.length,10);
+  set('[data-rhythm-type]','eighth');set('[data-rhythm-actual]',2);set('[data-rhythm-normal]',3);click('[data-apply-rhythm]');click('[data-save]');
+  assert.equal(saved.notes[0].duration,.75);assert.deepEqual(saved.notes[0].rhythm.tuplets,[{actual:2,normal:3}]);assert.equal(root.querySelectorAll('.notation-error').length,0);
+  set('[data-rhythm-type]','16th');set('[data-rhythm-dots]',2);set('[data-rhythm-actual]',3);set('[data-rhythm-normal]',2);set('[data-rhythm-nested-actual]',3);set('[data-rhythm-nested-normal]',2);click('[data-apply-rhythm]');click('[data-save]');
+  assert.ok(Math.abs(saved.notes[0].duration-7/36)<1e-10);assert.equal(saved.notes[0].rhythm.dots,2);assert.equal(saved.notes[0].rhythm.tuplets.length,2);
+  set('[data-custom-duration]',1);click('[data-timing]');assert.equal(root.querySelector('.form-error').textContent,'');click('[data-save]');assert.equal(saved.notes[0].rhythm,undefined);
+  set('[data-rhythm-type]','breve');click('[data-apply-rhythm]');assert.equal(root.querySelectorAll('.notation-error').length,0);assert.doesNotMatch(root.querySelector('[data-editor-preview]').textContent,/无法排版/);
+ }finally{dispose();dom.window.close();for(const[k,v]of Object.entries(previous)){if(v===undefined)delete globalThis[k];else globalThis[k]=v;}}
+});
+
+test('a real imported score previews its selected measure without carrying future rests, timing or dangling ties',async()=>{
+ const {readFile}=await import('node:fs/promises');const {readScoreDocument}=await import('../lib/score-document.ts');
+ for(const id of ['intermediate-beethoven-op27-2-m1','intermediate-beethoven-op13-m2']){
+  const {score}=JSON.parse(await readFile(new URL('../public/cloud-library/scores/'+id+'.json',import.meta.url)));const editor=createNoteEditor(score);
+  for(const index of [0,20,40]){const preview=editor.previewMeasure(index);assert.doesNotThrow(()=>readScoreDocument(preview));assert.ok(preview.rests.every(r=>r.beat+r.duration<=preview.durationBeats+1e-5));}
+ }
+ const editor=createNoteEditor({...raw,notes:[{id:'a',midi:60,beat:0,duration:4,hand:'right',tieTo:'b'},{id:'b',midi:60,beat:4,duration:4,hand:'right'}]});
+ assert.equal(editor.previewMeasure(0).notes[0].tieTo,undefined);
+});

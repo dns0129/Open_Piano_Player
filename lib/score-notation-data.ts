@@ -1,5 +1,7 @@
+import {writtenBeats,NOTE_VALUES} from "./notation-rhythm.mjs";
 import type {
   WrittenPitch,
+  WrittenRhythm,
   SourcePosition,
   ScoreRest,
   Lineage,
@@ -59,10 +61,22 @@ export function validatePositions(value: unknown): SourcePosition[] {
     return { page: p.page, system: p.system, x: p.x, y: p.y };
   });
 }
+export function validateWrittenRhythm(value: unknown, duration: number): WrittenRhythm {
+  const r=value as WrittenRhythm;
+  if(!r || !NOTE_VALUES.some(([type])=>type===r.type) || !Number.isInteger(r.dots) || r.dots<0 || r.dots>3)
+    throw new Error("书写时值的音符类型或附点无效。");
+  if(r.tuplets!==undefined && (!Array.isArray(r.tuplets) || r.tuplets.length>4 || r.tuplets.some(t=>
+    !t || !Number.isInteger(t.actual) || !Number.isInteger(t.normal) || t.actual<1 || t.normal<1 || t.actual>1024 || t.normal>1024 ||
+    (t.group!==undefined && (typeof t.group!=="string" || !t.group || t.group.length>80)))))
+    throw new Error("连音比例或分组无效。");
+  if(Math.abs(writtenBeats(r)-duration)>1e-5)throw new Error("书写时值与音符或休止符拍数不一致。");
+  return {type:r.type,dots:r.dots,...(r.tuplets?.length?{tuplets:r.tuplets.map(t=>({actual:t.actual,normal:t.normal,...(t.group?{group:t.group}:{})}))}:{})};
+}
 export function writtenNoteFields(
   note: Record<string, unknown>,
 ): Record<string, unknown> {
   const fields: Record<string, unknown> = {};
+  if(note.rhythm!==undefined)fields.rhythm=validateWrittenRhythm(note.rhythm,note.duration as number);
   if (note.pitch !== undefined)
     fields.pitch = validateWrittenPitch(note.pitch, note.midi as number);
   if (note.staff !== undefined) {
@@ -126,6 +140,7 @@ export function validateRests(value: unknown, duration: number): ScoreRest[] {
       voice: r.voice,
       hand: r.hand,
       provenance: r.provenance,
+      ...(r.rhythm!==undefined?{rhythm:validateWrittenRhythm(r.rhythm,r.duration)}:{}),
       ...(r.sourcePositions
         ? { sourcePositions: validatePositions(r.sourcePositions) }
         : {}),

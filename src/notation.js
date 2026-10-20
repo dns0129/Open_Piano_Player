@@ -1,7 +1,7 @@
 import {createDisplayRepresentation,createPerformanceTimeline} from '../lib/score-representations.ts';
 import { Renderer, Stave, StaveNote, StaveConnector, Voice, Formatter, Accidental, Dot, StaveTie, Beam, Tuplet, Annotation, Fraction, VexFlow, Barline, Articulation, Ornament, Modifier, GraceNote, GraceNoteGroup } from 'vexflow';
 import { beatsPerMeasure, KEY_NAMES, midiName, scoreMeasureBounds, scoreMeasureIndex, scoreKeySignature } from '../lib/score.mjs';
-import { measureSegments, spellMidi, numberedPitch, durationGlyph, planSystems } from '../lib/notation-layout.mjs';
+import { measureSegments, spellMidi, numberedPitch, planSystems } from '../lib/notation-layout.mjs';
 import { tonalityLabel } from '../lib/score-arrangement.mjs';
 import { tieChains, effectLabels, performanceNotes, ornamentAccidental } from '../lib/note-effects.mjs';
 
@@ -12,72 +12,10 @@ export const fontsReady = typeof document !== 'undefined' && document.fonts
   ? Promise.all([document.fonts.load('32px Bravura'), document.fonts.load('12px Academico')]).then(() => { VexFlow.setFonts('Bravura', 'Academico'); fontsLoaded = true; })
   : Promise.resolve().then(() => { fontsLoaded = true; });
 const symbol = accidental => ({ '-2': '𝄫', '-1': '♭', 0: '', 1: '♯', 2: '𝄪' })[accidental] || '';
-const RHYTHM_EPSILON = 0.00001;
-const ordinaryDurations = [6, 4, 3, 2, 1.5, 1, .75, .5, .25];
-const tripletDurations = [[4 / 3, 'h'], [2 / 3, 'q'], [1 / 3, '8'], [1 / 6, '16'], [1 / 12, '32']];
-const closeTo = (a, b) => Math.abs(a - b) < RHYTHM_EPSILON;
-
-/** The played duration stays exact; a triplet's printed value is its 3:2 base. */
-export function notationDuration(duration) {
-  const ordinary = ordinaryDurations.find(value => closeTo(value, duration));
-  if (ordinary !== undefined) { const [glyph, dots] = durationGlyph(ordinary); return { glyph, dots, printedBeats: ordinary, triplet: false }; }
-  const small = [[.1875, '32', 1], [.125, '32', 0], [.09375, '64', 1], [.0625, '64', 0], [.03125, '128', 0]].find(([value]) => closeTo(value, duration));
-  if (small) return { glyph: small[1], dots: small[2], printedBeats: small[0], triplet: false };
-  const triplet = tripletDurations.find(([value]) => closeTo(value, duration));
-  if (triplet) return { glyph: triplet[1], dots: 0, printedBeats: triplet[0] * 1.5, triplet: true };
-  throw new Error('此处包含暂不支持的连音节奏，请使用原谱查看准确节奏。');
-}
-
-/** Preserve ordinary scores' layout, while never rounding a triplet to 16ths. */
-export function notationMeasureSegments(score, measureIndex, hand) {
-  const {length,start,end}=scoreMeasureBounds(score,measureIndex);
-  const inMeasure = score.notes.filter(note => (note.staff || (note.hand==='left'?2:1)) === (hand==='left'?2:1) && note.beat < end - RHYTHM_EPSILON && note.beat + note.duration > start + RHYTHM_EPSILON);
-  if (inMeasure.every(note => closeTo(note.beat * 4, Math.round(note.beat * 4)) && closeTo((note.beat + note.duration) * 4, Math.round((note.beat + note.duration) * 4)))) return measureSegments(score, measureIndex, hand);
-  const snap = value => {
-    for (const grid of [4, 12, 8, 16, 32]) if (closeTo(value, Math.round(value * grid) / grid)) return Math.round(value * grid) / grid;
-    return value;
-  };
-  const notes = inMeasure.map(note => ({ ...note, start: Math.max(start, snap(note.beat)), end: Math.min(end, snap(note.beat + note.duration)) }));
-  const boundaries = [...new Set([start, end, ...notes.flatMap(note => [note.start, note.end])])].sort((a, b) => a - b);
-  const segments = [];
-  for (let index = 0; index < boundaries.length - 1; index++) {
-    const beat = boundaries[index], stop = boundaries[index + 1];
-    if (stop - beat < RHYTHM_EPSILON) continue;
-    const active = notes.filter(note => note.start < stop - RHYTHM_EPSILON && note.end > beat + RHYTHM_EPSILON).sort((a, b) => a.midi - b.midi);
-    const previous = segments.at(-1);
-    if (previous && previous.notes.map(note => note.id).join('|') === active.map(note => note.id).join('|')) previous.duration += stop - beat;
-    else segments.push({ beat, duration: stop - beat, notes: active });
-  }
-  return segments.flatMap(segment => {
-    try { notationDuration(segment.duration); return [segment]; } catch { /* A long ordinary span may need tied subdivisions. */ }
-    let remaining = segment.duration, beat = segment.beat;
-    const result = [];
-    for (const duration of ordinaryDurations) while (remaining >= duration - RHYTHM_EPSILON) { result.push({ ...segment, beat, duration }); remaining -= duration; beat += duration; }
-    if (remaining > RHYTHM_EPSILON) { notationDuration(remaining); result.push({ ...segment, beat, duration: remaining }); }
-    return result;
-  });
-}
-
-/** A 3:2 span can contain mixed note values, e.g. two eighths and two sixteenths. */
-export function notationTupletGroups(segments) {
-  const groups = [];
-  for (let index = 0; index < segments.length; index++) {
-    const first = segments[index], descriptor = notationDuration(first.duration);
-    if (!descriptor.triplet) continue;
-    const group = [];
-    let duration = 0, complete = false;
-    for (let next = index; next < segments.length; next++) {
-      const segment = segments[next];
-      if (!notationDuration(segment.duration).triplet || !closeTo(segment.beat, first.beat + duration)) break;
-      group.push(next); duration += segment.duration;
-      if (group.length > 1 && [.25, .5, 1, 2, 4].some(span => closeTo(duration, span))) { complete = true; break; }
-      if (duration > 4 + RHYTHM_EPSILON) break;
-    }
-    if (!complete) throw new Error('此处连音组合暂不能准确重排，请使用原谱查看。');
-    groups.push(group); index = group.at(-1);
-  }
-  return groups;
-}
+import {notationDuration,notationTupletGroups,notationTupletPlans,dotFactor,RHYTHM_EPSILON,closeRhythm as closeTo} from '../lib/notation-rhythm.mjs';
+export {notationDuration,notationTupletGroups} from '../lib/notation-rhythm.mjs';
+import {notationMeasureSegments} from '../lib/notation-segments.mjs';
+export {notationMeasureSegments} from '../lib/notation-segments.mjs';
 
 function hasMergedVoices(score) {
   for (const hand of ['right', 'left']) {
@@ -141,7 +79,7 @@ export function renderNotation(container, score, options = {}) {
   if (mode === 'numbered' && score.mode === 'minor') help.textContent += ` ${tonalityLabel(score)} · 以 6 为小调主音。`;
   if (options.onSelectNotes) help.textContent = '点击谱面选择音符；和弦内的单音也可在下方逐个选择。';
   if (mode !== 'roll' && hasMergedVoices(score)) help.textContent += ' 复声部合并为和弦及延音线；精确起止可切换钢琴卷帘查看。';
-  if (score.notes.some(note => tripletDurations.some(([duration]) => closeTo(note.duration, duration)))) help.textContent += ' 括号 3 表示三连音。';
+  if(mode!=='roll')help.textContent+=' 连音括号标出比例；无书写信息时由时值推断。MIDI 的微小松键间隙仅在谱面合并，原始演奏时值保留。';
   if(score.tempoMap?.length)help.textContent+=' 速度变化：'+score.tempoMap.map(e=>`第${e.beat}拍 ♩=${e.bpm}${e.curve==='linear'?' 渐变至下一点':''}`).join('；')+'。';
   if(score.fermatas?.length)help.textContent+=' 停留：'+score.fermatas.map(e=>`第${e.beat}拍额外${e.holdBeats}拍`).join('；')+'。';
   const systemsHost = document.createElement('div'); systemsHost.className = 'notation-systems'; root.append(help, systemsHost); container.replaceChildren(root);
@@ -169,7 +107,7 @@ export function renderNotation(container, score, options = {}) {
 
   function seekable(rect, segment) {
     const { beat, duration, notes } = segment;
-    rect.classList.add('notation-hit'); rect.setAttribute('tabindex', '0'); rect.setAttribute('role', 'button'); rect.dataset.beat = beat;
+    rect.classList.add('notation-hit'); rect.setAttribute('tabindex', '0'); rect.setAttribute('role', 'button'); rect.dataset.beat = beat;rect.dataset.duration=duration;rect.dataset.noteIds=notes.map(n=>n.id).join(' ');
     rect.setAttribute('aria-label', `定位第 ${scoreMeasureIndex(score,beat) + 1} 小节，${notes.length ? notes.map(n => midiName(n.midi)).join('、') : '休止'}，第 ${(beat - scoreMeasureBounds(score,scoreMeasureIndex(score,beat)).start + 1).toFixed(2).replace(/\.00$/, '')} 拍`);
     const select = () => { if (options.onSelectNotes && notes.length) options.onSelectNotes(notes.map(n => n.id)); else onSeek(beat); };
     rect.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); select(); });
@@ -188,10 +126,10 @@ export function renderNotation(container, score, options = {}) {
   function makeVoice(info, hand, stave) {
     const clef = hand === 'right' ? 'treble' : 'bass', keySignature=scoreKeySignature(score,info.index);
     const objects = segments(info.index, hand).map(segment => {
-      const { glyph: duration, dots } = notationDuration(segment.duration), pitches = [...new Map(segment.notes.map(n => [n.midi, n])).values()];
+      const { glyph: duration, dots } = notationDuration(segment.duration,segment.rhythm), pitches = [...new Map(segment.notes.map(n => [n.midi, n])).values()];
       const keys = pitches.length ? pitches.map(n => { const p = n.pitch?{letter:n.pitch.step,accidental:n.pitch.alter,octave:n.pitch.octave}:spellMidi(n.midi,keySignature); return `${p.letter.toLowerCase()}${['bb', 'b', '', '#', '##'][p.accidental + 2]}/${p.octave}`; }) : [clef === 'treble' ? 'b/4' : 'd/3'];
       const note = new StaveNote({ clef, keys, duration: duration + (pitches.length ? '' : 'r'), dots, autoStem: true }).setStave(stave);
-      if (dots) Dot.buildAndAttach([note], { all: true });
+      for(let i=0;i<dots;i++) Dot.buildAndAttach([note], { all: true });
       if (showNoteNames && pitches.length) note.addModifier(new Annotation(pitches.map(n => midiName(n.midi, keySignature < 0)).join(' ')).setFont('Arial', 8).setVerticalJustification('top'));
       const chordMarks=new Set();
       pitches.forEach((n,index)=>{
@@ -211,9 +149,9 @@ export function renderNotation(container, score, options = {}) {
       });
       return { ...segment, pitches, note, stave, info, hand };
     });
-    // Attach tuplets before adding tickables: VexFlow then formats a true 3:2
-    // eighth-note group, rather than a visibly incorrect 16th/eighth/16th group.
-    const tuplets = notationTupletGroups(objects).map(indices => new Tuplet(indices.map(index => objects[index].note), { numNotes: 3, notesOccupied: 2, bracketed: true, ratioed: false }));
+    // Attach each ratio before adding tickables, so VexFlow formats the
+    // actual fractional durations, including nested and partial groups.
+    const tuplets = notationTupletPlans(objects).map(plan => new Tuplet(plan.indices.map(index => objects[index].note), {numNotes:plan.actual,notesOccupied:plan.normal,bracketed:true,ratioed:plan.actual!==3||plan.normal!==2}));
     const voice = new Voice({ numBeats: info.timeSignature[0], beatValue: info.timeSignature[1] }).setMode(Voice.Mode.SOFT).addTickables(objects.map(n => n.note));
     Accidental.applyAccidentals([voice], KEY_NAMES[keySignature + 7]);
     let beams = [];
@@ -307,32 +245,33 @@ export function renderNotation(container, score, options = {}) {
         const baseline = baselines[row]; group.append(svgElement('line', { x1: info.endX, x2: info.endX, y1: baseline - (maxChord - 1) * 31 - 34, y2: baseline + 23, class: 'notation-barline' }));
         const measureEvents = [];
         for (const segment of segments(info.index, hand)) {
-          const engraving = notationDuration(segment.duration);
+          const engraving = notationDuration(segment.duration,segment.rhythm);
           const x = musicStart + 9 + (segment.beat - info.start) / info.length * span, durationWidth = Math.max(24, segment.duration / info.length * span);
           const pitches = [...new Map(segment.notes.map(n => [n.midi, n])).values()].sort((a, b) => a.midi - b.midi);
           const labels=[...new Set(pitches.filter(n=>closeTo(n.beat,segment.beat)).flatMap(effectLabels).filter(l=>l!=='延音线'))];
           if(labels.length) group.append(svgElement('text',{x,y:baseline-(pitches.length-1)*31-42,'font-size':11,'text-anchor':'middle',fill:'#52714e',class:'notation-effects','pointer-events':'none'},labels.join(' ')));
           const hit = svgElement('rect', { x: x - 14, y: baseline - (pitches.length - 1) * 31 - 32, width: Math.max(27, durationWidth - 3), height: Math.max(57, pitches.length * 31 + 22), rx: 4 }); group.append(hit); info.hits.push(seekable(hit, segment));
-          const event = { x, pitches: [], beat: segment.beat, duration: segment.duration }; events[hand].push(event); measureEvents.push(event);
+          const event = { x, pitches: [], beat: segment.beat, duration: segment.duration, rhythm:segment.rhythm }; events[hand].push(event); measureEvents.push(event);
           (pitches.length ? pitches : [null]).forEach((note, j) => {
             const y = baseline - j * 31, p = note ? numberedPitch(note.midi, key, note.pitch) : null;
             group.append(svgElement('text', { x, y, class: `notation-pitch${note ? '' : ' notation-rest'}`, 'font-size': 25, 'text-anchor': 'middle' }, p ? String(p.degree) : '0'));
             if (p?.accidental) group.append(svgElement('text', { x: x - 15, y: y - 8, 'font-size': 16, class: 'notation-pitch' }, symbol(p.accidental)));
             if (p?.octave) for (let k = 0; k < Math.min(4, Math.abs(p.octave)); k++) group.append(svgElement('circle', { cx: x, cy: p.octave > 0 ? y - 26 - k * 5 : y + 10 + k * 5, r: 1.45, fill: '#263b35', 'pointer-events': 'none' }));
-            const underlineCount = Math.max(0, Math.round(Math.log2(1 / (engraving.printedBeats / (engraving.dots ? 1.5 : 1)))));
+            const underlineCount = Math.max(0, Math.round(Math.log2(1 / (engraving.printedBeats / dotFactor(engraving.dots)))));
             for (let k = 0; k < underlineCount; k++) group.append(svgElement('line', { x1: x - 8, x2: x + 8, y1: y + 4 + k * 4, y2: y + 4 + k * 4, stroke: '#263b35', 'stroke-width': 1.5, 'pointer-events': 'none' }));
-            if (engraving.dots) group.append(svgElement('circle', { cx: x + 13, cy: y - 8, r: 1.8, fill: '#263b35', 'pointer-events': 'none' }));
-            if (segment.duration >= 2) for (let k = 1; k < Math.floor(segment.duration); k++) group.append(svgElement('text', { x: x + k / info.length * span, y, class: 'notation-pitch', 'font-size': 21, 'text-anchor': 'middle' }, '—'));
+            for(let dot=0;dot<engraving.dots;dot++) group.append(svgElement('circle', { cx: x + Math.max(0,engraving.printedBeats/dotFactor(engraving.dots)-1)*segment.duration/engraving.printedBeats/info.length*span + 13+dot*5, cy: y - 8, r: 1.8, fill: '#263b35', 'pointer-events': 'none',class:'notation-duration-dot' }));
+            if (engraving.printedBeats/dotFactor(engraving.dots) >= 2) for (let k = 1; k < engraving.printedBeats/dotFactor(engraving.dots); k++) group.append(svgElement('text', { x: x + k*segment.duration/engraving.printedBeats / info.length * span, y, class: 'notation-pitch', 'font-size': 21, 'text-anchor': 'middle' }, '—'));
             if (showNoteNames && note) group.append(svgElement('text', { x, y: y + 28, 'font-size': 9, 'text-anchor': 'middle', fill: '#9aa69c', 'pointer-events': 'none' }, midiName(note.midi, key < 0)));
             if (note) event.pitches.push({ ...note, y });
           });
         }
-        for (const indices of notationTupletGroups(measureEvents)) {
-          const first = measureEvents[indices[0]], last = measureEvents[indices.at(-1)], y = baseline - (maxChord - 1) * 31 - 39;
-          const bracket = svgElement('g', { class: 'notation-tuplet', 'aria-label': '3比2连音，可含不同时值的音符', 'pointer-events': 'none' });
+        for (const plan of notationTupletPlans(measureEvents)) {
+          const {indices,actual,normal,level}=plan;const label=actual===3&&normal===2?'3':`${actual}:${normal}`;
+          const first = measureEvents[indices[0]], last = measureEvents[indices.at(-1)], y = baseline - (maxChord - 1) * 31 - 39-level*17;
+          const bracket = svgElement('g', { class: 'notation-tuplet', 'aria-label': `${actual}比${normal}连音，可含音符与休止符`, 'pointer-events': 'none' });
           bracket.append(svgElement('path', { d: `M ${first.x - 9} ${y + 5} V ${y} H ${last.x + 9} V ${y + 5}`, fill: 'none', stroke: '#637c68', 'stroke-width': 1 }));
-          bracket.append(svgElement('rect', { x: (first.x + last.x) / 2 - 7, y: y - 7, width: 14, height: 13, fill: '#fff' }));
-          bracket.append(svgElement('text', { x: (first.x + last.x) / 2, y: y + 4, 'text-anchor': 'middle', 'font-size': 13, fill: '#46644f' }, '3'));
+          bracket.append(svgElement('rect', { x: (first.x + last.x) / 2 - label.length*4, y: y - 7, width: label.length*8, height: 13, fill: '#fff' }));
+          bracket.append(svgElement('text', { x: (first.x + last.x) / 2, y: y + 4, 'text-anchor': 'middle', 'font-size': 13, fill: '#46644f' }, label));
           group.append(bracket);
         }
       }

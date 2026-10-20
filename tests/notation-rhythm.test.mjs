@@ -73,7 +73,8 @@ test('polyphonic held notes keep their identity through merged segments and are 
   assert.equal(score.notes.filter(note => note.id === 'held').length, 1, 'rendering does not modify the playback events');
 });
 
-test('unsupported isolated tuplets fail explicitly instead of printing a false rhythm', () => {
-  assert.throws(() => notationDuration(.2), /暂不支持的连音节奏/);
-  assert.throws(() => notationTupletGroups([{ beat: 0, duration: 1 / 3 }]), /不能准确重排/);
+test('an isolated tuplet uses its actual ratio instead of rejecting the whole system', () => {
+  assert.deepEqual(notationDuration(.2).tuplet,{actual:5,normal:4});
+  assert.deepEqual(notationTupletGroups([{beat:0,duration:1/3}]),[[0]]);
+  assert.throws(()=>notationDuration(0),/正数/);
 });

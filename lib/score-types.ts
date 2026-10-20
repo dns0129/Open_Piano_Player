@@ -13,6 +13,11 @@ export interface SourcePosition {
   x: number;
   y: number;
 }
+export interface WrittenRhythm {
+  type: "breve" | "whole" | "half" | "quarter" | "eighth" | "16th" | "32nd" | "64th" | "128th" | "256th";
+  dots: number;
+  tuplets?: Array<{ actual: number; normal: number; group?: string }>;
+}
 export interface ScoreNote {
   id: string;
   midi: number;
@@ -24,6 +29,7 @@ export interface ScoreNote {
   pitch?: WrittenPitch;
   accidental?: string;
   sourcePositions?: SourcePosition[];
+  rhythm?: WrittenRhythm;
   velocity: number;
   tieTo?: string;
   [effect: string]: unknown;
@@ -42,6 +48,7 @@ export interface ScoreRest {
   hand: Hand;
   provenance: Provenance;
   sourcePositions?: SourcePosition[];
+  rhythm?: WrittenRhythm;
 }
 export interface Measure {
   measure?: number;

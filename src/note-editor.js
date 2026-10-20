@@ -1,3 +1,4 @@
+import {NOTE_VALUES,writtenBeats,notationDuration} from '../lib/notation-rhythm.mjs';
 import { createNoteEditor } from '../lib/note-editor.mjs';
 import { beatsPerMeasure, midiName, scoreMeasureBounds, scoreMeasureIndex } from '../lib/score.mjs';
 import { CHORD_QUALITIES, onsetGroup, tonalityLabel } from '../lib/score-arrangement.mjs';
@@ -7,6 +8,11 @@ import { DYNAMICS, effectLabels, nextTieNote, ornamentNeighbor } from '../lib/no
 const esc = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const durations = [[4,'全音符'],[2,'二分'],[1,'四分'],[.5,'八分'],[.25,'十六分']];
 const pitchNames = ['C','D♭','D','E♭','E','F','G♭','G','A♭','A','B♭','B'];
+function rhythmPanel(note){
+  const inferred=notationDuration(note.duration),rhythm=note.rhythm||{type:NOTE_VALUES.find(v=>v[1]===inferred.glyph)[0],dots:inferred.dots,tuplets:inferred.triplet?[{actual:3,normal:2}]:inferred.tuplet?[inferred.tuplet]:[]};
+  const t=rhythm.tuplets?.[0],nested=rhythm.tuplets?.[1];
+  return `<details data-rhythm-panel><summary>完整音符时值与连音</summary><div class="note-effects-grid"><label>音符类型<select data-rhythm-type aria-label="音符类型">${NOTE_VALUES.map(([type,,beats,label])=>`<option value="${type}" ${rhythm.type===type?'selected':''}>${label}（${beats}拍）</option>`).join('')}</select></label><label>附点<select data-rhythm-dots aria-label="附点数量">${['无附点','单附点','双附点','三附点'].map((label,n)=>`<option value="${n}" ${rhythm.dots===n?'selected':''}>${label}</option>`).join('')}</select></label><label>连音个数<input data-rhythm-actual aria-label="连音个数" type="number" min="1" max="1024" value="${t?.actual||1}"></label><label>占普通音个数<input data-rhythm-normal aria-label="连音占普通音个数" type="number" min="1" max="1024" value="${t?.normal||1}"></label><label>嵌套连音个数<input data-rhythm-nested-actual aria-label="嵌套连音个数" type="number" min="1" max="1024" value="${nested?.actual||1}"></label><label>嵌套占普通音个数<input data-rhythm-nested-normal aria-label="嵌套连音占普通音个数" type="number" min="1" max="1024" value="${nested?.normal||1}"></label></div><p class="form-note">例如八分三连音填 3 与 2，五连音填 5 与 4；复拍子的二连音填 2 与 3。1:1 为普通时值。相邻相同比例自动归组，嵌套比例逐层相乘。</p><button data-apply-rhythm>应用书写时值</button></details>`;
+}
 function effectsPanel(note,score) {
   const option=(value,label,current)=>`<option value="${value}" ${value===(current||'')?'selected':''}>${label}</option>`;
   const tieTarget=nextTieNote(score,note.id);
@@ -28,7 +34,7 @@ export function mountNoteEditor(root, raw, { onSave, onPreview, initialBeat = 0 
   function selectedNote() { return editor.score.notes.find(n => n.id === selected); }
   function action(fn) { try { fn(); dirty = true; error = ''; } catch (e) { error = e.message; } render(); }
   function render() {
-    const expanded = [...root.querySelectorAll('details[open]')].map(el=>el.hasAttribute('data-mode-panel')?'[data-mode-panel]':el.hasAttribute('data-chord-panel')?'[data-chord-panel]':el.hasAttribute('data-timing-panel')?'[data-timing-panel]':null).filter(Boolean);
+    const expanded = [...root.querySelectorAll('details[open]')].map(el=>el.hasAttribute('data-mode-panel')?'[data-mode-panel]':el.hasAttribute('data-chord-panel')?'[data-chord-panel]':el.hasAttribute('data-timing-panel')?'[data-timing-panel]':el.hasAttribute('data-rhythm-panel')?'[data-rhythm-panel]':null).filter(Boolean);
     renderer?.destroy();
     const score = editor.score, count = score.measureMap?.length || Math.max(1, Math.ceil(score.durationBeats / beatsPerMeasure(score)));
     measure = Math.max(0, Math.min(count - 1, measure));
@@ -45,7 +51,7 @@ export function mountNoteEditor(root, raw, { onSave, onPreview, initialBeat = 0 
       <details class="note-editor-arrangement" data-timing-panel><summary>变速与休止延长 · ${score.tempoMap?.length||0} 个速度点</summary><p class="form-note">全曲拍位从 0 起，以四分音符为 1 拍。渐变从该点持续到下一速度点；练习速度会按比例缩放整首。延长拍位填在音符或休止的结束处。</p><table><thead><tr><th>全曲拍位</th><th>BPM</th><th>到下一点</th></tr></thead><tbody data-tempo-rows>${(score.tempoMap||[]).concat([null,null]).map(e=>`<tr><td><input data-tempo-beat aria-label="速度点拍位" type="number" min="0" max="${score.durationBeats}" step="any" value="${e?.beat??''}"></td><td><input data-tempo-bpm aria-label="速度点 BPM" type="number" min="20" max="300" step="any" value="${e?.bpm??''}"></td><td><select data-tempo-curve aria-label="速度变化方式"><option value="step">保持速度</option><option value="linear" ${e?.curve==='linear'?'selected':''}>渐变至下一点</option></select></td></tr>`).join('')}</tbody></table><p class="form-note">清空某行拍位即可删除该点。每次应用会再提供两个空行。</p><table><thead><tr><th>停留拍位</th><th>额外拍数</th></tr></thead><tbody data-fermata-rows>${(score.fermatas||[]).concat([null,null]).map(e=>`<tr><td><input data-hold-beat aria-label="停留拍位" type="number" min="0" max="${score.durationBeats}" step="any" value="${e?.beat??''}"></td><td><input data-hold-length aria-label="额外停留拍数" type="number" min="0.0009765625" max="64" step="any" value="${e?.holdBeats??''}"></td></tr>`).join('')}</tbody></table><button data-apply-timing>应用变速与停留</button></details>
       <div class="note-editor-notes" aria-label="选择要修改的音符">${notes.map(n => `<button data-note="${esc(n.id)}" aria-pressed="${n.id === selected}" class="${n.id === selected ? 'selected' : ''}"><strong>${esc(midiName(n.midi))}</strong><small>${n.hand === 'right' ? '右手' : '左手'} · ${n.beat < start ? '上一小节延续' : `第 ${+(n.beat - start + 1).toFixed(3)} 拍`}</small></button>`).join('') || '<p>本小节没有音符，可以补一个。</p>'}</div>
       ${note ? `<div class="note-editor-controls"><div><strong>音高 ${esc(midiName(note.midi))}</strong><div class="note-editor-toolbar">${[[-12,'低八度'],[-1,'降半音'],[1,'升半音'],[12,'高八度']].map(([v,label]) => `<button data-pitch="${v}" ${note.midi + v < 21 || note.midi + v > 108 ? 'disabled' : ''}>${label}</button>`).join('')}<button data-preview>试听这个音</button></div></div><div><strong>时值</strong><div class="note-editor-toolbar">${durations.map(([v,label]) => `<button data-duration="${v}" aria-pressed="${Math.abs(note.duration-v)<.00001}" class="${Math.abs(note.duration-v)<.00001 ? 'selected' : ''}">${label}</button>`).join('')}<button data-dotted class="${durations.some(([v]) => Math.abs(note.duration-v*1.5)<.00001) ? 'selected' : ''}">附点</button><span>${+note.duration.toFixed(4)} 拍</span></div></div><div class="note-editor-toolbar"><label>演奏手 <select data-hand aria-label="演奏手"><option value="right" ${note.hand === 'right' ? 'selected' : ''}>右手</option><option value="left" ${note.hand === 'left' ? 'selected' : ''}>左手</option></select></label><button data-remove>删除这个音</button></div>
-      ${effectsPanel(note,score)}
+      ${rhythmPanel(note)}${effectsPanel(note,score)}
       <details class="note-editor-arrangement" data-chord-panel><summary>替换和弦 · ${note.hand==='right'?'右手':'左手'}此时的 ${group.length} 个音</summary><p class="form-note">只替换所选音符同一时刻、同一只手起奏的音组，另一只手保持原样。按从低到高沿用现有时值，新增和弦音沿用所选音符时值。</p><div class="note-editor-toolbar"><label>根音 <select data-chord-root aria-label="和弦根音">${pitchNames.map((p,i)=>`<option value="${i}" ${rootNote.midi%12===i?'selected':''}>${p}</option>`).join('')}</select></label><label>八度 <select data-chord-octave aria-label="和弦根音八度">${[1,2,3,4,5,6,7].map(o=>`<option ${Math.floor(rootNote.midi/12)-1===o?'selected':''}>${o}</option>`).join('')}</select></label><label>类型 <select data-chord-quality aria-label="和弦类型">${CHORD_QUALITIES.map(c=>`<option value="${c.id}">${c.label}</option>`).join('')}</select></label><button data-replace-chord>替换此音组</button></div></details>
       <details><summary>调整落点与特殊时值</summary><p class="form-note">拍数以四分音符为 1 拍。移动音符会保留其他音符的落点，空出的时间为休止。</p><label>起始拍（本小节从 1 起） <input data-beat type="number" step="any" min="1" max="${bar + 1}" value="${note.beat - start + 1}"></label><label>时值（拍） <input data-custom-duration type="number" min="0.0009765625" max="256" step="any" value="${note.duration}"></label><button data-timing>应用落点与时值</button></details></div>` : ''}
       <p class="form-error" role="alert">${esc(error)}</p><p class="form-note" role="status" data-edit-notice>${esc(notice)}</p><div class="note-editor-footer"><button data-add>＋ ${note ? '在此音后补一个音' : '在小节开头补一个音'}</button>${note ? '<button data-chord>＋ 同时发声的音</button>' : ''}<span data-save-status role="status">${dirty ? '有未保存的修改' : '尚未修改'}</span><button data-save class="button primary" ${!dirty ? 'disabled' : ''}>保存${raw.source?.kind === 'user-edited' ? '修改' : '为修改版'}</button></div><p class="form-note">源图可在原版本的“原图参考”查看。关闭窗口会放弃本次未保存修改；重新排版不会自动修复识别错误。</p>`;
@@ -66,6 +72,11 @@ export function mountNoteEditor(root, raw, { onSave, onPreview, initialBeat = 0 
     root.querySelectorAll('[data-pitch]').forEach(b => b.onclick = () => action(() => editor.update(selected, { midi: note.midi + Number(b.dataset.pitch) })));
     root.querySelectorAll('[data-duration]').forEach(b => b.onclick = () => action(() => editor.update(selected, { duration: Number(b.dataset.duration) })));
     $('[data-dotted]')?.addEventListener('click', () => action(() => { const dotted = durations.find(([v]) => Math.abs(note.duration-v*1.5)<.00001); editor.update(selected, { duration: dotted ? dotted[0] : note.duration*1.5 }); }));
+    $('[data-apply-rhythm]')?.addEventListener('click',()=>action(()=>{
+      const tuplets=[['actual','normal'],['nested-actual','nested-normal']].map(([a,n])=>({actual:Number($(`[data-rhythm-${a}]`).value),normal:Number($(`[data-rhythm-${n}]`).value)})).filter(t=>t.actual!==1||t.normal!==1);
+      const rhythm={type:$('[data-rhythm-type]').value,dots:Number($('[data-rhythm-dots]').value),...(tuplets.length?{tuplets}:{})};
+      editor.update(selected,{duration:writtenBeats(rhythm),rhythm});notice='已保存书写时值和连音比例。';
+    }));
     $('[data-hand]')?.addEventListener('change', e => action(() => editor.update(selected, { hand: e.target.value })));
     $('[data-remove]')?.addEventListener('click', () => action(() => editor.remove(selected)));
     $('[data-preview]')?.addEventListener('click', async () => { try { await onPreview?.(note.midi, note.duration, editor.score, selected); } catch (e) { error = e.message; render(); } });
@@ -84,15 +95,15 @@ export function mountNoteEditor(root, raw, { onSave, onPreview, initialBeat = 0 
     });
     $('[data-clear-effects]')?.addEventListener('click',()=>action(()=>editor.clearEffects(selected)));
     $('[data-timing]')?.addEventListener('click', () => action(() => {
-      const beat = Number($('[data-beat]').value), duration = Number($('[data-custom-duration]').value);
+      const beat = Number($('input[data-beat]').value), duration = Number($('[data-custom-duration]').value);
       if (beat < 1 || beat > bar + 1) throw new Error(`起始拍须在 1 到 ${bar + 1} 之间。`);
       editor.update(selected, { beat: start + beat - 1, duration });
     }));
-    $('[data-add]').onclick = () => action(() => { selected = editor.add(note ? note.beat + note.duration : start, note?.hand); measure = scoreMeasureIndex(editor.score,selectedNote().beat); });
+    $('[data-add]').onclick = () => action(() => { selected = editor.add(note ? note.beat + note.duration : start, note?.hand); if(note)editor.update(selected,{duration:note.duration,rhythm:note.rhythm}); measure = scoreMeasureIndex(editor.score,selectedNote().beat); });
     $('[data-chord]')?.addEventListener('click', () => action(() => { selected = editor.add(note.beat, note.hand); }));
     $('[data-save]').onclick = async () => { try { await onSave(editor.savedScore()); } catch (e) { error = e.message; render(); } };
     if (notes.length) {
-      const preview = { ...score, timeSignature:bounds.timeSignature,measureMap:[{beat:0,duration:bar,timeSignature:bounds.timeSignature}], durationBeats:bar, notes: notes.map(n => ({ ...n, beat: Math.max(0, n.beat-start), duration: Math.min(n.beat+n.duration, start+bar)-Math.max(n.beat,start) })) };
+      const preview = editor.previewMeasure(measure);
       try { renderer = renderNotation($('[data-editor-preview]'), preview, {mode:previewMode, autoScroll:false, onSelectNotes:ids=>{selected=ids.includes(selected)?ids[(ids.indexOf(selected)+1)%ids.length]:ids[0];render();} }); renderer.setBeat(Math.max(0, (note?.beat ?? start) - start)); }
       catch { $('[data-editor-preview]').textContent = '当前时值无法排版，可切换钢琴卷帘查看精确音符。'; }
     } else $('[data-editor-preview]').textContent = '本小节休止';
