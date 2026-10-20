@@ -1,3 +1,5 @@
+import { scoreSection, sectionKey } from '../lib/instrument-sections.mjs';
+import { guitarStarterScore } from '../lib/guitar.mjs';
 import { $, $$, esc, icon } from "./ui.js";
 import { assetURL } from "../lib/asset-url.mjs";
 import { tonalityLabel } from "../lib/score-arrangement.mjs";
@@ -18,7 +20,7 @@ export function createLibraryPanel({
 }) {
   const STATIC_SITE = capabilities.mode === "browser",
     library = [starterScore];
-  const availableScores = () => client.scores;
+  const availableScores = () => client.scores.filter(score => scoreSection(score) === (state.section || 'piano'));
   async function remember(score, sourceRecord, originalFile, options = {}) {
     const saved = await client.save(score, {
       sourceRecord,
@@ -102,9 +104,9 @@ export function createLibraryPanel({
   function libraryView() {
     const cloud = state.libraryTab === "cloud",
       scores = cloud
-        ? searchCloudScores(state.cloudScores, state.cloudLibraryQuery)
+        ? searchCloudScores(state.cloudScores.filter(score => scoreSection(score) === (state.section || 'piano')), state.cloudLibraryQuery)
         : availableScores();
-    return `<section class="content-page"><div class="page-heading"><div><span class="eyebrow">YOUR MUSIC LIBRARY</span><h1>${cloud ? "云端曲库" : "本地曲库"}</h1><p>${cloud ? "下载到本地后即可练习；本地删除不影响云端。" : "下载和导入的曲谱保存在本地，可随时删除。"}</p></div><button class="button primary" data-ai>${icon("search")}按歌名找谱</button></div>
+    return `<section class="content-page"><div class="page-heading"><div><span class="eyebrow">YOUR MUSIC LIBRARY</span><h1>${state.section === "guitar" ? "吉他" : "钢琴"}${cloud ? "云端曲库" : "本地曲库"}</h1><p>${cloud ? "下载到本地后即可练习；本地删除不影响云端。" : "下载和导入的曲谱按乐器分区保存，可随时删除。"}</p></div>${state.section === "guitar" ? `<button class="button primary" data-guitar-example>${icon("guitar")}打开吉他示例</button><button class="button secondary" data-upload>导入吉他谱</button>` : `<button class="button primary" data-ai>${icon("search")}按歌名找谱</button>`}</div>
   ${!cloud ? `<div class="library-backup-actions"><button class="button secondary" data-library-backup>备份完整曲库</button><button class="button secondary" data-library-restore>恢复曲库</button></div><button class="continue-practice" data-nav="practice"><span class="continue-icon">${icon("file-music")}</span><span><small>继续练习</small><strong>${esc(state.score.title)}</strong><span>${esc(state.score.composer || "钢琴练习曲")} · ${state.tempo} BPM</span></span><span class="continue-play">${icon("play")}</span></button>` : ""}
   <div class="cloud-library-tabs"><button class="button ${!cloud ? "primary" : "secondary"}" data-library-tab="local">本地曲库</button><button class="button ${cloud ? "primary" : "secondary"}" data-library-tab="cloud">云端曲库</button>${cloud ? `<button class="button quiet" data-cloud-refresh ${state.cloudBusy ? "disabled" : ""}>${state.cloudBusy ? "正在处理…" : "刷新云端"}</button>` : ""}</div>
   ${cloud && state.cloudError ? `<p class="cloud-library-error" role="alert">${esc(state.cloudError)}</p>` : ""}
@@ -135,11 +137,12 @@ export function createLibraryPanel({
     return scores
       .map(
         (s, i) =>
-          `<article class="score-card" data-card="${esc(s.id)}"><div class="card-art tone-${i % 4}"><span class="card-note">${["𝄞", "♫", "♩", "♬"][i % 4]}</span><span class="card-type">${s.source?.kind === "full-score-agent-approved" ? "已审核 · AI逐谱校对" : s.source?.kind === "full-score-model-reviewed" ? "AI全谱校对版 · 待人工确认" : s.source?.reviewRequired || s.source?.kind === "full-score-ai-draft" ? "数字谱 · 待校对" : s.source?.kind === "full-pdf-reviewed" ? "完整PDF钢琴谱" : s.source?.kind === "pdf-transcription-checked" ? "7页完整钢琴谱" : library.some((x) => x.id === s.id) ? "精选练习曲" : "我的乐谱"}</span><button data-open="${esc(s.id)}" class="card-play" aria-label="打开 ${esc(s.title)}">${icon("play")}</button></div><div class="card-info"><h3>${esc(s.title)}</h3><p>${esc(s.composer || "钢琴练习曲")}</p><div class="card-details"><span>${s.mode ? esc(tonalityLabel(s)) : keyName(s.keySignature) + " 调"} · ${s.timeSignature.join("/")}</span><span>${s.tempo} BPM</span></div></div>${!STATIC_SITE ? `<button class="button quiet cloud-upload" data-cloud-upload="${esc(s.id)}" ${state.cloudBusy ? "disabled" : ""}>上传云端</button>` : ""}<button class="button quiet" data-revisions="${esc(s.id)}">修订历史</button><button class="button quiet cloud-delete-local" data-delete="${esc(s.id)}" aria-label="本地删除 ${esc(s.title)}" title="仅删除本地副本">${icon("trash-2")}删除本地</button></article>`,
+          `<article class="score-card" data-card="${esc(s.id)}"><div class="card-art tone-${i % 4}"><span class="card-note">${["𝄞", "♫", "♩", "♬"][i % 4]}</span><span class="card-type">${s.source?.kind === "full-score-agent-approved" ? "已审核 · AI逐谱校对" : s.source?.kind === "full-score-model-reviewed" ? "AI全谱校对版 · 待人工确认" : s.source?.reviewRequired || s.source?.kind === "full-score-ai-draft" ? "数字谱 · 待校对" : s.source?.kind === "full-pdf-reviewed" ? "完整PDF钢琴谱" : s.source?.kind === "pdf-transcription-checked" ? "7页完整钢琴谱" : library.some((x) => x.id === s.id) ? "精选练习曲" : "我的乐谱"}</span><button data-open="${esc(s.id)}" class="card-play" aria-label="打开 ${esc(s.title)}">${icon("play")}</button></div><div class="card-info"><h3>${esc(s.title)}</h3><p>${esc(s.composer || (state.section === "guitar" ? "吉他练习曲" : "钢琴练习曲"))}</p><div class="card-details"><span>${s.mode ? esc(tonalityLabel(s)) : keyName(s.keySignature) + " 调"} · ${s.timeSignature.join("/")}</span><span>${s.tempo} BPM</span></div></div>${!STATIC_SITE ? `<button class="button quiet cloud-upload" data-cloud-upload="${esc(s.id)}" ${state.cloudBusy ? "disabled" : ""}>上传云端</button>` : ""}<button class="button quiet" data-revisions="${esc(s.id)}">修订历史</button><button class="button quiet cloud-delete-local" data-delete="${esc(s.id)}" aria-label="本地删除 ${esc(s.title)}" title="仅删除本地副本">${icon("trash-2")}删除本地</button></article>`,
       )
       .join("");
   }
   function bindLibrary() {
+    $('[data-guitar-example]')?.addEventListener('click', () => setScore(guitarStarterScore));
     $$("[data-open]").forEach(
       (b) =>
         (b.onclick = () => {
@@ -152,7 +155,7 @@ export function createLibraryPanel({
         (b.onclick = () => {
           state.libraryTab = b.dataset.libraryTab;
           localStorage.setItem(
-            "qinban-library-tab",
+            sectionKey("qinban-library-tab", state.section),
             JSON.stringify(state.libraryTab),
           );
           render();
@@ -258,8 +261,8 @@ export function createLibraryPanel({
             state.shared = client.scores;
             if (state.score.id === id) {
               client.release(id);
-              setScore(starterScore);
-              localStorage.removeItem("qinban-active-score");
+              setScore(state.section === "guitar" ? guitarStarterScore : starterScore);
+              localStorage.removeItem(sectionKey("qinban-active-score", state.section));
               state.view = "library";
             }
             toast("已删除本地副本，云端曲目保留。");

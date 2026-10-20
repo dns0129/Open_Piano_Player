@@ -1,3 +1,4 @@
+import { renderGuitarTab } from './guitar-notation.js';
 import {createDisplayRepresentation} from '../lib/score-representations.ts';
 import { VexFlow } from 'vexflow';
 import { normalizePrintStyle, printSVGColor, PRINT_TEXT_FONTS, PRINT_PAGE_STYLES } from '../lib/score-print-style.mjs';
@@ -90,7 +91,7 @@ export async function createScorePages(score, { mode = 'staff', sourceNotation, 
     const credit = [appearance.creditLabel, appearance.credit].filter(Boolean).join('：');
     if (appearance.creditPosition === 'under-title' && appearance.credit) line(credit, 12, left ? 'left' : 'center');
     line(appearance.subtitle, 13, left ? 'left' : 'center', '', palette.muted);
-    if (appearance.showDetails) line(`${score.timeSignature.join('/')} · ♩ = ${score.tempo} · ${{ staff: '五线谱', numbered: '简谱', source: '原图参考' }[mode]}`, 10, left ? 'left' : 'center', '', palette.muted);
+    if (appearance.showDetails) line(`${score.timeSignature.join('/')} · ♩ = ${score.tempo} · ${{ staff: '五线谱', numbered: '简谱', source: '原图参考', tab: '吉他六线谱 · 自动建议指法' }[mode]}`, 10, left ? 'left' : 'center', '', palette.muted);
     if (!['hidden', 'under-title'].includes(appearance.creditPosition) && appearance.credit) line(credit, 12, appearance.creditPosition);
     const draft = score.source?.reviewRequired || /draft|^audio-transcription$|^image-ai$|^full-score-model-reviewed$/.test(score.source?.kind || '');
     line([draft ? '待校对草稿' : '', score.source?.label, score.source?.license].filter(Boolean).join(' · '), 8, 'left', '', palette.muted);
@@ -133,7 +134,7 @@ export async function createScorePages(score, { mode = 'staff', sourceNotation, 
       const previousFonts = VexFlow.getFonts();
       try {
         VexFlow.setFonts(...new Set([appearance.musicFont, 'Bravura', appearance.musicFont === 'Petaluma' ? 'Petaluma Script' : 'Academico']));
-        renderer = renderNotation(host, score, { mode, autoScroll: false, renderAll: true });
+        renderer = (mode === 'tab' ? renderGuitarTab : renderNotation)(host, score, { mode, autoScroll: false, renderAll: true });
       } finally { VexFlow.setFonts(...previousFonts); }
       const error = host.querySelector('.notation-error');
       if (error) throw new Error(`此谱暂不能完整导出：${error.textContent}`);

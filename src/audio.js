@@ -1,11 +1,14 @@
 import {createPerformanceTimeline} from '../lib/score-representations.ts';
-import { DEFAULT_PIANO_INSTRUMENT, SAMPLE_BANK_URLS, pianoInstrument, pianoSampleProfile, pianoReleaseSeconds, PianoSampleBank } from '../lib/piano-voices.mjs';
+import { DEFAULT_PIANO_INSTRUMENT, SAMPLE_BANK_URLS, pianoSampleProfile, pianoReleaseSeconds, PianoSampleBank } from '../lib/piano-voices.mjs';
 import { assetURL } from '../lib/asset-url.mjs';
 import { createInstrumentRoom } from '../lib/instrument-room.mjs';
 import { INSTRUMENT_PREVIEW } from '../lib/instrument-demo.mjs';
 import { performanceNotes, tieChains } from '../lib/note-effects.mjs';
 import { createScoreTimeline } from '../lib/score-timing.mjs';
 import { bowedConnections, bowedEnvelope } from '../lib/bowed-articulation.mjs';
+
+import { playbackInstrument as pianoInstrument } from '../lib/instrument-sections.mjs';
+import { guitarWaveform } from '../lib/guitar-voice.mjs';
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
 const EPSILON = 1e-7;
@@ -18,10 +21,10 @@ export class PianoPlayer {
     this.onInstrumentState = options.onInstrumentState || (() => {});
     this._instrumentId = options.instrument || DEFAULT_PIANO_INSTRUMENT;
     const initialInstrument = pianoInstrument(this._instrumentId);
-    this._activeInstrument = initialInstrument.engine === 'synth' ? 'synth' : null;
+    this._activeInstrument = initialInstrument.engine !== 'samples' ? this._instrumentId : null;
     this._instrumentState = { id: this._instrumentId, status: this._activeInstrument ? 'ready' : 'idle',
       engine: initialInstrument.engine, progress: this._activeInstrument ? 1 : 0, loaded: 0, total: 0,
-      message: this._activeInstrument ? '轻量合成已就绪' : '首次播放时加载本机乐器采样' };
+      message: this._activeInstrument ? (initialInstrument.engine === 'pluck' ? '尼龙弦吉他已就绪 · 本机合成' : '轻量合成已就绪') : '首次播放时加载本机乐器采样' };
     this._sampleOptions = { manifestURL: options.sampleManifestURL, manifest: options.sampleManifest, fetcher: options.sampleFetcher };
     this._bankOptions = options.sampleBanks || {};
     this._sampleBanks = new Map();
@@ -231,9 +234,9 @@ export class PianoPlayer {
     if (id === this._activeInstrument && this._instrumentState.status === 'ready') return Promise.resolve(this.instrumentState);
     const generation = ++this._instrumentGeneration;
     this._instrumentId = id;
-    if (instrument.engine === 'synth') {
+    if (instrument.engine !== 'samples') {
       this._activateInstrument(id);
-      this._setInstrumentState({ id, status: 'ready', engine: 'synth', progress: 1, loaded: 0, total: 0, message: '轻量合成已就绪' });
+      this._setInstrumentState({ id, status: 'ready', engine: instrument.engine, progress: 1, loaded: 0, total: 0, message: instrument.engine === 'pluck' ? '尼龙弦吉他已就绪 · 本机合成' : '轻量合成已就绪' });
       return Promise.resolve(this.instrumentState);
     }
     this._setInstrumentState({ id, status: 'loading', engine: 'samples', progress: 0, loaded: 0, total: 0, message: `正在准备${instrument.label}…` });
@@ -293,6 +296,7 @@ export class PianoPlayer {
     for (const bank of this._sampleBanks.values()) bank.dispose();
     this._sampleBanks.clear();
     this._sampleBank = null;
+    this._guitarBuffers?.clear();
     for (const [room, timer] of this._retiredRooms) {
       globalThis.clearTimeout(timer);
       room.dispose();
@@ -424,6 +428,10 @@ export class PianoPlayer {
 
   _piano(midi, start, duration, velocity, elapsed = 0, bow = {}) {
     if (velocity <= 0) return;
+    if (this._activeInstrument === 'nylon-guitar') {
+      this._guitar(midi, start, duration, velocity, elapsed);
+      return;
+    }
     if (this._activeInstrument !== 'synth') {
       this._samplePiano(midi, start, duration, velocity, elapsed, bow);
       return;
@@ -481,6 +489,35 @@ export class PianoPlayer {
       output.disconnect();
       this._voices.delete(voice);
     }
+  }
+
+  _guitar(midi, start, duration, velocity, elapsed) {
+    const ctx = this._context;
+    this._guitarBuffers ||= new Map();
+    if (!this._guitarBuffers.has(midi)) {
+      const data = guitarWaveform(midi, ctx.sampleRate);
+      const buffer = ctx.createBuffer(1, data.length, ctx.sampleRate);
+      buffer.getChannelData(0).set(data);
+      // Bound cache memory for transposed/imported material.
+      if (this._guitarBuffers.size >= 40) this._guitarBuffers.delete(this._guitarBuffers.keys().next().value);
+      this._guitarBuffers.set(midi, buffer);
+    }
+    const buffer = this._guitarBuffers.get(midi);
+    if (elapsed >= buffer.duration - .004) return;
+    const source = ctx.createBufferSource(), output = ctx.createGain();
+    source.buffer = buffer;
+    const releaseAt = start + Math.min(duration, buffer.duration - elapsed);
+    const stopAt = Math.min(start + buffer.duration - elapsed, releaseAt + .14);
+    const attack = Math.min(.004, (stopAt - start) / 4);
+    output.gain.setValueAtTime(0, start);
+    output.gain.linearRampToValueAtTime(clamp(velocity, 0, 1) ** 1.2 * .9, start + attack);
+    output.gain.setValueAtTime(clamp(velocity, 0, 1) ** 1.2 * .9, Math.max(start + attack, releaseAt));
+    output.gain.linearRampToValueAtTime(0, stopAt);
+    source.connect(output); output.connect(this._master);
+    const voice = { output, nodes: [source], end: stopAt, cancelled: false };
+    this._voices.add(voice);
+    source.onended = () => { source.disconnect(); output.disconnect(); this._voices.delete(voice); };
+    source.start(start, elapsed); source.stop(stopAt);
   }
 
   _samplePiano(midi, start, duration, velocity, elapsed, bow) {

@@ -2,6 +2,7 @@ import {NOTE_VALUES,writtenBeats,notationDuration} from '../lib/notation-rhythm.
 import { createNoteEditor } from '../lib/note-editor.mjs';
 import { beatsPerMeasure, midiName, scoreMeasureBounds, scoreMeasureIndex } from '../lib/score.mjs';
 import { CHORD_QUALITIES, onsetGroup, tonalityLabel } from '../lib/score-arrangement.mjs';
+import { renderGuitarTab } from './guitar-notation.js';
 import { renderNotation } from './notation.js';
 import { DYNAMICS, effectLabels, nextTieNote, ornamentNeighbor } from '../lib/note-effects.mjs';
 
@@ -30,7 +31,8 @@ function effectsPanel(note,score) {
 export function mountNoteEditor(root, raw, { onSave, onPreview, initialBeat = 0 } = {}) {
   const editor = createNoteEditor(raw);
   let measure = scoreMeasureIndex(editor.score, initialBeat), selected = null, renderer, error = '', notice = '', dirty = false;
-  let previewMode = 'staff', sourceMode = raw.mode || '';
+  const guitar = raw.instrument === 'guitar';
+  let previewMode = guitar ? 'tab' : 'staff', sourceMode = raw.mode || '';
   function selectedNote() { return editor.score.notes.find(n => n.id === selected); }
   function action(fn) { try { fn(); dirty = true; error = ''; } catch (e) { error = e.message; } render(); }
   function render() {
@@ -43,9 +45,9 @@ export function mountNoteEditor(root, raw, { onSave, onPreview, initialBeat = 0 
     if (!notes.some(n => n.id === selected)) selected = notes[0]?.id || null;
     const note = selectedNote(), group = note ? onsetGroup(score,note.id) : [];
     const rootNote = group[0] || note;
-    root.innerHTML = `<p class="form-note">数字谱面由音符重新排版。修改音高、节奏、和弦或调式后，五线谱、简谱、钢琴卷帘和播放共同更新；首次保存会另存版本。</p>
+    root.innerHTML = `<p class="form-note">数字谱面由音符重新排版。修改音高、节奏、和弦或调式后，谱面和播放共同更新；首次保存会另存版本。</p>
       <div class="note-editor-toolbar"><button data-previous ${measure === 0 ? 'disabled' : ''}>上一小节</button><label>第 <input data-measure aria-label="编辑小节" type="number" min="1" max="${count}" value="${measure + 1}"> / ${count} 小节</label><button data-next ${measure >= count - 1 ? 'disabled' : ''}>下一小节</button><span></span><button data-undo ${!editor.canUndo ? 'disabled' : ''}>撤销</button><button data-redo ${!editor.canRedo ? 'disabled' : ''}>重做</button></div>
-      <div class="note-editor-toolbar"><strong>当前小节 · ${bounds.timeSignature.join('/')}</strong><span></span><div class="notation-switch">${[['staff','五线谱'],['numbered','简谱'],['roll','钢琴卷帘']].map(([v,label])=>`<button data-editor-mode="${v}" aria-pressed="${previewMode===v}" class="${previewMode===v?'selected':''}">${label}</button>`).join('')}</div></div>
+      <div class="note-editor-toolbar"><strong>当前小节 · ${bounds.timeSignature.join('/')}</strong><span></span><div class="notation-switch">${(guitar ? [['tab','六线谱'],['roll','音高卷帘']] : [['staff','五线谱'],['numbered','简谱'],['roll','钢琴卷帘']]).map(([v,label])=>`<button data-editor-mode="${v}" aria-pressed="${previewMode===v}" class="${previewMode===v?'selected':''}">${label}</button>`).join('')}</div></div>
       <div data-editor-preview class="note-editor-preview" aria-label="当前小节预览"></div>
       <details class="note-editor-arrangement" data-mode-panel><summary>调式改编 · ${score.mode ? esc(tonalityLabel(score)) : '原调式未标注'}</summary><p class="form-note">同主音大调 ↔ 自然小调：转换音阶内的第3、6、7级，保留节奏与声部。原有调外音保留原音高，转换后需试听；这是规则改编。</p><div class="note-editor-toolbar"><label>原调式 <select data-source-mode aria-label="原调式"><option value="" ${!sourceMode&&!score.mode?'selected':''}>请选择</option>${[['major','大调'],['minor','自然小调']].map(([v,l])=>`<option value="${v}" ${(score.mode||sourceMode)===v?'selected':''}>${l}</option>`).join('')}</select></label><label>目标调式 <select data-target-mode aria-label="目标调式"><option value="minor" ${(score.mode||sourceMode)==='major'?'selected':''}>自然小调</option><option value="major" ${(score.mode||sourceMode)==='minor'?'selected':''}>大调</option></select></label><button data-apply-mode>转换整首调式</button></div></details>
       <details class="note-editor-arrangement" data-timing-panel><summary>变速与休止延长 · ${score.tempoMap?.length||0} 个速度点</summary><p class="form-note">全曲拍位从 0 起，以四分音符为 1 拍。渐变从该点持续到下一速度点；练习速度会按比例缩放整首。延长拍位填在音符或休止的结束处。</p><table><thead><tr><th>全曲拍位</th><th>BPM</th><th>到下一点</th></tr></thead><tbody data-tempo-rows>${(score.tempoMap||[]).concat([null,null]).map(e=>`<tr><td><input data-tempo-beat aria-label="速度点拍位" type="number" min="0" max="${score.durationBeats}" step="any" value="${e?.beat??''}"></td><td><input data-tempo-bpm aria-label="速度点 BPM" type="number" min="20" max="300" step="any" value="${e?.bpm??''}"></td><td><select data-tempo-curve aria-label="速度变化方式"><option value="step">保持速度</option><option value="linear" ${e?.curve==='linear'?'selected':''}>渐变至下一点</option></select></td></tr>`).join('')}</tbody></table><p class="form-note">清空某行拍位即可删除该点。每次应用会再提供两个空行。</p><table><thead><tr><th>停留拍位</th><th>额外拍数</th></tr></thead><tbody data-fermata-rows>${(score.fermatas||[]).concat([null,null]).map(e=>`<tr><td><input data-hold-beat aria-label="停留拍位" type="number" min="0" max="${score.durationBeats}" step="any" value="${e?.beat??''}"></td><td><input data-hold-length aria-label="额外停留拍数" type="number" min="0.0009765625" max="64" step="any" value="${e?.holdBeats??''}"></td></tr>`).join('')}</tbody></table><button data-apply-timing>应用变速与停留</button></details>
@@ -104,7 +106,7 @@ export function mountNoteEditor(root, raw, { onSave, onPreview, initialBeat = 0 
     $('[data-save]').onclick = async () => { try { await onSave(editor.savedScore()); } catch (e) { error = e.message; render(); } };
     if (notes.length) {
       const preview = editor.previewMeasure(measure);
-      try { renderer = renderNotation($('[data-editor-preview]'), preview, {mode:previewMode, autoScroll:false, onSelectNotes:ids=>{selected=ids.includes(selected)?ids[(ids.indexOf(selected)+1)%ids.length]:ids[0];render();} }); renderer.setBeat(Math.max(0, (note?.beat ?? start) - start)); }
+      try { renderer = (previewMode === 'tab' ? renderGuitarTab : renderNotation)($('[data-editor-preview]'), preview, {mode:previewMode, autoScroll:false, onSelectNotes:ids=>{selected=ids.includes(selected)?ids[(ids.indexOf(selected)+1)%ids.length]:ids[0];render();} }); renderer.setBeat(Math.max(0, (note?.beat ?? start) - start)); }
       catch { $('[data-editor-preview]').textContent = '当前时值无法排版，可切换钢琴卷帘查看精确音符。'; }
     } else $('[data-editor-preview]').textContent = '本小节休止';
   }

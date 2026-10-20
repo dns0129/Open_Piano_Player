@@ -72,7 +72,7 @@ export function renderNotation(container, score, options = {}) {
   const root = document.createElement('div'); root.className = 'notation-root'; root.dataset.mode = mode;
   const help = document.createElement('p'); help.className = 'notation-help';
   help.textContent = mode === 'roll'
-    ? '钢琴卷帘 · 横向为时间，纵向为实际音高；绿色为右手，蓝色为左手。条带长度保留精确时值，点击音符定位。'
+    ? (score.instrument === 'guitar' ? '吉他音高卷帘 · 横向为时间，纵向为实际音高。条带长度保留精确时值，点击音符定位。' : '钢琴卷帘 · 横向为时间，纵向为实际音高；绿色为右手，蓝色为左手。条带长度保留精确时值，点击音符定位。')
     : mode === 'numbered'
     ? `1 = ${KEY_NAMES[score.keySignature + 7].replace('b', '♭').replace('#', '♯')} · ${score.timeSignature.join('/')} · 上行为右手，下行为左手；上下点表示八度，下划线表示短时值。点击音符定位。`
     : '高音谱表为右手，低音谱表为左手。点击音符定位，播放位置会沿连续谱面前进。';

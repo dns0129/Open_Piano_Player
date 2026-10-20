@@ -18,7 +18,7 @@ export function createScoreOutput({
     const input = (label, name, max) => `<label class="field print-wide">${label}<input data-print-setting="${name}" aria-label="${label}" maxlength="${max}"></label>`;
     const number = (label, name, min, max) => `<label class="field">${label}<input type="number" data-print-setting="${name}" aria-label="${label}" min="${min}" max="${max}" step="1"></label>`;
     modal('打印乐谱', `<p class="form-note">自定义整首乐谱的外观，预览首页后下载 PDF 或打印。导出保留当前移调和编配。</p><div class="score-print-workspace"><div class="score-print-controls"><div class="print-settings-grid">
-<label class="field">乐谱形式<select id="print-score-mode"><option value="staff">五线谱</option><option value="numbered">简谱</option>${sourceNotation ? '<option value="source">原图参考</option>' : ''}</select></label>
+<label class="field">乐谱形式<select id="print-score-mode">${score.instrument === "guitar" ? '<option value="tab">吉他六线谱</option>' : '<option value="staff">五线谱</option><option value="numbered">简谱</option>'}${sourceNotation ? '<option value="source">原图参考</option>' : ''}</select></label>
 ${field('谱面样式', 'pageStyle', PRINT_PAGE_STYLES)}
 ${field('标题与文字字体', 'textFont', PRINT_TEXT_FONTS)}${field('五线谱符号字体', 'musicFont', PRINT_MUSIC_FONTS)}
 ${input('抬头标题', 'title', 140)}${input('副标题（可留空）', 'subtitle', 140)}
@@ -33,7 +33,7 @@ ${number('页边距（mm）', 'marginMM', 10, 24)}${number('谱面大小（%）'
     const controls = $$('[data-print-setting]'), buttons = $$('[data-score-output]');
     const reset = $('#print-reset'), sourceNote = $('#print-source-note');
     status.closest('.modal').classList.add('score-print-modal');
-    select.value = state.mode === 'source' && sourceNotation ? 'source' : state.mode === 'numbered' ? 'numbered' : 'staff';
+    select.value = score.instrument === 'guitar' ? 'tab' : state.mode === 'source' && sourceNotation ? 'source' : state.mode === 'numbered' ? 'numbered' : 'staff';
     function apply(values) { controls.forEach(control => { const value = values[control.dataset.printSetting]; if (control.type === 'checkbox') control.checked = value; else control.value = value; }); }
     function settings() { return normalizePrintStyle(Object.fromEntries(controls.map(control => [control.dataset.printSetting, control.type === 'checkbox' ? control.checked : control.value])), score); }
     function savePreferences() { try { localStorage.setItem('qinban-print-appearance-v1', JSON.stringify(printStylePreferences(settings()))); } catch { /* Export still works when preference storage is unavailable. */ } }
@@ -94,7 +94,7 @@ ${number('页边距（mm）', 'marginMM', 10, 24)}${number('谱面大小（%）'
   function openExport() {
     modal(
       "带走你的练习谱",
-      `<p class="form-note">导出当前调式与编配。MusicXML 可在 MuseScore 等软件继续编辑。</p><div class="export-options"><button data-format="xml">${icon("file-music")}<span>MusicXML<small>双手五线谱 · 可编辑</small></span>${icon("download")}</button><button data-format="midi">${icon("piano")}<span>MIDI<small>钢琴音轨 · 原谱速度</small></span>${icon("download")}</button><button data-format="json">${icon("book-open")}<span>琴伴乐谱 JSON<small>完整备份 · 可重新导入</small></span>${icon("download")}</button><button data-format="print">${icon("download")}<span>打印 / 保存 PDF<small>A4 分页 · 五线谱 / 简谱 / 原谱</small></span>${icon("arrow-up-right")}</button></div>`,
+      `<p class="form-note">导出当前调式与编配。MusicXML 可在 MuseScore 等软件继续编辑。</p><div class="export-options"><button data-format="xml">${icon("file-music")}<span>MusicXML<small>${state.section === "guitar" ? "吉他五线谱 · 实际音高" : "双手五线谱 · 可编辑"}</small></span>${icon("download")}</button><button data-format="midi">${icon("piano")}<span>MIDI<small>${state.section === "guitar" ? "吉他音轨 · 原谱速度" : "钢琴音轨 · 原谱速度"}</small></span>${icon("download")}</button><button data-format="json">${icon("book-open")}<span>琴伴乐谱 JSON<small>完整备份 · 可重新导入</small></span>${icon("download")}</button><button data-format="print">${icon("download")}<span>打印 / 保存 PDF<small>${state.section === "guitar" ? "A4 分页 · 吉他六线谱" : "A4 分页 · 五线谱 / 简谱 / 原谱"}</small></span>${icon("arrow-up-right")}</button></div>`,
     );
     $$("[data-format]").forEach(
       (b) =>

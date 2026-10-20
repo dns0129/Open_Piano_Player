@@ -72,6 +72,7 @@ export interface SourceNotation {
   measureMap?: Measure[];
 }
 export interface PracticeScore {
+  instrument?: "piano" | "guitar";
   version: 1;
   id: string;
   title: string;
