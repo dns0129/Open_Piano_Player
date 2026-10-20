@@ -197,6 +197,79 @@ test('bowed strings sustain beyond the recording and seek into the transposed lo
   await h.player.dispose();
 });
 
+test('four model references share the piano cache and preserve loop, hand and transport settings', async () => {
+  const h = harness(makeScore([
+    { beat: 0, duration: 24, midi: 60, hand: 'right' },
+    { beat: 0, duration: 24, midi: 36, hand: 'left' },
+  ]), sampleOptions());
+  h.player.configure({ loopEnabled: true, loopStart: 1, loopEnd: 8, leftEnabled: false });
+  await h.player.play(); h.advance(0.2);
+  for (const id of ['kawai-gx2', 'kawai-sk2', 'yamaha-gc1', 'steinway-model40']) {
+    const beat = h.player.beat, before = h.context.bufferSources.length;
+    await h.player.setInstrument(id);
+    assert.equal(h.player.instrumentState.activeId, id);
+    assert.equal(h.player.beat, beat);
+    assert.equal(h.player.state, 'playing');
+    assert.equal(h.context.decodeCalls, 3);
+    assert.equal(h.context.bufferSources.length - before, 1, 'muted left hand stays muted');
+    assert.deepEqual(h.player._loopBounds(), { start: 1, end: 8, length: 7 });
+  }
+  assert.equal(h.context.oscillators.length, 0);
+  await h.player.dispose();
+  assert.ok(h.context.stereoNodes.every(n => n.disconnected));
+});
+
+test('violin short notes release promptly; sustained notes retain bow pressure and recorded vibrato', async () => {
+  const h = harness(makeScore([{ beat: 0, duration: 4, midi: 69 }]), {
+    instrument: 'violin', sampleBanks: { violin: bowedBank() },
+  });
+  await h.player.setInstrument('violin');
+  h.player._piano(69, 0.05, 0.1, 0.7);
+  h.player._piano(69, 1, 2, 0.7);
+  const [short, long] = [...h.player._voices];
+  assert.ok(Math.abs(short.end - 0.195) < 1e-9);
+  assert.ok(Math.abs(long.end - 3.18) < 1e-9);
+  const envelope = long.output.gain.events.filter(e => e[0] === 'linear' && e[2] < 3);
+  assert.ok(envelope.length > 10, 'a held note has gradual bow pressure changes');
+  assert.ok(new Set(envelope.map(e => e[1])).size > 5);
+  assert.equal(h.context.oscillators.length, 0, 'do not stack a second vibrato on the recording');
+  await h.player.dispose();
+});
+
+test('violin connects touching melody notes, but preserves repeated notes, rests and other voices', async () => {
+  const h = harness(makeScore([
+    { beat: 0, duration: 1, midi: 69, voice: '1' },
+    { beat: 1, duration: 1, midi: 72, voice: '1' },
+    { beat: 2, duration: 0.5, midi: 72, voice: '1' },
+    { beat: 3, duration: 1, midi: 76, voice: '1' },
+    { beat: 4, duration: 1, midi: 74, voice: '2' },
+  ]), { instrument: 'violin', sampleBanks: { violin: bowedBank() } });
+  await h.player.play();
+  assert.equal(h.context.bufferSources[0].offset, 0);
+  assert.ok(Math.abs(h.context.bufferSources[0].stops[0] - 0.546) < 1e-9, 'outgoing bow ends 28 ms after the next attack');
+  for (let i = 0; i < 21; i++) h.advance(0.1);
+  assert.deepEqual(h.context.bufferSources.map(s => s.offset), [0, 0.9, 0, 0, 0]);
+  h.player.seek(1);
+  assert.equal(h.context.bufferSources.at(-1).offset, 0, 'seeking exactly to a new note retains its attack');
+  h.player.configure({ loopEnabled: true, loopStart: 0, loopEnd: 1 });
+  assert.ok(h.context.bufferSources.at(-1).stops[0] - h.context.bufferSources.at(-1).started > 0.6,
+    'a connection outside the loop cannot shorten the boundary release');
+  await h.player.dispose();
+});
+
+test('violin chords and overlapping polyphony do not lose their attacks', async () => {
+  const h = harness(makeScore([
+    { beat: 0, duration: 1, midi: 69 }, { beat: 0, duration: 1, midi: 72 },
+    { beat: 1, duration: 1, midi: 74 }, { beat: 2, duration: 1, midi: 76 },
+    { beat: 1.5, duration: 2, midi: 67 },
+  ]), { instrument: 'violin', sampleBanks: { violin: bowedBank() } });
+  await h.player.play();
+  for (let i = 0; i < 11; i++) h.advance(0.1);
+  assert.equal(h.context.bufferSources.length, 5);
+  assert.ok(h.context.bufferSources.every(s => s.offset === 0));
+  await h.player.dispose();
+});
+
 test('piano, solo violin and ensemble keep independent caches and preserve transport on switches', async () => {
   const h = harness(makeScore([{ id: 'low', beat: 0, duration: 20, midi: 37, hand: 'left' }]), sampleOptions({
     sampleBanks: { violin: bowedBank(), strings: bowedBank([36, 60]) },

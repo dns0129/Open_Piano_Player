@@ -1,0 +1,275 @@
+{
+  "date": "2026-10-20",
+  "scope": "Four model-reference presets using the existing licensed Salamander bank, plus VSCO solo violin envelope and bow-transition improvements. No video recordings are shipped as samples.",
+  "validation": {
+    "isolatedSourceCheck": {
+      "typecheck": "passed",
+      "testsPassed": 350,
+      "testsSkipped": 2,
+      "skipReason": "Optional private score image fixtures absent from tracked source",
+      "testsFailed": 0,
+      "scoreLibraryVerified": 60
+    },
+    "productionBuild": "passed",
+    "browser": {
+      "rows": [
+        {
+          "id": "kawai-gx2",
+          "description": "GX-2 方向调音：深沉低音、圆润中频、通透高音与适量共鸣。基于 Salamander 录音，并非 KAWAI 原琴采样。 参考视频",
+          "ready": true
+        },
+        {
+          "id": "kawai-sk2",
+          "description": "SK-2 方向调音：宽厚琴体、柔和弱奏与更舒展的延音。基于 Salamander 录音，并非 KAWAI 原琴采样。 参考视频",
+          "ready": true
+        },
+        {
+          "id": "yamaha-gc1",
+          "description": "GC1 方向调音：清楚触键、明亮中高音与紧凑释音。基于 Salamander 录音，并非 GC1 原琴采样。 参考视频",
+          "ready": true
+        },
+        {
+          "id": "steinway-model40",
+          "description": "Model 40 Hepplewhite 方向调音：集中中频、克制低音、短释音与近距离声场。基于 Salamander 三角琴录音，并非 Model 40 直立琴原琴采样。 参考视频",
+          "ready": true
+        },
+        {
+          "id": "violin",
+          "description": "真实独奏小提琴录音与自然揉弦；短音利落、长音柔和起弓，同声部相接旋律柔化换弓，持续音保留轻微弓压起伏。",
+          "ready": true
+        }
+      ],
+      "persistence": true,
+      "errors": [],
+      "stress": [
+        {
+          "instrument": "kawai-gx2",
+          "peak": 0.8580304980278015,
+          "rms": 0.18006627961150126,
+          "nonfinite": 0,
+          "clipped": 0
+        },
+        {
+          "instrument": "kawai-sk2",
+          "peak": 0.9426658153533936,
+          "rms": 0.22006956457187762,
+          "nonfinite": 0,
+          "clipped": 0
+        },
+        {
+          "instrument": "yamaha-gc1",
+          "peak": 0.7652068734169006,
+          "rms": 0.14788761023137587,
+          "nonfinite": 0,
+          "clipped": 0
+        },
+        {
+          "instrument": "steinway-model40",
+          "peak": 0.7213367223739624,
+          "rms": 0.1360995420584197,
+          "nonfinite": 0,
+          "clipped": 0
+        },
+        {
+          "instrument": "violin",
+          "peak": 0.8188883066177368,
+          "rms": 0.14474080322874447,
+          "nonfinite": 0,
+          "clipped": 0
+        }
+      ]
+    },
+    "offlineDemoRenders": [
+      {
+        "id": "warm",
+        "label": "醇厚三角钢琴",
+        "file": "warm-grand.mp3",
+        "sampleRate": 44100,
+        "seconds": 21.46154195011338,
+        "peak": 0.24959439039230347,
+        "nonfinite": 0,
+        "clipped": 0,
+        "rms": 0.025670190242694076,
+        "phraseRms": 0.024169146173502278
+      },
+      {
+        "id": "a3-reference",
+        "label": "A3 参考三角钢琴",
+        "file": "a3-reference.mp3",
+        "sampleRate": 44100,
+        "seconds": 21.46154195011338,
+        "peak": 0.22129079699516296,
+        "nonfinite": 0,
+        "clipped": 0,
+        "rms": 0.02360244942004723,
+        "phraseRms": 0.0209609722722928
+      },
+      {
+        "id": "kawai-gx2",
+        "label": "KAWAI GX-2 参考三角钢琴",
+        "file": "kawai-gx2.mp3",
+        "sampleRate": 44100,
+        "seconds": 21.46154195011338,
+        "peak": 0.20613956451416016,
+        "nonfinite": 0,
+        "clipped": 0,
+        "rms": 0.020759051149367894,
+        "phraseRms": 0.018928762510678772
+      },
+      {
+        "id": "kawai-sk2",
+        "label": "KAWAI SK-2 参考三角钢琴",
+        "file": "kawai-sk2.mp3",
+        "sampleRate": 44100,
+        "seconds": 21.46154195011338,
+        "peak": 0.22232522070407867,
+        "nonfinite": 0,
+        "clipped": 0,
+        "rms": 0.0218599908713815,
+        "phraseRms": 0.018810686986614637
+      },
+      {
+        "id": "yamaha-gc1",
+        "label": "YAMAHA GC1 参考三角钢琴",
+        "file": "yamaha-gc1.mp3",
+        "sampleRate": 44100,
+        "seconds": 21.46154195011338,
+        "peak": 0.18414375185966492,
+        "nonfinite": 0,
+        "clipped": 0,
+        "rms": 0.018657734077655568,
+        "phraseRms": 0.018015470069748973
+      },
+      {
+        "id": "steinway-model40",
+        "label": "Steinway Model 40 雅致小直立琴（参考）",
+        "file": "steinway-model40.mp3",
+        "sampleRate": 44100,
+        "seconds": 21.46154195011338,
+        "peak": 0.1760091930627823,
+        "nonfinite": 0,
+        "clipped": 0,
+        "rms": 0.01883585747983302,
+        "phraseRms": 0.018823541354135224
+      },
+      {
+        "id": "violin",
+        "label": "温暖小提琴",
+        "file": "violin.mp3",
+        "sampleRate": 44100,
+        "seconds": 21.46154195011338,
+        "peak": 0.14301645755767822,
+        "nonfinite": 0,
+        "clipped": 0,
+        "rms": 0.03560312377243441,
+        "phraseRms": 0.022924093322930644
+      },
+      {
+        "id": "strings",
+        "label": "柔和弦乐合奏",
+        "file": "strings.mp3",
+        "sampleRate": 44100,
+        "seconds": 21.46154195011338,
+        "peak": 0.46417534351348877,
+        "nonfinite": 0,
+        "clipped": 0,
+        "rms": 0.05340447459469313,
+        "phraseRms": 0.024654486998620082
+      }
+    ]
+  },
+  "referenceAnalysis": {
+    "references": [
+      {
+        "model": "KAWAI GX-2",
+        "url": "https://www.youtube.com/watch?v=1InOnhNR4-A",
+        "title": "🎹【鋼琴家牛牛 開箱測評KAWAI GX-2 & SK-2 三角琴】🎶",
+        "channel": "Parsons Music 柏斯音樂",
+        "excerpt": [
+          74,
+          88
+        ],
+        "peak": 0.737502,
+        "rms": 0.046118,
+        "powerBandPercent": {
+          "sub": 2.47,
+          "bass": 7.76,
+          "body": 52.19,
+          "mid": 37.18,
+          "presence": 0.28,
+          "air": 0.12
+        },
+        "powerCentroidHz": 796.7,
+        "stereoCorrelation": 0.821
+      },
+      {
+        "model": "KAWAI SK-2",
+        "url": "https://www.youtube.com/watch?v=1InOnhNR4-A",
+        "title": "🎹【鋼琴家牛牛 開箱測評KAWAI GX-2 & SK-2 三角琴】🎶",
+        "channel": "Parsons Music 柏斯音樂",
+        "excerpt": [
+          150,
+          170
+        ],
+        "peak": 1.020033,
+        "rms": 0.177084,
+        "powerBandPercent": {
+          "sub": 0.32,
+          "bass": 12.58,
+          "body": 65.09,
+          "mid": 21.67,
+          "presence": 0.34,
+          "air": 0.01
+        },
+        "powerCentroidHz": 620.2,
+        "stereoCorrelation": 0.747
+      },
+      {
+        "model": "YAMAHA GC1",
+        "url": "https://www.youtube.com/watch?v=wewYucuyvdI",
+        "title": "Yamaha GC1 Baby Grand Piano Black Gloss (c.2002) | Review & Demo | Sherwood Phoenix",
+        "channel": "Sherwood Phoenix",
+        "excerpt": [
+          50,
+          80
+        ],
+        "peak": 0.570871,
+        "rms": 0.063402,
+        "powerBandPercent": {
+          "sub": 0.09,
+          "bass": 12.64,
+          "body": 78.48,
+          "mid": 8.75,
+          "presence": 0.04,
+          "air": 0.0
+        },
+        "powerCentroidHz": 401.0,
+        "stereoCorrelation": 0.734
+      },
+      {
+        "model": "Steinway Model 40",
+        "url": "https://www.youtube.com/watch?v=roZrorWI1aQ",
+        "title": "史坦威直立式鋼琴 Steinway Model 40 Hepplewhite 雅緻小直立琴：溫潤木韻，沉穩乍現｜D&D史坦威二手鋼琴專售館✨ Saint-Saëns 聖桑 - The Swan 天鵝",
+        "channel": "D&D史坦威二手鋼琴專售館",
+        "excerpt": [
+          10,
+          40
+        ],
+        "peak": 0.581742,
+        "rms": 0.075189,
+        "powerBandPercent": {
+          "sub": 0.02,
+          "bass": 3.2,
+          "body": 84.12,
+          "mid": 12.59,
+          "presence": 0.07,
+          "air": 0.0
+        },
+        "powerCentroidHz": 540.3,
+        "stereoCorrelation": 1.0
+      }
+    ],
+    "scope": "Local analysis of supplied videos only; excerpts may contain commentary. Notes, recording levels, microphones and rooms differ. These metrics describe recordings and are not acoustic model identification or a timbre similarity score. Video audio is excluded from application assets. Presets use the licensed Salamander Yamaha C5 bank."
+  },
+  "localDeliverables": "output/timbres/models-and-violin-20261020/"
+}

@@ -5,6 +5,7 @@ import { createInstrumentRoom } from '../lib/instrument-room.mjs';
 import { INSTRUMENT_PREVIEW } from '../lib/instrument-demo.mjs';
 import { performanceNotes, tieChains } from '../lib/note-effects.mjs';
 import { createScoreTimeline } from '../lib/score-timing.mjs';
+import { bowedConnections, bowedEnvelope } from '../lib/bowed-articulation.mjs';
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
 const EPSILON = 1e-7;
@@ -82,6 +83,7 @@ export class PianoPlayer {
       .filter((note) => Number.isFinite(note.midi) && Number.isFinite(note.beat) && note.duration > 0)
       .map((note, index) => ({ ...note, writtenBeat:note.beat, beat:this._performedBeat(note.beat), duration:this._performedBeat(note.beat+note.duration)-this._performedBeat(note.beat), id: note.id ?? `note-${index}`, hand: note.hand === 'left' ? 'left' : 'right' }))
       .sort((a, b) => a.beat - b.beat);
+    this._bowedConnections = bowedConnections(this._notes);
     this._duration = this._timeline.durationSeconds*this._baseTempo/60;
     this._clicks=[];
     const unit=4/(score?.timeSignature?.[1]||4),numerator=score?.timeSignature?.[0]||4;
@@ -405,18 +407,25 @@ export class PianoPlayer {
       const start = Math.max(from, note.beat);
       const end = Math.min(note.beat + note.duration, boundary, this._duration);
       if (end <= start + EPSILON) continue;
+      const connection = this._bowedConnections.get(note);
+      const loop = this._loopBounds();
+      const bow = {
+        from: Boolean(connection?.previous && note.beat > Math.max(loop?.start ?? 0, this._anchorBeat - base) + EPSILON
+          && connection.previous.beat >= (loop?.start ?? 0)),
+        to: Boolean(connection?.next && connection.next.beat < boundary - EPSILON),
+      };
       this._piano(note.midi, timeFor(start), (end - start) * secondsPerBeat, note.velocity ?? 0.72,
-        (start - note.beat) * secondsPerBeat);
+        (start - note.beat) * secondsPerBeat, bow);
     }
     if (this._config.metronome) {
       for(const tick of this._clicks)if(tick.beat>=from-EPSILON&&tick.beat<to-EPSILON)this._click(timeFor(tick.beat),tick.accent);
     }
   }
 
-  _piano(midi, start, duration, velocity, elapsed = 0) {
+  _piano(midi, start, duration, velocity, elapsed = 0, bow = {}) {
     if (velocity <= 0) return;
     if (this._activeInstrument !== 'synth') {
-      this._samplePiano(midi, start, duration, velocity, elapsed);
+      this._samplePiano(midi, start, duration, velocity, elapsed, bow);
       return;
     }
     const ctx = this._context;
@@ -474,7 +483,7 @@ export class PianoPlayer {
     }
   }
 
-  _samplePiano(midi, start, duration, velocity, elapsed) {
+  _samplePiano(midi, start, duration, velocity, elapsed, bow) {
     const ctx = this._context;
     const profile = pianoSampleProfile(this._activeInstrument);
     if (!profile || !this._sampleBank?.ready) throw new Error('乐器采样尚未准备好。');
@@ -482,6 +491,9 @@ export class PianoPlayer {
     const rate = 2 ** ((midi - sample.midi) / 12);
     const looping = Number.isFinite(sample.loopEnd);
     let offset = elapsed * rate;
+    // A connected note enters the steady bow; no synthetic pitch glide or
+    // second vibrato is added to the recording's existing natural vibrato.
+    if (profile.bowed && looping && bow.from && elapsed === 0) offset = sample.loopStart;
     if (looping && offset >= sample.loopEnd) {
       offset = sample.loopStart + (offset - sample.loopStart) % (sample.loopEnd - sample.loopStart);
     }
@@ -532,13 +544,22 @@ export class PianoPlayer {
     if (profile.room && !this._room) this._room = createInstrumentRoom(ctx, this._master, profile.room);
     output.connect(this._room?.input || this._master);
     const amplitude = profile.gain * clamp(velocity, 0.01, 1) ** profile.velocityExponent;
-    const release = pianoReleaseSeconds(profile, midi);
+    const envelope = profile.bowed ? bowedEnvelope(profile, duration, elapsed, bow) : null;
+    const release = envelope?.release ?? pianoReleaseSeconds(profile, midi);
     const naturalDuration = looping ? duration + release : (sample.buffer.duration - offset) / rate;
     const releaseAt = start + Math.min(duration, naturalDuration);
     const stopAt = Math.min(start + naturalDuration, releaseAt + release);
-    const attack = Math.min(elapsed > 0 ? 0.006 : profile.attack, duration / 4, (stopAt - start) / 4);
+    const attack = Math.min(envelope?.attack ?? (elapsed > 0 ? 0.006 : profile.attack), duration / 4, (stopAt - start) / 4);
     output.gain.setValueAtTime(0, start);
     output.gain.linearRampToValueAtTime(amplitude, start + attack);
+    if (profile.bowed && duration > 0.35) {
+      // Slow bow-pressure motion, well below the recorded vibrato frequency.
+      // Sample the original note phase so seeking does not restart the swell.
+      for (let t = attack + 0.08; t < duration - 0.04; t += 0.08) {
+        const motion = 1 - profile.bowed.swell * (1 - Math.cos(2 * Math.PI * profile.bowed.swellHz * (elapsed + t))) / 2;
+        output.gain.linearRampToValueAtTime(amplitude * motion, start + t);
+      }
+    }
     output.gain.setValueAtTime(amplitude, Math.max(start + attack, releaseAt));
     output.gain.linearRampToValueAtTime(0, Math.max(start + attack + 0.001, stopAt));
     const voice = { output, nodes, end: stopAt, cancelled: false };

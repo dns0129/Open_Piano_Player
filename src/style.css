@@ -515,6 +515,16 @@ main.view-practice {
 .instrument-status.error {
   color: #a87550;
 }
+.instrument-description {
+  margin: 7px 0 0;
+  color: #7a8b6d;
+  font-size: 10px;
+  line-height: 1.6;
+}
+.instrument-description a {
+  color: #48613c;
+  text-decoration: underline;
+}
 .piano-credit {
   margin-top: 24px;
   border-top: 1px solid var(--border);

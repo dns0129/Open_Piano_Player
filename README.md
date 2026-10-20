@@ -156,13 +156,28 @@ npm run scores:reread-five -- --run --import --publish
 
 **A3 参考三角钢琴** 是额外一版音色，参考用户指定的 [LivingPianosVideos《Hear Every Steinway Model》2:55–3:25 的 Model A3 演奏段](https://www.youtube.com/watch?v=y_ngIzKSC28&t=175s)。使用更集中的330Hz琴体共鸣、较轻的低音搁架、5ms起音与0.88–0.62秒的分音区释音，收敛混响，并以0.4声场宽度聚焦琴声。原醇厚版仍可选择，默认音色保持不变。这是基于 Salamander Yamaha C5 采样的参考调音，未使用视频音频作为应用采样，也不代表 Steinway A3 原琴采样或精确复刻；录音空间、麦克风与不同曲目的音高分布都会影响对比。
 
+另有四个独立型号参考预设，均共用已有钢琴采样缓存，切换不重复下载：
+
+| 音色 | 调音方向 | 参考视频 |
+| --- | --- | --- |
+| KAWAI GX-2 | 深沉低音、290Hz琴体、圆润触键、适量共鸣 | [牛牛 GX-2 / SK-2 对比](https://www.youtube.com/watch?v=1InOnhNR4-A) |
+| KAWAI SK-2 | 宽厚240Hz琴体、更大力度明暗变化、1.02–0.59秒释音 | [牛牛 GX-2 / SK-2 对比](https://www.youtube.com/watch?v=1InOnhNR4-A) |
+| YAMAHA GC1 | 清晰触键、明亮中高频、0.62–0.30秒释音 | [Sherwood Phoenix GC1 演示，0:42 起](https://www.youtube.com/watch?v=wewYucuyvdI&t=42s) |
+| Steinway Model 40 Hepplewhite | 克制低音、集中中频、短释音、近距离窄声场 | [雅致小直立琴《天鹅》](https://www.youtube.com/watch?v=roZrorWI1aQ) |
+
+这些是基于 Salamander Yamaha C5 录音的方向调音，**不是对应型号原琴采样，也不承诺精确复刻视频琴声**。参考音频仅供本地分析，不打包进应用。练习栏显示所选音色说明及参考视频链接；默认音色仍为醇厚三角钢琴。
+
 小提琴使用14个独奏录音，弦乐合奏使用20个分音区录音（低音提琴、大提琴组、中提琴组、小提琴组），合计约2.93MB，来源为 [VSCO 2 Community Edition](https://github.com/sgossner/VSCO-2-CE/tree/440300901dfe9275fd84e0b7763af1f8443ae62e)（Sam Gossner、Simon Dalzell；剪辑 Elan Hickler / Soundemote，[CC0](https://creativecommons.org/publicdomain/zero/1.0/)）。保留真实弓弦和揉弦，经过起音修整、音量匹配和180ms交叉淡化循环，支持持续长音；乐器自然音域之外以最近根音移调延伸。独奏小提琴沿用标准科学音高，其他源文件的八度命名已按 C3=中央C 转换。
+
+小提琴包络随音长变化：短音约14ms起音、45ms释音，长音逐渐放宽至60ms／180ms。同手、同声部的单音旋律前后相接且相距不超过八度时，以28ms交接并从稳定弓段进入下一音；重复音、休止、断奏、和弦及重叠多声部保留独立起音。持续音加入最多4.5%的缓慢弓压起伏，不叠加额外揉弦；160Hz高通与3.1kHz轻削减控制低频杂声和尖锐弓噪。循环边界和从中途恢复仍按原播放时钟处理。这是采样包络模拟，并非真实连奏过渡采样。
 
 全部MP3和作者/许可说明均随源码放在 `public/audio/piano/`、`public/audio/violin/` 和 `public/audio/strings/`，构建前校验SHA256，运行时只从应用自身资源读取，也支持 GitHub Pages 子路径。首次播放或试听时按需准备所选音源，显示加载进度；钢琴预设共用一套缓存，小提琴与合奏各自缓存。文件缺失或损坏会明确报错，可重试或手动选择轻量合成。音色切换继续使用同一播放时钟，保留当前播放位置、左右手和循环设置；跳转进弦乐长音时从循环内继续。自然播完保留释音与空间尾音，手动暂停和停止同时淡出混响。
 
 `python3 scripts/prepare-string-assets.py` 可重新制作弦乐素材（需要 numpy、scipy、ffmpeg 和网络）；普通安装、构建和播放使用已经打包的文件，无需重新下载。素材清单记录固定源版本、原始路径与处理前后SHA256。
 
 `output/timbres/` 中保留三段约21秒的MP3试听。开发时可用 `node node_modules/vite/bin/vite.js --host 127.0.0.1 --port 5173` 启动源码服务，再运行 `node scripts/render-instrument-demos.mjs` 重新导出；此可选工具需要额外提供 Playwright、Chromium 和 ffmpeg。也可用 `QINBAN_PLAYWRIGHT_MODULE` 指定 Playwright 模块路径、`QINBAN_CHROMIUM` 指定浏览器路径。
+
+新版试听工具默认导出醇厚、A3、四个型号、小提琴和合奏共八段；可用 `node scripts/render-instrument-demos.mjs http://127.0.0.1:5173 output/timbres/models-and-violin-20261020` 指定单独输出目录，之后可追加所需音色ID。`QINBAN_FFMPEG` 可指定 ffmpeg 路径。导出使用实际播放器调度器并记录峰值、RMS、削波和非有限采样数，发现无声或无效音频即报错。
 
 ## 按歌名联网找谱
 
