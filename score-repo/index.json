@@ -38,6 +38,96 @@
       "addedAt": "2026-10-20T04:31:57.280Z"
     },
     {
+      "id": "beginner-burgmuller-op100-03",
+      "title": "牧歌 · Pastorale · Op.100 No.3",
+      "composer": "Friedrich Burgmüller 布格缪勒",
+      "description": "初级进阶 · Op.100 No.3 · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        6,
+        8
+      ],
+      "keySignature": 1,
+      "tempo": 100,
+      "measures": 29,
+      "notes": 355,
+      "durationBeats": 85,
+      "sourceKind": "mutopia-midi",
+      "sha256": "a376e16aa6268e21ac639878da39071a621bafd0689745e62200186b4a6a7e53",
+      "addedAt": "2026-10-20T04:43:48.281Z"
+    },
+    {
+      "id": "beginner-burgmuller-op100-05",
+      "title": "天真 · Innocence · Op.100 No.5",
+      "composer": "Friedrich Burgmüller 布格缪勒",
+      "description": "初级 · Op.100 No.5 · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        3,
+        4
+      ],
+      "keySignature": -1,
+      "tempo": 112,
+      "measures": 17,
+      "notes": 215,
+      "durationBeats": 50,
+      "sourceKind": "mutopia-midi",
+      "sha256": "b63f74fc3882fc3c60725c1020f5025e181bd139b85096b6695529ddc1aa6a89",
+      "addedAt": "2026-10-20T04:43:48.292Z"
+    },
+    {
+      "id": "beginner-burgmuller-op100-06",
+      "title": "前进 · Progress · Op.100 No.6",
+      "composer": "Friedrich Burgmüller 布格缪勒",
+      "description": "初级进阶 · Op.100 No.6 · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 0,
+      "tempo": 132,
+      "measures": 16,
+      "notes": 213,
+      "durationBeats": 64,
+      "sourceKind": "mutopia-midi",
+      "sha256": "d6c9df1ba0112d81ab0712955e17e9730af273ee866cf69802220795cadf3b56",
+      "addedAt": "2026-10-20T04:43:48.299Z"
+    },
+    {
+      "id": "beginner-burgmuller-op100-08",
+      "title": "优美 · La Gracieuse · Op.100 No.8",
+      "composer": "Friedrich Burgmüller 布格缪勒",
+      "description": "初级进阶 · Op.100 No.8 · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        3,
+        4
+      ],
+      "keySignature": -1,
+      "tempo": 100,
+      "measures": 16,
+      "notes": 318,
+      "durationBeats": 48,
+      "sourceKind": "mutopia-midi",
+      "sha256": "1fe9a225ba72642685468024156e9333ce3dd412451eeb55c5a762071dc597cc",
+      "addedAt": "2026-10-20T04:43:48.309Z"
+    },
+    {
+      "id": "beginner-burgmuller-op100-10",
+      "title": "娇嫩的花朵 · Tender Flower · Op.100 No.10",
+      "composer": "Friedrich Burgmüller 布格缪勒",
+      "description": "初级进阶 · Op.100 No.10 · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 2,
+      "tempo": 152,
+      "measures": 24,
+      "notes": 269,
+      "durationBeats": 95,
+      "sourceKind": "mutopia-midi",
+      "sha256": "081a057823206627b3d3931df8abe9af0e28a253dc10a26c24ff67f4de96eb31",
+      "addedAt": "2026-10-20T04:43:48.320Z"
+    },
+    {
       "id": "beginner-schumann-op68-01",
       "title": "旋律 · Melodie · Op.68 No.1",
       "composer": "Robert Schumann 舒曼",
@@ -146,6 +236,24 @@
       "addedAt": "2026-10-20T04:31:57.229Z"
     },
     {
+      "id": "beginner-schumann-op68-07",
+      "title": "猎人之歌 · Hunting Song · Op.68 No.7",
+      "composer": "Robert Schumann 舒曼",
+      "description": "初级进阶 · Op.68 No.7 · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        6,
+        8
+      ],
+      "keySignature": -1,
+      "tempo": 140,
+      "measures": 56,
+      "notes": 616,
+      "durationBeats": 167.5,
+      "sourceKind": "mutopia-midi",
+      "sha256": "ae23e6ec4167ab6cc94593a8e4b47b0881f55749aaaebead3edad6afb50922c5",
+      "addedAt": "2026-10-20T04:43:48.197Z"
+    },
+    {
       "id": "beginner-schumann-op68-09",
       "title": "民歌 · Folk Song · Op.68 No.9",
       "composer": "Robert Schumann 舒曼",
@@ -180,6 +288,78 @@
       "sourceKind": "mutopia-midi",
       "sha256": "4090f7315bc5be697af8f062bfacb5f1c7ac668968db0483cd7dd317b8759d79",
       "addedAt": "2026-10-20T04:31:57.257Z"
+    },
+    {
+      "id": "beginner-schumann-op68-11",
+      "title": "西西里舞曲 · Sicilienne · Op.68 No.11",
+      "composer": "Robert Schumann 舒曼",
+      "description": "初级进阶 · Op.68 No.11 · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        6,
+        8
+      ],
+      "keySignature": 0,
+      "tempo": 110,
+      "measures": 78,
+      "notes": 795,
+      "durationBeats": 219.5,
+      "sourceKind": "mutopia-midi",
+      "sha256": "b47a2a31ea414d476f01df283e704216bd346143bec611b78943c2502cd5fa57",
+      "addedAt": "2026-10-20T04:43:48.218Z"
+    },
+    {
+      "id": "beginner-schumann-op68-13",
+      "title": "五月，可爱的五月 · May Sweet May · Op.68 No.13",
+      "composer": "Robert Schumann 舒曼",
+      "description": "初级进阶 · Op.68 No.13 · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        2,
+        4
+      ],
+      "keySignature": 4,
+      "tempo": 52,
+      "measures": 52,
+      "notes": 784,
+      "durationBeats": 104,
+      "sourceKind": "mutopia-midi",
+      "sha256": "4c096501954a1d75e7aaba0bcdda5b4102bb07584b75518d7bddd85704441b69",
+      "addedAt": "2026-10-20T04:43:48.239Z"
+    },
+    {
+      "id": "beginner-schumann-op68-16",
+      "title": "初次的悲伤 · First Loss · Op.68 No.16",
+      "composer": "Robert Schumann 舒曼",
+      "description": "初级进阶 · Op.68 No.16 · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        2,
+        4
+      ],
+      "keySignature": 1,
+      "tempo": 74,
+      "measures": 48,
+      "notes": 314,
+      "durationBeats": 96,
+      "sourceKind": "mutopia-midi",
+      "sha256": "9d3348858205531ba4510f1755c3f4b4a9ad26ef970756c28496cdd00b8a5114",
+      "addedAt": "2026-10-20T04:43:48.257Z"
+    },
+    {
+      "id": "beginner-schumann-op68-18",
+      "title": "收割者之歌 · The Reapers Song · Op.68 No.18",
+      "composer": "Robert Schumann 舒曼",
+      "description": "初级进阶 · Op.68 No.18 · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        6,
+        8
+      ],
+      "keySignature": 0,
+      "tempo": 130,
+      "measures": 44,
+      "notes": 466,
+      "durationBeats": 129.5,
+      "sourceKind": "mutopia-midi",
+      "sha256": "06f458a173124336dd31b88545669c36e6a9c2f8e4503a61ef3df5f9dfa12e61",
+      "addedAt": "2026-10-20T04:43:48.268Z"
     },
     {
       "id": "edited-8314396d-6190-40b0-8ef2-969ae6384e09",

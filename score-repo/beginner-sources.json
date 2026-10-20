@@ -323,6 +323,336 @@
           "sha256": "38e77d34af818774ff888a7ba64637b8820b0ace4e7ece5aa67c0d157cd2a661"
         }
       }
+    },
+    {
+      "id": "beginner-schumann-op68-07",
+      "title": "猎人之歌 · Hunting Song",
+      "opus": "Op.68 No.7",
+      "level": "初级进阶",
+      "batch": 2,
+      "mutopiaId": 691,
+      "composer": "Robert Schumann 舒曼",
+      "maintainer": "Philippe Hézaine",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=691",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-07-chanson-du-chasseur/schumann-op68-07-chanson-du-chasseur.mid",
+          "path": "public/beginner-sources/beginner-schumann-op68-07/original.mid",
+          "bytes": 5633,
+          "sha256": "18e7ae891edeafdc39d46f61864a88d3a52d2604cd213c2bae8cb3d32e523a46"
+        },
+        "ly": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-07-chanson-du-chasseur/schumann-op68-07-chanson-du-chasseur.ly",
+          "path": "public/beginner-sources/beginner-schumann-op68-07/original.ly",
+          "bytes": 6260,
+          "sha256": "4425e1e372e77ed8e1a22f41fb4fc1bb2b21a33ec79c1275379e566ffdff9f45"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-07-chanson-du-chasseur/schumann-op68-07-chanson-du-chasseur-a4.pdf",
+          "path": "public/beginner-sources/beginner-schumann-op68-07/original.pdf",
+          "bytes": 70678,
+          "sha256": "03d227708f8c8b9cea05f3fb1085535d1280332a78e1cca23b6b00eba322c4aa"
+        }
+      }
+    },
+    {
+      "id": "beginner-schumann-op68-11",
+      "title": "西西里舞曲 · Sicilienne",
+      "opus": "Op.68 No.11",
+      "level": "初级进阶",
+      "batch": 2,
+      "mutopiaId": 783,
+      "composer": "Robert Schumann 舒曼",
+      "maintainer": "Philippe Hézaine",
+      "license": "CC BY-SA 2.5",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.5/",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=783",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-11-sicilienne/schumann-op68-11-sicilienne.mid",
+          "path": "public/beginner-sources/beginner-schumann-op68-11/original.mid",
+          "bytes": 7081,
+          "sha256": "faa91b513ff620d2f6a07d75b36240f67787dbdf5492fae4b1895a5e716c0ee2"
+        },
+        "ly": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-11-sicilienne/schumann-op68-11-sicilienne.ly",
+          "path": "public/beginner-sources/beginner-schumann-op68-11/original.ly",
+          "bytes": 9087,
+          "sha256": "f0a0b7874b357ecd5bc8684c356a39992e4c5816688be08f7a1056ec5a697975"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-11-sicilienne/schumann-op68-11-sicilienne-a4.pdf",
+          "path": "public/beginner-sources/beginner-schumann-op68-11/original.pdf",
+          "bytes": 97049,
+          "sha256": "51a9e879180cdf75fd81a04e0c8a6de898e6500993aa8b0e2fff993350b52cea"
+        }
+      }
+    },
+    {
+      "id": "beginner-schumann-op68-13",
+      "title": "五月，可爱的五月 · May Sweet May",
+      "opus": "Op.68 No.13",
+      "level": "初级进阶",
+      "batch": 2,
+      "mutopiaId": 662,
+      "composer": "Robert Schumann 舒曼",
+      "maintainer": "Philippe Hézaine",
+      "license": "CC BY-SA 2.5",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.5/",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=662",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-13-Mai-cher-Mai/schumann-op68-13-Mai-cher-Mai.mid",
+          "path": "public/beginner-sources/beginner-schumann-op68-13/original.mid",
+          "bytes": 6944,
+          "sha256": "7b30b51f289bf1706cc56d088b47bc33f44ea1cabb9e96bae482b9e015e05912"
+        },
+        "ly": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-13-Mai-cher-Mai/schumann-op68-13-Mai-cher-Mai.ly",
+          "path": "public/beginner-sources/beginner-schumann-op68-13/original.ly",
+          "bytes": 7864,
+          "sha256": "8aa10d30c216c819fe2b8ed7100dd8c27b2f99ef614e4034310516ed33c93e82"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-13-Mai-cher-Mai/schumann-op68-13-Mai-cher-Mai-a4.pdf",
+          "path": "public/beginner-sources/beginner-schumann-op68-13/original.pdf",
+          "bytes": 92533,
+          "sha256": "2e2a0b00bf8cb5c4b05ec92ef7c1f8b3a59b0a5ff69b529d23d92fe2e9e3ed05"
+        }
+      }
+    },
+    {
+      "id": "beginner-schumann-op68-16",
+      "title": "初次的悲伤 · First Loss",
+      "opus": "Op.68 No.16",
+      "level": "初级进阶",
+      "batch": 2,
+      "mutopiaId": 676,
+      "composer": "Robert Schumann 舒曼",
+      "maintainer": "Philippe Hézaine",
+      "license": "CC BY-SA 2.5",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.5/",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=676",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-16-premier-chagrin/schumann-op68-16-premier-chagrin.mid",
+          "path": "public/beginner-sources/beginner-schumann-op68-16/original.mid",
+          "bytes": 2993,
+          "sha256": "55156715e3a34eeebb8cc6e8066b6c77c703ecd6f2a76de2d98928efdc619a9c"
+        },
+        "ly": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-16-premier-chagrin/schumann-op68-16-premier-chagrin.ly",
+          "path": "public/beginner-sources/beginner-schumann-op68-16/original.ly",
+          "bytes": 6065,
+          "sha256": "71cd3ce1834c65212f80a58e76861a7ed224d4bf764be6662dc631021ce01413"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-16-premier-chagrin/schumann-op68-16-premier-chagrin-a4.pdf",
+          "path": "public/beginner-sources/beginner-schumann-op68-16/original.pdf",
+          "bytes": 61047,
+          "sha256": "32bdc23ad50e66c5a66919b437a7e5f80cb25a1a4993ec6d78a0191e1ed67b67"
+        }
+      }
+    },
+    {
+      "id": "beginner-schumann-op68-18",
+      "title": "收割者之歌 · The Reapers Song",
+      "opus": "Op.68 No.18",
+      "level": "初级进阶",
+      "batch": 2,
+      "mutopiaId": 663,
+      "composer": "Robert Schumann 舒曼",
+      "maintainer": "Philippe Hézaine",
+      "license": "CC BY-SA 2.5",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.5/",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=663",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-18-moissonneurs/schumann-op68-18-moissonneurs.mid",
+          "path": "public/beginner-sources/beginner-schumann-op68-18/original.mid",
+          "bytes": 4408,
+          "sha256": "8cb3953a65f95d6b7cd5cd155b2690236b1e527ce4f91ae867055c82dd1093ca"
+        },
+        "ly": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-18-moissonneurs/schumann-op68-18-moissonneurs.ly",
+          "path": "public/beginner-sources/beginner-schumann-op68-18/original.ly",
+          "bytes": 6641,
+          "sha256": "8aadd7cf57864a8835f29d2a2d6902a0af1e27c56645e5850c4cdb7e446a7317"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/SchumannR/O68/schumann-op68-18-moissonneurs/schumann-op68-18-moissonneurs-a4.pdf",
+          "path": "public/beginner-sources/beginner-schumann-op68-18/original.pdf",
+          "bytes": 73653,
+          "sha256": "ace155870c428377bdba59d3c5b19c2b2f49f2c36fbc549cfbda70058b70b604"
+        }
+      }
+    },
+    {
+      "id": "beginner-burgmuller-op100-03",
+      "title": "牧歌 · Pastorale",
+      "opus": "Op.100 No.3",
+      "level": "初级进阶",
+      "batch": 2,
+      "mutopiaId": 218,
+      "composer": "Friedrich Burgmüller 布格缪勒",
+      "maintainer": "Bas Wassink",
+      "license": "Public Domain",
+      "licenseUrl": "https://www.mutopiaproject.org/legal.html",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=218",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/BurgmullerJFF/O100/25EF-03/25EF-03.mid",
+          "path": "public/beginner-sources/beginner-burgmuller-op100-03/original.mid",
+          "bytes": 3416,
+          "sha256": "192500ee12358537bf92811064ee4ad0b680c78302d5762175a3c32fe573a577"
+        },
+        "ly": {
+          "url": "https://www.mutopiaproject.org/ftp/BurgmullerJFF/O100/25EF-03/25EF-03.ly",
+          "path": "public/beginner-sources/beginner-burgmuller-op100-03/original.ly",
+          "bytes": 4125,
+          "sha256": "be3b90be0fcfe7d92e34ef189cb633f7007e38ea8d5f290e4c3e5a988f097c81"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/BurgmullerJFF/O100/25EF-03/25EF-03-a4.pdf",
+          "path": "public/beginner-sources/beginner-burgmuller-op100-03/original.pdf",
+          "bytes": 67060,
+          "sha256": "278500ead2c9f578a6a7158fd382ecf7210cc89cf063b643026661044bddd43c"
+        }
+      }
+    },
+    {
+      "id": "beginner-burgmuller-op100-05",
+      "title": "天真 · Innocence",
+      "opus": "Op.100 No.5",
+      "level": "初级",
+      "batch": 2,
+      "mutopiaId": 214,
+      "composer": "Friedrich Burgmüller 布格缪勒",
+      "maintainer": "Bas Wassink",
+      "license": "Public Domain",
+      "licenseUrl": "https://www.mutopiaproject.org/legal.html",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=214",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/BurgmullerJFF/O100/25EF-05/25EF-05.mid",
+          "path": "public/beginner-sources/beginner-burgmuller-op100-05/original.mid",
+          "bytes": 2139,
+          "sha256": "39768b50abb623d24986b0e3993518ca92a6f1340d6154fc092f218cb6b97fee"
+        },
+        "ly": {
+          "url": "https://www.mutopiaproject.org/ftp/BurgmullerJFF/O100/25EF-05/25EF-05.ly",
+          "path": "public/beginner-sources/beginner-burgmuller-op100-05/original.ly",
+          "bytes": 3320,
+          "sha256": "f19c5f5986cfc75d56263a4cab98eac7d3927c10bce75917766e49351280286a"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/BurgmullerJFF/O100/25EF-05/25EF-05-a4.pdf",
+          "path": "public/beginner-sources/beginner-burgmuller-op100-05/original.pdf",
+          "bytes": 64189,
+          "sha256": "a94740fa90a20752564b103456b6bae941cd65c0539bbab2db239e08b20e7301"
+        }
+      }
+    },
+    {
+      "id": "beginner-burgmuller-op100-06",
+      "title": "前进 · Progress",
+      "opus": "Op.100 No.6",
+      "level": "初级进阶",
+      "batch": 2,
+      "mutopiaId": 215,
+      "composer": "Friedrich Burgmüller 布格缪勒",
+      "maintainer": "Bas Wassink",
+      "license": "Public Domain",
+      "licenseUrl": "https://www.mutopiaproject.org/legal.html",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=215",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/BurgmullerJFF/O100/25EF-06/25EF-06.mid",
+          "path": "public/beginner-sources/beginner-burgmuller-op100-06/original.mid",
+          "bytes": 2148,
+          "sha256": "d28e280d333d8a97262a4ffeba00fab251d382cd9a17e45a517d6613cb03f722"
+        },
+        "ly": {
+          "url": "https://www.mutopiaproject.org/ftp/BurgmullerJFF/O100/25EF-06/25EF-06.ly",
+          "path": "public/beginner-sources/beginner-burgmuller-op100-06/original.ly",
+          "bytes": 3303,
+          "sha256": "e3f05f6bd21543333f1843d1f024f721bba34f63699de71e09def1d0d6f5ad61"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/BurgmullerJFF/O100/25EF-06/25EF-06-a4.pdf",
+          "path": "public/beginner-sources/beginner-burgmuller-op100-06/original.pdf",
+          "bytes": 64932,
+          "sha256": "cb1f238292b6164eeff7425aea36ce3ffbc07cbb734d7aaa0dab5c9176d02fa8"
+        }
+      }
+    },
+    {
+      "id": "beginner-burgmuller-op100-08",
+      "title": "优美 · La Gracieuse",
+      "opus": "Op.100 No.8",
+      "level": "初级进阶",
+      "batch": 2,
+      "mutopiaId": 217,
+      "composer": "Friedrich Burgmüller 布格缪勒",
+      "maintainer": "Bas Wassink",
+      "license": "Public Domain",
+      "licenseUrl": "https://www.mutopiaproject.org/legal.html",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=217",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/BurgmullerJFF/O100/25EF-08/25EF-08.mid",
+          "path": "public/beginner-sources/beginner-burgmuller-op100-08/original.mid",
+          "bytes": 2958,
+          "sha256": "f103bc6cb67cdbbad517170d6a7c51428e9a8481c74eec10258ea34a58b832fd"
+        },
+        "ly": {
+          "url": "https://www.mutopiaproject.org/ftp/BurgmullerJFF/O100/25EF-08/25EF-08.ly",
+          "path": "public/beginner-sources/beginner-burgmuller-op100-08/original.ly",
+          "bytes": 3772,
+          "sha256": "67a2b204b7a4757522fcdc67adf368df923cd2f9208da4bde7548b3365f73f7a"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/BurgmullerJFF/O100/25EF-08/25EF-08-a4.pdf",
+          "path": "public/beginner-sources/beginner-burgmuller-op100-08/original.pdf",
+          "bytes": 65753,
+          "sha256": "69b7e2e74694d81603eb75ac683aff68d3b12471e8c2dccc662630cb98acaee4"
+        }
+      }
+    },
+    {
+      "id": "beginner-burgmuller-op100-10",
+      "title": "娇嫩的花朵 · Tender Flower",
+      "opus": "Op.100 No.10",
+      "level": "初级进阶",
+      "batch": 2,
+      "mutopiaId": 221,
+      "composer": "Friedrich Burgmüller 布格缪勒",
+      "maintainer": "Bas Wassink",
+      "license": "Public Domain",
+      "licenseUrl": "https://www.mutopiaproject.org/legal.html",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=221",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/BurgmullerJFF/O100/25EF-10/25EF-10.mid",
+          "path": "public/beginner-sources/beginner-burgmuller-op100-10/original.mid",
+          "bytes": 2773,
+          "sha256": "58dd9eec57bfcb7fb8a924530e8f6c1e1599a02fc10cc4f79ae6d1ef6e2a0c85"
+        },
+        "ly": {
+          "url": "https://www.mutopiaproject.org/ftp/BurgmullerJFF/O100/25EF-10/25EF-10.ly",
+          "path": "public/beginner-sources/beginner-burgmuller-op100-10/original.ly",
+          "bytes": 3786,
+          "sha256": "facd4daa13d8b44afb23aa69c21149d4249f2befa99cb83b449b8254a66327f9"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/BurgmullerJFF/O100/25EF-10/25EF-10-a4.pdf",
+          "path": "public/beginner-sources/beginner-burgmuller-op100-10/original.pdf",
+          "bytes": 70203,
+          "sha256": "4f1ad5a19a76b69f5aebabc621258fbd4aac9abdbf4a34c1a6bc457f386807dd"
+        }
+      }
     }
   ]
 }

@@ -13,7 +13,9 @@ test("beginner collection retains licensed originals and every MIDI performance 
       "utf8",
     ),
   );
-  assert.equal(manifest.scores.length, 10);
+  assert.equal(manifest.scores.length, 20);
+  assert.equal(new Set(manifest.scores.map((s) => s.id)).size, 20);
+  assert.equal(manifest.scores.filter((s) => s.batch === 2).length, 10);
   for (const source of manifest.scores) {
     const files = {};
     for (const [kind, file] of Object.entries(source.files)) {
@@ -40,6 +42,18 @@ test("beginner collection retains licensed originals and every MIDI performance 
     const midi = new MidiPackage.Midi(files.mid),
       timeline = createPerformanceTimeline(bundle.document),
       expected = [];
+    for (const change of midi.header.timeSignatures) {
+      const beat = change.ticks / midi.header.ppq;
+      if (beat >= bundle.document.durationBeats) continue;
+      const measure = bundle.document.measureMap
+        .filter((m) => m.beat <= beat + 1e-7)
+        .at(-1);
+      assert.deepEqual(
+        measure.timeSignature,
+        change.timeSignature,
+        source.id + " meter at " + beat,
+      );
+    }
     for (const track of midi.tracks.filter(
       (t) => t.notes.length && t.channel !== 9,
     ))

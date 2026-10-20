@@ -22,6 +22,36 @@ const entries = new Map(index.scores.map((s) => [s.id, s]));
 const local = process.argv.includes("--local") ? createLibraryStore() : null;
 const warning =
   "数字谱来自原版 MIDI：原始音高和节奏保留，音名拼写、声部、休止及延音音头由演奏事件推断；指法、连奏线和页码定位请查原 PDF。反复段按原 MIDI 的展开顺序播放。";
+
+function changingMeterMap(midi, duration) {
+  const changes = midi.header.timeSignatures;
+  if (changes.length < 2) return {};
+  const map = [];
+  let beat = 0,
+    current = 0;
+  while (beat < duration - 1e-7) {
+    while (
+      current + 1 < changes.length &&
+      changes[current + 1].ticks / midi.header.ppq <= beat + 1e-7
+    )
+      current++;
+    const meter = changes[current].timeSignature;
+    const next = Math.min(
+      duration,
+      beat + (meter[0] * 4) / meter[1],
+      changes[current + 1]?.ticks / midi.header.ppq || Infinity,
+    );
+    if (next <= beat) throw Error("MIDI 拍号时间轴无效。");
+    map.push({
+      measure: map.length + 1,
+      beat,
+      duration: next - beat,
+      timeSignature: meter,
+    });
+    beat = next;
+  }
+  return { measureMap: map };
+}
 await mkdir("public/cloud-library/scores", { recursive: true });
 for (const source of manifest.scores) {
   const files = {};
@@ -51,6 +81,7 @@ for (const source of manifest.scores) {
     Math.abs(n - Math.round(n)) < 0.001 ? Math.round(n) : n;
   const document = readScoreDocument({
     ...imported.score,
+    ...changingMeterMap(midi, imported.score.durationBeats),
     tempo: roundedTempo(imported.score.tempo),
     tempoMap: imported.score.tempoMap?.map((e) => ({
       ...e,
@@ -66,7 +97,11 @@ for (const source of manifest.scores) {
     })),
     source: {
       kind: "mutopia-midi",
-      label: source.level + " · Mutopia MIDI · 排版：" + source.maintainer,
+      label:
+        source.level +
+        (source.batch ? " · 第" + source.batch + "批" : "") +
+        " · Mutopia MIDI · 排版：" +
+        source.maintainer,
       url: source.sourceUrl,
       license:
         source.license +

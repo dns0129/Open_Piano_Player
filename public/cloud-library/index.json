@@ -38,6 +38,96 @@
       "file": "scores/beginner-burgmuller-op100-02.json"
     },
     {
+      "id": "beginner-burgmuller-op100-03",
+      "title": "牧歌 · Pastorale · Op.100 No.3",
+      "composer": "Friedrich Burgmüller 布格缪勒",
+      "tempo": 100,
+      "timeSignature": [
+        6,
+        8
+      ],
+      "keySignature": 1,
+      "notes": 355,
+      "hasOriginal": false,
+      "sourceLabel": "初级进阶 · 第2批 · Mutopia MIDI · 排版：Bas Wassink",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=218",
+      "license": "Public Domain · https://www.mutopiaproject.org/legal.html · 排版：Bas Wassink；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/beginner-burgmuller-op100-03.json"
+    },
+    {
+      "id": "beginner-burgmuller-op100-05",
+      "title": "天真 · Innocence · Op.100 No.5",
+      "composer": "Friedrich Burgmüller 布格缪勒",
+      "tempo": 112,
+      "timeSignature": [
+        3,
+        4
+      ],
+      "keySignature": -1,
+      "notes": 215,
+      "hasOriginal": false,
+      "sourceLabel": "初级 · 第2批 · Mutopia MIDI · 排版：Bas Wassink",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=214",
+      "license": "Public Domain · https://www.mutopiaproject.org/legal.html · 排版：Bas Wassink；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/beginner-burgmuller-op100-05.json"
+    },
+    {
+      "id": "beginner-burgmuller-op100-06",
+      "title": "前进 · Progress · Op.100 No.6",
+      "composer": "Friedrich Burgmüller 布格缪勒",
+      "tempo": 132,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 0,
+      "notes": 213,
+      "hasOriginal": false,
+      "sourceLabel": "初级进阶 · 第2批 · Mutopia MIDI · 排版：Bas Wassink",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=215",
+      "license": "Public Domain · https://www.mutopiaproject.org/legal.html · 排版：Bas Wassink；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/beginner-burgmuller-op100-06.json"
+    },
+    {
+      "id": "beginner-burgmuller-op100-08",
+      "title": "优美 · La Gracieuse · Op.100 No.8",
+      "composer": "Friedrich Burgmüller 布格缪勒",
+      "tempo": 100,
+      "timeSignature": [
+        3,
+        4
+      ],
+      "keySignature": -1,
+      "notes": 318,
+      "hasOriginal": false,
+      "sourceLabel": "初级进阶 · 第2批 · Mutopia MIDI · 排版：Bas Wassink",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=217",
+      "license": "Public Domain · https://www.mutopiaproject.org/legal.html · 排版：Bas Wassink；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/beginner-burgmuller-op100-08.json"
+    },
+    {
+      "id": "beginner-burgmuller-op100-10",
+      "title": "娇嫩的花朵 · Tender Flower · Op.100 No.10",
+      "composer": "Friedrich Burgmüller 布格缪勒",
+      "tempo": 152,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 2,
+      "notes": 269,
+      "hasOriginal": false,
+      "sourceLabel": "初级进阶 · 第2批 · Mutopia MIDI · 排版：Bas Wassink",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=221",
+      "license": "Public Domain · https://www.mutopiaproject.org/legal.html · 排版：Bas Wassink；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/beginner-burgmuller-op100-10.json"
+    },
+    {
       "id": "beginner-schumann-op68-01",
       "title": "旋律 · Melodie · Op.68 No.1",
       "composer": "Robert Schumann 舒曼",
@@ -146,6 +236,24 @@
       "file": "scores/beginner-schumann-op68-06.json"
     },
     {
+      "id": "beginner-schumann-op68-07",
+      "title": "猎人之歌 · Hunting Song · Op.68 No.7",
+      "composer": "Robert Schumann 舒曼",
+      "tempo": 140,
+      "timeSignature": [
+        6,
+        8
+      ],
+      "keySignature": -1,
+      "notes": 616,
+      "hasOriginal": false,
+      "sourceLabel": "初级进阶 · 第2批 · Mutopia MIDI · 排版：Philippe Hézaine",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=691",
+      "license": "CC BY-SA 3.0 · https://creativecommons.org/licenses/by-sa/3.0/ · 排版：Philippe Hézaine；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/beginner-schumann-op68-07.json"
+    },
+    {
       "id": "beginner-schumann-op68-09",
       "title": "民歌 · Folk Song · Op.68 No.9",
       "composer": "Robert Schumann 舒曼",
@@ -180,6 +288,78 @@
       "license": "CC BY-SA 2.5 · https://creativecommons.org/licenses/by-sa/2.5/ · 排版：Philippe Hézaine；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
       "reviewRequired": false,
       "file": "scores/beginner-schumann-op68-10.json"
+    },
+    {
+      "id": "beginner-schumann-op68-11",
+      "title": "西西里舞曲 · Sicilienne · Op.68 No.11",
+      "composer": "Robert Schumann 舒曼",
+      "tempo": 110,
+      "timeSignature": [
+        6,
+        8
+      ],
+      "keySignature": 0,
+      "notes": 795,
+      "hasOriginal": false,
+      "sourceLabel": "初级进阶 · 第2批 · Mutopia MIDI · 排版：Philippe Hézaine",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=783",
+      "license": "CC BY-SA 2.5 · https://creativecommons.org/licenses/by-sa/2.5/ · 排版：Philippe Hézaine；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/beginner-schumann-op68-11.json"
+    },
+    {
+      "id": "beginner-schumann-op68-13",
+      "title": "五月，可爱的五月 · May Sweet May · Op.68 No.13",
+      "composer": "Robert Schumann 舒曼",
+      "tempo": 52,
+      "timeSignature": [
+        2,
+        4
+      ],
+      "keySignature": 4,
+      "notes": 784,
+      "hasOriginal": false,
+      "sourceLabel": "初级进阶 · 第2批 · Mutopia MIDI · 排版：Philippe Hézaine",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=662",
+      "license": "CC BY-SA 2.5 · https://creativecommons.org/licenses/by-sa/2.5/ · 排版：Philippe Hézaine；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/beginner-schumann-op68-13.json"
+    },
+    {
+      "id": "beginner-schumann-op68-16",
+      "title": "初次的悲伤 · First Loss · Op.68 No.16",
+      "composer": "Robert Schumann 舒曼",
+      "tempo": 74,
+      "timeSignature": [
+        2,
+        4
+      ],
+      "keySignature": 1,
+      "notes": 314,
+      "hasOriginal": false,
+      "sourceLabel": "初级进阶 · 第2批 · Mutopia MIDI · 排版：Philippe Hézaine",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=676",
+      "license": "CC BY-SA 2.5 · https://creativecommons.org/licenses/by-sa/2.5/ · 排版：Philippe Hézaine；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/beginner-schumann-op68-16.json"
+    },
+    {
+      "id": "beginner-schumann-op68-18",
+      "title": "收割者之歌 · The Reapers Song · Op.68 No.18",
+      "composer": "Robert Schumann 舒曼",
+      "tempo": 130,
+      "timeSignature": [
+        6,
+        8
+      ],
+      "keySignature": 0,
+      "notes": 466,
+      "hasOriginal": false,
+      "sourceLabel": "初级进阶 · 第2批 · Mutopia MIDI · 排版：Philippe Hézaine",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=663",
+      "license": "CC BY-SA 2.5 · https://creativecommons.org/licenses/by-sa/2.5/ · 排版：Philippe Hézaine；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/beginner-schumann-op68-18.json"
     },
     {
       "id": "bumblebee-yeung-complete",
@@ -606,7 +786,7 @@
   "deletedIds": [
     "full-score-croatian-skill-high-20261019"
   ],
-  "updatedAt": "2026-10-20T04:35:32.527Z",
+  "updatedAt": "2026-10-20T04:43:48.326Z",
   "superseded": {
     "full-score-croatian-skill-high-20261019": "full-score-croatian-reviewed-20261019"
   }
