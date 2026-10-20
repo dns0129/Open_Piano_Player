@@ -542,6 +542,366 @@
       "addedAt": "2026-10-17T23:04:38.628Z"
     },
     {
+      "id": "intermediate-bach-bwv772",
+      "title": "C大调二部创意曲第1首 · Invention No.1 · BWV 772",
+      "composer": "Johann Sebastian Bach 巴赫",
+      "description": "进阶 · 中级 · BWV 772 · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 0,
+      "tempo": 80,
+      "measures": 22,
+      "notes": 458,
+      "durationBeats": 88,
+      "sourceKind": "mutopia-midi",
+      "sha256": "561b6e327d4d3ccf764b68201693ab4a7cc6acc2af52e9f4ff0eb941b36baadc",
+      "addedAt": "2026-10-20T08:05:03.471Z"
+    },
+    {
+      "id": "intermediate-bach-bwv775",
+      "title": "d小调二部创意曲第4首 · Invention No.4 · BWV 775",
+      "composer": "Johann Sebastian Bach 巴赫",
+      "description": "进阶 · 中级 · BWV 775 · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        3,
+        8
+      ],
+      "keySignature": -1,
+      "tempo": 90,
+      "measures": 52,
+      "notes": 443,
+      "durationBeats": 78,
+      "sourceKind": "mutopia-midi",
+      "sha256": "8cd434443aff59f03954e41b516eeb80c54988aa7736359338917df628ad7fc1",
+      "addedAt": "2026-10-20T08:05:03.500Z"
+    },
+    {
+      "id": "intermediate-bach-bwv777",
+      "title": "E大调二部创意曲第6首 · Invention No.6 · BWV 777",
+      "composer": "Johann Sebastian Bach 巴赫",
+      "description": "进阶 · 中级 · BWV 777 · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        3,
+        8
+      ],
+      "keySignature": 4,
+      "tempo": 40,
+      "measures": 62,
+      "notes": 547,
+      "durationBeats": 93,
+      "sourceKind": "mutopia-midi",
+      "sha256": "fc7ba616ba38ec01458e41790ed4f2ac917c55bb579e0eebe58fa1be5434ea85",
+      "addedAt": "2026-10-20T08:05:03.516Z"
+    },
+    {
+      "id": "intermediate-bach-bwv779",
+      "title": "F大调二部创意曲第8首 · Invention No.8 · BWV 779",
+      "composer": "Johann Sebastian Bach 巴赫",
+      "description": "进阶 · 中级 · BWV 779 · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        3,
+        4
+      ],
+      "keySignature": -1,
+      "tempo": 90,
+      "measures": 34,
+      "notes": 598,
+      "durationBeats": 100,
+      "sourceKind": "mutopia-midi",
+      "sha256": "6e3b6fd9d65a7fd530c312a9882995542cc47cd824a2d84dc710904fecea12ec",
+      "addedAt": "2026-10-20T08:05:03.534Z"
+    },
+    {
+      "id": "intermediate-bach-bwv781",
+      "title": "G大调二部创意曲第10首 · Invention No.10 · BWV 781",
+      "composer": "Johann Sebastian Bach 巴赫",
+      "description": "进阶 · 中级 · BWV 781 · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        9,
+        8
+      ],
+      "keySignature": 1,
+      "tempo": 172,
+      "measures": 32,
+      "notes": 439,
+      "durationBeats": 144,
+      "sourceKind": "mutopia-midi",
+      "sha256": "067d6596c3b6419ab07cc37d920968a361152fe5ce5c75294350c660f0af1996",
+      "addedAt": "2026-10-20T08:05:03.551Z"
+    },
+    {
+      "id": "intermediate-bach-bwv784",
+      "title": "a小调二部创意曲第13首 · Invention No.13 · BWV 784",
+      "composer": "Johann Sebastian Bach 巴赫",
+      "description": "进阶 · 中级 · BWV 784 · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 0,
+      "tempo": 100,
+      "measures": 25,
+      "notes": 564,
+      "durationBeats": 100,
+      "sourceKind": "mutopia-midi",
+      "sha256": "002416a0c6e00f03b62cae28a9ac9ab50097e6fdabeb5650cf19e01c32173b87",
+      "addedAt": "2026-10-20T08:05:03.565Z"
+    },
+    {
+      "id": "intermediate-bach-bwv785",
+      "title": "降B大调二部创意曲第14首 · Invention No.14 · BWV 785",
+      "composer": "Johann Sebastian Bach 巴赫",
+      "description": "进阶 · 中级 · BWV 785 · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": -2,
+      "tempo": 65,
+      "measures": 20,
+      "notes": 592,
+      "durationBeats": 80,
+      "sourceKind": "mutopia-midi",
+      "sha256": "404810046e6301d09d9ba2049f139f8cffd1c9708490e336e21cd08f30fd3eb0",
+      "addedAt": "2026-10-20T08:05:03.581Z"
+    },
+    {
+      "id": "intermediate-bach-bwv786",
+      "title": "b小调二部创意曲第15首 · Invention No.15 · BWV 786",
+      "composer": "Johann Sebastian Bach 巴赫",
+      "description": "进阶 · 中级 · BWV 786 · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 2,
+      "tempo": 105,
+      "measures": 22,
+      "notes": 477,
+      "durationBeats": 88,
+      "sourceKind": "mutopia-midi",
+      "sha256": "4b46155c33a130b43e7dbda34849082d218ae99c3df4983019d12f3981498702",
+      "addedAt": "2026-10-20T08:05:03.596Z"
+    },
+    {
+      "id": "intermediate-beethoven-op13-m2",
+      "title": "悲怆奏鸣曲 · 第二乐章 · Pathétique II · Op.13 · II",
+      "composer": "Ludwig van Beethoven 贝多芬",
+      "description": "进阶 · 中级 · Op.13 · II · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        2,
+        4
+      ],
+      "keySignature": -4,
+      "tempo": 36,
+      "measures": 73,
+      "notes": 1629,
+      "durationBeats": 146,
+      "sourceKind": "mutopia-midi",
+      "sha256": "8249aee2180e91f912f7236d84e65279c9cc6072fa46b5793b2514b23bed8c91",
+      "addedAt": "2026-10-20T08:05:03.690Z"
+    },
+    {
+      "id": "intermediate-beethoven-op27-2-m1",
+      "title": "月光奏鸣曲 · 第一乐章 · Moonlight Sonata I · Op.27 No.2 · I",
+      "composer": "Ludwig van Beethoven 贝多芬",
+      "description": "进阶 · 中级 · Op.27 No.2 · I · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        2,
+        2
+      ],
+      "keySignature": 4,
+      "tempo": 60,
+      "measures": 69,
+      "notes": 1142,
+      "durationBeats": 276,
+      "sourceKind": "mutopia-midi",
+      "sha256": "50cf2079507b51cb04b2169edb7f266b4bbac3f8315abcfc373ca6287f1a37a6",
+      "addedAt": "2026-10-20T08:05:03.650Z"
+    },
+    {
+      "id": "intermediate-beethoven-op49-1-m1",
+      "title": "第19号奏鸣曲 · 第一乐章 · Sonata No.19 I · Op.49 No.1 · I",
+      "composer": "Ludwig van Beethoven 贝多芬",
+      "description": "进阶 · 中级 · Op.49 No.1 · I · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        2,
+        4
+      ],
+      "keySignature": -2,
+      "tempo": 98,
+      "measures": 111,
+      "notes": 1273,
+      "durationBeats": 219.5,
+      "sourceKind": "mutopia-midi",
+      "sha256": "6c581e89bff23fe2df4a5cf3d7bdff70578934ca30c4e3e1e0da9cdc254b660f",
+      "addedAt": "2026-10-20T08:05:03.743Z"
+    },
+    {
+      "id": "intermediate-beethoven-op49-1-m2",
+      "title": "第19号奏鸣曲 · 第二乐章 · Sonata No.19 II · Op.49 No.1 · II",
+      "composer": "Ludwig van Beethoven 贝多芬",
+      "description": "进阶 · 中级 · Op.49 No.1 · II · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        6,
+        8
+      ],
+      "keySignature": 1,
+      "tempo": 124,
+      "measures": 165,
+      "notes": 2004,
+      "durationBeats": 492,
+      "sourceKind": "mutopia-midi",
+      "sha256": "818f48a094224f412b3628ecce53f4f523550e1883fd6a2c566dddf6cbd501e2",
+      "addedAt": "2026-10-20T08:05:03.791Z"
+    },
+    {
+      "id": "intermediate-beethoven-op49-2-m1",
+      "title": "第20号奏鸣曲 · 第一乐章 · Sonata No.20 I · Op.49 No.2 · I",
+      "composer": "Ludwig van Beethoven 贝多芬",
+      "description": "进阶 · 中级 · Op.49 No.2 · I · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        2,
+        2
+      ],
+      "keySignature": 1,
+      "tempo": 142,
+      "measures": 122,
+      "notes": 1626,
+      "durationBeats": 485,
+      "sourceKind": "mutopia-midi",
+      "sha256": "e51c302f3e2be14cca921d3e9077db25ec168018778fd509519da43758b144f0",
+      "addedAt": "2026-10-20T08:05:03.840Z"
+    },
+    {
+      "id": "intermediate-beethoven-op49-2-m2",
+      "title": "第20号奏鸣曲 · 第二乐章 · Sonata No.20 II · Op.49 No.2 · II",
+      "composer": "Ludwig van Beethoven 贝多芬",
+      "description": "进阶 · 中级 · Op.49 No.2 · II · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        3,
+        4
+      ],
+      "keySignature": 1,
+      "tempo": 134,
+      "measures": 121,
+      "notes": 1280,
+      "durationBeats": 359,
+      "sourceKind": "mutopia-midi",
+      "sha256": "7759235216d44506946ccf8b8205512e9e3651c6d9a23b06ea19e3e6044f3364",
+      "addedAt": "2026-10-20T08:05:03.884Z"
+    },
+    {
+      "id": "intermediate-beethoven-woo59",
+      "title": "致爱丽丝 · 完整曲 · Für Elise · WoO 59",
+      "composer": "Ludwig van Beethoven 贝多芬",
+      "description": "进阶 · 中级 · WoO 59 · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        3,
+        8
+      ],
+      "keySignature": 0,
+      "tempo": 72,
+      "measures": 105,
+      "notes": 905,
+      "durationBeats": 156.5,
+      "sourceKind": "mutopia-midi",
+      "sha256": "d1acf1cc313b49b14fdb0ff287c39801cb688e12f94b11d23ce97f3b7422748b",
+      "addedAt": "2026-10-20T08:05:03.618Z"
+    },
+    {
+      "id": "intermediate-beethoven-woo82",
+      "title": "降E大调小步舞曲 · Minuet · WoO 82",
+      "composer": "Ludwig van Beethoven 贝多芬",
+      "description": "进阶 · 中级 · WoO 82 · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        3,
+        4
+      ],
+      "keySignature": -3,
+      "tempo": 112,
+      "measures": 123,
+      "notes": 1156,
+      "durationBeats": 365,
+      "sourceKind": "mutopia-midi",
+      "sha256": "cf2e09b97a227a7dc40fb65fcd76b71318e2aa87d705f116755889ea28f0bdf3",
+      "addedAt": "2026-10-20T08:05:03.915Z"
+    },
+    {
+      "id": "intermediate-chopin-op28-04",
+      "title": "e小调前奏曲 · Prelude No.4 · Op.28 No.4",
+      "composer": "Frédéric Chopin 肖邦",
+      "description": "进阶 · 中级 · Op.28 No.4 · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        2,
+        2
+      ],
+      "keySignature": 1,
+      "tempo": 48,
+      "measures": 27,
+      "notes": 604,
+      "durationBeats": 103,
+      "sourceKind": "mutopia-midi",
+      "sha256": "cbaeec7bfe82fd080eece99277e343c5994476b1e03467f033df709ba3287ccf",
+      "addedAt": "2026-10-20T08:05:03.941Z"
+    },
+    {
+      "id": "intermediate-chopin-op28-06",
+      "title": "b小调前奏曲 · Prelude No.6 · Op.28 No.6",
+      "composer": "Frédéric Chopin 肖邦",
+      "description": "进阶 · 中级 · Op.28 No.6 · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        3,
+        4
+      ],
+      "keySignature": 2,
+      "tempo": 45,
+      "measures": 26,
+      "notes": 405,
+      "durationBeats": 76,
+      "sourceKind": "mutopia-midi",
+      "sha256": "d289e873e7d56f1609fa2b677a066d26a59fba82516559f448434820a0c9e3d0",
+      "addedAt": "2026-10-20T08:05:03.956Z"
+    },
+    {
+      "id": "intermediate-chopin-op28-07",
+      "title": "A大调前奏曲 · Prelude No.7 · Op.28 No.7",
+      "composer": "Frédéric Chopin 肖邦",
+      "description": "进阶 · 中级 · Op.28 No.7 · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        3,
+        4
+      ],
+      "keySignature": 3,
+      "tempo": 120,
+      "measures": 17,
+      "notes": 168,
+      "durationBeats": 48,
+      "sourceKind": "mutopia-midi",
+      "sha256": "6d8eef2b191b2aa29e944909f099c2b693d28738bcfb431da7a7ae608fbf93ae",
+      "addedAt": "2026-10-20T08:05:03.970Z"
+    },
+    {
+      "id": "intermediate-chopin-op28-20",
+      "title": "c小调前奏曲 · Prelude No.20 · Op.28 No.20",
+      "composer": "Frédéric Chopin 肖邦",
+      "description": "进阶 · 中级 · Op.28 No.20 · Mutopia 原始 MIDI 导入",
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": -3,
+      "tempo": 42,
+      "measures": 13,
+      "notes": 286,
+      "durationBeats": 52,
+      "sourceKind": "mutopia-midi",
+      "sha256": "39ae66f2caf5429593bf42f5dc275c60e54c39f7135dbaefccb668646233398e",
+      "addedAt": "2026-10-20T08:05:03.981Z"
+    },
+    {
       "id": "reread-gpt61-high-v2-eutopia-staff",
       "title": "Eutopia · GPT‑6.1 high 新策略",
       "composer": "未知",

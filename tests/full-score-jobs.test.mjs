@@ -49,7 +49,8 @@ test('all pages and all ordered systems must be explicitly accounted before call
 
 test('one start processes every row once with concurrency two, then waits for human confirmation',async t=>{
   let active=0,maximum=0,calls=0;
-  const recognize=async({region})=>{active++;maximum=Math.max(maximum,active);calls++;await delay(5);active--;return regionResult(region);};
+  let releasePair;const pairStarted=new Promise(resolve=>{releasePair=resolve;});
+  const recognize=async({region})=>{active++;maximum=Math.max(maximum,active);calls++;if(calls===2)releasePair();await pairStarted;active--;return regionResult(region);};
   const {store}=await fixture(t,{recognizeRegion:recognize,checkRegion:recognize,maxConcurrency:2});
   const {id}=await store.createJob(rawJob(),auth);const started=await store.startJob(id,auth);assert.equal(started.status,'running');assert.equal(started.estimate.piCalls,3);
   let job=await store.waitForIdle(id,auth);assert.equal(calls,3);assert.equal(maximum,2);assert.equal(job.status,'needs-review');assert.equal(job.progress.needsReview,3);assert.equal(job.result,null);

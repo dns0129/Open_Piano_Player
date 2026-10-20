@@ -588,6 +588,366 @@
       "file": "scores/hanting-complete.json"
     },
     {
+      "id": "intermediate-bach-bwv772",
+      "title": "C大调二部创意曲第1首 · Invention No.1 · BWV 772",
+      "composer": "Johann Sebastian Bach 巴赫",
+      "tempo": 80,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 0,
+      "notes": 458,
+      "hasOriginal": false,
+      "sourceLabel": "进阶 · 中级 · 第3批 · Mutopia MIDI · 排版：jeff covey",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=40",
+      "license": "CC BY-SA 3.0 · https://creativecommons.org/licenses/by-sa/3.0/ · 排版：jeff covey；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/intermediate-bach-bwv772.json"
+    },
+    {
+      "id": "intermediate-bach-bwv775",
+      "title": "d小调二部创意曲第4首 · Invention No.4 · BWV 775",
+      "composer": "Johann Sebastian Bach 巴赫",
+      "tempo": 90,
+      "timeSignature": [
+        3,
+        8
+      ],
+      "keySignature": -1,
+      "notes": 443,
+      "hasOriginal": false,
+      "sourceLabel": "进阶 · 中级 · 第3批 · Mutopia MIDI · 排版：Allen Garvin",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=67",
+      "license": "Public Domain · https://www.mutopiaproject.org/legal.html · 排版：Allen Garvin；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/intermediate-bach-bwv775.json"
+    },
+    {
+      "id": "intermediate-bach-bwv777",
+      "title": "E大调二部创意曲第6首 · Invention No.6 · BWV 777",
+      "composer": "Johann Sebastian Bach 巴赫",
+      "tempo": 40,
+      "timeSignature": [
+        3,
+        8
+      ],
+      "keySignature": 4,
+      "notes": 547,
+      "hasOriginal": false,
+      "sourceLabel": "进阶 · 中级 · 第3批 · Mutopia MIDI · 排版：jeff covey",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=159",
+      "license": "CC BY-SA 3.0 · https://creativecommons.org/licenses/by-sa/3.0/ · 排版：jeff covey；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/intermediate-bach-bwv777.json"
+    },
+    {
+      "id": "intermediate-bach-bwv779",
+      "title": "F大调二部创意曲第8首 · Invention No.8 · BWV 779",
+      "composer": "Johann Sebastian Bach 巴赫",
+      "tempo": 90,
+      "timeSignature": [
+        3,
+        4
+      ],
+      "keySignature": -1,
+      "notes": 598,
+      "hasOriginal": false,
+      "sourceLabel": "进阶 · 中级 · 第3批 · Mutopia MIDI · 排版：Allen Garvin",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=61",
+      "license": "Public Domain · https://www.mutopiaproject.org/legal.html · 排版：Allen Garvin；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/intermediate-bach-bwv779.json"
+    },
+    {
+      "id": "intermediate-bach-bwv781",
+      "title": "G大调二部创意曲第10首 · Invention No.10 · BWV 781",
+      "composer": "Johann Sebastian Bach 巴赫",
+      "tempo": 172,
+      "timeSignature": [
+        9,
+        8
+      ],
+      "keySignature": 1,
+      "notes": 439,
+      "hasOriginal": false,
+      "sourceLabel": "进阶 · 中级 · 第3批 · Mutopia MIDI · 排版：Allen Garvin",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=62",
+      "license": "Public Domain · https://www.mutopiaproject.org/legal.html · 排版：Allen Garvin；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/intermediate-bach-bwv781.json"
+    },
+    {
+      "id": "intermediate-bach-bwv784",
+      "title": "a小调二部创意曲第13首 · Invention No.13 · BWV 784",
+      "composer": "Johann Sebastian Bach 巴赫",
+      "tempo": 100,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 0,
+      "notes": 564,
+      "hasOriginal": false,
+      "sourceLabel": "进阶 · 中级 · 第3批 · Mutopia MIDI · 排版：Allen Garvin",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=59",
+      "license": "Public Domain · https://www.mutopiaproject.org/legal.html · 排版：Allen Garvin；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/intermediate-bach-bwv784.json"
+    },
+    {
+      "id": "intermediate-bach-bwv785",
+      "title": "降B大调二部创意曲第14首 · Invention No.14 · BWV 785",
+      "composer": "Johann Sebastian Bach 巴赫",
+      "tempo": 65,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": -2,
+      "notes": 592,
+      "hasOriginal": false,
+      "sourceLabel": "进阶 · 中级 · 第3批 · Mutopia MIDI · 排版：Allen Garvin",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=72",
+      "license": "Public Domain · https://www.mutopiaproject.org/legal.html · 排版：Allen Garvin；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/intermediate-bach-bwv785.json"
+    },
+    {
+      "id": "intermediate-bach-bwv786",
+      "title": "b小调二部创意曲第15首 · Invention No.15 · BWV 786",
+      "composer": "Johann Sebastian Bach 巴赫",
+      "tempo": 105,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": 2,
+      "notes": 477,
+      "hasOriginal": false,
+      "sourceLabel": "进阶 · 中级 · 第3批 · Mutopia MIDI · 排版：Allen Garvin",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=68",
+      "license": "Public Domain · https://www.mutopiaproject.org/legal.html · 排版：Allen Garvin；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/intermediate-bach-bwv786.json"
+    },
+    {
+      "id": "intermediate-beethoven-op13-m2",
+      "title": "悲怆奏鸣曲 · 第二乐章 · Pathétique II · Op.13 · II",
+      "composer": "Ludwig van Beethoven 贝多芬",
+      "tempo": 36,
+      "timeSignature": [
+        2,
+        4
+      ],
+      "keySignature": -4,
+      "notes": 1629,
+      "hasOriginal": false,
+      "sourceLabel": "进阶 · 中级 · 第3批 · Mutopia MIDI · 排版：Chris Sawer",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=295",
+      "license": "Public Domain · https://www.mutopiaproject.org/legal.html · 排版：Chris Sawer；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/intermediate-beethoven-op13-m2.json"
+    },
+    {
+      "id": "intermediate-beethoven-op27-2-m1",
+      "title": "月光奏鸣曲 · 第一乐章 · Moonlight Sonata I · Op.27 No.2 · I",
+      "composer": "Ludwig van Beethoven 贝多芬",
+      "tempo": 60,
+      "timeSignature": [
+        2,
+        2
+      ],
+      "keySignature": 4,
+      "notes": 1142,
+      "hasOriginal": false,
+      "sourceLabel": "进阶 · 中级 · 第3批 · Mutopia MIDI · 排版：Stewart Holmes",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=276",
+      "license": "CC BY-SA 2.5 · https://creativecommons.org/licenses/by-sa/2.5/ · 排版：Stewart Holmes；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/intermediate-beethoven-op27-2-m1.json"
+    },
+    {
+      "id": "intermediate-beethoven-op49-1-m1",
+      "title": "第19号奏鸣曲 · 第一乐章 · Sonata No.19 I · Op.49 No.1 · I",
+      "composer": "Ludwig van Beethoven 贝多芬",
+      "tempo": 98,
+      "timeSignature": [
+        2,
+        4
+      ],
+      "keySignature": -2,
+      "notes": 1273,
+      "hasOriginal": false,
+      "sourceLabel": "进阶 · 中级 · 第3批 · Mutopia MIDI · 排版：Stelios Samelis",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=912",
+      "license": "Public Domain · https://www.mutopiaproject.org/legal.html · 排版：Stelios Samelis；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/intermediate-beethoven-op49-1-m1.json"
+    },
+    {
+      "id": "intermediate-beethoven-op49-1-m2",
+      "title": "第19号奏鸣曲 · 第二乐章 · Sonata No.19 II · Op.49 No.1 · II",
+      "composer": "Ludwig van Beethoven 贝多芬",
+      "tempo": 124,
+      "timeSignature": [
+        6,
+        8
+      ],
+      "keySignature": 1,
+      "notes": 2004,
+      "hasOriginal": false,
+      "sourceLabel": "进阶 · 中级 · 第3批 · Mutopia MIDI · 排版：Stelios Samelis",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=913",
+      "license": "Public Domain · https://www.mutopiaproject.org/legal.html · 排版：Stelios Samelis；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/intermediate-beethoven-op49-1-m2.json"
+    },
+    {
+      "id": "intermediate-beethoven-op49-2-m1",
+      "title": "第20号奏鸣曲 · 第一乐章 · Sonata No.20 I · Op.49 No.2 · I",
+      "composer": "Ludwig van Beethoven 贝多芬",
+      "tempo": 142,
+      "timeSignature": [
+        2,
+        2
+      ],
+      "keySignature": 1,
+      "notes": 1626,
+      "hasOriginal": false,
+      "sourceLabel": "进阶 · 中级 · 第3批 · Mutopia MIDI · 排版：Stelios Samelis",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=776",
+      "license": "Public Domain · https://www.mutopiaproject.org/legal.html · 排版：Stelios Samelis；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/intermediate-beethoven-op49-2-m1.json"
+    },
+    {
+      "id": "intermediate-beethoven-op49-2-m2",
+      "title": "第20号奏鸣曲 · 第二乐章 · Sonata No.20 II · Op.49 No.2 · II",
+      "composer": "Ludwig van Beethoven 贝多芬",
+      "tempo": 134,
+      "timeSignature": [
+        3,
+        4
+      ],
+      "keySignature": 1,
+      "notes": 1280,
+      "hasOriginal": false,
+      "sourceLabel": "进阶 · 中级 · 第3批 · Mutopia MIDI · 排版：Stelios Samelis",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=777",
+      "license": "Public Domain · https://www.mutopiaproject.org/legal.html · 排版：Stelios Samelis；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/intermediate-beethoven-op49-2-m2.json"
+    },
+    {
+      "id": "intermediate-beethoven-woo59",
+      "title": "致爱丽丝 · 完整曲 · Für Elise · WoO 59",
+      "composer": "Ludwig van Beethoven 贝多芬",
+      "tempo": 72,
+      "timeSignature": [
+        3,
+        8
+      ],
+      "keySignature": 0,
+      "notes": 905,
+      "hasOriginal": false,
+      "sourceLabel": "进阶 · 中级 · 第3批 · Mutopia MIDI · 排版：Stelios Samelis",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=931",
+      "license": "Public Domain · https://www.mutopiaproject.org/legal.html · 排版：Stelios Samelis；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/intermediate-beethoven-woo59.json"
+    },
+    {
+      "id": "intermediate-beethoven-woo82",
+      "title": "降E大调小步舞曲 · Minuet · WoO 82",
+      "composer": "Ludwig van Beethoven 贝多芬",
+      "tempo": 112,
+      "timeSignature": [
+        3,
+        4
+      ],
+      "keySignature": -3,
+      "notes": 1156,
+      "hasOriginal": false,
+      "sourceLabel": "进阶 · 中级 · 第3批 · Mutopia MIDI · 排版：Stelios Samelis",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=904",
+      "license": "Public Domain · https://www.mutopiaproject.org/legal.html · 排版：Stelios Samelis；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/intermediate-beethoven-woo82.json"
+    },
+    {
+      "id": "intermediate-chopin-op28-04",
+      "title": "e小调前奏曲 · Prelude No.4 · Op.28 No.4",
+      "composer": "Frédéric Chopin 肖邦",
+      "tempo": 48,
+      "timeSignature": [
+        2,
+        2
+      ],
+      "keySignature": 1,
+      "notes": 604,
+      "hasOriginal": false,
+      "sourceLabel": "进阶 · 中级 · 第3批 · Mutopia MIDI · 排版：Roland Goretzki",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=921",
+      "license": "Public Domain · https://www.mutopiaproject.org/legal.html · 排版：Roland Goretzki；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/intermediate-chopin-op28-04.json"
+    },
+    {
+      "id": "intermediate-chopin-op28-06",
+      "title": "b小调前奏曲 · Prelude No.6 · Op.28 No.6",
+      "composer": "Frédéric Chopin 肖邦",
+      "tempo": 45,
+      "timeSignature": [
+        3,
+        4
+      ],
+      "keySignature": 2,
+      "notes": 405,
+      "hasOriginal": false,
+      "sourceLabel": "进阶 · 中级 · 第3批 · Mutopia MIDI · 排版：Magnus Lewis-Smith",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=469",
+      "license": "Public Domain · https://www.mutopiaproject.org/legal.html · 排版：Magnus Lewis-Smith；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/intermediate-chopin-op28-06.json"
+    },
+    {
+      "id": "intermediate-chopin-op28-07",
+      "title": "A大调前奏曲 · Prelude No.7 · Op.28 No.7",
+      "composer": "Frédéric Chopin 肖邦",
+      "tempo": 120,
+      "timeSignature": [
+        3,
+        4
+      ],
+      "keySignature": 3,
+      "notes": 168,
+      "hasOriginal": false,
+      "sourceLabel": "进阶 · 中级 · 第3批 · Mutopia MIDI · 排版：Magnus Lewis-Smith",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=470",
+      "license": "Public Domain · https://www.mutopiaproject.org/legal.html · 排版：Magnus Lewis-Smith；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/intermediate-chopin-op28-07.json"
+    },
+    {
+      "id": "intermediate-chopin-op28-20",
+      "title": "c小调前奏曲 · Prelude No.20 · Op.28 No.20",
+      "composer": "Frédéric Chopin 肖邦",
+      "tempo": 42,
+      "timeSignature": [
+        4,
+        4
+      ],
+      "keySignature": -3,
+      "notes": 286,
+      "hasOriginal": false,
+      "sourceLabel": "进阶 · 中级 · 第3批 · Mutopia MIDI · 排版：Magnus Lewis-Smith",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=472",
+      "license": "Public Domain · https://www.mutopiaproject.org/legal.html · 排版：Magnus Lewis-Smith；琴伴从原 MIDI 转换数字谱，衍生数字谱沿用同一许可。",
+      "reviewRequired": false,
+      "file": "scores/intermediate-chopin-op28-20.json"
+    },
+    {
       "id": "mary-lamb",
       "title": "玛丽有只小羊羔",
       "composer": "传统童谣",
@@ -786,7 +1146,7 @@
   "deletedIds": [
     "full-score-croatian-skill-high-20261019"
   ],
-  "updatedAt": "2026-10-20T04:43:48.326Z",
+  "updatedAt": "2026-10-20T08:05:03.987Z",
   "superseded": {
     "full-score-croatian-skill-high-20261019": "full-score-croatian-reviewed-20261019"
   }

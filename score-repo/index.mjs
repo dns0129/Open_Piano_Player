@@ -30,16 +30,36 @@ import s26 from './scores/full-score-7e87728f60040aa1f7178325cebffac4e8ad.json' 
 import s27 from './scores/full-score-9241860ef6cad1e3c0f17e48ca0d30ffdbff.json' with { type: 'json' };
 import s28 from './scores/full-score-feb36563796cd9a9b7f118a809ad559fe4dc.json' with { type: 'json' };
 import s29 from './scores/golden-hour-netease-664959.json' with { type: 'json' };
-import s30 from './scores/reread-gpt61-high-v2-eutopia-staff.json' with { type: 'json' };
-import s31 from './scores/reread-gpt61-high-v2-golden.json' with { type: 'json' };
-import s32 from './scores/reread-gpt61-high-v2-ifyou.json' with { type: 'json' };
-import s33 from './scores/reread-gpt61-high-v2-merry.json' with { type: 'json' };
-import s34 from './scores/reread-gpt61-high-v2-sudi.json' with { type: 'json' };
-import s35 from './scores/score-mv906k5t.json' with { type: 'json' };
-import s36 from './scores/score-mv9096ep.json' with { type: 'json' };
-import s37 from './scores/score-mv90aval.json' with { type: 'json' };
-import s38 from './scores/score-mv9j4u62.json' with { type: 'json' };
-import s39 from './scores/score-mv9mxb7i.json' with { type: 'json' };
+import s30 from './scores/intermediate-bach-bwv772.json' with { type: 'json' };
+import s31 from './scores/intermediate-bach-bwv775.json' with { type: 'json' };
+import s32 from './scores/intermediate-bach-bwv777.json' with { type: 'json' };
+import s33 from './scores/intermediate-bach-bwv779.json' with { type: 'json' };
+import s34 from './scores/intermediate-bach-bwv781.json' with { type: 'json' };
+import s35 from './scores/intermediate-bach-bwv784.json' with { type: 'json' };
+import s36 from './scores/intermediate-bach-bwv785.json' with { type: 'json' };
+import s37 from './scores/intermediate-bach-bwv786.json' with { type: 'json' };
+import s38 from './scores/intermediate-beethoven-op13-m2.json' with { type: 'json' };
+import s39 from './scores/intermediate-beethoven-op27-2-m1.json' with { type: 'json' };
+import s40 from './scores/intermediate-beethoven-op49-1-m1.json' with { type: 'json' };
+import s41 from './scores/intermediate-beethoven-op49-1-m2.json' with { type: 'json' };
+import s42 from './scores/intermediate-beethoven-op49-2-m1.json' with { type: 'json' };
+import s43 from './scores/intermediate-beethoven-op49-2-m2.json' with { type: 'json' };
+import s44 from './scores/intermediate-beethoven-woo59.json' with { type: 'json' };
+import s45 from './scores/intermediate-beethoven-woo82.json' with { type: 'json' };
+import s46 from './scores/intermediate-chopin-op28-04.json' with { type: 'json' };
+import s47 from './scores/intermediate-chopin-op28-06.json' with { type: 'json' };
+import s48 from './scores/intermediate-chopin-op28-07.json' with { type: 'json' };
+import s49 from './scores/intermediate-chopin-op28-20.json' with { type: 'json' };
+import s50 from './scores/reread-gpt61-high-v2-eutopia-staff.json' with { type: 'json' };
+import s51 from './scores/reread-gpt61-high-v2-golden.json' with { type: 'json' };
+import s52 from './scores/reread-gpt61-high-v2-ifyou.json' with { type: 'json' };
+import s53 from './scores/reread-gpt61-high-v2-merry.json' with { type: 'json' };
+import s54 from './scores/reread-gpt61-high-v2-sudi.json' with { type: 'json' };
+import s55 from './scores/score-mv906k5t.json' with { type: 'json' };
+import s56 from './scores/score-mv9096ep.json' with { type: 'json' };
+import s57 from './scores/score-mv90aval.json' with { type: 'json' };
+import s58 from './scores/score-mv9j4u62.json' with { type: 'json' };
+import s59 from './scores/score-mv9mxb7i.json' with { type: 'json' };
 
 export const repositoryScores = [
   { ...validateScore(s0), description: "初级 · Op.100 No.1 · Mutopia 原始 MIDI 导入" },
@@ -72,14 +92,34 @@ export const repositoryScores = [
   { ...validateScore(s27), description: "本地保存版本；DeepSeek 识别后使用此前已审核 GPT high 谱稿校正，不代表 DeepSeek 原始识别结果。" },
   { ...validateScore(s28), description: "从本地曲库同步；保留原有来源及待校对标记。" },
   { ...validateScore(s29), description: "网易云9页55小节逐音转写 · E 大调 12/8 · 待对照原谱校对" },
-  { ...validateScore(s30), description: "accidentals-v2-20261018 · 4页16行完整新识别 · 复读与原图疑点校核完成，待人工逐音复核" },
-  { ...validateScore(s31), description: "accidentals-v2-20261018 · 9页45行完整新识别 · 复读与原图疑点校核完成，待人工逐音复核" },
-  { ...validateScore(s32), description: "accidentals-v2-20261018 · 6页23行完整新识别 · 复读与原图疑点校核完成，待人工逐音复核" },
-  { ...validateScore(s33), description: "accidentals-v2-20261018 · 6页34行完整新识别 · 复读与原图疑点校核完成，待人工逐音复核" },
-  { ...validateScore(s34), description: "accidentals-v2-20261018 · 5页25行完整新识别 · 复读与原图疑点校核完成，待人工逐音复核" },
-  { ...validateScore(s35), description: "从本地曲库同步；保留原有来源及待校对标记。" },
-  { ...validateScore(s36), description: "从本地曲库同步；保留原有来源及待校对标记。" },
-  { ...validateScore(s37), description: "从本地曲库同步；保留原有来源及待校对标记。" },
-  { ...validateScore(s38), description: "从本地曲库同步；保留原有来源及待校对标记。" },
-  { ...validateScore(s39), description: "从本地曲库同步；保留原有来源及待校对标记。" },
+  { ...validateScore(s30), description: "进阶 · 中级 · BWV 772 · Mutopia 原始 MIDI 导入" },
+  { ...validateScore(s31), description: "进阶 · 中级 · BWV 775 · Mutopia 原始 MIDI 导入" },
+  { ...validateScore(s32), description: "进阶 · 中级 · BWV 777 · Mutopia 原始 MIDI 导入" },
+  { ...validateScore(s33), description: "进阶 · 中级 · BWV 779 · Mutopia 原始 MIDI 导入" },
+  { ...validateScore(s34), description: "进阶 · 中级 · BWV 781 · Mutopia 原始 MIDI 导入" },
+  { ...validateScore(s35), description: "进阶 · 中级 · BWV 784 · Mutopia 原始 MIDI 导入" },
+  { ...validateScore(s36), description: "进阶 · 中级 · BWV 785 · Mutopia 原始 MIDI 导入" },
+  { ...validateScore(s37), description: "进阶 · 中级 · BWV 786 · Mutopia 原始 MIDI 导入" },
+  { ...validateScore(s38), description: "进阶 · 中级 · Op.13 · II · Mutopia 原始 MIDI 导入" },
+  { ...validateScore(s39), description: "进阶 · 中级 · Op.27 No.2 · I · Mutopia 原始 MIDI 导入" },
+  { ...validateScore(s40), description: "进阶 · 中级 · Op.49 No.1 · I · Mutopia 原始 MIDI 导入" },
+  { ...validateScore(s41), description: "进阶 · 中级 · Op.49 No.1 · II · Mutopia 原始 MIDI 导入" },
+  { ...validateScore(s42), description: "进阶 · 中级 · Op.49 No.2 · I · Mutopia 原始 MIDI 导入" },
+  { ...validateScore(s43), description: "进阶 · 中级 · Op.49 No.2 · II · Mutopia 原始 MIDI 导入" },
+  { ...validateScore(s44), description: "进阶 · 中级 · WoO 59 · Mutopia 原始 MIDI 导入" },
+  { ...validateScore(s45), description: "进阶 · 中级 · WoO 82 · Mutopia 原始 MIDI 导入" },
+  { ...validateScore(s46), description: "进阶 · 中级 · Op.28 No.4 · Mutopia 原始 MIDI 导入" },
+  { ...validateScore(s47), description: "进阶 · 中级 · Op.28 No.6 · Mutopia 原始 MIDI 导入" },
+  { ...validateScore(s48), description: "进阶 · 中级 · Op.28 No.7 · Mutopia 原始 MIDI 导入" },
+  { ...validateScore(s49), description: "进阶 · 中级 · Op.28 No.20 · Mutopia 原始 MIDI 导入" },
+  { ...validateScore(s50), description: "accidentals-v2-20261018 · 4页16行完整新识别 · 复读与原图疑点校核完成，待人工逐音复核" },
+  { ...validateScore(s51), description: "accidentals-v2-20261018 · 9页45行完整新识别 · 复读与原图疑点校核完成，待人工逐音复核" },
+  { ...validateScore(s52), description: "accidentals-v2-20261018 · 6页23行完整新识别 · 复读与原图疑点校核完成，待人工逐音复核" },
+  { ...validateScore(s53), description: "accidentals-v2-20261018 · 6页34行完整新识别 · 复读与原图疑点校核完成，待人工逐音复核" },
+  { ...validateScore(s54), description: "accidentals-v2-20261018 · 5页25行完整新识别 · 复读与原图疑点校核完成，待人工逐音复核" },
+  { ...validateScore(s55), description: "从本地曲库同步；保留原有来源及待校对标记。" },
+  { ...validateScore(s56), description: "从本地曲库同步；保留原有来源及待校对标记。" },
+  { ...validateScore(s57), description: "从本地曲库同步；保留原有来源及待校对标记。" },
+  { ...validateScore(s58), description: "从本地曲库同步；保留原有来源及待校对标记。" },
+  { ...validateScore(s59), description: "从本地曲库同步；保留原有来源及待校对标记。" },
 ];

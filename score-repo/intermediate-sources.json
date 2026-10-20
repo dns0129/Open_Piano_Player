@@ -1,0 +1,824 @@
+{
+  "version": 1,
+  "provider": "Mutopia Project",
+  "retrievedAt": "2026-10-20",
+  "conversion": "Original MIDI to Qinban v2; hand and staff mapping checked against original source; written spelling, voices, rests and tie heads inferred. Complete works or explicitly named movements; not a facsimile of the PDF.",
+  "scores": [
+    {
+      "id": "intermediate-bach-bwv772",
+      "title": "C大调二部创意曲第1首 · Invention No.1",
+      "opus": "BWV 772",
+      "level": "进阶 · 中级",
+      "batch": 3,
+      "mutopiaId": 40,
+      "composer": "Johann Sebastian Bach 巴赫",
+      "maintainer": "jeff covey",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=40",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/BachJS/BWV772/bach-invention-01/bach-invention-01.mid",
+          "path": "public/intermediate-sources/intermediate-bach-bwv772/original.mid",
+          "bytes": 3929,
+          "sha256": "9b9a6213941932d5171d9102d85912c3c1c61f8176ce02005cd2198881823c2d"
+        },
+        "ly": {
+          "url": "https://www.mutopiaproject.org/ftp/BachJS/BWV772/bach-invention-01/bach-invention-01.ly",
+          "path": "public/intermediate-sources/intermediate-bach-bwv772/original.ly",
+          "bytes": 4931,
+          "sha256": "3c01302f70efd1dd6f43becaf19b9b2aac49e25b3e89666e3e55bc576c6cd55d"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/BachJS/BWV772/bach-invention-01/bach-invention-01-a4.pdf",
+          "path": "public/intermediate-sources/intermediate-bach-bwv772/original.pdf",
+          "bytes": 66384,
+          "sha256": "065368cc0357b7fb0666c179be47d9829bb0fb785ead2592b41d2fc8a2d28018"
+        }
+      },
+      "trackHands": [
+        "right",
+        "left"
+      ],
+      "handMappingNote": "Checked original LilyPond staff order: one/up/rh is the upper staff; two/down/lh is the lower staff. Performance hands follow those staves.",
+      "keySignature": 0,
+      "mode": "major"
+    },
+    {
+      "id": "intermediate-bach-bwv775",
+      "title": "d小调二部创意曲第4首 · Invention No.4",
+      "opus": "BWV 775",
+      "level": "进阶 · 中级",
+      "batch": 3,
+      "mutopiaId": 67,
+      "composer": "Johann Sebastian Bach 巴赫",
+      "maintainer": "Allen Garvin",
+      "license": "Public Domain",
+      "licenseUrl": "https://www.mutopiaproject.org/legal.html",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=67",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/BachJS/BWV775/bach-invention-04/bach-invention-04.mid",
+          "path": "public/intermediate-sources/intermediate-bach-bwv775/original.mid",
+          "bytes": 3793,
+          "sha256": "5ecc06eb04d56ea40bd4db64bfd49ac9bff523e46d134912fa5bd07aea1db1c7"
+        },
+        "ly": {
+          "url": "https://www.mutopiaproject.org/ftp/BachJS/BWV775/bach-invention-04/bach-invention-04.ly",
+          "path": "public/intermediate-sources/intermediate-bach-bwv775/original.ly",
+          "bytes": 5880,
+          "sha256": "69d93bdf27f257b2699f352c582e1b004a0a0d48f60b95065dad6cedc4a0538b"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/BachJS/BWV775/bach-invention-04/bach-invention-04-a4.pdf",
+          "path": "public/intermediate-sources/intermediate-bach-bwv775/original.pdf",
+          "bytes": 64441,
+          "sha256": "5e71399f764ffdca2e7df28ffea92ad092221077eb1369e63d2208e7150e668e"
+        }
+      },
+      "trackHands": [
+        "right",
+        "left"
+      ],
+      "handMappingNote": "Checked original LilyPond staff order: one/up/rh is the upper staff; two/down/lh is the lower staff. Performance hands follow those staves.",
+      "keySignature": -1,
+      "mode": "minor"
+    },
+    {
+      "id": "intermediate-bach-bwv777",
+      "title": "E大调二部创意曲第6首 · Invention No.6",
+      "opus": "BWV 777",
+      "level": "进阶 · 中级",
+      "batch": 3,
+      "mutopiaId": 159,
+      "composer": "Johann Sebastian Bach 巴赫",
+      "maintainer": "jeff covey",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=159",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/BachJS/BWV777/bach-invention-06/bach-invention-06.mid",
+          "path": "public/intermediate-sources/intermediate-bach-bwv777/original.mid",
+          "bytes": 4774,
+          "sha256": "457fcba53879cd3902d421d5f37383b8fdd848ae7888597981f5f257a962b945"
+        },
+        "ly": {
+          "url": "https://www.mutopiaproject.org/ftp/BachJS/BWV777/bach-invention-06/bach-invention-06.ly",
+          "path": "public/intermediate-sources/intermediate-bach-bwv777/original.ly",
+          "bytes": 11955,
+          "sha256": "3c974260a4f38c98bffe9a7e0db49cf215123a24e496d4cf4901d5afc5466651"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/BachJS/BWV777/bach-invention-06/bach-invention-06-a4.pdf",
+          "path": "public/intermediate-sources/intermediate-bach-bwv777/original.pdf",
+          "bytes": 80743,
+          "sha256": "4ab6bb20221c6bb8eed481b6c3beb620648a8fd107150c81e31d64d1372f562e"
+        }
+      },
+      "trackHands": [
+        "right",
+        "left"
+      ],
+      "handMappingNote": "Checked original LilyPond staff order: one/up/rh is the upper staff; two/down/lh is the lower staff. Performance hands follow those staves.",
+      "keySignature": 4,
+      "mode": "major"
+    },
+    {
+      "id": "intermediate-bach-bwv779",
+      "title": "F大调二部创意曲第8首 · Invention No.8",
+      "opus": "BWV 779",
+      "level": "进阶 · 中级",
+      "batch": 3,
+      "mutopiaId": 61,
+      "composer": "Johann Sebastian Bach 巴赫",
+      "maintainer": "Allen Garvin",
+      "license": "Public Domain",
+      "licenseUrl": "https://www.mutopiaproject.org/legal.html",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=61",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/BachJS/BWV779/bach-invention-08/bach-invention-08.mid",
+          "path": "public/intermediate-sources/intermediate-bach-bwv779/original.mid",
+          "bytes": 5113,
+          "sha256": "07238719180171f76283756405ee43a0319226e869283bf29affb9e4c360e6f8"
+        },
+        "ly": {
+          "url": "https://www.mutopiaproject.org/ftp/BachJS/BWV779/bach-invention-08/bach-invention-08.ly",
+          "path": "public/intermediate-sources/intermediate-bach-bwv779/original.ly",
+          "bytes": 5950,
+          "sha256": "ddc634821a618e9a5e9ffcefbd96005bd02bd1f12573e2fefc4e6e6653d83ebe"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/BachJS/BWV779/bach-invention-08/bach-invention-08-a4.pdf",
+          "path": "public/intermediate-sources/intermediate-bach-bwv779/original.pdf",
+          "bytes": 68486,
+          "sha256": "9a0dd599cdea0e39ff8bff9192173a758c979034d3f7da777f4a099ee644b6ce"
+        }
+      },
+      "trackHands": [
+        "right",
+        "left"
+      ],
+      "handMappingNote": "Checked original LilyPond staff order: one/up/rh is the upper staff; two/down/lh is the lower staff. Performance hands follow those staves.",
+      "keySignature": -1,
+      "mode": "major"
+    },
+    {
+      "id": "intermediate-bach-bwv781",
+      "title": "G大调二部创意曲第10首 · Invention No.10",
+      "opus": "BWV 781",
+      "level": "进阶 · 中级",
+      "batch": 3,
+      "mutopiaId": 62,
+      "composer": "Johann Sebastian Bach 巴赫",
+      "maintainer": "Allen Garvin",
+      "license": "Public Domain",
+      "licenseUrl": "https://www.mutopiaproject.org/legal.html",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=62",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/BachJS/BWV781/bach-invention-10/bach-invention-10.mid",
+          "path": "public/intermediate-sources/intermediate-bach-bwv781/original.mid",
+          "bytes": 4147,
+          "sha256": "64eed7d404ddbf668bef6a7e1d227390081e13731b9f2bf6c07792d6562eb822"
+        },
+        "ly": {
+          "url": "https://www.mutopiaproject.org/ftp/BachJS/BWV781/bach-invention-10/bach-invention-10.ly",
+          "path": "public/intermediate-sources/intermediate-bach-bwv781/original.ly",
+          "bytes": 6053,
+          "sha256": "233799d59551acc87f19d6c999b82e0bfb0c00b4cf04309e07a5ea44b3cb8329"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/BachJS/BWV781/bach-invention-10/bach-invention-10-a4.pdf",
+          "path": "public/intermediate-sources/intermediate-bach-bwv781/original.pdf",
+          "bytes": 62798,
+          "sha256": "350b3f29d284b9a6c4aa08b84a86d65896ce10efb2e13563c7385e622d386f12"
+        }
+      },
+      "trackHands": [
+        "right",
+        "left"
+      ],
+      "handMappingNote": "Checked original LilyPond staff order: one/up/rh is the upper staff; two/down/lh is the lower staff. Performance hands follow those staves.",
+      "keySignature": 1,
+      "mode": "major"
+    },
+    {
+      "id": "intermediate-bach-bwv784",
+      "title": "a小调二部创意曲第13首 · Invention No.13",
+      "opus": "BWV 784",
+      "level": "进阶 · 中级",
+      "batch": 3,
+      "mutopiaId": 59,
+      "composer": "Johann Sebastian Bach 巴赫",
+      "maintainer": "Allen Garvin",
+      "license": "Public Domain",
+      "licenseUrl": "https://www.mutopiaproject.org/legal.html",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=59",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/BachJS/BWV784/bach-invention-13/bach-invention-13.mid",
+          "path": "public/intermediate-sources/intermediate-bach-bwv784/original.mid",
+          "bytes": 4863,
+          "sha256": "e5b4dd4790ee2f2fdadca75630790a373363e1f6cb4558838e34bbad907364f1"
+        },
+        "ly": {
+          "url": "https://www.mutopiaproject.org/ftp/BachJS/BWV784/bach-invention-13/bach-invention-13.ly",
+          "path": "public/intermediate-sources/intermediate-bach-bwv784/original.ly",
+          "bytes": 5842,
+          "sha256": "dabd266006e9dd5ae8584daa1e00ac08460ee8ac90cae6d0472f620d2eaeb7b5"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/BachJS/BWV784/bach-invention-13/bach-invention-13-a4.pdf",
+          "path": "public/intermediate-sources/intermediate-bach-bwv784/original.pdf",
+          "bytes": 69161,
+          "sha256": "d263a0db7f29e0a4c95110d53c54ba1a25a77f39e13a56b91cb998598cebf571"
+        }
+      },
+      "trackHands": [
+        "right",
+        "left"
+      ],
+      "handMappingNote": "Checked original LilyPond staff order: one/up/rh is the upper staff; two/down/lh is the lower staff. Performance hands follow those staves.",
+      "keySignature": 0,
+      "mode": "minor"
+    },
+    {
+      "id": "intermediate-bach-bwv785",
+      "title": "降B大调二部创意曲第14首 · Invention No.14",
+      "opus": "BWV 785",
+      "level": "进阶 · 中级",
+      "batch": 3,
+      "mutopiaId": 72,
+      "composer": "Johann Sebastian Bach 巴赫",
+      "maintainer": "Allen Garvin",
+      "license": "Public Domain",
+      "licenseUrl": "https://www.mutopiaproject.org/legal.html",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=72",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/BachJS/BWV785/bach-invention-14/bach-invention-14.mid",
+          "path": "public/intermediate-sources/intermediate-bach-bwv785/original.mid",
+          "bytes": 5015,
+          "sha256": "8ef3606dc2b71c51c7c0e4438080ed641963e1a8e69d7b82aba42a04ebc5e9b9"
+        },
+        "ly": {
+          "url": "https://www.mutopiaproject.org/ftp/BachJS/BWV785/bach-invention-14/bach-invention-14.ly",
+          "path": "public/intermediate-sources/intermediate-bach-bwv785/original.ly",
+          "bytes": 6404,
+          "sha256": "d3a03a1dafa1998c68c1fe389e92bcf8a5d711639b15e9f777af83551c4ae48e"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/BachJS/BWV785/bach-invention-14/bach-invention-14-a4.pdf",
+          "path": "public/intermediate-sources/intermediate-bach-bwv785/original.pdf",
+          "bytes": 69303,
+          "sha256": "159211c9fe3858d6adc0996fb6c0a567ec15c27f01ecfd34041486d4af156ad7"
+        }
+      },
+      "trackHands": [
+        "right",
+        "left"
+      ],
+      "handMappingNote": "Checked original LilyPond staff order: one/up/rh is the upper staff; two/down/lh is the lower staff. Performance hands follow those staves.",
+      "keySignature": -2,
+      "mode": "major"
+    },
+    {
+      "id": "intermediate-bach-bwv786",
+      "title": "b小调二部创意曲第15首 · Invention No.15",
+      "opus": "BWV 786",
+      "level": "进阶 · 中级",
+      "batch": 3,
+      "mutopiaId": 68,
+      "composer": "Johann Sebastian Bach 巴赫",
+      "maintainer": "Allen Garvin",
+      "license": "Public Domain",
+      "licenseUrl": "https://www.mutopiaproject.org/legal.html",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=68",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/BachJS/BWV786/bach-invention-15/bach-invention-15.mid",
+          "path": "public/intermediate-sources/intermediate-bach-bwv786/original.mid",
+          "bytes": 4152,
+          "sha256": "4b629b29d815d9f253600836a2801444780f20718b74892c502a044da6f85a88"
+        },
+        "ly": {
+          "url": "https://www.mutopiaproject.org/ftp/BachJS/BWV786/bach-invention-15/bach-invention-15.ly",
+          "path": "public/intermediate-sources/intermediate-bach-bwv786/original.ly",
+          "bytes": 4377,
+          "sha256": "7ae422f704d35a84dddec0e567264e310fb2d37b26900dbb68b9808aff971456"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/BachJS/BWV786/bach-invention-15/bach-invention-15-a4.pdf",
+          "path": "public/intermediate-sources/intermediate-bach-bwv786/original.pdf",
+          "bytes": 65975,
+          "sha256": "3fdf7b44076b3306f41154da2f0920f15eb167c9379c617190bb9960d94fe1c4"
+        }
+      },
+      "trackHands": [
+        "right",
+        "left"
+      ],
+      "handMappingNote": "Checked original LilyPond staff order: one/up/rh is the upper staff; two/down/lh is the lower staff. Performance hands follow those staves.",
+      "keySignature": 2,
+      "mode": "minor"
+    },
+    {
+      "id": "intermediate-beethoven-woo59",
+      "title": "致爱丽丝 · 完整曲 · Für Elise",
+      "opus": "WoO 59",
+      "level": "进阶 · 中级",
+      "batch": 3,
+      "mutopiaId": 931,
+      "composer": "Ludwig van Beethoven 贝多芬",
+      "maintainer": "Stelios Samelis",
+      "license": "Public Domain",
+      "licenseUrl": "https://www.mutopiaproject.org/legal.html",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=931",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/BeethovenLv/WoO59/fur_Elise_WoO59/fur_Elise_WoO59.mid",
+          "path": "public/intermediate-sources/intermediate-beethoven-woo59/original.mid",
+          "bytes": 7590,
+          "sha256": "1c12c21c7bbf4cf163896732672648a69d497636059837abd153c71abe50215a"
+        },
+        "ly": {
+          "url": "https://www.mutopiaproject.org/ftp/BeethovenLv/WoO59/fur_Elise_WoO59/fur_Elise_WoO59.ly",
+          "path": "public/intermediate-sources/intermediate-beethoven-woo59/original.ly",
+          "bytes": 8800,
+          "sha256": "828a7bd1b42e441fe1b0eb0389ba46f1502dab28bbe488389e635fb446ba7a67"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/BeethovenLv/WoO59/fur_Elise_WoO59/fur_Elise_WoO59-a4.pdf",
+          "path": "public/intermediate-sources/intermediate-beethoven-woo59/original.pdf",
+          "bytes": 222242,
+          "sha256": "0641395b4e97811bb89751352719bb9994cacd4f13da7b9429fe65716dfdc328"
+        }
+      },
+      "trackHands": [
+        "right",
+        "left"
+      ],
+      "handMappingNote": "Checked original LilyPond staff order: one/up/rh is the upper staff; two/down/lh is the lower staff. Performance hands follow those staves.",
+      "keySignature": 0,
+      "mode": "minor",
+      "pickupBeats": 0.5
+    },
+    {
+      "id": "intermediate-beethoven-op27-2-m1",
+      "title": "月光奏鸣曲 · 第一乐章 · Moonlight Sonata I",
+      "opus": "Op.27 No.2 · I",
+      "level": "进阶 · 中级",
+      "batch": 3,
+      "mutopiaId": 276,
+      "composer": "Ludwig van Beethoven 贝多芬",
+      "maintainer": "Stewart Holmes",
+      "license": "CC BY-SA 2.5",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.5/",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=276",
+      "files": {
+        "midiZip": {
+          "url": "https://www.mutopiaproject.org/ftp/BeethovenLv/O27/moonlight/moonlight-mids.zip",
+          "path": "public/intermediate-sources/intermediate-beethoven-op27-2-m1/original-midi.zip",
+          "bytes": 9522,
+          "sha256": "94915b176f0b999919a6cd1025a45ec8dd0a454dab33b2b332c5026291ea91f5"
+        },
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/BeethovenLv/O27/moonlight/moonlight-mids.zip",
+          "path": "public/intermediate-sources/intermediate-beethoven-op27-2-m1/original.mid",
+          "archiveMember": "moonlight1.mid",
+          "bytes": 9491,
+          "sha256": "a34e969c4957f0e9e98fc9ff0278cc1284931bdae6d463469797faa2b73a9c5c"
+        },
+        "sourceZip": {
+          "url": "https://www.mutopiaproject.org/ftp/BeethovenLv/O27/moonlight/moonlight-lys.zip",
+          "path": "public/intermediate-sources/intermediate-beethoven-op27-2-m1/original-source.zip",
+          "bytes": 37285,
+          "sha256": "3863df81f0a3141f3ea7dd901efd9929f90e32c577377b99a7f7ff81b6b33990"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/BeethovenLv/O27/moonlight/moonlight-a4.pdf",
+          "path": "public/intermediate-sources/intermediate-beethoven-op27-2-m1/original.pdf",
+          "bytes": 441248,
+          "sha256": "e62c8888eccf8071e4193e95e5a646fb74ea513d638dd34605bb5d74142a4fb8"
+        }
+      },
+      "scope": "第一乐章；附带的原始 PDF 与源代码压缩包包含整部奏鸣曲。",
+      "trackHands": [
+        "right",
+        "left"
+      ],
+      "handMappingNote": "Checked original LilyPond staff order: one/up/rh is the upper staff; two/down/lh is the lower staff. Performance hands follow those staves.",
+      "keySignature": 4,
+      "mode": "minor"
+    },
+    {
+      "id": "intermediate-beethoven-op13-m2",
+      "title": "悲怆奏鸣曲 · 第二乐章 · Pathétique II",
+      "opus": "Op.13 · II",
+      "level": "进阶 · 中级",
+      "batch": 3,
+      "mutopiaId": 295,
+      "composer": "Ludwig van Beethoven 贝多芬",
+      "maintainer": "Chris Sawer",
+      "license": "Public Domain",
+      "licenseUrl": "https://www.mutopiaproject.org/legal.html",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=295",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/BeethovenLv/O13/pathetique-2/pathetique-2.mid",
+          "path": "public/intermediate-sources/intermediate-beethoven-op13-m2/original.mid",
+          "bytes": 13382,
+          "sha256": "92c685ca98001473bcc21fa98110cc125ab489c1bf49be185e062d204a268492"
+        },
+        "ly": {
+          "url": "https://www.mutopiaproject.org/ftp/BeethovenLv/O13/pathetique-2/pathetique-2.ly",
+          "path": "public/intermediate-sources/intermediate-beethoven-op13-m2/original.ly",
+          "bytes": 17471,
+          "sha256": "7d7c233230bc558d6275119b1ca9af1b4f5ebe762e29855698fc1e08032acc7a"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/BeethovenLv/O13/pathetique-2/pathetique-2-a4.pdf",
+          "path": "public/intermediate-sources/intermediate-beethoven-op13-m2/original.pdf",
+          "bytes": 152742,
+          "sha256": "e06ebea3d4935ac18bf9c50f433f6f4fe0ca5cd9b29752a8b8138dd2780c97d6"
+        }
+      },
+      "trackHands": [
+        "right",
+        "left"
+      ],
+      "handMappingNote": "Checked original LilyPond staff order: one/up/rh is the upper staff; two/down/lh is the lower staff. Performance hands follow those staves.",
+      "keySignature": -4,
+      "mode": "major"
+    },
+    {
+      "id": "intermediate-beethoven-op49-1-m1",
+      "title": "第19号奏鸣曲 · 第一乐章 · Sonata No.19 I",
+      "opus": "Op.49 No.1 · I",
+      "level": "进阶 · 中级",
+      "batch": 3,
+      "mutopiaId": 912,
+      "composer": "Ludwig van Beethoven 贝多芬",
+      "maintainer": "Stelios Samelis",
+      "license": "Public Domain",
+      "licenseUrl": "https://www.mutopiaproject.org/legal.html",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=912",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/BeethovenLv/O49/LVB_Sonate_49no1_1/LVB_Sonate_49no1_1.mid",
+          "path": "public/intermediate-sources/intermediate-beethoven-op49-1-m1/original.mid",
+          "bytes": 10976,
+          "sha256": "ba6c0d49597a2d3d7f883448b9a8debce65db19f5e36922286c011bed22783ea"
+        },
+        "ly": {
+          "url": "https://www.mutopiaproject.org/ftp/BeethovenLv/O49/LVB_Sonate_49no1_1/LVB_Sonate_49no1_1.ly",
+          "path": "public/intermediate-sources/intermediate-beethoven-op49-1-m1/original.ly",
+          "bytes": 9202,
+          "sha256": "6d621bcddc86087d03fabba3b501a219227ee63667a553fd7e7263c091836a68"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/BeethovenLv/O49/LVB_Sonate_49no1_1/LVB_Sonate_49no1_1-a4.pdf",
+          "path": "public/intermediate-sources/intermediate-beethoven-op49-1-m1/original.pdf",
+          "bytes": 133295,
+          "sha256": "55710529b193ba1804b288085f441a100c47b9716e7dd73bd3546f6f04aadea2"
+        }
+      },
+      "trackHands": [
+        "right",
+        "left"
+      ],
+      "handMappingNote": "Checked original LilyPond staff order: one/up/rh is the upper staff; two/down/lh is the lower staff. Performance hands follow those staves.",
+      "keySignature": -2,
+      "mode": "minor",
+      "pickupBeats": 0.5
+    },
+    {
+      "id": "intermediate-beethoven-op49-1-m2",
+      "title": "第19号奏鸣曲 · 第二乐章 · Sonata No.19 II",
+      "opus": "Op.49 No.1 · II",
+      "level": "进阶 · 中级",
+      "batch": 3,
+      "mutopiaId": 913,
+      "composer": "Ludwig van Beethoven 贝多芬",
+      "maintainer": "Stelios Samelis",
+      "license": "Public Domain",
+      "licenseUrl": "https://www.mutopiaproject.org/legal.html",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=913",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/BeethovenLv/O49/LVB_Sonate_49no1_2/LVB_Sonate_49no1_2.mid",
+          "path": "public/intermediate-sources/intermediate-beethoven-op49-1-m2/original.mid",
+          "bytes": 17988,
+          "sha256": "d1ed7e7264cadc84cd32c25eb3cc12063b51f5b2e3ddbf8da35b86dce216082f"
+        },
+        "ly": {
+          "url": "https://www.mutopiaproject.org/ftp/BeethovenLv/O49/LVB_Sonate_49no1_2/LVB_Sonate_49no1_2.ly",
+          "path": "public/intermediate-sources/intermediate-beethoven-op49-1-m2/original.ly",
+          "bytes": 15534,
+          "sha256": "a93127bde29e186876902cf696ecac7f6c5096308f3127fb229e872ef8d62625"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/BeethovenLv/O49/LVB_Sonate_49no1_2/LVB_Sonate_49no1_2-a4.pdf",
+          "path": "public/intermediate-sources/intermediate-beethoven-op49-1-m2/original.pdf",
+          "bytes": 166269,
+          "sha256": "78eca1f1628382b0f989c53de1a059f508888a1d97fe4cd8501adb9a96b16587"
+        }
+      },
+      "trackHands": [
+        "right",
+        "left"
+      ],
+      "handMappingNote": "Checked original LilyPond staff order: one/up/rh is the upper staff; two/down/lh is the lower staff. Performance hands follow those staves.",
+      "keySignature": 1,
+      "mode": "major",
+      "pickupBeats": 2
+    },
+    {
+      "id": "intermediate-beethoven-op49-2-m1",
+      "title": "第20号奏鸣曲 · 第一乐章 · Sonata No.20 I",
+      "opus": "Op.49 No.2 · I",
+      "level": "进阶 · 中级",
+      "batch": 3,
+      "mutopiaId": 776,
+      "composer": "Ludwig van Beethoven 贝多芬",
+      "maintainer": "Stelios Samelis",
+      "license": "Public Domain",
+      "licenseUrl": "https://www.mutopiaproject.org/legal.html",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=776",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/BeethovenLv/O49/LVB_Sonate_49no2_1/LVB_Sonate_49no2_1.mid",
+          "path": "public/intermediate-sources/intermediate-beethoven-op49-2-m1/original.mid",
+          "bytes": 14953,
+          "sha256": "02cd2ff58d6a98c15a6fa825bca2c5538294215ce3fe5815efe42fc864aa0670"
+        },
+        "ly": {
+          "url": "https://www.mutopiaproject.org/ftp/BeethovenLv/O49/LVB_Sonate_49no2_1/LVB_Sonate_49no2_1.ly",
+          "path": "public/intermediate-sources/intermediate-beethoven-op49-2-m1/original.ly",
+          "bytes": 11561,
+          "sha256": "dac4c1622b3927576c22ea2c97c35df04e284dc6aab0bed96c702d4a1b96c321"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/BeethovenLv/O49/LVB_Sonate_49no2_1/LVB_Sonate_49no2_1-a4.pdf",
+          "path": "public/intermediate-sources/intermediate-beethoven-op49-2-m1/original.pdf",
+          "bytes": 138038,
+          "sha256": "55b5a0b4676abb01ca50f258f19170ab1492023d5e5f19af12230e39aeab089f"
+        }
+      },
+      "trackHands": [
+        "right",
+        "left"
+      ],
+      "handMappingNote": "Checked original LilyPond staff order: one/up/rh is the upper staff; two/down/lh is the lower staff. Performance hands follow those staves.",
+      "keySignature": 1,
+      "mode": "major"
+    },
+    {
+      "id": "intermediate-beethoven-op49-2-m2",
+      "title": "第20号奏鸣曲 · 第二乐章 · Sonata No.20 II",
+      "opus": "Op.49 No.2 · II",
+      "level": "进阶 · 中级",
+      "batch": 3,
+      "mutopiaId": 777,
+      "composer": "Ludwig van Beethoven 贝多芬",
+      "maintainer": "Stelios Samelis",
+      "license": "Public Domain",
+      "licenseUrl": "https://www.mutopiaproject.org/legal.html",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=777",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/BeethovenLv/O49/LVB_Sonate_49no2_2/LVB_Sonate_49no2_2.mid",
+          "path": "public/intermediate-sources/intermediate-beethoven-op49-2-m2/original.mid",
+          "bytes": 11560,
+          "sha256": "bbc781ca46ebd2e22e4fc9976a5fd5647c1da43dc7d545525c4b87d0244e251f"
+        },
+        "ly": {
+          "url": "https://www.mutopiaproject.org/ftp/BeethovenLv/O49/LVB_Sonate_49no2_2/LVB_Sonate_49no2_2.ly",
+          "path": "public/intermediate-sources/intermediate-beethoven-op49-2-m2/original.ly",
+          "bytes": 8604,
+          "sha256": "235b676a2f96e17db771d83275081b574e848efe4f38eecaec62ce0fa3541c5b"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/BeethovenLv/O49/LVB_Sonate_49no2_2/LVB_Sonate_49no2_2-a4.pdf",
+          "path": "public/intermediate-sources/intermediate-beethoven-op49-2-m2/original.pdf",
+          "bytes": 137431,
+          "sha256": "4655d2713d7238f5cb16ba614c64ca787642a2f9642a03b1f35fb6628da6ad3c"
+        }
+      },
+      "trackHands": [
+        "right",
+        "left"
+      ],
+      "handMappingNote": "Checked original LilyPond staff order: one/up/rh is the upper staff; two/down/lh is the lower staff. Performance hands follow those staves.",
+      "keySignature": 1,
+      "mode": "major",
+      "pickupBeats": 1
+    },
+    {
+      "id": "intermediate-beethoven-woo82",
+      "title": "降E大调小步舞曲 · Minuet",
+      "opus": "WoO 82",
+      "level": "进阶 · 中级",
+      "batch": 3,
+      "mutopiaId": 904,
+      "composer": "Ludwig van Beethoven 贝多芬",
+      "maintainer": "Stelios Samelis",
+      "license": "Public Domain",
+      "licenseUrl": "https://www.mutopiaproject.org/legal.html",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=904",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/BeethovenLv/WoO82/menuett_WoO82/menuett_WoO82.mid",
+          "path": "public/intermediate-sources/intermediate-beethoven-woo82/original.mid",
+          "bytes": 10207,
+          "sha256": "64cf1e5040bb857a7aba4b733fbd04c888b128998fce325fedea259c095e94fb"
+        },
+        "ly": {
+          "url": "https://www.mutopiaproject.org/ftp/BeethovenLv/WoO82/menuett_WoO82/menuett_WoO82.ly",
+          "path": "public/intermediate-sources/intermediate-beethoven-woo82/original.ly",
+          "bytes": 10145,
+          "sha256": "ea1063881fc08218c12011f093d2bf70092a37d72f14f3f1a4e383b1e4a054af"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/BeethovenLv/WoO82/menuett_WoO82/menuett_WoO82-a4.pdf",
+          "path": "public/intermediate-sources/intermediate-beethoven-woo82/original.pdf",
+          "bytes": 78200,
+          "sha256": "dcbd2fb1718803e3619779c36e62fe6b08dc092528ad233cc41dc13a7027b24e"
+        }
+      },
+      "trackHands": [
+        "right",
+        "left"
+      ],
+      "handMappingNote": "Checked original LilyPond staff order: one/up/rh is the upper staff; two/down/lh is the lower staff. Performance hands follow those staves.",
+      "keySignature": -3,
+      "mode": "major",
+      "pickupBeats": 1,
+      "scope": "小步舞曲与三声中部，按原始 MIDI 顺序；D.C. 回归不额外补写。"
+    },
+    {
+      "id": "intermediate-chopin-op28-04",
+      "title": "e小调前奏曲 · Prelude No.4",
+      "opus": "Op.28 No.4",
+      "level": "进阶 · 中级",
+      "batch": 3,
+      "mutopiaId": 921,
+      "composer": "Frédéric Chopin 肖邦",
+      "maintainer": "Roland Goretzki",
+      "license": "Public Domain",
+      "licenseUrl": "https://www.mutopiaproject.org/legal.html",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=921",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/ChopinFF/O28/Chop-28-4a/Chop-28-4a.mid",
+          "path": "public/intermediate-sources/intermediate-chopin-op28-04/original.mid",
+          "bytes": 7212,
+          "sha256": "b19f8e0d783915e80e33cc4f622ef9623994ab89f114a53983c3f628265b798b"
+        },
+        "sourceZip": {
+          "url": "https://www.mutopiaproject.org/ftp/ChopinFF/O28/Chop-28-4a/Chop-28-4a-lys.zip",
+          "path": "public/intermediate-sources/intermediate-chopin-op28-04/original-source.zip",
+          "bytes": 11712,
+          "sha256": "1f35c19d3bfdfeeac0a9c1a283aeb3a3cc8f98acb3f49593c4b25fcf6b161497"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/ChopinFF/O28/Chop-28-4a/Chop-28-4a-a4.pdf",
+          "path": "public/intermediate-sources/intermediate-chopin-op28-04/original.pdf",
+          "bytes": 69600,
+          "sha256": "8a7b5a44b9421351e00364c9b38ae587d1f9daa6fe913b26b0aaf01f6b91ae30"
+        }
+      },
+      "trackHands": [
+        "right",
+        "left"
+      ],
+      "handMappingNote": "Checked original LilyPond staff order: one/up/rh is the upper staff; two/down/lh is the lower staff. Performance hands follow those staves.",
+      "keySignature": 1,
+      "mode": "minor",
+      "pickupBeats": 1
+    },
+    {
+      "id": "intermediate-chopin-op28-06",
+      "title": "b小调前奏曲 · Prelude No.6",
+      "opus": "Op.28 No.6",
+      "level": "进阶 · 中级",
+      "batch": 3,
+      "mutopiaId": 469,
+      "composer": "Frédéric Chopin 肖邦",
+      "maintainer": "Magnus Lewis-Smith",
+      "license": "Public Domain",
+      "licenseUrl": "https://www.mutopiaproject.org/legal.html",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=469",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/ChopinFF/O28/Chop-28-6/Chop-28-6.mid",
+          "path": "public/intermediate-sources/intermediate-chopin-op28-06/original.mid",
+          "bytes": 4025,
+          "sha256": "b9328cbeaa149c49eab925794e94f3b95f579a41e4d9c781c953aad0b940bf63"
+        },
+        "sourceZip": {
+          "url": "https://www.mutopiaproject.org/ftp/ChopinFF/O28/Chop-28-6/Chop-28-6-lys.zip",
+          "path": "public/intermediate-sources/intermediate-chopin-op28-06/original-source.zip",
+          "bytes": 3675,
+          "sha256": "c52da142c6e061b785f8e7ffc49093e11e2ae7bc074b7a86b7471833e34d423c"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/ChopinFF/O28/Chop-28-6/Chop-28-6-a4.pdf",
+          "path": "public/intermediate-sources/intermediate-chopin-op28-06/original.pdf",
+          "bytes": 321033,
+          "sha256": "0a65152634e32f57ea48a06bfae5d947cb7fae6bc0c6f2a2fd37f43b3c49518e"
+        }
+      },
+      "trackHands": [
+        "right",
+        "left"
+      ],
+      "handMappingNote": "Checked original LilyPond staff order: one/up/rh is the upper staff; two/down/lh is the lower staff. Performance hands follow those staves.",
+      "keySignature": 2,
+      "mode": "minor"
+    },
+    {
+      "id": "intermediate-chopin-op28-07",
+      "title": "A大调前奏曲 · Prelude No.7",
+      "opus": "Op.28 No.7",
+      "level": "进阶 · 中级",
+      "batch": 3,
+      "mutopiaId": 470,
+      "composer": "Frédéric Chopin 肖邦",
+      "maintainer": "Magnus Lewis-Smith",
+      "license": "Public Domain",
+      "licenseUrl": "https://www.mutopiaproject.org/legal.html",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=470",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/ChopinFF/O28/Chop-28-7/Chop-28-7.mid",
+          "path": "public/intermediate-sources/intermediate-chopin-op28-07/original.mid",
+          "bytes": 1759,
+          "sha256": "6eed7f2185afd852f01d695e50db84cdb4c8742de1a26294dc3202569346ef36"
+        },
+        "sourceZip": {
+          "url": "https://www.mutopiaproject.org/ftp/ChopinFF/O28/Chop-28-7/Chop-28-7-lys.zip",
+          "path": "public/intermediate-sources/intermediate-chopin-op28-07/original-source.zip",
+          "bytes": 3528,
+          "sha256": "6e061dd3af2f17398c33d9d8eb657e65dca88ba0acae6592aa5cc2928b3f21ce"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/ChopinFF/O28/Chop-28-7/Chop-28-7-a4.pdf",
+          "path": "public/intermediate-sources/intermediate-chopin-op28-07/original.pdf",
+          "bytes": 314988,
+          "sha256": "98b1359e63ccd4740fa6fc22ef8c802189b01f11b9625bd39aecc8472a9e28a6"
+        }
+      },
+      "trackHands": [
+        "right",
+        "left"
+      ],
+      "handMappingNote": "Checked original LilyPond staff order: one/up/rh is the upper staff; two/down/lh is the lower staff. Performance hands follow those staves.",
+      "keySignature": 3,
+      "mode": "major",
+      "pickupBeats": 1
+    },
+    {
+      "id": "intermediate-chopin-op28-20",
+      "title": "c小调前奏曲 · Prelude No.20",
+      "opus": "Op.28 No.20",
+      "level": "进阶 · 中级",
+      "batch": 3,
+      "mutopiaId": 472,
+      "composer": "Frédéric Chopin 肖邦",
+      "maintainer": "Magnus Lewis-Smith",
+      "license": "Public Domain",
+      "licenseUrl": "https://www.mutopiaproject.org/legal.html",
+      "sourceUrl": "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=472",
+      "files": {
+        "mid": {
+          "url": "https://www.mutopiaproject.org/ftp/ChopinFF/O28/Chop-28-20/Chop-28-20.mid",
+          "path": "public/intermediate-sources/intermediate-chopin-op28-20/original.mid",
+          "bytes": 2637,
+          "sha256": "9cc6c417d4bb261644f6bd3d00033025e675a25694fd172be2f98e93efc1fcfe"
+        },
+        "ly": {
+          "url": "https://www.mutopiaproject.org/ftp/ChopinFF/O28/Chop-28-20/Chop-28-20.ly",
+          "path": "public/intermediate-sources/intermediate-chopin-op28-20/original.ly",
+          "bytes": 7474,
+          "sha256": "fd6e30e421d4b34197cfa2b6d9d420e0c941edbaa2b61d5e1883e79d815bef5d"
+        },
+        "pdf": {
+          "url": "https://www.mutopiaproject.org/ftp/ChopinFF/O28/Chop-28-20/Chop-28-20-a4.pdf",
+          "path": "public/intermediate-sources/intermediate-chopin-op28-20/original.pdf",
+          "bytes": 53140,
+          "sha256": "a92fda36c173c9ffdee03291015d7332d6e60dab9df0d981856a28fec684ad9d"
+        }
+      },
+      "trackHands": [
+        "right",
+        "left"
+      ],
+      "handMappingNote": "Checked original LilyPond staff order: one/up/rh is the upper staff; two/down/lh is the lower staff. Performance hands follow those staves.",
+      "keySignature": -3,
+      "mode": "minor"
+    }
+  ]
+}

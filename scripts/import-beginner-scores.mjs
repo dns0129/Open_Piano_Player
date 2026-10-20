@@ -11,9 +11,18 @@ import {
 } from "../lib/cloud-library-format.mjs";
 import { addScore } from "../lib/score-repository.mjs";
 import { createLibraryStore } from "../lib/library-store.mjs";
+import { KEY_NAMES } from "../lib/score.mjs";
 
+const manifestOption = process.argv.indexOf("--manifest");
+if (manifestOption >= 0 && !process.argv[manifestOption + 1])
+  throw Error("--manifest 需要清单路径。");
 const manifest = JSON.parse(
-  await readFile("score-repo/beginner-sources.json", "utf8"),
+  await readFile(
+    manifestOption >= 0
+      ? process.argv[manifestOption + 1]
+      : "score-repo/beginner-sources.json",
+    "utf8",
+  ),
 );
 const index = JSON.parse(
   await readFile("public/cloud-library/index.json", "utf8"),
@@ -21,11 +30,13 @@ const index = JSON.parse(
 const entries = new Map(index.scores.map((s) => [s.id, s]));
 const local = process.argv.includes("--local") ? createLibraryStore() : null;
 const warning =
-  "数字谱来自原版 MIDI：原始音高和节奏保留，音名拼写、声部、休止及延音音头由演奏事件推断；指法、连奏线和页码定位请查原 PDF。反复段按原 MIDI 的展开顺序播放。";
+  "数字谱来自原版 MIDI：原始音高和节奏保留，音名拼写、声部、休止及延音音头由演奏事件推断；指法、连奏线、踏板和页码定位请查原 PDF。反复段按原 MIDI 的展开顺序播放。";
 
-function changingMeterMap(midi, duration) {
+function changingMeterMap(midi, duration, pickup = 0) {
   const changes = midi.header.timeSignatures;
-  if (changes.length < 2) return {};
+  const keys = midi.header.keySignatures.filter((e) => e.ticks > 0);
+  if (changes.length < 2 && !keys.length && !pickup) return {};
+  if (!changes.length) throw Error("变调 MIDI 缺少拍号信息。");
   const map = [];
   let beat = 0,
     current = 0;
@@ -38,8 +49,11 @@ function changingMeterMap(midi, duration) {
     const meter = changes[current].timeSignature;
     const next = Math.min(
       duration,
-      beat + (meter[0] * 4) / meter[1],
+      beat + (beat === 0 && pickup ? pickup : (meter[0] * 4) / meter[1]),
       changes[current + 1]?.ticks / midi.header.ppq || Infinity,
+      ...keys
+        .map((e) => e.ticks / midi.header.ppq)
+        .filter((position) => position > beat + 1e-7),
     );
     if (next <= beat) throw Error("MIDI 拍号时间轴无效。");
     map.push({
@@ -49,6 +63,15 @@ function changingMeterMap(midi, duration) {
       timeSignature: meter,
     });
     beat = next;
+  }
+  for (const key of keys) {
+    const beat = key.ticks / midi.header.ppq,
+      measure = map.find((m) => Math.abs(m.beat - beat) < 1e-7);
+    if (beat >= duration) continue;
+    const fifths = KEY_NAMES.indexOf(key.key) - 7;
+    if (!measure || fifths < -7)
+      throw Error("变调不在小节边界或调号无效，需要原谱核对。");
+    measure.keySignature = fifths;
   }
   return { measureMap: map };
 }
@@ -65,15 +88,17 @@ for (const source of manifest.scores) {
     imported = importMidi(files.mid, source.id + ".mid");
   const hands = new Map();
   let i = 0;
-  for (const track of midi.tracks.filter(
-    (t) => t.notes.length && t.channel !== 9,
-  )) {
-    const hand = /upper|^up:/i.test(track.name)
-      ? "right"
-      : /lower|^down:/i.test(track.name)
-        ? "left"
-        : null;
-    if (!hand) throw Error(source.id + " 的谱表音轨未标识。");
+  for (const [trackIndex, track] of midi.tracks.entries()) {
+    if (!track.notes.length || track.channel === 9) continue;
+    const hand =
+      source.trackHands?.[trackIndex] ||
+      (/upper|^up:/i.test(track.name)
+        ? "right"
+        : /lower|^down:/i.test(track.name)
+          ? "left"
+          : null);
+    if (!["right", "left"].includes(hand))
+      throw Error(source.id + " 的谱表音轨未标识。");
     for (const note of track.notes)
       if (note.midi >= 21 && note.midi <= 108) hands.set("midi-" + i++, hand);
   }
@@ -81,7 +106,11 @@ for (const source of manifest.scores) {
     Math.abs(n - Math.round(n)) < 0.001 ? Math.round(n) : n;
   const document = readScoreDocument({
     ...imported.score,
-    ...changingMeterMap(midi, imported.score.durationBeats),
+    ...changingMeterMap(midi, imported.score.durationBeats, source.pickupBeats),
+    ...(source.keySignature !== undefined
+      ? { keySignature: source.keySignature }
+      : {}),
+    ...(source.mode ? { mode: source.mode } : {}),
     tempo: roundedTempo(imported.score.tempo),
     tempoMap: imported.score.tempoMap?.map((e) => ({
       ...e,
