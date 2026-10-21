@@ -19,7 +19,7 @@ const COOKIE='qinban_session';
 const contentTypes={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8','.xml':'application/xml','.musicxml':'application/vnd.recordare.musicxml+xml','.mxl':'application/vnd.recordare.musicxml','.mid':'audio/midi','.midi':'audio/midi','.svg':'image/svg+xml','.png':'image/png','.jpeg':'image/jpeg','.jpg':'image/jpeg','.webp':'image/webp','.ico':'image/x-icon','.woff2':'font/woff2','.woff':'font/woff','.ttf':'font/ttf','.otf':'font/otf','.pfb':'application/octet-stream','.bcmap':'application/octet-stream','.wasm':'application/wasm','.bin':'application/octet-stream','.txt':'text/plain; charset=utf-8','.mp3':'audio/mpeg','.wav':'audio/wav','.ogg':'audio/ogg','.pdf':'application/pdf'};
 function safeEqual(a,b){if(typeof a!=='string'||typeof b!=='string')return false;const x=Buffer.from(a),y=Buffer.from(b);return x.length===y.length && timingSafeEqual(x,y);}
 
-export function createAppServer({distDir=resolve('dist'),settingsStore=createSettingsStore(),generate=generateScore,statusReader=authStatus,publicDownloader=downloadPublicScore,scoreSearch=createScoreSearch(),fullScoreJobs,neteaseProvider,localLibrary=createLocalLibrary(),cloudLibrary=createCloudLibrary(),downloadLibrary=createDownloadLibrary(),libraryStore}={}) {
+export function createAppServer({developerMode=false,distDir=resolve('dist'),settingsStore=createSettingsStore(),generate=generateScore,statusReader=authStatus,publicDownloader=downloadPublicScore,scoreSearch=createScoreSearch(),fullScoreJobs,neteaseProvider,localLibrary=createLocalLibrary(),cloudLibrary=createCloudLibrary(),downloadLibrary=createDownloadLibrary(),libraryStore}={}) {
   const scoreLibrary=libraryStore||createLibraryStore({legacyLibrary:localLibrary,legacyDownloads:downloadLibrary});
   const scoreJobs=fullScoreJobs||createFullScoreJobStore({settingsProvider:()=>settingsStore.read()});
   const netease=neteaseProvider||createNeteaseScoreProvider();
@@ -74,12 +74,13 @@ export function createAppServer({distDir=resolve('dist'),settingsStore=createSet
       const url=new URL(req.url,'http://127.0.0.1');
       if(!url.pathname.startsWith('/api/')){await staticFile(req,res,url);return;}
       if(url.pathname==='/api/status' && req.method==='GET'){
-        const current=session(req,res,true);const settings=await settingsStore.read();
+        const current=session(req,res,true);if(developerMode){json(res,200,{csrfToken:current.csrfToken,mode:'developer',localOnly:true,features:['score','import','edit','playback']});return;}const settings=await settingsStore.read();
         const pi={...await statusReader(SCORE_RECOGNITION.model),model:SCORE_RECOGNITION.model,reasoningEffort:SCORE_RECOGNITION.reasoningEffort,modelLocked:true};
         json(res,200,{csrfToken:current.csrfToken,pi,deepseek:{configured:Boolean(settings.deepseekApiKey || process.env.DEEPSEEK_API_KEY),model:settings.deepseekModel || defaultDeepseekModel,models:['deepseek-flash','deepseek-v4-pro','deepseek-chat','deepseek-reasoner'],vision:(settings.deepseekModel||defaultDeepseekModel)==='deepseek-flash'},fullScore:{...SCORE_RECOGNITION,deepseek:{available:Boolean(settings.deepseekApiKey||process.env.DEEPSEEK_API_KEY)&&(settings.deepseekModel||defaultDeepseekModel)==='deepseek-flash',ready:Boolean(settings.deepseekApiKey||process.env.DEEPSEEK_API_KEY)&&(settings.deepseekModel||defaultDeepseekModel)==='deepseek-flash',model:'deepseek-flash',reasoningEffort:'high'},pi:{available:pi.available===true,ready:pi.available===true,model:SCORE_RECOGNITION.model,reasoningEffort:SCORE_RECOGNITION.reasoningEffort},maxPages:200,maxPdfBytes:50*1024*1024},localOnly:true});return;
       }
       const current=session(req,res);if(!current)throw userError('会话已过期，请刷新页面。','SESSION_REQUIRED',403);
       if(['POST','PUT','DELETE','PATCH'].includes(req.method) && !safeEqual(req.headers['x-csrf-token'],current.csrfToken))throw userError('请求校验失败，请刷新页面后重试。','CSRF',403);
+      if(developerMode&&(!['/api/library','/api/local-library','/api/local-downloads','/api/cloud-library'].some(prefix=>url.pathname===prefix||url.pathname.startsWith(prefix+'/'))||req.method!=='GET'&&url.pathname.startsWith('/api/cloud-library')))throw userError('账号、托管识谱和运营功能请使用独立商业版。','COMMERCIAL_APP_REQUIRED',403);
       if(url.pathname==='/api/library'&&req.method==='GET'){
         const {records,warnings=[]}=await scoreLibrary.list();json(res,200,{records:records.map(({assets,history,originalFile,...record})=>record),warnings});return;
       }
@@ -225,7 +226,7 @@ export function createAppServer({distDir=resolve('dist'),settingsStore=createSet
 
 if(process.argv[1] && import.meta.url===pathToFileURL(resolve(process.argv[1])).href){
   const port=8792;
-  const server=createAppServer();server.listen(port,'127.0.0.1',()=>console.log(`琴伴钢琴练习室已启动：http://127.0.0.1:${port}`));
+  const server=createAppServer({developerMode:true});server.listen(port,'127.0.0.1',()=>console.log(`琴伴钢琴练习室已启动：http://127.0.0.1:${port}`));
   server.on('error',error=>{console.error(error.code==='EADDRINUSE'?'8792 端口已在使用，请打开现有琴伴窗口。':'本机服务未能启动。');process.exitCode=1;});
   for(const name of ['SIGTERM','SIGINT'])process.on(name,()=>{server.close();server.closeIdleConnections();});
 }

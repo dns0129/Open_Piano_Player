@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "琴伴账号与私有曲库 v1 接口",
-    "version": "1.0.0-local",
-    "description": "已完成本机独立账号服务实现。正式 PostgreSQL、SMTP、HTTPS 与多设备部署尚未配置或验收。实现与运行边界见 ../account-private-library-implementation.md；现有 8792 本机版和静态 Pages 不提供这些账号接口。所有 ownership 取自服务端会话。"
+    "version": "1.1.0-local",
+    "description": "已完成本机独立账号服务实现。正式 PostgreSQL、SMTP、HTTPS 与多设备部署尚未配置或验收。实现与运行边界见 ../account-private-library-implementation.md；现有 8792 本机版和静态 Pages 不提供这些账号接口。所有 ownership 取自服务端会话。 独立商业入口与托管识谱、每人每月任务数、全站成本控制和运营已实现并做本机验证；实际付费模型接入尚未验收，见 ../commercial-app-implementation.md。"
   },
   "servers": [
     {
@@ -1983,7 +1983,7 @@
             "$ref": "#/components/responses/Failure"
           }
         },
-        "description": "被任意历史修订引用时返回 409。文件延迟清理。",
+        "description": "被任意历史修订或识谱任务引用时返回 409。终止任务明细保留 60 天；文件延迟清理。",
         "parameters": [
           {
             "$ref": "#/components/parameters/Csrf"
@@ -2143,6 +2143,1726 @@
           }
         }
       }
+    },
+    "/product": {
+      "get": {
+        "operationId": "get__product",
+        "summary": "商业版公开状态与公告",
+        "security": [],
+        "description": "仅公开开关与文案，不返回私有数据、单价或密钥。已达日/月成本上限也显示不可用。",
+        "x-implementation-status": "implemented-local",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "404": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "409": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "422": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "428": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "429": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "503": {
+            "$ref": "#/components/responses/Failure"
+          }
+        }
+      }
+    },
+    "/recognition/quota": {
+      "get": {
+        "operationId": "get__recognition_quota",
+        "summary": "本人 UTC 自然月任务数",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "description": "",
+        "x-implementation-status": "implemented-local",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskQuota"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "404": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "409": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "422": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "428": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "429": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "503": {
+            "$ref": "#/components/responses/Failure"
+          }
+        }
+      }
+    },
+    "/recognition/jobs": {
+      "get": {
+        "operationId": "get__recognition_jobs",
+        "summary": "本人最近 30 个识谱任务",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "description": "",
+        "x-implementation-status": "implemented-local",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "jobs": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RecognitionJob"
+                      }
+                    }
+                  },
+                  "required": [
+                    "jobs"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "404": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "409": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "422": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "428": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "429": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "503": {
+            "$ref": "#/components/responses/Failure"
+          }
+        }
+      },
+      "post": {
+        "operationId": "post__recognition_jobs",
+        "summary": "提交用户选定的完整谱行",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "description": "同键重试不重复创建任务；先占 1 个任务名额。服务关闭、名额不足、有活跃任务或预算不足时拒绝。上传本身不调用生成。",
+        "x-implementation-status": "implemented-local",
+        "responses": {
+          "202": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskCreated"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "404": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "409": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "422": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "428": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "429": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "503": {
+            "$ref": "#/components/responses/Failure"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Csrf"
+          },
+          {
+            "$ref": "#/components/parameters/Idempotency"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecognitionCreate"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/recognition/jobs/{jobId}": {
+      "get": {
+        "operationId": "get__recognition_jobs_jobId_",
+        "summary": "读取本人任务",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "description": "",
+        "x-implementation-status": "implemented-local",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecognitionJob"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "404": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "409": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "422": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "428": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "429": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "503": {
+            "$ref": "#/components/responses/Failure"
+          }
+        },
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/recognition/jobs/{jobId}/cancel": {
+      "post": {
+        "operationId": "post__recognition_jobs_jobId_cancel",
+        "summary": "停止任务后续调用",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "description": "排队取消自动退名额；已发出请求按已知或不确定费用保留。",
+        "x-implementation-status": "implemented-local",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "jobId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "state": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "jobId",
+                    "state"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "404": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "409": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "422": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "428": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "429": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "503": {
+            "$ref": "#/components/responses/Failure"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Csrf"
+          },
+          {
+            "$ref": "#/components/parameters/Idempotency"
+          },
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/recognition/jobs/{jobId}/retry": {
+      "post": {
+        "operationId": "post__recognition_jobs_jobId_retry",
+        "summary": "新建任务并仅重试未完成行",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "description": "复用成功行，发生生成请求时占新任务 1 次。不会自动重发原计费调用。",
+        "x-implementation-status": "implemented-local",
+        "responses": {
+          "202": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskCreated"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "404": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "409": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "422": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "428": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "429": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "503": {
+            "$ref": "#/components/responses/Failure"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Csrf"
+          },
+          {
+            "$ref": "#/components/parameters/Idempotency"
+          },
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/recognition/jobs/{jobId}/save": {
+      "post": {
+        "operationId": "post__recognition_jobs_jobId_save",
+        "summary": "保存结构通过的 AI 待核对草稿",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "description": "跨行延音与全部选定行检查通过才可保存。humanConfirmed=false；不承诺整曲范围。重复保存返回已有 entryId。",
+        "x-implementation-status": "implemented-local",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "entryId": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  },
+                  "required": [
+                    "entryId"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "404": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "409": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "422": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "428": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "429": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "503": {
+            "$ref": "#/components/responses/Failure"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Csrf"
+          },
+          {
+            "$ref": "#/components/parameters/Idempotency"
+          },
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/source-groups/{sourceGroupId}/pages": {
+      "get": {
+        "operationId": "get__source_groups_sourceGroupId_pages",
+        "summary": "读取本人原谱预览尺寸与页序",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "description": "",
+        "x-implementation-status": "implemented-local",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourcePagePreviews"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "404": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "409": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "422": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "428": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "429": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "503": {
+            "$ref": "#/components/responses/Failure"
+          }
+        },
+        "parameters": [
+          {
+            "name": "sourceGroupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/source-groups/{sourceGroupId}/pages/{ordinal}/preview": {
+      "get": {
+        "operationId": "get__source_groups_sourceGroupId_pages_ordinal_preview",
+        "summary": "读取本人原谱页预览",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "description": "图片使用规范化方向派生图（如有），PDF 服务端渲染。响应 no-store，原字节不改写。",
+        "x-implementation-status": "implemented-local",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "contentEncoding": "binary"
+                }
+              },
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "contentEncoding": "binary"
+                }
+              },
+              "image/webp": {
+                "schema": {
+                  "type": "string",
+                  "contentEncoding": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "404": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "409": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "422": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "428": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "429": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "503": {
+            "$ref": "#/components/responses/Failure"
+          }
+        },
+        "parameters": [
+          {
+            "name": "sourceGroupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "ordinal",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 6
+            }
+          }
+        ]
+      }
+    },
+    "/feedback": {
+      "get": {
+        "operationId": "get__feedback",
+        "summary": "读取本人反馈与回复",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "description": "",
+        "x-implementation-status": "implemented-local",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "feedback": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Feedback"
+                      }
+                    }
+                  },
+                  "required": [
+                    "feedback"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "404": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "409": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "422": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "428": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "429": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "503": {
+            "$ref": "#/components/responses/Failure"
+          }
+        }
+      },
+      "post": {
+        "operationId": "post__feedback",
+        "summary": "提交问题反馈",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "description": "",
+        "x-implementation-status": "implemented-local",
+        "responses": {
+          "201": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "feedbackId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "state": {
+                      "const": "open"
+                    }
+                  },
+                  "required": [
+                    "feedbackId",
+                    "state"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "404": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "409": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "422": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "428": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "429": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "503": {
+            "$ref": "#/components/responses/Failure"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Csrf"
+          },
+          {
+            "$ref": "#/components/parameters/Idempotency"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedbackWrite"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/operator/overview": {
+      "get": {
+        "operationId": "get__operator_overview",
+        "summary": "全站预算、预留、失败统计和未知费用",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "description": "仅服务端运营角色；写操作要求 10 分钟内邮箱验证。 金额均为整数美元百万分之一，费用与预留按配置单价计算，不是供应商结算账单。",
+        "x-implementation-status": "implemented-local",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperatorOverview"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "404": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "409": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "422": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "428": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "429": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "503": {
+            "$ref": "#/components/responses/Failure"
+          }
+        }
+      }
+    },
+    "/operator/policy": {
+      "put": {
+        "operationId": "put__operator_policy",
+        "summary": "修改预算、任务数、接单开关与公告",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "description": "仅服务端运营角色；写操作要求 10 分钟内邮箱验证。 CAS revision；启用需供应商配置就绪、0 < 单任务 ≤ 每日 ≤ 每月，全部未知费用已核对。",
+        "x-implementation-status": "implemented-local",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "revision": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "revision"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "404": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "409": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "422": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "428": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "429": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "503": {
+            "$ref": "#/components/responses/Failure"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Csrf"
+          },
+          {
+            "$ref": "#/components/parameters/OperatorIdempotency"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommercePolicy"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/operator/users": {
+      "get": {
+        "operationId": "get__operator_users",
+        "summary": "最近 100 个账号与本月任务数",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "description": "仅服务端运营角色；写操作要求 10 分钟内邮箱验证。 ",
+        "x-implementation-status": "implemented-local",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "users": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    }
+                  },
+                  "required": [
+                    "users"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "404": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "409": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "422": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "428": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "429": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "503": {
+            "$ref": "#/components/responses/Failure"
+          }
+        }
+      }
+    },
+    "/operator/users/{userId}": {
+      "put": {
+        "operationId": "put__operator_users_userId_",
+        "summary": "设置账号状态与每月任务数",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "description": "仅服务端运营角色；写操作要求 10 分钟内邮箱验证。 暂停会撤销会话并停止后续调用。不能暂停当前运营账号。身份与额度分两步提交，可按相同绝对值重试。",
+        "x-implementation-status": "implemented-local",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "userId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "state": {
+                      "type": "string"
+                    },
+                    "taskLimit": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "userId",
+                    "state",
+                    "taskLimit"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "404": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "409": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "422": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "428": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "429": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "503": {
+            "$ref": "#/components/responses/Failure"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Csrf"
+          },
+          {
+            "$ref": "#/components/parameters/OperatorIdempotency"
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "state": {
+                    "type": "string",
+                    "enum": [
+                      "active",
+                      "disabled"
+                    ]
+                  },
+                  "taskLimit": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 10000
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  }
+                },
+                "required": [
+                  "state",
+                  "taskLimit",
+                  "reason"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/operator/invitations": {
+      "post": {
+        "operationId": "post__operator_invitations",
+        "summary": "为普通用户建立邀请资格",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "description": "仅服务端运营角色；写操作要求 10 分钟内邮箱验证。 不发送邀请邮件，不提升运营角色。",
+        "x-implementation-status": "implemented-local",
+        "responses": {
+          "201": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "404": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "409": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "422": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "428": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "429": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "503": {
+            "$ref": "#/components/responses/Failure"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Csrf"
+          },
+          {
+            "$ref": "#/components/parameters/OperatorIdempotency"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  }
+                },
+                "required": [
+                  "email",
+                  "reason"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/operator/jobs": {
+      "get": {
+        "operationId": "get__operator_jobs",
+        "summary": "最近 100 个任务的状态、失败码与费用元数据",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "description": "仅服务端运营角色；写操作要求 10 分钟内邮箱验证。 不含曲名、原图或乐谱内容。",
+        "x-implementation-status": "implemented-local",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "jobs": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    }
+                  },
+                  "required": [
+                    "jobs"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "404": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "409": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "422": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "428": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "429": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "503": {
+            "$ref": "#/components/responses/Failure"
+          }
+        }
+      }
+    },
+    "/operator/tasks/{jobId}/refund": {
+      "post": {
+        "operationId": "post__operator_tasks_jobId_refund",
+        "summary": "补偿已停止任务的任务名额",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "description": "仅服务端运营角色；写操作要求 10 分钟内邮箱验证。 重复操作不会多退名额；不撤销供应商成本。",
+        "x-implementation-status": "implemented-local",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "jobId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "refunded": {
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "jobId",
+                    "refunded"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "404": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "409": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "422": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "428": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "429": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "503": {
+            "$ref": "#/components/responses/Failure"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Csrf"
+          },
+          {
+            "$ref": "#/components/parameters/OperatorIdempotency"
+          },
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  }
+                },
+                "required": [
+                  "reason"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/operator/attempts/{attemptId}/reconcile": {
+      "post": {
+        "operationId": "post__operator_attempts_attemptId_reconcile",
+        "summary": "录入人工核对后的未知调用费用",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "description": "仅服务端运营角色；写操作要求 10 分钟内邮箱验证。 只接受 unknown。cost 单位为美元百万分之一；不自动恢复接单。",
+        "x-implementation-status": "implemented-local",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "attemptId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "cost": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 1000000000000
+                    }
+                  },
+                  "required": [
+                    "attemptId",
+                    "cost"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "404": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "409": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "422": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "428": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "429": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "503": {
+            "$ref": "#/components/responses/Failure"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Csrf"
+          },
+          {
+            "$ref": "#/components/parameters/OperatorIdempotency"
+          },
+          {
+            "name": "attemptId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "cost": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000000
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  }
+                },
+                "required": [
+                  "cost",
+                  "reason"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/operator/feedback": {
+      "get": {
+        "operationId": "get__operator_feedback",
+        "summary": "最近 100 条主动提交的反馈",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "description": "仅服务端运营角色；写操作要求 10 分钟内邮箱验证。 ",
+        "x-implementation-status": "implemented-local",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "feedback": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    }
+                  },
+                  "required": [
+                    "feedback"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "404": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "409": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "422": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "428": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "429": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "503": {
+            "$ref": "#/components/responses/Failure"
+          }
+        }
+      }
+    },
+    "/operator/feedback/{feedbackId}": {
+      "put": {
+        "operationId": "put__operator_feedback_feedbackId_",
+        "summary": "回复并更新反馈状态",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "description": "仅服务端运营角色；写操作要求 10 分钟内邮箱验证。 ",
+        "x-implementation-status": "implemented-local",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "feedbackId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "state": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "feedbackId",
+                    "state"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "404": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "409": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "422": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "428": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "429": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "503": {
+            "$ref": "#/components/responses/Failure"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Csrf"
+          },
+          {
+            "$ref": "#/components/parameters/OperatorIdempotency"
+          },
+          {
+            "name": "feedbackId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "state": {
+                    "type": "string",
+                    "enum": [
+                      "open",
+                      "in_progress",
+                      "resolved"
+                    ]
+                  },
+                  "reply": {
+                    "type": "string",
+                    "maxLength": 4000
+                  }
+                },
+                "required": [
+                  "state",
+                  "reply"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/operator/audit": {
+      "get": {
+        "operationId": "get__operator_audit",
+        "summary": "最近 100 条运营操作索引",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "description": "仅服务端运营角色；写操作要求 10 分钟内邮箱验证。 ",
+        "x-implementation-status": "implemented-local",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "events": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": true
+                      }
+                    }
+                  },
+                  "required": [
+                    "events"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "404": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "409": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "422": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "428": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "429": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "503": {
+            "$ref": "#/components/responses/Failure"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2174,6 +3894,17 @@
           "maxLength": 128
         },
         "description": "作用域为当前账号与操作；同键不同输入返回 409。"
+      },
+      "OperatorIdempotency": {
+        "name": "Idempotency-Key",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "minLength": 16,
+          "maxLength": 128
+        },
+        "description": "运营写请求必须携带操作标识；预算用 revision 防并发覆盖，用户设置和反馈用绝对值更新，补偿/核对用账本状态防重复。邀请重复可能延长资格并保留多条审计，不保证所有运营操作同键重放原响应。"
       }
     },
     "schemas": {
@@ -2220,12 +3951,20 @@
               "active",
               "deletion_pending"
             ]
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "operator"
+            ]
           }
         },
         "required": [
           "id",
           "email",
-          "state"
+          "state",
+          "role"
         ],
         "additionalProperties": false
       },
@@ -3293,6 +5032,738 @@
         "required": [
           "state",
           "recoverUntil"
+        ],
+        "additionalProperties": false
+      },
+      "Product": {
+        "type": "object",
+        "properties": {
+          "product": {
+            "const": "qinban-commercial"
+          },
+          "recognitionAvailable": {
+            "type": "boolean"
+          },
+          "announcement": {
+            "type": "string"
+          },
+          "supportContact": {
+            "type": "string"
+          },
+          "limits": {
+            "type": "object",
+            "properties": {
+              "pages": {
+                "const": 6
+              },
+              "imageMiB": {
+                "const": 20
+              },
+              "pdfMiB": {
+                "const": 50
+              },
+              "regions": {
+                "const": 30
+              }
+            },
+            "required": [
+              "pages",
+              "imageMiB",
+              "pdfMiB",
+              "regions"
+            ],
+            "additionalProperties": false
+          },
+          "quotaUnit": {
+            "const": "task"
+          },
+          "billing": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "product",
+          "recognitionAvailable",
+          "announcement",
+          "supportContact",
+          "limits",
+          "quotaUnit",
+          "billing"
+        ],
+        "additionalProperties": false
+      },
+      "TaskQuota": {
+        "type": "object",
+        "properties": {
+          "period": {
+            "type": "string",
+            "pattern": "^\\d{4}-\\d{2}$"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000
+          },
+          "used": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "remaining": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "unit": {
+            "const": "task"
+          },
+          "resetAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "available": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "period",
+          "limit",
+          "used",
+          "remaining",
+          "unit",
+          "resetAt",
+          "available"
+        ],
+        "additionalProperties": false
+      },
+      "SelectionRect": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "y": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "width": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 1
+          },
+          "height": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 1
+          }
+        },
+        "required": [
+          "x",
+          "y",
+          "width",
+          "height"
+        ],
+        "additionalProperties": false
+      },
+      "RecognitionCreate": {
+        "type": "object",
+        "properties": {
+          "sourceGroupId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "fallbackTempo": {
+            "type": "integer",
+            "minimum": 20,
+            "maximum": 240
+          },
+          "scopeConfirmed": {
+            "const": true
+          },
+          "regions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "page": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 6
+                },
+                "rect": {
+                  "$ref": "#/components/schemas/SelectionRect"
+                }
+              },
+              "required": [
+                "page",
+                "rect"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 1,
+            "maxItems": 30
+          }
+        },
+        "required": [
+          "sourceGroupId",
+          "title",
+          "fallbackTempo",
+          "scopeConfirmed",
+          "regions"
+        ],
+        "additionalProperties": false
+      },
+      "TaskCreated": {
+        "type": "object",
+        "properties": {
+          "jobId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "state": {
+            "const": "queued"
+          }
+        },
+        "required": [
+          "jobId",
+          "state"
+        ],
+        "additionalProperties": false
+      },
+      "CheckIssue": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      },
+      "RecognitionRegion": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "page": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 6
+          },
+          "system": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 30
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "preparing",
+              "calling",
+              "complete",
+              "needs_correction",
+              "failed",
+              "not_started",
+              "uncertain"
+            ]
+          },
+          "notes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "measures": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "errorCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CheckIssue"
+            }
+          },
+          "cropResourceId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "id",
+          "page",
+          "system",
+          "state",
+          "notes",
+          "measures",
+          "errorCode",
+          "warnings",
+          "issues",
+          "cropResourceId"
+        ],
+        "additionalProperties": false
+      },
+      "RecognitionJob": {
+        "type": "object",
+        "properties": {
+          "jobId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "cancelling",
+              "cancelled",
+              "needs_review",
+              "partial",
+              "failed",
+              "interrupted"
+            ]
+          },
+          "sourceGroupId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "scope": {
+            "const": "user-selected-regions"
+          },
+          "allPagesIncluded": {
+            "type": "boolean"
+          },
+          "savedEntryId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "canSave": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "progress": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 30
+              },
+              "complete": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 30
+              }
+            },
+            "required": [
+              "total",
+              "complete"
+            ],
+            "additionalProperties": false
+          },
+          "regions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecognitionRegion"
+            }
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CheckIssue"
+            }
+          }
+        },
+        "required": [
+          "jobId",
+          "title",
+          "state",
+          "sourceGroupId",
+          "scope",
+          "allPagesIncluded",
+          "savedEntryId",
+          "canSave",
+          "createdAt",
+          "updatedAt",
+          "progress",
+          "regions",
+          "issues"
+        ],
+        "additionalProperties": false
+      },
+      "SourcePagePreviews": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "images",
+              "pdf"
+            ]
+          },
+          "pages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ordinal": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 6
+                },
+                "width": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "height": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "mimeType": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "ordinal",
+                "width",
+                "height",
+                "mimeType"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 6
+          }
+        },
+        "required": [
+          "kind",
+          "pages"
+        ],
+        "additionalProperties": false
+      },
+      "FeedbackWrite": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "enum": [
+              "recognition",
+              "practice",
+              "account",
+              "other"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4000
+          },
+          "jobId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "category",
+          "message"
+        ],
+        "additionalProperties": false
+      },
+      "Feedback": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "category": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "open",
+              "in_progress",
+              "resolved"
+            ]
+          },
+          "reply": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "category",
+          "message",
+          "state",
+          "reply",
+          "createdAt"
+        ],
+        "additionalProperties": false
+      },
+      "CommercePolicy": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100000000
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "defaultTaskLimit": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000
+          },
+          "dailyCap": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000000000
+          },
+          "monthlyCap": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000000000
+          },
+          "jobCap": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000000000
+          },
+          "maxActive": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4
+          },
+          "announcement": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "supportContact": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "revision",
+          "enabled",
+          "defaultTaskLimit",
+          "dailyCap",
+          "monthlyCap",
+          "jobCap",
+          "maxActive",
+          "announcement",
+          "supportContact",
+          "reason"
+        ],
+        "additionalProperties": false
+      },
+      "CommercePolicyView": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100000000
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "defaultTaskLimit": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10000
+          },
+          "dailyCap": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000000000
+          },
+          "monthlyCap": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000000000
+          },
+          "jobCap": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000000000
+          },
+          "maxActive": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4
+          },
+          "announcement": {
+            "type": "string",
+            "maxLength": 1000
+          },
+          "supportContact": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "pausedReason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "revision",
+          "enabled",
+          "pausedReason",
+          "defaultTaskLimit",
+          "dailyCap",
+          "monthlyCap",
+          "jobCap",
+          "maxActive",
+          "announcement",
+          "supportContact"
+        ],
+        "additionalProperties": false
+      },
+      "OperatorOverview": {
+        "type": "object",
+        "properties": {
+          "policy": {
+            "$ref": "#/components/schemas/CommercePolicyView"
+          },
+          "providerConfigured": {
+            "type": "boolean"
+          },
+          "budget": {
+            "type": "object",
+            "properties": {
+              "currency": {
+                "const": "USD"
+              },
+              "scale": {
+                "const": 1000000
+              },
+              "day": {
+                "type": "string"
+              },
+              "month": {
+                "type": "string"
+              },
+              "dayCommitted": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1000000000000
+              },
+              "monthCommitted": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1000000000000
+              },
+              "unknown": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "definition": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "currency",
+              "scale",
+              "day",
+              "month",
+              "dayCommitted",
+              "monthCommitted",
+              "unknown",
+              "definition"
+            ],
+            "additionalProperties": false
+          },
+          "jobs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "type": "string"
+                },
+                "count": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "state",
+                "count"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "attempts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        },
+        "required": [
+          "policy",
+          "providerConfigured",
+          "budget",
+          "jobs",
+          "attempts"
         ],
         "additionalProperties": false
       }

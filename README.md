@@ -1,6 +1,15 @@
 # 琴伴 · 钢琴练习室
 
-本机运行的钢琴练习 App：输入原曲歌名，联网查找乐谱，选择版本导入后按自己的速度练习。
+钢琴乐谱与练习 App。开发者模式负责乐谱导入、显示、编辑、播放与导出；独立商业账号版负责私有曲库、托管识谱、任务数与成本控制、手机上传和运营。
+
+## 两个独立入口
+
+| 版本 | 启动 | 默认地址 | 功能边界 |
+| --- | --- | --- | --- |
+| 本地开发者模式 | `启动琴伴.command` / `npm start` | `http://127.0.0.1:8792` | 乐谱基础、数字谱导入、编辑、播放、导出与旧本机曲库 |
+| 商业账号版 | `启动商业版.command` / `npm run commercial:start` | `http://127.0.0.1:8793/` | 登录、私有曲库、原谱上传、后台识谱、每人每月任务数、全站成本上限、反馈与运营 |
+
+商业版先运行 `npm run commercial:operator -- 运营邮箱`，再启动；终端首次启动前执行 `npm run commercial:build`。本机预览的验证码写入独立私有开发邮箱。模型凭据与单价未配置时，识谱默认关闭，账号、上传和练习仍可使用。正式 PostgreSQL、SMTP、HTTPS 和付费模型接入尚未配置；[商业版实现、运行与预算规则](docs/commercial-app-implementation.md) 及 [本轮验收](docs/commercial-app-validation-20261021.md) 记录实际边界。
 
 ## 工程结构与数据迁移
 
@@ -8,7 +17,7 @@
 
 运行 `npm run typecheck` 或 `npm run check` 验证。[架构、v1 迁移规则、备份和接口说明](docs/architecture.md)。新核心直接运行需 Node.js >=22.19，启动器会检查版本。
 
-账号与私有曲库已完成独立本机实现：邀请制邮箱验证码、账号隔离、原图/PDF 私有保存、数字谱练习与修改、修订、回收站、完整备份和选择迁移。先使用 Node.js ≥22.19 运行 `npm run accounts:invite -- 测试邮箱`，再双击 **启动账号版.command**，访问 `http://127.0.0.1:8793/account.html`。本机验证码写入私有开发邮箱，不发送真实邮件；原有 8792 本机版独立保留。运行说明和未验收边界见 [账号版实现与验证](docs/account-private-library-implementation.md)，配套 [设计](docs/account-private-library-design.md) 与 [v1 接口契约](docs/contracts/account-private-library-v1.openapi.json)。尚未配置生产数据库、真实邮件、HTTPS 或多设备服务。
+邀请制账号、修订、回收站、完整备份和选择迁移见 [账号与私有曲库说明](docs/account-private-library-implementation.md)、[设计](docs/account-private-library-design.md) 与 [v1 接口契约](docs/contracts/account-private-library-v1.openapi.json)。`启动账号版.command` 和 `accounts:*` 命令继续兼容，商业版仍使用 `.local/accounts-v1/`；不会另建一个空目录替换已有账号数据。
 
 [24 张手机照片识谱报告](docs/phone-score-accuracy-20261021.md) 分开记录整照压力测试、完整谱行补测及独立视觉参考的局部一致率；未标注部分的真实准确率仍未知。测试规范见 [原生图片测试清单](docs/contracts/image-recognition-benchmark.schema.json)。
 
@@ -16,7 +25,7 @@
 
 macOS 双击 **启动琴伴.command**，构建并打开 `http://127.0.0.1:8792`。需要 Node.js >=22.19，启动器会自动查找本机的新版本 Node。
 
-更新源码后，如果旧服务仍在运行，请在旧启动终端按 Control+C，再双击启动器；只刷新网页不会更新 Node 服务内存中的找谱逻辑。关闭启动终端或按 Control+C 可停止本机服务。
+更新源码后，如果旧服务仍在运行，请在旧启动终端按 Control+C，再双击启动器；只刷新网页不会更新 Node 服务内存中的逻辑。关闭启动终端或按 Control+C 可停止本机服务。
 
 ```sh
 npm install
@@ -32,7 +41,7 @@ npm start
 
 另有 20 首进阶曲目：巴赫二部创意曲 8 首、贝多芬作品或奏鸣曲乐章 8 首、肖邦前奏曲 4 首。搜索“第3批”可单独查看，亦可按作曲家搜索。标题明确区分完整作品和单独乐章；原始文件、具体版本许可及导入范围见 [进阶曲目来源](public/intermediate-sources/README.md)。
 
-- 顶部：练习室、我的曲库、AI 找谱、音频转谱；右上角识谱任务、导入乐谱与 AI 设置。
+- 开发者模式顶部：钢琴 / 吉他、练习室、我的曲库和数字谱导入；商业版练习室增加返回私有曲库、上传识谱和账号入口。本地开发者模式不显示 AI 设置、模型登录或运营入口，服务端同时拒绝这些调用。
 - 练习侧栏：速度、左右手开关、节拍器、小节循环、音量、五线谱/简谱/钢琴卷帘切换、跟随、移调、编辑与导出。底部播放栏保留播放/暂停、进度、速度与常用快捷开关。
 - 布局栏：顶栏、侧栏和钢琴键盘均可独立收起；「专注」只保留乐谱、播放按钮和右上角退出入口。iPad 竖屏默认专注，iPhone 横屏也默认专注；横竖屏分别记住布局选择，收起面板、旋转屏幕不重置播放进度。
 - iPhone 使用底部导航、列表曲库与「继续练习」入口；练习设置以抽屉展开，键盘按需显示并可横向滑动。页面支持屏幕安全区域，浏览器刷新后保留布局偏好。
@@ -90,7 +99,7 @@ npm start
 
 在线打开：https://dns0129.github.io/Open_Piano_Player/
 
-`npm run build:pages` 生成纯静态网页到 `dist-pages/`（默认部署在 `/Open_Piano_Player/` 子路径，可用 `PAGES_BASE=/其他路径/` 覆盖）。网页版包含全部曲库、五线谱/简谱、钢琴播放、变速、分手、循环、移调、导出，以及本地 MusicXML/MXL/MIDI/JSON 导入和浏览器内音频转谱；联网找谱、图片/PDF 识谱、网易云导入和本机共享曲库需要 Node 服务，网页版会给出说明而不会发起这些请求。
+`npm run build:pages` 生成纯静态基础版到 `dist-pages/`（默认部署在 `/Open_Piano_Player/` 子路径，可用 `PAGES_BASE=/其他路径/` 覆盖）。它包含内置曲库、五线谱/简谱、播放、编辑、变速、分手、循环、移调、导出和 MusicXML/MXL/MIDI/JSON 导入，不提供账号或识谱服务。商业版由 `npm run build:hosted` 单独构建到 `dist-hosted/`，需要独立 Node 后端；推送源码与 Pages 构建不等于部署了商业版。
 
 发布：推送到 `main` 后，`.github/workflows/pages.yml` 自动构建网页版并发布到 `gh-pages` 分支（也可在 Actions 页手动运行），仓库 Settings → Pages 选择 “Deploy from a branch · gh-pages · /(root)”。网页公开可见，其中包括全部内置曲目。
 
@@ -106,7 +115,9 @@ npm run scores:list
 
 App 导出的琴伴 JSON（`{ "score": {...} }`）可直接加入。曲目 ID 只能用小写字母、数字和连字符。新增曲目通过 Pull Request 合并到 `main`，`.github/workflows/score-repo.yml` 会对改动执行同样的校验；手工改动曲目文件而不更新清单会因 SHA-256 不一致而失败。仓库为私有时，曲目只对有权限的账号可见。
 
-## 通用多页钢琴谱 PDF
+## 历史识谱研究工具与数据留存
+
+本节记录原有脚本、实验和历史任务。当前开发者模式 UI 与默认 8792 服务只提供乐谱基础功能；这些旧研究脚本和 `.local/full-score-jobs/` 数据保留，商业账号版走独立凭据与任务队列，见上方商业版说明。
 
 2026-10-18 升降记号策略 `accidentals-v2-20261018`：单图、谱行识别和独立复读共用专项提示词，检查密集和弦中的记号归属、调号与逐小节临时升降状态、还原号、八度和跨小节延音。请求仍固定 `gpt-6.1-sol` / `high`；结果与用量记录保存提示词版本，旧提示词的缓存、检查点和相同 PDF 自动复用不代替新识别。历史任务和人工校对不会被删除。
 

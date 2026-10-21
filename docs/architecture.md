@@ -4,6 +4,14 @@
 
 邀请制账号版已新增独立 `/api/v1` 服务和 hosted 构建，复用乐谱文档、播放和编辑器。当前以本机 PGlite PostgreSQL 与私有文件目录验收，生产数据库与邮件尚未接通；详见 [实现与验证](account-private-library-implementation.md) 和 [设计](account-private-library-design.md)。下文的原有本机与静态浏览器模式仍独立运行。
 
+## 商业版与基础版边界
+
+8792 默认启动 `developerMode=true`：仅乐谱基础、数字文件导入、编辑、播放、导出和本机曲库；状态接口不读取订阅登录或模型设置，非曲库 API 在进入旧处理器前拒绝。静态 Pages 是同一基础功能。旧识谱脚本、历史数据和可注入服务器工厂保留给研究工具与回归测试。
+
+商业入口为 8793 `/`，练习室为 `/practice.html`，由 hosted 多入口构建产生。只调用同源 `/api/v1`，不使用旧本机 API、恢复 token 或 Codex/Pi 凭据。`recognition-source.mjs` 只渲染与裁图；`recognition-provider.mjs` 持有服务端凭据和 Responses 协议；`recognition-budget.mjs` 串行锁定任务和成本账本；`recognition-jobs.mjs` 管理持久队列、检查点和主动重试；`operations.mjs` 集中角色、近期验证和审计。复用的纯乐谱校验与拼接下沉到 `score-region.mjs`，不依赖旧本机任务或认证。
+
+任务内容、裁图、原谱与反馈受账号 RLS 约束；全站控制表只存任务 UUID、账号 UUID、状态与成本等运营元数据。服务端读取具体用户反馈时按所属账号事务取回；运营 API 不提供其他用户曲谱或图片下载。前端 Service Worker 只提供不含私有内容的断网提示，不缓存账号数据。详细状态、预算算法与运维规则见 [商业版实现](commercial-app-implementation.md)。
+
 ## 三种表示
 
 - lib/score-document.ts：唯一持久乐谱文档为 schema: qinban.score / version: 2。保存书写音名（step、alter、octave）、记号、独立的谱表与演奏手、声部、休止、音头与 tieTo、变拍变调、演奏设置及原图定位。

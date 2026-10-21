@@ -6,7 +6,7 @@ async function status() {
     const r = await fetch(url + "/api/status", {
       signal: AbortSignal.timeout(1200),
     });
-    return r.ok ? await r.json() : null;
+    return r.ok ? await r.json() : {mode:'occupied-unknown'};
   } catch {
     return null;
   }
@@ -18,9 +18,15 @@ function openBrowser() {
   }
   console.log(`琴伴练习室：${url}`);
 }
-if (await status()) {
-  openBrowser();
-  console.log("已打开正在运行的琴伴。");
+const running = await status();
+if (running) {
+  if (running.mode === 'developer') {
+    openBrowser();
+    console.log("已打开正在运行的琴伴开发者模式。");
+  } else {
+    console.error("8792 已被另一版本服务占用。请在其启动终端完成当前任务并按 Control+C，再重新启动琴伴开发者模式。");
+    process.exitCode = 1;
+  }
 } else {
   const server = spawn(process.execPath, ["server.mjs"], { stdio: "inherit" });
   let exited = false;
@@ -32,7 +38,7 @@ if (await status()) {
     process.on(sig, () => server.kill(sig));
   for (let i = 0; i < 60 && !exited; i++) {
     await new Promise((r) => setTimeout(r, 250));
-    if (await status()) {
+    if ((await status())?.mode === 'developer') {
       openBrowser();
       break;
     }

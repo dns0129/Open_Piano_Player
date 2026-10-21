@@ -271,10 +271,10 @@ function render() {
   state.audio.previewRenderer?.destroy();
   $("#app").innerHTML =
     `<div data-section="${state.section}" class="app-shell ${state.view === "practice" ? "has-practice" : ""}">
-<header id="app-header" class="app-header"><a class="brand" href="#" aria-label="琴伴首页"><span class="brand-symbol">${icon("piano")}</span><span>琴伴<small>QINBAN</small></span></a>
+<header id="app-header" class="app-header"><a class="brand" href="${capabilities.mode === "hosted" ? "/" : "#"}" aria-label="琴伴首页"><span class="brand-symbol">${icon("piano")}</span><span>琴伴<small>${capabilities.mode === "hosted" ? "商业版练习室" : capabilities.mode === "local" ? "开发者模式" : "公开练习版"}</small></span></a>
 <div class="instrument-sections" role="group" aria-label="乐器分区"><button data-section="piano" aria-pressed="${state.section === 'piano'}" class="${state.section === 'piano' ? 'selected' : ''}">${icon('piano')}钢琴</button><button data-section="guitar" aria-pressed="${state.section === 'guitar'}" class="${state.section === 'guitar' ? 'selected' : ''}">${icon('guitar')}吉他</button></div>
-<nav class="main-nav" aria-label="主导航"><button data-nav="practice" class="nav-tab ${state.view === "practice" ? "active" : ""}">${icon("music-2")}<span>练习室</span></button><button data-nav="library" class="nav-tab ${state.view === "library" ? "active" : ""}">${icon("book-open")}<span>我的曲库</span><small>${availableScores().length}</small></button>${state.section === "piano" ? `<button data-nav="search" class="nav-tab ${state.view === "search" ? "active" : ""}">${icon("search")}<span>AI 找谱</span><small class="online-badge">联网</small></button><button data-nav="audio" class="nav-tab ${state.view === "audio" ? "active" : ""}">${icon("audio-lines")}<span>音频转谱</span></button>` : ""}</nav>
-<div class="header-actions">${capabilities.mode === "hosted" ? '<a class="button quiet" href="/account.html">账号与私有曲库</a>' : ""}${state.section === "piano" ? `<button class="button quiet" data-fullscore-jobs ${capabilities.mode === "hosted" ? "hidden" : ""}>识谱任务</button>` : ""}<button class="button quiet" data-upload aria-label="导入乐谱">${icon("upload")}<span>导入乐谱</span></button><button class="icon-button" data-settings ${capabilities.mode === "hosted" ? "hidden" : ""} aria-label="AI 与设置" title="AI 与设置">${icon("sliders-horizontal")}</button></div></header>
+<nav class="main-nav" aria-label="主导航"><button data-nav="practice" class="nav-tab ${state.view === "practice" ? "active" : ""}">${icon("music-2")}<span>练习室</span></button><button data-nav="library" class="nav-tab ${state.view === "library" ? "active" : ""}">${icon("book-open")}<span>我的曲库</span><small>${availableScores().length}</small></button>${!capabilities.coreOnly && state.section === "piano" ? `<button data-nav="search" class="nav-tab ${state.view === "search" ? "active" : ""}">${icon("search")}<span>AI 找谱</span><small class="online-badge">联网</small></button><button data-nav="audio" class="nav-tab ${state.view === "audio" ? "active" : ""}">${icon("audio-lines")}<span>音频转谱</span></button>` : ""}</nav>
+<div class="header-actions">${capabilities.mode === "hosted" ? '<a class="button quiet" href="/">我的曲库</a><a class="button quiet" href="/recognition.html">上传识谱</a><a class="button quiet" href="/account.html">账号</a>' : ""}<button class="button quiet" data-upload aria-label="导入乐谱">${icon("upload")}<span>导入数字谱</span></button></div></header>
 <main class="view-${state.view}">${state.view === "library" ? libraryView() : state.view === "search" ? searchView() : state.view === "audio" ? audioView() : practiceView()}</main>
 <nav class="mobile-nav" aria-label="移动端主导航">${[
       ["practice", "music-2", "练习室"],
@@ -282,7 +282,7 @@ function render() {
       ["search", "search", "找谱"],
       ["audio", "audio-lines", "转谱"],
     ]
-      .filter(([view]) => state.section === "piano" || ["practice", "library"].includes(view))
+      .filter(([view]) => !capabilities.coreOnly && state.section === "piano" || ["practice", "library"].includes(view))
       .map(
         ([view, symbol, label]) =>
           `<button data-nav="${view}" class="${state.view === view ? "active" : ""}" ${state.view === view ? 'aria-current="page"' : ""}>${icon(symbol)}<span>${label}</span></button>`,
@@ -371,6 +371,7 @@ function bindCommon() {
   $$("[data-ai]").forEach((b) => (b.onclick = () => openSearch()));
   $$("[data-settings]").forEach((b) => (b.onclick = openSettings));
   $(".brand").onclick = (e) => {
+    if (capabilities.mode === "hosted") return;
     e.preventDefault();
     state.view = "practice";
     render();
@@ -1068,7 +1069,7 @@ async function openSettings() {
   });
 }
 function openImportChooser() {
-  if (state.section === 'guitar') {
+  if (capabilities.coreOnly || state.section === 'guitar') {
     $('#file-input').accept = '.xml,.musicxml,.mxl,.mid,.midi,.json';
     $('#file-input').click();
     return;

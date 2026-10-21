@@ -25,12 +25,17 @@
     "check": "npm run typecheck && npm test && npm run scores:verify",
     "build:hosted": "node scripts/prepare-assets.mjs && VITE_HOSTED_SITE=1 vite build --outDir dist-hosted",
     "accounts:start": "node scripts/accounts.mjs start",
-    "accounts:invite": "node scripts/accounts.mjs invite"
+    "accounts:invite": "node scripts/accounts.mjs invite",
+    "commercial:build": "npm run build:hosted",
+    "commercial:start": "node scripts/accounts.mjs start",
+    "commercial:operator": "node scripts/accounts.mjs operator",
+    "accounts:operator": "node scripts/accounts.mjs operator"
   },
   "dependencies": {
     "@earendil-works/pi-agent-core": "1.1.0",
     "@earendil-works/pi-ai": "1.1.0",
     "@electric-sql/pglite": "0.5.10",
+    "@napi-rs/canvas": "1.0.11",
     "@neteasecloudmusicapienhanced/api": "4.41.1",
     "@spotify/basic-pitch": "1.0.1",
     "@tensorflow/tfjs": "3.21.0",
