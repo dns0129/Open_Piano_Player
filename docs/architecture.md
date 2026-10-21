@@ -6,7 +6,7 @@
 
 ## 商业版与基础版边界
 
-8792 默认启动 `developerMode=true`：仅乐谱基础、数字文件导入、编辑、播放、导出和本机曲库；状态接口不读取订阅登录或模型设置，非曲库 API 在进入旧处理器前拒绝。静态 Pages 是同一基础功能。旧识谱脚本、历史数据和可注入服务器工厂保留给研究工具与回归测试。
+8792 默认启动 `developerMode=true`，保留原有图片/PDF 识谱、任务恢复、模型连接/设置、找谱、网易云导入、数字谱编辑与播放。状态接口返回原有识谱状态；本机接口继续检查回环地址、同源、会话与 CSRF。商业账号 `/api/v1` 在本机服务明确拒绝，原本机 `/api` 识谱路由正常运行。静态 Pages 仍不能调用本机识谱服务。旧任务与原谱保留在原目录。
 
 商业入口为 8793 `/`，练习室为 `/practice.html`，由 hosted 多入口构建产生。只调用同源 `/api/v1`，不使用旧本机 API、恢复 token 或 Codex/Pi 凭据。`recognition-source.mjs` 只渲染与裁图；`recognition-provider.mjs` 持有服务端凭据和 Responses 协议；`recognition-budget.mjs` 串行锁定任务和成本账本；`recognition-jobs.mjs` 管理持久队列、检查点和主动重试；`operations.mjs` 集中角色、近期验证和审计。复用的纯乐谱校验与拼接下沉到 `score-region.mjs`，不依赖旧本机任务或认证。
 

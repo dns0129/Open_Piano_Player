@@ -6,13 +6,13 @@
 
 | 入口 | 构建与服务 | 内容 |
 | --- | --- | --- |
-| 本地开发者模式 8792 | `npm run build`、`npm start` | 乐谱显示、数字导入、编辑、播放、导出与旧本机曲库 |
-| 静态 Pages | `npm run build:pages` | 同样的基础功能，浏览器曲库独立保留 |
+| 本地开发者模式 8792 | `npm run build`、`npm start` | 原有图片/PDF 识谱、历史任务、模型设置、找谱、导入、编辑与播放 |
+| 静态 Pages | `npm run build:pages` | 乐谱练习、数字导入与音频转谱；联网识谱需本机服务 |
 | 商业账号版 8793 | `npm run commercial:build`、`npm run commercial:start` | 账号、私有曲库、上传、识谱队列、额度和运营 |
 
 商业首页 `/`，上传 `/recognition.html`，练习 `/practice.html`，账号资料 `/account.html`，运营 `/operations.html`。hosted 构建不包含开发者 `index.html`。旧账号命令与 `.local/accounts-v1/` 继续使用，增量建表不替换已有账号或曲库。
 
-开发者模式隐藏模型设置、订阅登录、识谱任务、找谱与发布；默认 Node 服务也在旧处理器之前拒绝相应接口。研究脚本、旧任务、原谱与其他会话成果保留。商业后端不读取 Pi/Codex 凭据、本机模型设置或旧识谱 token，也不代理旧 API。
+本机版完整保留原有识谱入口、设置、任务恢复和找谱；模型连接沿用原有本机配置，历史任务与原谱继续使用。商业账号与额度控制走独立服务，商业后端不读取 Pi/Codex 凭据、本机模型设置或旧识谱 token，也不代理旧 API。本机服务不开放商业账号 `/api/v1`，两种识谱使用各自的数据和授权。
 
 ## 首次本机运行
 

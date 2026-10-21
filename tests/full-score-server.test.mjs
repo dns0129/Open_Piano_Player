@@ -16,7 +16,7 @@ test('full-document HTTP routes preserve session/CSRF boundaries and explicit re
     cancelJob:record('cancel',{status:'cancelled'}),confirmRegion:record('review',{status:'needs-review'}),
     confirmJob:record('confirm',{status:'complete'}),close:record('close',undefined),
   };
-  const server=createAppServer({fullScoreJobs:store,statusReader:async()=>({available:false}),settingsStore:{read:async()=>({})}});
+  const server=createAppServer({developerMode:true,fullScoreJobs:store,statusReader:async()=>({available:false}),settingsStore:{read:async()=>({})}});
   server.listen(0,'127.0.0.1');await once(server,'listening');
   t.after(async()=>{server.closeAllConnections();await new Promise(resolve=>server.close(resolve));});
   const url=`http://127.0.0.1:${server.address().port}`;
