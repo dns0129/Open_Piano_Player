@@ -79,6 +79,36 @@ test('thin gray staff lines and variable hand spacing retain every complete pian
   assert.equal(layout.assessment.canRequestOcr, true);
 });
 
+function connectedPianoPage(tops=[100,202,314,412,523,628,740,850,962,1050]) {
+  const image=page(800,1200);
+  for(const top of tops)staff(image,top);
+  // The printed system-start bar joins the hands even when hand spacing is
+  // almost the same as (or larger than) the gap to the following system.
+  for(let i=0;i<tops.length;i+=2)ink(image,65,tops[i],2,tops[i+1]+34-tops[i]);
+  return image;
+}
+
+test('printed connectors retain five grand staffs when variable hand and row gaps are nearly equal',()=>{
+  const layout=detectScoreSystems(connectedPianoPage(),{pianoSourceVerified:true});
+  assert.equal(layout.staffs.length,10);assert.equal(layout.systems.length,5);
+  assert.ok(layout.systems.every(system=>system.staffs.length===2));
+  for(let index=0;index<5;index++)assert.deepEqual(layout.systems[index].staffs,layout.staffs.slice(index*2,index*2+2));
+});
+
+test('connected hands may be farther apart than adjacent systems without pairing across systems',async()=>{
+  const image=connectedPianoPage([100,250,330,480]);
+  await withPreparedImage(image,{pianoSourceVerified:true},prepared=>{
+    assert.equal(prepared.systems.length,2);
+    for(const system of prepared.systems){
+      assert.equal(system.staffs.length,2);
+      const [chunk]=prepared.getSelection({selectedSystemIds:[system.id]});
+      assert.equal(chunk.assessment.canRequestOcr,true);
+      assert.ok(chunk.region.rect.y<=system.staffs[0].lines[0]);
+      assert.ok(chunk.region.rect.y+chunk.region.rect.height>system.staffs[1].lines[4]);
+    }
+  });
+});
+
 // Exercise the actual browser preprocessing/selection seam without any model or network call.
 async function withPreparedImage(fixture, options, run) {
   const previous = { Image: globalThis.Image, document: globalThis.document };
