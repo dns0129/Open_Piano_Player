@@ -11,3 +11,5 @@ tmp/
 .env.*
 !.env.example
 dist-pages/
+
+dist-hosted/

@@ -1,6 +1,6 @@
 # 账号与私有曲库设计
 
-日期：2026-10-21。状态：设计完成，待实现。适用版本：邀请制教师收费版。
+日期：2026-10-21。状态：本机实现已落地，生产接入与多设备验收待完成。适用版本：邀请制教师收费版。实际运行与验证边界见 [账号版实现说明](account-private-library-implementation.md)。
 
 首版以个人账号拥有曲库：老师和成人学习者都能私有保存原始曲谱、数字谱与修改历史，并在另一台设备登录后继续使用。老师身份是产品用途，不会自动获得其他用户的访问权。现有本机版继续独立运行，现有公共曲库继续提供公开内容。
 
@@ -175,7 +175,7 @@ RLS 是数据库补充防线，无法替代 HTTP 授权和 worker 的 owner 校�
 
 新增 expectedRevision 为 0，更新、回收和恢复必须提供当前 revision；遗漏返回 428，陈旧返回 `409 REVISION_CONFLICT`。事务锁定本人 entry，验证输入和 ready 资源后插入不可变 revision、关联资源，再更新 current_revision。回收同样递增 revision 并设置 deleted_at，防止并发修改复活已删记录。新 entry 总从 revision 1 开始，不信任输入的修订号、作者归属或审核状态。恢复旧版本会创建新修订，不覆盖历史。
 
-上传对象先完成，再提交数据库引用；对象上传失败不提交曲谱。数据库事务失败的未引用对象进入延时回收，不立刻删除可能被并发提交引用的对象。一天内未完成的暂存上传自动清理；ready 资源和来源组未关联任何修订或任务且没有有效上传租约时，也在 24 小时后清理。回收前再次检查引用与有效租约，先删除无人使用的来源组关系，再删除无引用对象。
+上传对象先完成，再提交数据库引用；对象上传失败不提交曲谱。数据库事务失败的未引用对象进入延时回收，不立刻删除可能被并发提交引用的对象。一天内未完成的暂存上传自动清理。用户显式保存的来源组标记 pinned，尚未附加数字谱时也持久保留，列入完整备份；用户可删除未关联修订的来源组。未固定的来源组及无引用、无上传租约的 ready 资源在 24 小时后清理；派生图仍被原图关联时保留。数据库事务失败留下的孤立文件也延迟一天并再次核对后回收。回收前再次检查引用与有效租约，先删除无人使用的来源组关系，再删除无引用对象。
 
 原始文件不受数字音符编辑影响；原图定位关系只有在仍匹配音乐数据时供跟随使用，复用现有 sourceReference 校验。归属字段和存储引用不混入 qinban.score 文档，导出 MusicXML / MIDI 不受影响。
 
@@ -185,14 +185,14 @@ RLS 是数据库补充防线，无法替代 HTTP 授权和 worker 的 owner 校�
 
 ## 8 HTTP Interface
 
-完整机器可读约定见 [OpenAPI 设计契约](contracts/account-private-library-v1.openapi.json)。这是待实现的 v1 路由，不改变当前运行接口。所有写请求使用 X-CSRF-Token；所有业务 mutation 还使用 Idempotency-Key，登录 challenge 与 session 路由采用专门的一次性消费规则。
+完整机器可读约定见 [OpenAPI 设计契约](contracts/account-private-library-v1.openapi.json)。这些路由由独立账号入口提供，不改变原有 8792 服务接口。所有写请求使用 X-CSRF-Token；所有业务 mutation 还使用 Idempotency-Key，登录 challenge 与 session 路由采用专门的一次性消费规则。
 
 | 路由 | 作用与授权 |
 | --- | --- |
 | GET `/api/v1/auth/context` | 建立登录前 nonce，返回对应 CSRF token；不读取曲库 |
 | GET `/api/v1/session` | 返回当前用户、CSRF token、近期验证时间；无登录返回 401，不自动建账号 |
 | POST `/api/v1/auth/code` | 请求登录或近期验证的验证码；同源登录前 / 登录会话 nonce |
-| POST `/api/v1/auth/verify` | 原子验证并登录或仅更新近期验证；生成会话 Cookie |
+| POST `/api/v1/auth/verify` | 原子验证并登录或近期重新验证；生成新会话 Cookie，重新验证时撤销旧会话 |
 | GET `/api/v1/sessions` | 本人设备会话，不返回 token 或摘要 |
 | DELETE `/api/v1/sessions/{sessionId}` | 撤销本人会话；全部退出还要求近期验证 |
 | POST `/api/v1/auth/logout-all` | 近期验证后撤销本人全部会话 |
@@ -203,7 +203,9 @@ RLS 是数据库补充防线，无法替代 HTTP 授权和 worker 的 owner 校�
 | POST `/api/v1/uploads` | 申请本人暂存上传 |
 | PUT `/api/v1/uploads/{uploadId}/content` | 上传二进制，不允许更改归属 |
 | POST `/api/v1/uploads/{uploadId}/complete` | 验证文件并返回 ready 资源引用 |
-| POST `/api/v1/source-groups` | 校验本人资源与页序，创建来源组 |
+| GET / POST `/api/v1/source-groups` | 列出持久保存的本人资料 / 校验本人资源与页序并创建来源组 |
+| GET / DELETE `/api/v1/source-groups/{sourceGroupId}` | 读取本人来源组 / 删除未被修订引用的来源组 |
+| GET `/api/v1/device-library`、POST `/api/v1/device-library/export` | 仅本机验证入口，主动选择旧曲库导入，保留原数据 |
 | GET `/api/v1/resources/{resourceId}` | 本人资源下载，不接受存储 key 或公开哈希作为授权 |
 | POST `/api/v1/library/exports` | 近期验证，创建本人完整备份任务；固定曲目修订快照 |
 | GET `/api/v1/library/exports/{exportId}` | 读取本人备份状态；就绪后通过 resourceId 下载 |
@@ -273,4 +275,4 @@ v2 顶层固定为 `{format, version, exportedAt, records, sourceGroups, resourc
 - **备份恢复**：在隔离测试环境恢复数据库和对象；校验资源引用，重放删除记录，再用本人账号完成播放、编辑与导出。
 - **原能力回归**：本机启动、游客导入、现有公共曲库、打印、MusicXML/MIDI、吉他分区仍按原模式运行。真实图片识别准确性单列报告，不用账号或存储测试代替。
 
-本次设计交付只证明方案与契约已整理。账号注册、私有同步、邮件发送和生产部署须在实现及上述验收后分别报告实际状态。
+本机实现、数据库与 HTTP 隔离测试、备份恢复和浏览器旅程的实际结果见实现说明。第 5 项真部署与真实多设备验收尚未执行；本机结果不代表邮件或线上服务已可用。

@@ -8,7 +8,9 @@
 
 运行 `npm run typecheck` 或 `npm run check` 验证。[架构、v1 迁移规则、备份和接口说明](docs/architecture.md)。新核心直接运行需 Node.js >=22.19，启动器会检查版本。
 
-[账号与私有曲库设计](docs/account-private-library-design.md) 已确定邀请制登录、账号隔离、原图存储、修订、选择迁移和验收要求；配套 [v1 接口设计契约](docs/contracts/account-private-library-v1.openapi.json) 与 [原生图片测试清单规范](docs/contracts/image-recognition-benchmark.schema.json)。这些为待实现设计，当前运行模式仍按下文说明。
+账号与私有曲库已完成独立本机实现：邀请制邮箱验证码、账号隔离、原图/PDF 私有保存、数字谱练习与修改、修订、回收站、完整备份和选择迁移。先使用 Node.js ≥22.19 运行 `npm run accounts:invite -- 测试邮箱`，再双击 **启动账号版.command**，访问 `http://127.0.0.1:8793/account.html`。本机验证码写入私有开发邮箱，不发送真实邮件；原有 8792 本机版独立保留。运行说明和未验收边界见 [账号版实现与验证](docs/account-private-library-implementation.md)，配套 [设计](docs/account-private-library-design.md) 与 [v1 接口契约](docs/contracts/account-private-library-v1.openapi.json)。尚未配置生产数据库、真实邮件、HTTPS 或多设备服务。
+
+[24 张手机照片识谱报告](docs/phone-score-accuracy-20261021.md) 分开记录整照压力测试、完整谱行补测及独立视觉参考的局部一致率；未标注部分的真实准确率仍未知。测试规范见 [原生图片测试清单](docs/contracts/image-recognition-benchmark.schema.json)。
 
 ## 启动
 

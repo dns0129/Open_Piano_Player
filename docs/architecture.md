@@ -2,7 +2,7 @@
 
 运行环境为 Node.js >= 22.19；核心 TypeScript 只使用 Node 可直接擦除的类型语法，Vite 负责浏览器构建。运行 npm run typecheck 检查类型，npm run check 检查类型、测试与仓库曲目。
 
-后续邀请制托管版见 [账号与私有曲库设计](account-private-library-design.md)。该设计增加独立的账号与私有存储，复用现有乐谱文档与曲库操作；下文描述的本机和浏览器实现不因此自动具备账号同步能力。
+邀请制账号版已新增独立 `/api/v1` 服务和 hosted 构建，复用乐谱文档、播放和编辑器。当前以本机 PGlite PostgreSQL 与私有文件目录验收，生产数据库与邮件尚未接通；详见 [实现与验证](account-private-library-implementation.md) 和 [设计](account-private-library-design.md)。下文的原有本机与静态浏览器模式仍独立运行。
 
 ## 三种表示
 
@@ -54,7 +54,7 @@ lib/notation-rhythm.mjs 集中处理倍全至二百五十六分音符、0–3 �
 
 ## 请求与功能能力
 
-capabilities.js 明确区分 local / browser 模式；api-client.js 是本机请求的统一接口，处理会话、CSRF 和一次过期恢复。静态模式在发送前拒绝本机请求，不修改全局 fetch。普通资源、模型与原谱图片加载不受影响。
+capabilities.js 明确区分 local / browser / hosted 模式；api-client.js 是本机请求的统一接口，处理会话、CSRF 和一次过期恢复。静态模式在发送前拒绝本机请求，不修改全局 fetch。普通资源、模型与原谱图片加载不受影响。
 
 本机曲库接口均沿用同源会话和 CSRF 检查：
 

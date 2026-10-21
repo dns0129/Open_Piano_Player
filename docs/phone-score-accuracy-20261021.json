@@ -1,0 +1,953 @@
+{
+  "generatedAt": "2026-10-21T08:07:22.094Z",
+  "status": "completed",
+  "scope": "24 native photos submitted as multi-system single-region stress test; separate one-system crop is not the same scope",
+  "model": "gpt-6.1-sol",
+  "reasoningEffort": "high",
+  "wholePhoto": {
+    "attempted": 24,
+    "total": 24,
+    "structuredComplete": 6,
+    "partial": 15,
+    "failedWithoutRaw": 3,
+    "batchWallSeconds": 22358.715,
+    "cases": [
+      {
+        "id": "p1_q1",
+        "resumedAfterInterruption": false,
+        "status": "failed",
+        "modelComplete": false,
+        "rawNotes": 194,
+        "seconds": 372.23456095899996,
+        "usage": {
+          "input": 16086,
+          "output": 13871,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 11394,
+          "totalTokens": 29957,
+          "cost": {
+            "input": 0.032172,
+            "output": 0.13871,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0.170882
+          }
+        },
+        "errorCode": "NEEDS_SOURCE",
+        "startedAt": "2026-10-21T01:52:43.014Z",
+        "endedAt": "2026-10-21T01:58:55.252Z"
+      },
+      {
+        "id": "p1_q5",
+        "resumedAfterInterruption": false,
+        "status": "failed",
+        "modelComplete": false,
+        "rawNotes": 198,
+        "seconds": 325.953850167,
+        "usage": {
+          "input": 16086,
+          "output": 12020,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 9752,
+          "totalTokens": 28106,
+          "cost": {
+            "input": 0.032172,
+            "output": 0.12020000000000002,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0.152372
+          }
+        },
+        "errorCode": "NEEDS_SOURCE",
+        "startedAt": "2026-10-21T02:00:01.790Z",
+        "endedAt": "2026-10-21T02:05:27.742Z"
+      },
+      {
+        "id": "p1_q10",
+        "resumedAfterInterruption": false,
+        "status": "failed",
+        "modelComplete": false,
+        "rawNotes": 38,
+        "seconds": 265.5816367919999,
+        "usage": {
+          "input": 16086,
+          "output": 10371,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 9722,
+          "totalTokens": 26457,
+          "cost": {
+            "input": 0.032172,
+            "output": 0.10371000000000001,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0.135882
+          }
+        },
+        "errorCode": "NEEDS_SOURCE",
+        "startedAt": "2026-10-21T02:04:27.337Z",
+        "endedAt": "2026-10-21T02:08:52.919Z"
+      },
+      {
+        "id": "p2_q1",
+        "resumedAfterInterruption": false,
+        "status": "failed",
+        "modelComplete": false,
+        "rawNotes": 37,
+        "seconds": 254.30168045800002,
+        "usage": {
+          "input": 16086,
+          "output": 9248,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 8643,
+          "totalTokens": 25334,
+          "cost": {
+            "input": 0.032172,
+            "output": 0.09248,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0.12465200000000001
+          }
+        },
+        "errorCode": "NEEDS_SOURCE",
+        "startedAt": "2026-10-21T01:49:16.110Z",
+        "endedAt": "2026-10-21T01:53:30.413Z"
+      },
+      {
+        "id": "p5_q1",
+        "resumedAfterInterruption": false,
+        "status": "failed",
+        "modelComplete": false,
+        "rawNotes": 131,
+        "seconds": 288.411030458,
+        "usage": {
+          "input": 2518,
+          "output": 10448,
+          "cacheRead": 13568,
+          "cacheWrite": 0,
+          "reasoning": 8461,
+          "totalTokens": 26534,
+          "cost": {
+            "input": 0.005036,
+            "output": 0.10448,
+            "cacheRead": 0.0013568,
+            "cacheWrite": 0,
+            "total": 0.11087280000000001
+          }
+        },
+        "errorCode": "NEEDS_SOURCE",
+        "startedAt": "2026-10-21T02:05:27.748Z",
+        "endedAt": "2026-10-21T02:10:16.161Z"
+      },
+      {
+        "id": "p9_q1",
+        "resumedAfterInterruption": false,
+        "status": "failed",
+        "modelComplete": false,
+        "rawNotes": 99,
+        "seconds": 425.446195541,
+        "usage": {
+          "input": 16086,
+          "output": 15312,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 13968,
+          "totalTokens": 31398,
+          "cost": {
+            "input": 0.032172,
+            "output": 0.15312,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0.185292
+          }
+        },
+        "errorCode": "NEEDS_SOURCE",
+        "startedAt": "2026-10-21T02:08:52.924Z",
+        "endedAt": "2026-10-21T02:15:58.364Z"
+      },
+      {
+        "id": "p10_q1",
+        "resumedAfterInterruption": false,
+        "status": "failed",
+        "modelComplete": false,
+        "rawNotes": 0,
+        "seconds": 206.91937475000003,
+        "usage": {
+          "input": 16086,
+          "output": 6791,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 6558,
+          "totalTokens": 22877,
+          "cost": {
+            "input": 0.032172,
+            "output": 0.06791000000000001,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0.100082
+          }
+        },
+        "errorCode": "NEEDS_SOURCE",
+        "startedAt": "2026-10-21T01:49:16.086Z",
+        "endedAt": "2026-10-21T01:52:43.007Z"
+      },
+      {
+        "id": "p10_q5",
+        "resumedAfterInterruption": false,
+        "status": "failed",
+        "modelComplete": false,
+        "rawNotes": 94,
+        "seconds": 404.72309295799977,
+        "usage": {
+          "input": 16086,
+          "output": 14861,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 13466,
+          "totalTokens": 30947,
+          "cost": {
+            "input": 0.032172,
+            "output": 0.14861000000000002,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0.18078200000000003
+          }
+        },
+        "errorCode": "NEEDS_SOURCE",
+        "startedAt": "2026-10-21T02:10:16.166Z",
+        "endedAt": "2026-10-21T02:17:00.878Z"
+      },
+      {
+        "id": "p10_q10",
+        "resumedAfterInterruption": false,
+        "status": "failed",
+        "modelComplete": false,
+        "rawNotes": 153,
+        "seconds": 415.75906379099985,
+        "usage": {
+          "input": 16086,
+          "output": 15088,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 13036,
+          "totalTokens": 31174,
+          "cost": {
+            "input": 0.032172,
+            "output": 0.15088000000000001,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0.18305200000000002
+          }
+        },
+        "errorCode": "NEEDS_SOURCE",
+        "startedAt": "2026-10-21T02:15:58.368Z",
+        "endedAt": "2026-10-21T02:22:54.123Z"
+      },
+      {
+        "id": "p13_q1",
+        "resumedAfterInterruption": false,
+        "status": "failed",
+        "modelComplete": null,
+        "rawNotes": 0,
+        "seconds": 600.0184235410001,
+        "usage": null,
+        "errorCode": 23,
+        "startedAt": "2026-10-21T02:17:00.885Z",
+        "endedAt": "2026-10-21T02:27:00.904Z"
+      },
+      {
+        "id": "p17_q1",
+        "resumedAfterInterruption": false,
+        "status": "failed",
+        "modelComplete": null,
+        "rawNotes": 0,
+        "seconds": 443.8274288330001,
+        "usage": null,
+        "errorCode": "NO_REGION_RESULT",
+        "startedAt": "2026-10-21T02:22:54.132Z",
+        "endedAt": "2026-10-21T02:30:17.960Z"
+      },
+      {
+        "id": "p21_q1",
+        "resumedAfterInterruption": false,
+        "status": "failed",
+        "modelComplete": false,
+        "rawNotes": 107,
+        "seconds": 320.11022149999997,
+        "usage": {
+          "input": 2518,
+          "output": 11600,
+          "cacheRead": 13568,
+          "cacheWrite": 0,
+          "reasoning": 10018,
+          "totalTokens": 27686,
+          "cost": {
+            "input": 0.005036,
+            "output": 0.116,
+            "cacheRead": 0.0013568,
+            "cacheWrite": 0,
+            "total": 0.12239280000000001
+          }
+        },
+        "errorCode": "NEEDS_SOURCE",
+        "startedAt": "2026-10-21T01:44:19.152Z",
+        "endedAt": "2026-10-21T01:49:39.265Z"
+      },
+      {
+        "id": "p25_q1",
+        "resumedAfterInterruption": false,
+        "status": "returned",
+        "modelComplete": true,
+        "rawNotes": 162,
+        "seconds": 227.7556032499997,
+        "usage": {
+          "input": 16086,
+          "output": 8096,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 6080,
+          "totalTokens": 24182,
+          "cost": {
+            "input": 0.032172,
+            "output": 0.08096,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0.11313200000000001
+          }
+        },
+        "errorCode": null,
+        "startedAt": "2026-10-21T02:27:00.913Z",
+        "endedAt": "2026-10-21T02:30:48.667Z"
+      },
+      {
+        "id": "p29_q1",
+        "resumedAfterInterruption": false,
+        "status": "returned",
+        "modelComplete": true,
+        "rawNotes": 51,
+        "seconds": 237.23061991599994,
+        "usage": {
+          "input": 16086,
+          "output": 8463,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 7250,
+          "totalTokens": 24549,
+          "cost": {
+            "input": 0.032172,
+            "output": 0.08463000000000001,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0.11680200000000002
+          }
+        },
+        "errorCode": null,
+        "startedAt": "2026-10-21T02:30:17.966Z",
+        "endedAt": "2026-10-21T02:34:15.188Z"
+      },
+      {
+        "id": "p33_q1",
+        "resumedAfterInterruption": false,
+        "status": "failed",
+        "modelComplete": false,
+        "rawNotes": 136,
+        "seconds": 238.33650295800018,
+        "usage": {
+          "input": 16086,
+          "output": 10874,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 9094,
+          "totalTokens": 26960,
+          "cost": {
+            "input": 0.032172,
+            "output": 0.10874,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0.140912
+          }
+        },
+        "errorCode": "NEEDS_SOURCE",
+        "startedAt": "2026-10-21T02:30:48.673Z",
+        "endedAt": "2026-10-21T02:34:47.002Z"
+      },
+      {
+        "id": "p37_q1",
+        "resumedAfterInterruption": false,
+        "status": "returned",
+        "modelComplete": true,
+        "rawNotes": 134,
+        "seconds": 253.53775279199985,
+        "usage": {
+          "input": 16086,
+          "output": 9355,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 7621,
+          "totalTokens": 25441,
+          "cost": {
+            "input": 0.032172,
+            "output": 0.09355000000000001,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0.125722
+          }
+        },
+        "errorCode": null,
+        "startedAt": "2026-10-21T02:34:15.195Z",
+        "endedAt": "2026-10-21T02:38:28.733Z"
+      },
+      {
+        "id": "p41_q1",
+        "resumedAfterInterruption": false,
+        "status": "failed",
+        "modelComplete": false,
+        "rawNotes": 87,
+        "seconds": 213.00092387500032,
+        "usage": {
+          "input": 16086,
+          "output": 7434,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 6157,
+          "totalTokens": 23520,
+          "cost": {
+            "input": 0.032172,
+            "output": 0.07434,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0.106512
+          }
+        },
+        "errorCode": "NEEDS_SOURCE",
+        "startedAt": "2026-10-21T02:34:47.009Z",
+        "endedAt": "2026-10-21T02:38:20.010Z"
+      },
+      {
+        "id": "p45_q1",
+        "resumedAfterInterruption": false,
+        "status": "returned",
+        "modelComplete": true,
+        "rawNotes": 90,
+        "seconds": 387.46360366600004,
+        "usage": {
+          "input": 16086,
+          "output": 7298,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 5989,
+          "totalTokens": 23384,
+          "cost": {
+            "input": 0.032172,
+            "output": 0.07298,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0.105152
+          }
+        },
+        "errorCode": null,
+        "startedAt": "2026-10-21T02:38:20.017Z",
+        "endedAt": "2026-10-21T02:44:47.480Z"
+      },
+      {
+        "id": "p49_q1",
+        "resumedAfterInterruption": false,
+        "status": "failed",
+        "modelComplete": false,
+        "rawNotes": 63,
+        "seconds": 380.86741008299964,
+        "usage": {
+          "input": 16086,
+          "output": 9487,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 8667,
+          "totalTokens": 25573,
+          "cost": {
+            "input": 0.032172,
+            "output": 0.09487000000000001,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0.12704200000000002
+          }
+        },
+        "errorCode": "NEEDS_SOURCE",
+        "startedAt": "2026-10-21T02:38:28.738Z",
+        "endedAt": "2026-10-21T02:44:49.605Z"
+      },
+      {
+        "id": "p53_q1",
+        "resumedAfterInterruption": false,
+        "status": "failed",
+        "modelComplete": false,
+        "rawNotes": 131,
+        "seconds": 391.3681017910001,
+        "usage": {
+          "input": 16086,
+          "output": 14323,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 12382,
+          "totalTokens": 30409,
+          "cost": {
+            "input": 0.032172,
+            "output": 0.14323000000000002,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0.17540200000000003
+          }
+        },
+        "errorCode": "NEEDS_SOURCE",
+        "startedAt": "2026-10-21T01:53:30.419Z",
+        "endedAt": "2026-10-21T02:00:01.783Z"
+      },
+      {
+        "id": "p57_q1",
+        "resumedAfterInterruption": true,
+        "status": "returned",
+        "modelComplete": true,
+        "rawNotes": 157,
+        "seconds": 174.290436792,
+        "usage": {
+          "input": 16086,
+          "output": 7238,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 5413,
+          "totalTokens": 23324,
+          "cost": {
+            "input": 0.032172,
+            "output": 0.07238,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0.104552
+          }
+        },
+        "errorCode": null,
+        "startedAt": "2026-10-21T07:50:57.633Z",
+        "endedAt": "2026-10-21T07:53:51.917Z"
+      },
+      {
+        "id": "p61_q1",
+        "resumedAfterInterruption": false,
+        "status": "returned",
+        "modelComplete": true,
+        "rawNotes": 211,
+        "seconds": 285.58369016700004,
+        "usage": {
+          "input": 16086,
+          "output": 10774,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 7768,
+          "totalTokens": 26860,
+          "cost": {
+            "input": 0.032172,
+            "output": 0.10774,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0.139912
+          }
+        },
+        "errorCode": null,
+        "startedAt": "2026-10-21T02:44:49.610Z",
+        "endedAt": "2026-10-21T02:49:35.193Z"
+      },
+      {
+        "id": "p65_q1",
+        "resumedAfterInterruption": true,
+        "status": "failed",
+        "modelComplete": null,
+        "rawNotes": 0,
+        "seconds": 360.262733417,
+        "usage": null,
+        "errorCode": "NO_REGION_RESULT",
+        "startedAt": "2026-10-21T07:50:57.616Z",
+        "endedAt": "2026-10-21T07:56:57.867Z"
+      },
+      {
+        "id": "p69_q1",
+        "resumedAfterInterruption": false,
+        "status": "failed",
+        "modelComplete": false,
+        "rawNotes": 38,
+        "seconds": 332.08078395900003,
+        "usage": {
+          "input": 16086,
+          "output": 10654,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "reasoning": 10007,
+          "totalTokens": 26740,
+          "cost": {
+            "input": 0.032172,
+            "output": 0.10654000000000001,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0.138712
+          }
+        },
+        "errorCode": "NEEDS_SOURCE",
+        "startedAt": "2026-10-21T01:58:55.258Z",
+        "endedAt": "2026-10-21T02:04:27.331Z"
+      }
+    ],
+    "usage": {
+      "input": {
+        "sum": 310670,
+        "reportedCalls": 21
+      },
+      "output": {
+        "sum": 223606,
+        "reportedCalls": 21
+      },
+      "cacheRead": {
+        "sum": 27136,
+        "reportedCalls": 21
+      },
+      "reasoning": {
+        "sum": 191446,
+        "reportedCalls": 21
+      },
+      "totalTokens": {
+        "sum": 561412,
+        "reportedCalls": 21
+      }
+    }
+  },
+  "independentAgentVisualSubset": {
+    "referenceNotes": 36,
+    "predictedNotes": 16,
+    "matchedEvents": 16,
+    "pitchCorrect": 16,
+    "strictCorrect": 16,
+    "missing": 20,
+    "extras": 0,
+    "exactMeasures": 2,
+    "referenceMeasures": 3,
+    "accuracyForUnlabelledRemainder": null,
+    "humanGroundTruth": false,
+    "references": [
+      {
+        "sampleId": "p21_q1",
+        "referenceType": "independent-agent-visual-transcription",
+        "humanConfirmed": false,
+        "referenceHash": "db33ab07c543ba9bd45ac58509b8067b3652dcb99a703748ce7757c07671a6e8",
+        "scope": "first two complete measures of first system only",
+        "referenceNotes": 16,
+        "predictedNotes": 16,
+        "matchedEvents": 16,
+        "pitchCorrect": 16,
+        "strictCorrect": 16,
+        "missing": 0,
+        "extras": 0,
+        "bars": [
+          {
+            "measure": 1,
+            "exact": true
+          },
+          {
+            "measure": 2,
+            "exact": true
+          }
+        ],
+        "errors": []
+      },
+      {
+        "sampleId": "p10_q1",
+        "referenceType": "independent-agent-visual-transcription",
+        "humanConfirmed": false,
+        "referenceHash": "5354b1ba4f126ee0cd02122345f9e226db312bc9dae77a3153b6ad26f3ad9814",
+        "scope": "first measure of second complete system, relative measure 5",
+        "referenceNotes": 20,
+        "predictedNotes": 0,
+        "matchedEvents": 0,
+        "pitchCorrect": 0,
+        "strictCorrect": 0,
+        "missing": 20,
+        "extras": 0,
+        "bars": [
+          {
+            "measure": 5,
+            "exact": false
+          }
+        ],
+        "errors": [
+          {
+            "kind": "missing",
+            "reference": {
+              "measure": 5,
+              "midi": 72,
+              "beat": 0,
+              "duration": 1,
+              "hand": "right"
+            }
+          },
+          {
+            "kind": "missing",
+            "reference": {
+              "measure": 5,
+              "midi": 70,
+              "beat": 1,
+              "duration": 1,
+              "hand": "right"
+            }
+          },
+          {
+            "kind": "missing",
+            "reference": {
+              "measure": 5,
+              "midi": 60,
+              "beat": 0,
+              "duration": 0.25,
+              "hand": "right"
+            }
+          },
+          {
+            "kind": "missing",
+            "reference": {
+              "measure": 5,
+              "midi": 65,
+              "beat": 0.25,
+              "duration": 0.25,
+              "hand": "right"
+            }
+          },
+          {
+            "kind": "missing",
+            "reference": {
+              "measure": 5,
+              "midi": 60,
+              "beat": 0.5,
+              "duration": 0.25,
+              "hand": "right"
+            }
+          },
+          {
+            "kind": "missing",
+            "reference": {
+              "measure": 5,
+              "midi": 63,
+              "beat": 0.75,
+              "duration": 0.25,
+              "hand": "right"
+            }
+          },
+          {
+            "kind": "missing",
+            "reference": {
+              "measure": 5,
+              "midi": 58,
+              "beat": 1,
+              "duration": 0.25,
+              "hand": "right"
+            }
+          },
+          {
+            "kind": "missing",
+            "reference": {
+              "measure": 5,
+              "midi": 63,
+              "beat": 1.25,
+              "duration": 0.25,
+              "hand": "right"
+            }
+          },
+          {
+            "kind": "missing",
+            "reference": {
+              "measure": 5,
+              "midi": 58,
+              "beat": 1.5,
+              "duration": 0.25,
+              "hand": "right"
+            }
+          },
+          {
+            "kind": "missing",
+            "reference": {
+              "measure": 5,
+              "midi": 63,
+              "beat": 1.75,
+              "duration": 0.25,
+              "hand": "right"
+            }
+          },
+          {
+            "kind": "missing",
+            "reference": {
+              "measure": 5,
+              "midi": 44,
+              "beat": 0,
+              "duration": 1,
+              "hand": "left"
+            }
+          },
+          {
+            "kind": "missing",
+            "reference": {
+              "measure": 5,
+              "midi": 49,
+              "beat": 1,
+              "duration": 1,
+              "hand": "left"
+            }
+          },
+          {
+            "kind": "missing",
+            "reference": {
+              "measure": 5,
+              "midi": 56,
+              "beat": 0,
+              "duration": 0.25,
+              "hand": "left"
+            }
+          },
+          {
+            "kind": "missing",
+            "reference": {
+              "measure": 5,
+              "midi": 51,
+              "beat": 0.25,
+              "duration": 0.25,
+              "hand": "left"
+            }
+          },
+          {
+            "kind": "missing",
+            "reference": {
+              "measure": 5,
+              "midi": 56,
+              "beat": 0.5,
+              "duration": 0.25,
+              "hand": "left"
+            }
+          },
+          {
+            "kind": "missing",
+            "reference": {
+              "measure": 5,
+              "midi": 51,
+              "beat": 0.75,
+              "duration": 0.25,
+              "hand": "left"
+            }
+          },
+          {
+            "kind": "missing",
+            "reference": {
+              "measure": 5,
+              "midi": 55,
+              "beat": 1,
+              "duration": 0.25,
+              "hand": "left"
+            }
+          },
+          {
+            "kind": "missing",
+            "reference": {
+              "measure": 5,
+              "midi": 51,
+              "beat": 1.25,
+              "duration": 0.25,
+              "hand": "left"
+            }
+          },
+          {
+            "kind": "missing",
+            "reference": {
+              "measure": 5,
+              "midi": 55,
+              "beat": 1.5,
+              "duration": 0.25,
+              "hand": "left"
+            }
+          },
+          {
+            "kind": "missing",
+            "reference": {
+              "measure": 5,
+              "midi": 51,
+              "beat": 1.75,
+              "duration": 0.25,
+              "hand": "left"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "singleSystemSupplement": {
+    "model": "gpt-6.1-sol",
+    "reasoningEffort": "high",
+    "parent": "p21_q1",
+    "scope": "first complete system only",
+    "method": "lossless unscaled PNG crop, separate supplementary test; not comparable to full-photo scope",
+    "inputSha256": "ce303b5e4283589e8da51aa470cb94eb27ccb14f8feef7c74b0d3dded33fdb79",
+    "startedAt": "2026-10-21T02:10:43.609Z",
+    "endedAt": "2026-10-21T02:12:16.638Z",
+    "seconds": 93.029,
+    "status": "returned",
+    "notes": 48,
+    "measures": 6,
+    "usage": {
+      "input": 6666,
+      "output": 4116,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "reasoning": 3465,
+      "totalTokens": 10782,
+      "cost": {
+        "input": 0.013332,
+        "output": 0.04116,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 0.054492
+      }
+    },
+    "subset": {
+      "referenceNotes": 16,
+      "predictedNotes": 16,
+      "matchedEvents": 16,
+      "pitchCorrect": 16,
+      "strictCorrect": 16,
+      "missing": 0,
+      "extras": 0,
+      "bars": [
+        {
+          "measure": 1,
+          "exact": true
+        },
+        {
+          "measure": 2,
+          "exact": true
+        }
+      ],
+      "errors": []
+    },
+    "printedTempoKnown": false
+  },
+  "cost": {
+    "settledBilling": null,
+    "sdkEstimateCalls": 21,
+    "sdkEstimatesOnly": 2.8601135999999996,
+    "manualReviewMinutes": null
+  },
+  "interruptedAttempts": {
+    "samples": [
+      "p57_q1",
+      "p65_q1"
+    ],
+    "status": "process-ended-without-result",
+    "usage": null,
+    "requestStart": null
+  },
+  "environmentFailure": {
+    "sandboxAttempts": 24,
+    "reason": "DNS ENOTFOUND; no model response; usage unknown",
+    "keptInPrivateDirectory": ".local/phone-score-accuracy-20261021/"
+  }
+}

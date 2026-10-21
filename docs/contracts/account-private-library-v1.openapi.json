@@ -1,9 +1,9 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "琴伴账号与私有曲库设计契约",
-    "version": "1.0.0-design",
-    "description": "设计文档，不代表运行接口已实现。权威设计见 ../account-private-library-design.md。所有 object ownership 均取自服务端会话，嵌套音乐文档继续使用现有运行时校验。"
+    "title": "琴伴账号与私有曲库 v1 接口",
+    "version": "1.0.0-local",
+    "description": "已完成本机独立账号服务实现。正式 PostgreSQL、SMTP、HTTPS 与多设备部署尚未配置或验收。实现与运行边界见 ../account-private-library-implementation.md；现有 8792 本机版和静态 Pages 不提供这些账号接口。所有 ownership 取自服务端会话。"
   },
   "servers": [
     {
@@ -41,7 +41,7 @@
             "$ref": "#/components/responses/Failure"
           }
         },
-        "x-implementation-status": "design-only"
+        "x-implementation-status": "implemented-local"
       }
     },
     "/session": {
@@ -95,7 +95,7 @@
             "$ref": "#/components/responses/Failure"
           }
         },
-        "x-implementation-status": "design-only"
+        "x-implementation-status": "implemented-local"
       }
     },
     "/auth/code": {
@@ -127,7 +127,7 @@
             "$ref": "#/components/responses/Failure"
           }
         },
-        "x-implementation-status": "design-only",
+        "x-implementation-status": "implemented-local",
         "description": "先读取 auth/context；reauth 使用当前会话 CSRF 且邮箱必须属于本人。未知或未受邀邮箱统一返回相同形状的 202。",
         "parameters": [
           {
@@ -175,8 +175,8 @@
             "$ref": "#/components/responses/Failure"
           }
         },
-        "x-implementation-status": "design-only",
-        "description": "challenge 绑定登录前 nonce 或当前会话；recover 仅生成恢复账号所需的受限会话。",
+        "x-implementation-status": "implemented-local",
+        "description": "验证码一次性消费。登录与近期重新验证均签发新 Cookie；重新验证撤销原会话。",
         "parameters": [
           {
             "$ref": "#/components/parameters/Csrf"
@@ -245,7 +245,7 @@
             "$ref": "#/components/responses/Failure"
           }
         },
-        "x-implementation-status": "design-only"
+        "x-implementation-status": "implemented-local"
       }
     },
     "/sessions/{sessionId}": {
@@ -292,7 +292,7 @@
             "$ref": "#/components/responses/Failure"
           }
         },
-        "x-implementation-status": "design-only",
+        "x-implementation-status": "implemented-local",
         "parameters": [
           {
             "name": "sessionId",
@@ -369,7 +369,7 @@
             "$ref": "#/components/responses/Failure"
           }
         },
-        "x-implementation-status": "design-only",
+        "x-implementation-status": "implemented-local",
         "x-recent-authentication-seconds": 600,
         "parameters": [
           {
@@ -445,7 +445,7 @@
             "$ref": "#/components/responses/Failure"
           }
         },
-        "x-implementation-status": "design-only",
+        "x-implementation-status": "implemented-local",
         "parameters": [
           {
             "name": "cursor",
@@ -527,7 +527,7 @@
             "$ref": "#/components/responses/Failure"
           }
         },
-        "x-implementation-status": "design-only",
+        "x-implementation-status": "implemented-local",
         "description": "expectedRevision 必须为 0；忽略客户端的归属声明，资源必须属于本人。",
         "parameters": [
           {
@@ -600,7 +600,7 @@
             "$ref": "#/components/responses/Failure"
           }
         },
-        "x-implementation-status": "design-only",
+        "x-implementation-status": "implemented-local",
         "parameters": [
           {
             "name": "entryId",
@@ -663,7 +663,7 @@
             "$ref": "#/components/responses/Failure"
           }
         },
-        "x-implementation-status": "design-only",
+        "x-implementation-status": "implemented-local",
         "parameters": [
           {
             "name": "entryId",
@@ -742,7 +742,7 @@
             "$ref": "#/components/responses/Failure"
           }
         },
-        "x-implementation-status": "design-only",
+        "x-implementation-status": "implemented-local",
         "parameters": [
           {
             "name": "entryId",
@@ -822,7 +822,7 @@
             "$ref": "#/components/responses/Failure"
           }
         },
-        "x-implementation-status": "design-only",
+        "x-implementation-status": "implemented-local",
         "parameters": [
           {
             "name": "entryId",
@@ -906,7 +906,7 @@
             "$ref": "#/components/responses/Failure"
           }
         },
-        "x-implementation-status": "design-only",
+        "x-implementation-status": "implemented-local",
         "description": "targetRevision 可省略以恢复回收站当前版本；总是创建新修订。",
         "parameters": [
           {
@@ -988,7 +988,7 @@
             "$ref": "#/components/responses/Failure"
           }
         },
-        "x-implementation-status": "design-only",
+        "x-implementation-status": "implemented-local",
         "description": "按 purpose 和真实 MIME 分别限制：图片 20 MiB / 40MP，PDF 50 MiB，备份独立使用 512 MiB 上限；本通用大小约束见 backup 分支。",
         "parameters": [
           {
@@ -1054,7 +1054,7 @@
             "$ref": "#/components/responses/Failure"
           }
         },
-        "x-implementation-status": "design-only",
+        "x-implementation-status": "implemented-local",
         "parameters": [
           {
             "name": "uploadId",
@@ -1136,7 +1136,7 @@
             "$ref": "#/components/responses/Failure"
           }
         },
-        "x-implementation-status": "design-only",
+        "x-implementation-status": "implemented-local",
         "parameters": [
           {
             "name": "uploadId",
@@ -1217,7 +1217,7 @@
             "$ref": "#/components/responses/Failure"
           }
         },
-        "x-implementation-status": "design-only",
+        "x-implementation-status": "implemented-local",
         "description": "每个 originalResourceId 必须属于本人，kind 与文件真实类型一致。ordinal 连续且从 1 开始。照片片段保留 scope=excerpt。",
         "parameters": [
           {
@@ -1237,6 +1237,82 @@
             }
           }
         }
+      },
+      "get": {
+        "operationId": "get_source_groups",
+        "summary": "列出本人已保存的原始资料",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "x-implementation-status": "implemented-local",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "groups": {
+                      "type": "array",
+                      "maxItems": 100,
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "sourceGroupId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "images",
+                              "pdf",
+                              "digital"
+                            ]
+                          },
+                          "pages": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/SourcePage"
+                            }
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        },
+                        "required": [
+                          "sourceGroupId",
+                          "kind",
+                          "pages",
+                          "createdAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "groups"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "404": {
+            "$ref": "#/components/responses/Failure"
+          }
+        },
+        "description": "本机版本返回最近 100 组。显式保存的原图组持久保留，不因尚未附加数字谱而过期。"
       }
     },
     "/resources/{resourceId}": {
@@ -1291,7 +1367,7 @@
             "$ref": "#/components/responses/Failure"
           }
         },
-        "x-implementation-status": "design-only",
+        "x-implementation-status": "implemented-local",
         "parameters": [
           {
             "name": "resourceId",
@@ -1356,7 +1432,7 @@
             "$ref": "#/components/responses/Failure"
           }
         },
-        "x-implementation-status": "design-only",
+        "x-implementation-status": "implemented-local",
         "x-recent-authentication-seconds": 600,
         "parameters": [
           {
@@ -1429,7 +1505,7 @@
             "$ref": "#/components/responses/Failure"
           }
         },
-        "x-implementation-status": "design-only",
+        "x-implementation-status": "implemented-local",
         "parameters": [
           {
             "name": "exportId",
@@ -1494,7 +1570,7 @@
             "$ref": "#/components/responses/Failure"
           }
         },
-        "x-implementation-status": "design-only",
+        "x-implementation-status": "implemented-local",
         "parameters": [
           {
             "$ref": "#/components/parameters/Csrf"
@@ -1566,7 +1642,7 @@
             "$ref": "#/components/responses/Failure"
           }
         },
-        "x-implementation-status": "design-only",
+        "x-implementation-status": "implemented-local",
         "parameters": [
           {
             "name": "importId",
@@ -1647,7 +1723,7 @@
             "$ref": "#/components/responses/Failure"
           }
         },
-        "x-implementation-status": "design-only",
+        "x-implementation-status": "implemented-local",
         "parameters": [
           {
             "name": "importId",
@@ -1712,7 +1788,7 @@
             "$ref": "#/components/responses/Failure"
           }
         },
-        "x-implementation-status": "design-only",
+        "x-implementation-status": "implemented-local",
         "x-recent-authentication-seconds": 600,
         "parameters": [
           {
@@ -1788,8 +1864,8 @@
             "$ref": "#/components/responses/Failure"
           }
         },
-        "x-implementation-status": "design-only",
-        "description": "只允许 purpose=recover 验证后生成的受限会话；锁定账号行，与到期清理互斥。",
+        "x-implementation-status": "implemented-local",
+        "description": "注销等待期内以受限恢复会话验证；成功后撤销旧会话并签发正常会话。",
         "parameters": [
           {
             "$ref": "#/components/parameters/Csrf"
@@ -1812,6 +1888,261 @@
           }
         }
       }
+    },
+    "/source-groups/{sourceGroupId}": {
+      "get": {
+        "operationId": "get_source_group",
+        "summary": "读取本人来源组",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "x-implementation-status": "implemented-local",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceGroup"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "404": {
+            "$ref": "#/components/responses/Failure"
+          }
+        },
+        "description": "",
+        "parameters": [
+          {
+            "name": "sourceGroupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "delete_source_group",
+        "summary": "删除未关联修订的本人来源组",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "x-implementation-status": "implemented-local",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "sourceGroupId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "removed": {
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "sourceGroupId",
+                    "removed"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "404": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "409": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "428": {
+            "$ref": "#/components/responses/Failure"
+          }
+        },
+        "description": "被任意历史修订引用时返回 409。文件延迟清理。",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Csrf"
+          },
+          {
+            "$ref": "#/components/parameters/Idempotency"
+          },
+          {
+            "name": "sourceGroupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/device-library": {
+      "get": {
+        "operationId": "get_device_library",
+        "summary": "预览本机旧曲库供主动选择",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "x-implementation-status": "implemented-local",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "records": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "revision": {
+                            "type": "integer"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "title",
+                          "revision"
+                        ]
+                      }
+                    },
+                    "warnings": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "records",
+                    "warnings"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "404": {
+            "$ref": "#/components/responses/Failure"
+          }
+        },
+        "description": "仅 local-validation 可用。生产模式统一 404，不自动读取或上传。"
+      }
+    },
+    "/device-library/export": {
+      "post": {
+        "operationId": "post_device_library_export",
+        "summary": "导出用户选中的本机记录用于导入预览",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "x-implementation-status": "implemented-local",
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "现有 qinban-library-backup v1 包；含所选原图和历史。"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "404": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "409": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "428": {
+            "$ref": "#/components/responses/Failure"
+          }
+        },
+        "description": "仅 local-validation 可用；保留本机原数据。",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Csrf"
+          },
+          {
+            "$ref": "#/components/parameters/Idempotency"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ids": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 10000,
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "ids"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1819,7 +2150,8 @@
       "sessionCookie": {
         "type": "apiKey",
         "in": "cookie",
-        "name": "__Host-qinban_session"
+        "name": "__Host-qinban_session",
+        "description": "生产为 Secure __Host-qinban_session；本机验证使用仅回环地址可用的 qinban_dev_account。"
       }
     },
     "parameters": {
@@ -1906,6 +2238,20 @@
           "expiresAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "profile": {
+            "type": "string",
+            "enum": [
+              "local-validation",
+              "production"
+            ]
+          },
+          "mailboxNotice": {
+            "type": "string"
+          },
+          "mailboxDirectory": {
+            "type": "string",
+            "description": "仅本机验证模式返回；包含本机开发邮箱路径，不含验证码。"
           }
         },
         "required": [
@@ -2239,6 +2585,18 @@
           "height": {
             "type": "integer",
             "minimum": 1
+          },
+          "name": {
+            "type": "string"
+          },
+          "recognitionResourceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "pages": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "PDF 实际页数。"
           }
         },
         "required": [

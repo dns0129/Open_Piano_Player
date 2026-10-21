@@ -50,10 +50,13 @@ export function createUnifiedLibrary({
   storage = globalThis.localStorage,
   legacySources = readLegacySources,
   fetchImpl = (...args) => fetch(...args),
+  migrateLegacy = true,
 } = {}) {
   let cache = [],
     warnings = [],
     initialization;
+  let cacheGeneration = 0;
+  const checkGeneration = generation => { if (generation !== cacheGeneration) throw Object.assign(new Error("账号已切换，旧操作已停止。"), {code:"IDENTITY_CHANGED"}); };
   const urls = new Map();
   async function refresh() {
     const result = await adapter.list();
@@ -169,7 +172,7 @@ export function createUnifiedLibrary({
   }
   return {
     initialize() {
-      return (initialization ||= migrate()
+      return (initialization ||= (migrateLegacy ? migrate() : Promise.resolve())
         .then(refresh)
         .catch((error) => {
           initialization = null;
@@ -196,6 +199,7 @@ export function createUnifiedLibrary({
         expectedRevision,
       } = {},
     ) {
+      const generation = cacheGeneration;
       const known = cache.find((r) => r.id === score.id),
         parent = score.lineage?.parentId;
       let previous;
@@ -235,6 +239,7 @@ export function createUnifiedLibrary({
         score,
         sourceNotation ? { sourceNotation } : {},
       );
+      checkGeneration(generation);
       const record = await adapter.save(
         {
           document,
@@ -262,7 +267,9 @@ export function createUnifiedLibrary({
       return record.score;
     },
     async readSource(score) {
+      const generation = cacheGeneration;
       const record = await adapter.get(score.id);
+      checkGeneration(generation);
       return sourceMatchesScore(score, { reference: record.sourceReference })
         ? source(record)
         : null;
@@ -294,6 +301,7 @@ export function createUnifiedLibrary({
       return adapter.get(id);
     },
     release,
+    reset() { cacheGeneration++; for (const id of urls.keys()) release(id); cache = []; warnings = []; initialization = null; },
   };
 }
 
@@ -303,15 +311,17 @@ export function createLibraryClient({
   storage = globalThis.localStorage,
   browser = createBrowserLibrary(),
   legacySources,
+  hosted,
 } = {}) {
-  const adapter =
+  const adapter = capabilities.mode === "hosted" ? hosted :
     capabilities.mode === "local" ? createDiskLibrary(api) : browser;
   const client = createUnifiedLibrary({
     adapter,
-    metadata: browser.metadata,
+    metadata: capabilities.mode === "hosted" ? hosted.metadata : browser.metadata,
     storage,
+    migrateLegacy: capabilities.mode !== "hosted",
     ...(legacySources ? { legacySources } : {}),
   });
-  client.metadata = browser.metadata;
+  client.metadata = capabilities.mode === "hosted" ? hosted.metadata : browser.metadata;
   return client;
 }
