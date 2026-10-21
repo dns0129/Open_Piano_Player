@@ -1294,24 +1294,11 @@ function openFullPdf(file, source, resumeJob = null) {
             .sort((a, b) => a[0].localeCompare(b[0])),
         },
         notation: result.sourceNotation,
+        assets: result.assets,
         warnings: result.warnings,
         reviewStatus: result.reviewStatus,
       };
-      const links = new Map(
-        result.assets.map((a) => [a.id, URL.createObjectURL(a.blob)]),
-      );
-      try {
-        sourceRecord.notation = {
-          ...sourceRecord.notation,
-          systems: sourceRecord.notation.systems.map((system) => ({
-            ...system,
-            imageUrl: links.get(system.assetId || system.id),
-          })),
-        };
-        await remember(score, sourceRecord);
-      } finally {
-        for (const url of links.values()) URL.revokeObjectURL(url);
-      }
+      await remember(score, sourceRecord);
       setScore(score, result.warnings || []);
       toast(
         `${result.reviewStatus?.method === "ai-unreviewed" ? "AI草稿已导入（待校对）" : "完整谱已导入"}：${score.notes.length}个音符，已重排为可编辑数字谱。`,

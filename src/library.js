@@ -148,17 +148,27 @@ export function createUnifiedLibrary({
     if (!record.sourceNotation) return null;
     release(record.id);
     const links = new Map(),
-      owned = [];
+      owned = [],
+      assets = [];
     for (const a of record.assets) {
       const bytes = Uint8Array.from(atob(a.data), (c) => c.charCodeAt(0)),
-        url = URL.createObjectURL(new Blob([bytes], { type: a.mimeType }));
+        blob = new Blob([bytes], { type: a.mimeType }),
+        url = URL.createObjectURL(blob);
       links.set(a.id, url);
       owned.push(url);
+      assets.push({
+        id: a.id,
+        page: a.page,
+        system: a.system,
+        mimeType: a.mimeType,
+        blob,
+      });
     }
     urls.set(record.id, owned);
     return {
       id: record.id,
       reference: record.sourceReference,
+      assets,
       notation: {
         ...record.sourceNotation,
         systems: record.sourceNotation.systems.map((s) => ({
@@ -222,15 +232,44 @@ export function createUnifiedLibrary({
         sourceNotation = sourceRecord.notation;
         sourceReference = sourceRecord.reference;
         assets = [];
+        const supplied = Array.isArray(sourceRecord.assets)
+          ? sourceRecord.assets
+          : [];
         for (const s of sourceNotation.systems) {
-          const response = await fetchImpl(s.imageUrl);
-          if (!response.ok) throw new Error("原谱图片读取失败，乐谱未保存。");
-          const blob = await response.blob();
+          const sourceAsset =
+            supplied.find((asset) => asset.id === (s.assetId || s.id)) ||
+            supplied.find(
+              (asset) =>
+                Number.isInteger(s.page) &&
+                Number.isInteger(s.system) &&
+                asset.page === s.page &&
+                asset.system === s.system,
+            );
+          let blob;
+          if (sourceAsset) {
+            if (!(sourceAsset.blob instanceof Blob) || !sourceAsset.blob.size)
+              throw new Error("原谱图片数据为空，乐谱未保存。请重新打开原谱后再试。");
+            blob = sourceAsset.blob;
+          } else {
+            try {
+              const response = await fetchImpl(s.imageUrl);
+              if (!response.ok) throw new Error("Image response was not successful");
+              blob = await response.blob();
+            } catch (cause) {
+              throw Object.assign(
+                new Error(
+                  "原谱图片读取失败。已有乐谱和审核结果仍保留，请重新打开后再保存。",
+                  { cause },
+                ),
+                { code: "SOURCE_IMAGE_READ_FAILED" },
+              );
+            }
+          }
           assets.push({
             id: s.assetId || s.id,
             page: s.page,
             system: s.system,
-            mimeType: blob.type,
+            mimeType: blob.type || sourceAsset?.mimeType,
             data: await base64(blob),
           });
         }
