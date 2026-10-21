@@ -1,0 +1,278 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:qinban:image-recognition-benchmark:1",
+  "title": "原生图片识谱评估输入清单",
+  "description": "只描述素材与参考范围，不证明识别准确或公开许可；样本路径相对于项目根目录，不能包含凭据。分组页序、完整谱行上下界和文件哈希仍需工具检查。",
+  "type": "object",
+  "properties": {
+    "format": {
+      "const": "qinban-image-benchmark"
+    },
+    "version": {
+      "const": 1
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "samples": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "sourceGroup": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "ordinal": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "file": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?![A-Za-z]:)(?!.*\\\\).+$"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "mimeType": {
+            "type": "string",
+            "enum": [
+              "image/jpeg",
+              "image/png",
+              "image/webp"
+            ]
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "width": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "height": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "scope": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "full_page",
+                  "excerpt",
+                  "unknown"
+                ]
+              },
+              "firstCompleteSystem": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "lastCompleteSystem": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "notes": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "additionalProperties": false
+          },
+          "source": {
+            "type": "object",
+            "properties": {
+              "repositoryUrl": {
+                "type": "string",
+                "format": "uri"
+              },
+              "archiveEntry": {
+                "type": "string"
+              },
+              "pieceId": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "title": {
+                "type": "string"
+              },
+              "composer": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "repositoryUrl"
+            ],
+            "additionalProperties": false
+          },
+          "capture": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "phone_photo",
+                  "camera_photo",
+                  "screenshot",
+                  "scan",
+                  "unknown"
+                ]
+              },
+              "cameraMake": {
+                "type": "string"
+              },
+              "cameraModel": {
+                "type": "string"
+              },
+              "conditions": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "additionalProperties": false
+          },
+          "groundTruth": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "unknown",
+                  "not_transcribed",
+                  "independently_verified"
+                ]
+              },
+              "midiRole": {
+                "type": "string",
+                "enum": [
+                  "auxiliary_only",
+                  "none"
+                ]
+              },
+              "auxiliaryPaths": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?![A-Za-z]:)(?!.*\\\\).+$"
+                }
+              },
+              "noteReferencePath": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?![A-Za-z]:)(?!.*\\\\).+$"
+              }
+            },
+            "required": [
+              "status",
+              "midiRole"
+            ],
+            "additionalProperties": false
+          },
+          "rights": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "unknown",
+                  "documented_permission"
+                ]
+              },
+              "handling": {
+                "type": "string",
+                "enum": [
+                  "local_evaluation_only",
+                  "approved_private_import"
+                ]
+              },
+              "evidence": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "status",
+              "handling"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "sourceGroup",
+          "ordinal",
+          "file",
+          "sha256",
+          "mimeType",
+          "bytes",
+          "width",
+          "height",
+          "scope",
+          "source",
+          "capture",
+          "groundTruth",
+          "rights"
+        ],
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "groundTruth": {
+                  "properties": {
+                    "status": {
+                      "const": "independently_verified"
+                    }
+                  },
+                  "required": [
+                    "status"
+                  ]
+                }
+              },
+              "required": [
+                "groundTruth"
+              ]
+            },
+            "then": {
+              "properties": {
+                "groundTruth": {
+                  "required": [
+                    "noteReferencePath"
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      },
+      "minItems": 1
+    }
+  },
+  "required": [
+    "format",
+    "version",
+    "createdAt",
+    "samples"
+  ],
+  "additionalProperties": false
+}

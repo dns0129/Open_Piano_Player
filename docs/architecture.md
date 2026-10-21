@@ -2,6 +2,8 @@
 
 运行环境为 Node.js >= 22.19；核心 TypeScript 只使用 Node 可直接擦除的类型语法，Vite 负责浏览器构建。运行 npm run typecheck 检查类型，npm run check 检查类型、测试与仓库曲目。
 
+后续邀请制托管版见 [账号与私有曲库设计](account-private-library-design.md)。该设计增加独立的账号与私有存储，复用现有乐谱文档与曲库操作；下文描述的本机和浏览器实现不因此自动具备账号同步能力。
+
 ## 三种表示
 
 - lib/score-document.ts：唯一持久乐谱文档为 schema: qinban.score / version: 2。保存书写音名（step、alter、octave）、记号、独立的谱表与演奏手、声部、休止、音头与 tieTo、变拍变调、演奏设置及原图定位。

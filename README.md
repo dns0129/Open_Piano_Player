@@ -8,6 +8,8 @@
 
 运行 `npm run typecheck` 或 `npm run check` 验证。[架构、v1 迁移规则、备份和接口说明](docs/architecture.md)。新核心直接运行需 Node.js >=22.19，启动器会检查版本。
 
+[账号与私有曲库设计](docs/account-private-library-design.md) 已确定邀请制登录、账号隔离、原图存储、修订、选择迁移和验收要求；配套 [v1 接口设计契约](docs/contracts/account-private-library-v1.openapi.json) 与 [原生图片测试清单规范](docs/contracts/image-recognition-benchmark.schema.json)。这些为待实现设计，当前运行模式仍按下文说明。
+
 ## 启动
 
 macOS 双击 **启动琴伴.command**，构建并打开 `http://127.0.0.1:8792`。需要 Node.js >=22.19，启动器会自动查找本机的新版本 Node。
