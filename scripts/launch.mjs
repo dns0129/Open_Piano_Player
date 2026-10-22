@@ -1,5 +1,8 @@
 import { spawn } from "node:child_process";
-const port = 8792,
+import { fileURLToPath } from "node:url";
+// server.mjs is spawned by relative path, so run from the project root.
+process.chdir(fileURLToPath(new URL("..", import.meta.url)));
+const port = Number(process.env.QINBAN_PORT) || 8792,
   url = `http://127.0.0.1:${port}`;
 async function status() {
   try {
@@ -24,7 +27,7 @@ if (running) {
     openBrowser();
     console.log("已打开正在运行的琴伴开发者模式。");
   } else {
-    console.error("8792 已被另一版本服务占用。请在其启动终端完成当前任务并按 Control+C，再重新启动琴伴开发者模式。");
+    console.error(`${port} 已被另一版本服务占用。请在其启动终端完成当前任务并按 Control+C，再重新启动琴伴开发者模式。`);
     process.exitCode = 1;
   }
 } else {

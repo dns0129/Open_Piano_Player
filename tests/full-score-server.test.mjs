@@ -37,6 +37,8 @@ test('full-document HTTP routes preserve session/CSRF boundaries and explicit re
   await post('/api/full-score-jobs/test-job/confirm',{scopeConfirmed:true},headers);
   assert.deepEqual(calls.find(c=>c.method==='confirm').args[2],{scopeConfirmed:true});
   const pdf=await fetch(url+'/api/full-score-jobs/test-job/document',{headers});assert.equal(pdf.headers.get('content-type'),'application/pdf');assert.equal(await pdf.text(),'%PDF-test');
+  const {['x-fullscore-token']:_,...withoutToken}=headers;await fetch(url+'/api/full-score-jobs/test-job?token=private-test-token',{headers:withoutToken});
+  assert.equal(calls.filter(c=>c.method==='get').at(-1).args[1].token,undefined,'任务 token 不能从 URL 读取');
   const image=await fetch(url+'/api/full-score-jobs/test-job/region/page-2-row-1',{headers});assert.equal(image.headers.get('content-type'),'image/png');assert.equal(await image.text(),'png');
   const foreign=await post('/api/full-score-jobs/test-job/cancel',{}, {...headers,origin:'https://foreign.example'});assert.equal(foreign.status,403);assert.ok(!calls.some(c=>c.method==='cancel'));
 });

@@ -1,4 +1,7 @@
 import {createHostedRuntime} from '../lib/accounts/runtime.mjs';
+import {fileURLToPath} from 'node:url';
+// .local/ and dist-hosted/ are resolved from the working directory; pin it to the project.
+process.chdir(fileURLToPath(new URL('..',import.meta.url)));
 const command=process.argv[2]||'start';
 const runtime=await createHostedRuntime();
 if(command==='invite'||command==='operator'){

@@ -35,7 +35,7 @@ npm run build
 npm start
 ```
 
-`npm run dev` 在同一个本机 8792 服务中监听前端构建更新，修改后刷新网页。
+`npm run dev` 在同一个本机 8792 服务中监听前端构建更新，修改后刷新网页。需要换端口时设置 `QINBAN_PORT`（如 `QINBAN_PORT=8800 npm start`），`npm run dev`、`npm run launch` 同样生效；服务从任意目录启动都读写本项目的 `.local/`。
 
 ## 页面与练习
 

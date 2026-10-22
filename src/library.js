@@ -1,9 +1,28 @@
 import { createBrowserLibrary } from "./library-indexeddb.js";
 import { readLegacySources, sourceMatchesScore } from "./source-library.js";
 import { readScoreDocument } from "../lib/score-document.ts";
-import { contentHash } from "../lib/library-format.ts";
+import { contentHash, createLibraryBackup, readLibraryBackup } from "../lib/library-format.ts";
 
-export function createDiskLibrary(api) {
+// Groups records so each restore request stays well below the server JSON limit;
+// a record larger than the limit is sent alone (single saves allow up to 72 MB).
+export function restoreBatches(records, limit = 24_000_000) {
+  const batches = [];
+  let current = [],
+    size = 0;
+  for (const record of records) {
+    const length = JSON.stringify(record).length;
+    if (current.length && size + length > limit) {
+      batches.push(current);
+      current = [];
+      size = 0;
+    }
+    current.push(record);
+    size += length;
+  }
+  if (current.length) batches.push(current);
+  return batches;
+}
+export function createDiskLibrary(api, { restoreBatchChars } = {}) {
   return {
     list: () => api.json("/api/library"),
     get: (id) => api.json("/api/library/records/" + encodeURIComponent(id)),
@@ -14,7 +33,19 @@ export function createDiskLibrary(api) {
         {},
       ),
     backup: () => api.json("/api/library/backup"),
-    restore: (backup) => api.json("/api/library/restore", { backup }),
+    async restore(backup) {
+      // Verify the whole backup once here, then send it in independently verified parts.
+      const restored = [],
+        conflicts = [];
+      for (const batch of restoreBatches(await readLibraryBackup(backup), restoreBatchChars)) {
+        const result = await api.json("/api/library/restore", {
+          backup: await createLibraryBackup(batch),
+        });
+        restored.push(...result.restored);
+        conflicts.push(...result.conflicts);
+      }
+      return { restored, conflicts };
+    },
   };
 }
 const identity = (score) => [

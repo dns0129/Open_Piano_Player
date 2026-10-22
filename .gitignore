@@ -13,3 +13,5 @@ tmp/
 dist-pages/
 
 dist-hosted/
+__pycache__/
+*.pyc

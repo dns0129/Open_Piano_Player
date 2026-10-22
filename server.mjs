@@ -4,8 +4,8 @@ import {createDownloadLibrary} from './lib/download-library.mjs';
 import {createLocalLibrary} from './lib/local-library.mjs';
 import http from 'node:http';
 import {readFile, realpath, stat} from 'node:fs/promises';
-import {resolve, extname, sep} from 'node:path';
-import {pathToFileURL} from 'node:url';
+import {resolve, extname, sep, dirname} from 'node:path';
+import {pathToFileURL, fileURLToPath} from 'node:url';
 import {randomBytes,timingSafeEqual} from 'node:crypto';
 import {authStatus,publicError} from './lib/auth.mjs';
 import {createSettingsStore,defaultDeepseekModel,userError} from './lib/settings.mjs';
@@ -88,7 +88,7 @@ export function createAppServer({developerMode=false,distDir=resolve('dist'),set
         const input=await body(req,72*1024*1024);json(res,200,await scoreLibrary.save(input.record,{expectedRevision:input.expectedRevision}));return;
       }
       if(url.pathname==='/api/library/backup'&&req.method==='GET'){json(res,200,await scoreLibrary.backup());return;}
-      if(url.pathname==='/api/library/restore'&&req.method==='POST'){const input=await body(req,512*1024*1024);json(res,200,await scoreLibrary.restore(input.backup));return;}
+      if(url.pathname==='/api/library/restore'&&req.method==='POST'){const input=await body(req,80*1024*1024);json(res,200,await scoreLibrary.restore(input.backup));return;}
       const unifiedRoute=/^\/api\/library\/records\/([^/]+)(\/delete)?$/.exec(url.pathname);
       if(unifiedRoute){
         let id;try{id=decodeURIComponent(unifiedRoute[1]);}catch{throw userError('曲库 ID 编码无效。');}
@@ -159,7 +159,7 @@ export function createAppServer({developerMode=false,distDir=resolve('dist'),set
       const jobRoute=/^\/api\/full-score-jobs(?:\/([A-Za-z0-9_-]{1,80}))?(?:\/([a-z-]+))?(?:\/([A-Za-z0-9_-]{1,80}))?$/.exec(url.pathname);
       if(jobRoute){
         const [,id,action,regionId]=jobRoute;
-        const auth={sessionId:current.scope,token:req.headers['x-fullscore-token']||url.searchParams.get('token')||undefined};
+        const auth={sessionId:current.scope,token:req.headers['x-fullscore-token']||undefined};
         if(!id&&req.method==='POST'){json(res,201,await scoreJobs.createJob(await body(req),auth));return;}
         if(id&&!action&&req.method==='GET'){json(res,200,await scoreJobs.getJob(id,auth));return;}
         if(id&&action==='document'&&req.method==='GET'){
@@ -225,8 +225,10 @@ export function createAppServer({developerMode=false,distDir=resolve('dist'),set
 }
 
 if(process.argv[1] && import.meta.url===pathToFileURL(resolve(process.argv[1])).href){
-  const port=8792;
+  // .local/ and dist/ are resolved from the working directory; pin it to the project wherever node was started.
+  process.chdir(dirname(fileURLToPath(import.meta.url)));
+  const port=Number(process.env.QINBAN_PORT)||8792;
   const server=createAppServer({developerMode:true});server.listen(port,'127.0.0.1',()=>console.log(`琴伴钢琴练习室已启动：http://127.0.0.1:${port}`));
-  server.on('error',error=>{console.error(error.code==='EADDRINUSE'?'8792 端口已在使用，请打开现有琴伴窗口。':'本机服务未能启动。');process.exitCode=1;});
+  server.on('error',error=>{console.error(error.code==='EADDRINUSE'?`${port} 端口已在使用，请打开现有琴伴窗口。`:'本机服务未能启动。');process.exitCode=1;});
   for(const name of ['SIGTERM','SIGINT'])process.on(name,()=>{server.close();server.closeIdleConnections();});
 }

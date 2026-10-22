@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { indexedDB } from "fake-indexeddb";
 import { createBrowserLibrary } from "../src/library-indexeddb.js";
 import { createLibraryStore } from "../lib/library-store.mjs";
-import { createUnifiedLibrary, createLibraryClient } from "../src/library.js";
+import { createUnifiedLibrary, createLibraryClient, createDiskLibrary } from "../src/library.js";
 const input = () => ({
   score: {
     version: 1,
@@ -248,4 +248,38 @@ test("unreadable legacy entries report warnings without hiding the authoritative
   assert.equal(result.records.length, 1);
   assert.equal(result.warnings.length, 2);
   assert.equal((await store.get("song")).id, "song");
+});
+test("disk client restores a full backup in separately verified requests", async (t) => {
+  const directory = await mkdtemp(join(tmpdir(), "qinban-library-batches-"));
+  const source = createLibraryStore({ directory: join(directory, "source") }),
+    target = createLibraryStore({ directory: join(directory, "target") });
+  t.after(async () => {
+    await source.close?.();
+    await target.close?.();
+    await rm(directory, { recursive: true, force: true });
+  });
+  for (const id of ["one", "two", "three"]) {
+    const record = input();
+    record.score.id = record.sourceNotation.scoreId = id;
+    await source.save(record, { expectedRevision: 0 });
+  }
+  const requests = [];
+  const disk = createDiskLibrary(
+    {
+      json: async (path, body) => {
+        requests.push(path);
+        return target.restore(body.backup);
+      },
+    },
+    { restoreBatchChars: 1 },
+  );
+  const backup = await source.backup();
+  assert.deepEqual((await disk.restore(backup)).restored.sort(), ["one", "three", "two"]);
+  assert.deepEqual(requests, Array(3).fill("/api/library/restore"));
+  assert.deepEqual((await disk.restore(backup)).conflicts.sort(), ["one", "three", "two"]);
+  const corrupt = structuredClone(backup);
+  corrupt.records[0].revision++;
+  requests.length = 0;
+  await assert.rejects(disk.restore(corrupt), /校验/);
+  assert.equal(requests.length, 0, "损坏的备份不应发出任何恢复请求");
 });
