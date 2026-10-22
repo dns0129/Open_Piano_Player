@@ -782,7 +782,7 @@ const { isAudioFile, audioView, receiveAudio, bindAudio } =
     download,
     keyName,
   });
-const { openSearch, searchView, bindSearch, loadOnlineEntry } =
+const { openSearch, searchView, bindSearch } =
   createSearchWorkspace({
     state,
     player,

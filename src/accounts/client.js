@@ -32,7 +32,7 @@ export function createAccountClient({fetchImpl=(...a)=>fetch(...a),onIdentityCha
  };
  const channel=typeof BroadcastChannel!=='undefined'?new BroadcastChannel('qinban-account-identity'):null;
  const announce=()=>channel?.postMessage({changed:true});
- if(channel)channel.onmessage=()=>{epoch++;const previous=session;session=null;onIdentityChange(null);for(const fn of listeners)fn(null);void api.initialize().catch(()=>{});};
+ if(channel)channel.onmessage=()=>{epoch++;session=null;onIdentityChange(null);for(const fn of listeners)fn(null);void api.initialize().catch(()=>{});};
  api.dispose=()=>{epoch++;session=null;channel?.close();listeners.clear()};
  return api;
 }

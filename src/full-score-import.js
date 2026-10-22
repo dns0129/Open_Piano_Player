@@ -98,7 +98,7 @@ export function mountFullScoreImport(host, { file, source = {}, resumeJob = null
     const focus = root.contains(document.activeElement) ? { noteId: document.activeElement.dataset.noteId, field: document.activeElement.dataset.noteField, meta: document.activeElement.dataset.meta, restField: document.activeElement.dataset.restField, restIndex: document.activeElement.dataset.restIndex, start: document.activeElement.selectionStart } : null;
     const advancedOpen = root.querySelector('.fsi-advanced')?.open;
     const epoch = ++renderEpoch; selector?.destroy(); selector = null; previewRenderer?.destroy(); previewRenderer = null;
-    const summary = fullScoreReviewSummary(draft), regions = draft.regions.filter(region => region.page === state.activePage), current = activeRegion(), caps = capability();
+    const summary = fullScoreReviewSummary(draft), regions = draft.regions.filter(region => region.page === state.activePage), current = activeRegion();
     const failedCount = (state.job?.regions || []).filter(region => region.status === 'failed' || region.status !== 'confirmed' && region.result?.checks?.passed === false).length;
     const completed = state.progress?.confirmed ?? summary.reviewedCount;
     const processed = state.progress ? (state.progress.needsReview || 0) + (state.progress.confirmed || 0) + (state.progress.failed || 0) : summary.recognizedCount;

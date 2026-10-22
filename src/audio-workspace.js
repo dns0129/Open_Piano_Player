@@ -1,4 +1,4 @@
-import { $, $$, esc, icon, refreshIcons } from "./ui.js";
+import { $, $$, esc, icon } from "./ui.js";
 import { validateScore } from "../lib/score.mjs";
 import { renderNotation } from "./notation.js";
 import { tonalityLabel } from "../lib/score-arrangement.mjs";

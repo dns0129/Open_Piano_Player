@@ -141,11 +141,29 @@ export function createLibraryPanel({
       .join("");
   }
 
+  // A piano-roll sketch of the opening bars gives each card a recognisable shape.
+  function noteSketch(score) {
+    const span = Math.min(score.durationBeats || 16, 16);
+    const notes = (score.notes || []).filter((n) => n.beat < span).slice(0, 240);
+    if (!notes.length) return "";
+    const pitches = notes.map((n) => n.midi),
+      low = Math.min(...pitches) - 1,
+      range = Math.max(...pitches) + 1 - low;
+    const bars = notes
+      .map((n) => {
+        const x = (n.beat / span) * 100,
+          w = Math.max(0.8, Math.min(n.duration, span - n.beat) / span * 100 - 0.4),
+          y = (1 - (n.midi - low) / range) * 40;
+        return `<rect class="${n.hand === "left" ? "left" : "right"}" x="${x.toFixed(2)}" y="${(y - 0.9).toFixed(2)}" width="${w.toFixed(2)}" height="1.8" rx="0.6"/>`;
+      })
+      .join("");
+    return `<svg class="card-sketch" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">${bars}</svg>`;
+  }
   function scoreCards(scores) {
     return scores
       .map(
         (s, i) =>
-          `<article class="score-card" data-card="${esc(s.id)}"><div class="card-art tone-${i % 4}"><span class="card-note">${["𝄞", "♫", "♩", "♬"][i % 4]}</span><span class="card-type">${HOSTED ? "私有曲谱 · 请核对原谱" : s.source?.kind === "full-score-agent-approved" ? "已审核 · AI逐谱校对" : s.source?.kind === "full-score-model-reviewed" ? "AI全谱校对版 · 待人工确认" : s.source?.reviewRequired || s.source?.kind === "full-score-ai-draft" ? "数字谱 · 待校对" : s.source?.kind === "full-pdf-reviewed" ? "完整PDF钢琴谱" : s.source?.kind === "pdf-transcription-checked" ? "7页完整钢琴谱" : library.some((x) => x.id === s.id) ? "精选练习曲" : "我的乐谱"}</span><button data-open="${esc(s.id)}" class="card-play" aria-label="打开 ${esc(s.title)}">${icon("play")}</button></div><div class="card-info"><h3>${esc(s.title)}</h3><p>${esc(s.composer || (state.section === "guitar" ? "吉他练习曲" : "钢琴练习曲"))}</p><div class="card-details"><span>${s.mode ? esc(tonalityLabel(s)) : keyName(s.keySignature) + " 调"} · ${s.timeSignature.join("/")}</span><span>${s.tempo} BPM</span></div></div>${capabilities.publish ? `<button class="button quiet cloud-upload" data-cloud-upload="${esc(s.id)}" ${state.cloudBusy ? "disabled" : ""}>上传云端</button>` : ""}<button class="button quiet" data-revisions="${esc(s.id)}">修订历史</button><button class="button quiet cloud-delete-local" data-delete="${esc(s.id)}" aria-label="${HOSTED ? "移到回收站" : "本地删除"} ${esc(s.title)}" title="${HOSTED ? "30 天内可在账号页面恢复" : "仅删除本地副本"}">${icon("trash-2")}${HOSTED ? "移到回收站" : "删除本地"}</button></article>`,
+          `<article class="score-card" data-card="${esc(s.id)}"><div class="card-art tone-${i % 4}">${noteSketch(s) || `<span class="card-note">${["𝄞", "♫", "♩", "♬"][i % 4]}</span>`}<span class="card-type">${HOSTED ? "私有曲谱 · 请核对原谱" : s.source?.kind === "full-score-agent-approved" ? "已审核 · AI逐谱校对" : s.source?.kind === "full-score-model-reviewed" ? "AI全谱校对版 · 待人工确认" : s.source?.reviewRequired || s.source?.kind === "full-score-ai-draft" ? "数字谱 · 待校对" : s.source?.kind === "full-pdf-reviewed" ? "完整PDF钢琴谱" : s.source?.kind === "pdf-transcription-checked" ? "7页完整钢琴谱" : library.some((x) => x.id === s.id) ? "精选练习曲" : "我的乐谱"}</span><button data-open="${esc(s.id)}" class="card-play" aria-label="打开 ${esc(s.title)}">${icon("play")}</button></div><div class="card-info"><h3>${esc(s.title)}</h3><p>${esc(s.composer || (state.section === "guitar" ? "吉他练习曲" : "钢琴练习曲"))}</p><div class="card-details"><span>${s.mode ? esc(tonalityLabel(s)) : keyName(s.keySignature) + " 调"} · ${s.timeSignature.join("/")}</span><span>${s.tempo} BPM</span></div></div>${capabilities.publish ? `<button class="button quiet cloud-upload" data-cloud-upload="${esc(s.id)}" ${state.cloudBusy ? "disabled" : ""}>上传云端</button>` : ""}<button class="button quiet" data-revisions="${esc(s.id)}">修订历史</button><button class="button quiet cloud-delete-local" data-delete="${esc(s.id)}" aria-label="${HOSTED ? "移到回收站" : "本地删除"} ${esc(s.title)}" title="${HOSTED ? "30 天内可在账号页面恢复" : "仅删除本地副本"}">${icon("trash-2")}${HOSTED ? "移到回收站" : "删除本地"}</button></article>`,
       )
       .join("");
   }

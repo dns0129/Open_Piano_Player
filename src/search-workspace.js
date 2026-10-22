@@ -1,6 +1,5 @@
 import { preserveOriginalFile } from "./library.js";
 import { $, $$, esc, icon, refreshIcons } from "./ui.js";
-import { validateScore } from "../lib/score.mjs";
 import { mountSourceBrowser } from "./source-browser.js";
 import { STATIC_NOTICE } from "./capabilities.js";
 export function createSearchWorkspace({

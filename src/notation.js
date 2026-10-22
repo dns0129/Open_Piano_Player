@@ -2,9 +2,9 @@ import { scrollBehavior } from './ui.js';
 import {createDisplayRepresentation,createPerformanceTimeline} from '../lib/score-representations.ts';
 import { Renderer, Stave, StaveNote, StaveConnector, Voice, Formatter, Accidental, Dot, StaveTie, Beam, Tuplet, Annotation, Fraction, VexFlow, Barline, Articulation, Ornament, Modifier, GraceNote, GraceNoteGroup } from 'vexflow/bravura';
 import { beatsPerMeasure, KEY_NAMES, midiName, scoreMeasureBounds, scoreMeasureIndex, scoreKeySignature } from '../lib/score.mjs';
-import { measureSegments, spellMidi, numberedPitch, planSystems } from '../lib/notation-layout.mjs';
+import { spellMidi, numberedPitch, planSystems } from '../lib/notation-layout.mjs';
 import { tonalityLabel } from '../lib/score-arrangement.mjs';
-import { tieChains, effectLabels, performanceNotes, ornamentAccidental } from '../lib/note-effects.mjs';
+import { tieChains, effectLabels, ornamentAccidental } from '../lib/note-effects.mjs';
 
 const NS = 'http://www.w3.org/2000/svg';
 let fontsLoaded = false;
@@ -13,7 +13,7 @@ export const fontsReady = typeof document !== 'undefined' && document.fonts
   ? Promise.all([document.fonts.load('32px Bravura'), document.fonts.load('12px Academico')]).then(() => { VexFlow.setFonts('Bravura', 'Academico'); fontsLoaded = true; })
   : Promise.resolve().then(() => { fontsLoaded = true; });
 const symbol = accidental => ({ '-2': '𝄫', '-1': '♭', 0: '', 1: '♯', 2: '𝄪' })[accidental] || '';
-import {notationDuration,notationTupletGroups,notationTupletPlans,descriptorTuplets,dotFactor,RHYTHM_EPSILON,closeRhythm as closeTo} from '../lib/notation-rhythm.mjs';
+import {notationDuration,notationTupletPlans,descriptorTuplets,dotFactor,RHYTHM_EPSILON,closeRhythm as closeTo} from '../lib/notation-rhythm.mjs';
 export {notationDuration,notationTupletGroups} from '../lib/notation-rhythm.mjs';
 import {notationMeasureSegments} from '../lib/notation-segments.mjs';
 export {notationMeasureSegments} from '../lib/notation-segments.mjs';

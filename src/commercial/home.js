@@ -1,4 +1,4 @@
-import {esc,date,stateLabels,layout,loginPrompt,createPage} from './shared.js';
+import {esc,date,stateLabels,layout,createPage} from './shared.js';
 const root=document.querySelector('#commercial-app'),state={records:[],jobs:[],feedback:[],quota:null,info:null,query:'',error:'',message:'',busy:false,nextCursor:null,feedbackDraft:{category:'recognition',message:''}};
 const page=createPage(()=>{state.records=[];state.jobs=[];state.feedback=[];state.quota=null;state.feedbackDraft={category:'recognition',message:''};render()}),{client}=page;
 const $=selector=>root.querySelector(selector);
