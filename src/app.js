@@ -739,7 +739,7 @@ function modal(title, body, subtitle = "") {
   $("#modal-root").innerHTML =
     `<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="modal-heading"><div><h2>${title}</h2>${subtitle ? `<p>${subtitle}</p>` : ""}</div><button id="modal-close" class="icon-button" aria-label="关闭">${icon("x")}</button></div>${body}</section></div>`;
   refreshIcons();
-  $("#modal-close").onclick = closeModal;
+  $("#modal-close").onclick = requestCloseModal;
   $(".modal-backdrop").onclick = (e) => {
     if (e.target === e.currentTarget && !state.busy) closeModal();
   };
@@ -748,6 +748,11 @@ function modal(title, body, subtitle = "") {
       $(".modal input:not([type=hidden]),.modal select,.modal button")?.focus(),
     0,
   );
+}
+// Closing while recognition runs discards the model request, so ask first.
+function requestCloseModal() {
+  if (state.busy && !confirm("识谱仍在进行，关闭将取消本次识别。确定关闭吗？")) return;
+  closeModal();
 }
 function closeModal() {
   modalEpoch++;
@@ -906,7 +911,7 @@ async function openAI(attachment = null) {
     // Replace only the loading body, retaining its cleanup ownership.
     const section = $(".modal");
     section.innerHTML = `<div class="modal-heading"><div><h2>选择识谱范围</h2><p>先识别清楚的小节，再导入练习。</p></div><button id="modal-close" class="icon-button" aria-label="关闭">${icon("x")}</button></div><form id="ai-form"><div class="ocr-file-heading"><strong>${esc(attachment.name)}</strong>${attachment.source ? safeLink(attachment.source.url, "原始来源") : ""}</div>${totalPages > 1 ? `<label class="field ocr-page-picker">谱面页<select id="ocr-page" aria-label="谱面页">${Array.from({ length: totalPages }, (_, i) => `<option value="${i}">第 ${i + 1} 页 / 共 ${totalPages} 页</option>`).join("")}</select></label>` : ""}<div id="score-image-host"></div><p id="ocr-scope-summary" class="ocr-scope-summary" role="status"></p><label class="field">乐谱名称<input name="title" maxlength="150" value="${esc(attachment.source?.songName || attachment.name.replace(/\.[^.]+$/, ""))}" required></label><label class="field">识谱说明<textarea name="prompt" rows="2" maxlength="3000" placeholder="保留两只手和原谱节奏；后续谱行可补充调号、拍号、速度。"></textarea></label><label class="field">识谱服务<select name="provider">${providerOptions()}</select></label><p class="form-note">仅转写选定范围，不补写缺页。框选时请包含完整小节、两只手与谱号。AI 结果仍需对照原图校对。</p><div id="ai-error" class="form-error" role="alert"></div><button class="button primary full" type="submit">${icon("file-music")}识别选段并导入</button></form>`;
-    $("#modal-close").onclick = closeModal;
+    $("#modal-close").onclick = requestCloseModal;
     function updateScope(options = selector?.getSelectionOptions()) {
       const info = $("#ocr-scope-summary");
       if (!options || !info) return;
@@ -1325,8 +1330,9 @@ function download(content, name, type) {
 }
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
-    if ($(".modal")) e.stopImmediatePropagation();
-    closeModal();
+    if (!$(".modal")) return;
+    e.stopImmediatePropagation();
+    requestCloseModal();
     return;
   }
   if (

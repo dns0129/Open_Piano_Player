@@ -32,6 +32,8 @@ export function createLibraryPanel({
     return saved;
   }
   async function loadAvailablePracticeSource(score) {
+    // Built-in exercises have no saved original, so skip the guaranteed 404.
+    if ([starterScore.id, guitarStarterScore.id].includes(score.id)) return null;
     try {
       return await client.readSource(score);
     } catch (e) {
@@ -44,13 +46,15 @@ export function createLibraryPanel({
     if (!response.ok) throw new Error("云端曲库读取失败。");
     return response.json();
   }
-  let librarySync;
+  let librarySync, initialization;
   function syncLocalLibrary() {
     if (librarySync) return librarySync;
     librarySync = (async () => {
       try {
-        await client.initialize();
-        await client.refresh();
+        // initialize() is memoized and already lists once; later syncs only need refresh().
+        const pending = client.initialize();
+        if (pending === initialization) await client.refresh();
+        else await (initialization = pending);
         state.shared = client.scores;
         if (state.view === "library" && !$("#modal-root")?.childElementCount) {
           const query = $("#library-query")?.value || "";
