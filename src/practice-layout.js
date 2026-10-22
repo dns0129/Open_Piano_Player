@@ -9,11 +9,15 @@ export function practicePresentation(width, height) {
   return width <= 1400 ? 'tablet' : 'desktop';
 }
 
-export function practiceLayout(presentation, preferences = {}) {
+// Below this window height the keyboard starts folded so the score keeps at least two systems.
+export const SHORT_VIEWPORT_HEIGHT = 720;
+
+export function practiceLayout(presentation, preferences = {}, { short = false } = {}) {
+  const roomy = presentation === 'tablet' || presentation === 'desktop';
   const layout = {
     topbar: true,
-    sidebar: presentation === 'tablet' || presentation === 'desktop',
-    keyboard: presentation === 'tablet' || presentation === 'desktop',
+    sidebar: roomy,
+    keyboard: roomy && !short,
     focus: presentation === 'portrait' || presentation === 'phone-landscape',
   };
   for (const panel of panels) {
@@ -37,7 +41,7 @@ export function mountPracticeLayout(shell, { storage, viewport = window } = {}) 
 
   function apply() {
     presentation = practicePresentation(viewport.innerWidth, viewport.innerHeight);
-    layout = practiceLayout(presentation, preferences);
+    layout = practiceLayout(presentation, preferences, { short: viewport.innerHeight < SHORT_VIEWPORT_HEIGHT });
     shell.dataset.presentation = presentation;
     shell.classList.toggle('is-focus', layout.focus);
     for (const panel of panels.filter(panel => panel !== 'focus')) {

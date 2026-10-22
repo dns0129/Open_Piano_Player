@@ -1,3 +1,4 @@
+import { scrollBehavior } from './ui.js';
 import { guitarTabNotes, GUITAR_TUNING } from '../lib/guitar.mjs';
 import { scoreMeasureBounds, midiName } from '../lib/score.mjs';
 
@@ -58,7 +59,7 @@ export function renderGuitarTab(container, score, options = {}) {
       const index = bars.findIndex(b => beat >= b.bounds.start && beat < b.bounds.end);
       if (index !== current) {
         bars.forEach((b, i) => b.shade.setAttribute('fill', i === index ? '#edf4e9' : 'transparent'));
-        if (options.autoScroll !== false && index >= 0 && current >= 0) bars[index].host.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
+        if (options.autoScroll !== false && index >= 0 && current >= 0) bars[index].host.scrollIntoView?.({ block: 'nearest', behavior: scrollBehavior() });
         current = index;
       }
     },

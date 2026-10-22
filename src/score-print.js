@@ -1,6 +1,6 @@
 import { renderGuitarTab } from './guitar-notation.js';
 import {createDisplayRepresentation} from '../lib/score-representations.ts';
-import { VexFlow } from 'vexflow';
+import { VexFlow } from 'vexflow/bravura';
 import { normalizePrintStyle, printSVGColor, PRINT_TEXT_FONTS, PRINT_PAGE_STYLES } from '../lib/score-print-style.mjs';
 import { PDFDocument } from 'pdf-lib';
 import { renderNotation, fontsReady } from './notation.js';

@@ -1,7 +1,6 @@
 import { $, $$, esc, icon, refreshIcons } from "./ui.js";
 import { validateScore } from "../lib/score.mjs";
 import { renderNotation } from "./notation.js";
-import { exportMidi } from "../lib/exporters.mjs";
 import { tonalityLabel } from "../lib/score-arrangement.mjs";
 export function createAudioWorkspace({
   state,
@@ -145,12 +144,18 @@ ${a.file ? `<div class="audio-source"><div class="audio-file-meta"><span>${icon(
         setScore(a.result.score, a.result.warnings || []);
         toast("音频转写谱已保存到曲库");
       };
-      $("#download-transcription").onclick = () =>
-        download(
-          exportMidi(a.result.score),
-          a.result.score.title.replace(/[\\/:*?"<>|]/g, "_") + ".mid",
-          "audio/midi",
-        );
+      $("#download-transcription").onclick = async () => {
+        try {
+          const { exportMidi } = await import("../lib/exporters.mjs");
+          download(
+            exportMidi(a.result.score),
+            a.result.score.title.replace(/[\\/:*?"<>|]/g, "_") + ".mid",
+            "audio/midi",
+          );
+        } catch (error) {
+          toast(error.message, true);
+        }
+      };
       try {
         a.previewRenderer = renderNotation(
           $("#audio-score-preview"),

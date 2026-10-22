@@ -26,6 +26,13 @@ test('iPad portrait and iPhone landscape use the whole score; phones have no def
   assert.equal(practiceLayout('phone').keyboard,false);
 });
 
+test('short desktop windows fold the keyboard by default but keep a saved choice', () => {
+  assert.equal(practiceLayout('desktop',{},{short:true}).keyboard,false);
+  assert.equal(practiceLayout('desktop',{},{short:true}).sidebar,true);
+  assert.equal(practiceLayout('desktop',{desktop:{keyboard:true}},{short:true}).keyboard,true);
+  assert.equal(practiceLayout('desktop').keyboard,true);
+});
+
 test('folding panels and rotating keep the same player, score DOM and current beat', () => {
   const t=setup();
   try {

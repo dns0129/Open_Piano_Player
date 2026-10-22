@@ -1,5 +1,6 @@
+import { scrollBehavior } from './ui.js';
 import {createDisplayRepresentation,createPerformanceTimeline} from '../lib/score-representations.ts';
-import { Renderer, Stave, StaveNote, StaveConnector, Voice, Formatter, Accidental, Dot, StaveTie, Beam, Tuplet, Annotation, Fraction, VexFlow, Barline, Articulation, Ornament, Modifier, GraceNote, GraceNoteGroup } from 'vexflow';
+import { Renderer, Stave, StaveNote, StaveConnector, Voice, Formatter, Accidental, Dot, StaveTie, Beam, Tuplet, Annotation, Fraction, VexFlow, Barline, Articulation, Ornament, Modifier, GraceNote, GraceNoteGroup } from 'vexflow/bravura';
 import { beatsPerMeasure, KEY_NAMES, midiName, scoreMeasureBounds, scoreMeasureIndex, scoreKeySignature } from '../lib/score.mjs';
 import { measureSegments, spellMidi, numberedPitch, planSystems } from '../lib/notation-layout.mjs';
 import { tonalityLabel } from '../lib/score-arrangement.mjs';
@@ -12,7 +13,7 @@ export const fontsReady = typeof document !== 'undefined' && document.fonts
   ? Promise.all([document.fonts.load('32px Bravura'), document.fonts.load('12px Academico')]).then(() => { VexFlow.setFonts('Bravura', 'Academico'); fontsLoaded = true; })
   : Promise.resolve().then(() => { fontsLoaded = true; });
 const symbol = accidental => ({ '-2': '𝄫', '-1': '♭', 0: '', 1: '♯', 2: '𝄪' })[accidental] || '';
-import {notationDuration,notationTupletGroups,notationTupletPlans,dotFactor,RHYTHM_EPSILON,closeRhythm as closeTo} from '../lib/notation-rhythm.mjs';
+import {notationDuration,notationTupletGroups,notationTupletPlans,descriptorTuplets,dotFactor,RHYTHM_EPSILON,closeRhythm as closeTo} from '../lib/notation-rhythm.mjs';
 export {notationDuration,notationTupletGroups} from '../lib/notation-rhythm.mjs';
 import {notationMeasureSegments} from '../lib/notation-segments.mjs';
 export {notationMeasureSegments} from '../lib/notation-segments.mjs';
@@ -79,7 +80,9 @@ export function renderNotation(container, score, options = {}) {
   if (mode === 'numbered' && score.mode === 'minor') help.textContent += ` ${tonalityLabel(score)} · 以 6 为小调主音。`;
   if (options.onSelectNotes) help.textContent = '点击谱面选择音符；和弦内的单音也可在下方逐个选择。';
   if (mode !== 'roll' && hasMergedVoices(score)) help.textContent += ' 复声部合并为和弦及延音线；精确起止可切换钢琴卷帘查看。';
-  if(mode!=='roll')help.textContent+=' 连音括号标出比例；无书写信息时由时值推断。MIDI 的微小松键间隙仅在谱面合并，原始演奏时值保留。';
+  // Explain tuplets and MIDI clean-up only for scores that actually have them.
+  if (mode !== 'roll' && score.notes.some(note => descriptorTuplets(notationDuration(note.duration, note.rhythm)).length)) help.textContent += ' 三连音等连音用括号里的数字标出。';
+  if (mode !== 'roll' && score.source?.kind === 'midi') help.textContent += ' MIDI 里细小的松键间隙在谱面上已合并，播放仍按原始演奏。';
   if(score.tempoMap?.length)help.textContent+=' 速度变化：'+score.tempoMap.map(e=>`第${e.beat}拍 ♩=${e.bpm}${e.curve==='linear'?' 渐变至下一点':''}`).join('；')+'。';
   if(score.fermatas?.length)help.textContent+=' 停留：'+score.fermatas.map(e=>`第${e.beat}拍额外${e.holdBeats}拍`).join('；')+'。';
   const systemsHost = document.createElement('div'); systemsHost.className = 'notation-systems'; root.append(help, systemsHost); container.replaceChildren(root);
@@ -349,7 +352,7 @@ export function renderNotation(container, score, options = {}) {
     scrollFrame = requestAnimationFrame(() => {
       if (destroyed) return;
       const bounds = info.system.host.getBoundingClientRect(), viewport = container.getBoundingClientRect();
-      if (bounds.top < viewport.top + 14 || bounds.bottom > viewport.bottom - 14) container.scrollTo({ top: Math.max(0, container.scrollTop + bounds.top - viewport.top - Math.max(12, (container.clientHeight - bounds.height) / 2)), behavior: 'smooth' });
+      if (bounds.top < viewport.top + 14 || bounds.bottom > viewport.bottom - 14) container.scrollTo({ top: Math.max(0, container.scrollTop + bounds.top - viewport.top - Math.max(12, (container.clientHeight - bounds.height) / 2)), behavior: scrollBehavior() });
     });
   }
   rebuild();

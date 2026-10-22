@@ -1,22 +1,22 @@
-.instrument-sections { display:flex; align-items:center; gap:3px; padding:4px; border:1px solid #d9e1d2; border-radius:10px; background:#f1f4ed; flex-shrink:0; }
+.instrument-sections { display:flex; align-items:center; gap:3px; padding:4px; border:1px solid var(--border); border-radius:10px; background:var(--surface-2); flex-shrink:0; }
 .instrument-sections button { display:flex; align-items:center; justify-content:center; gap:6px; min-height:34px; padding:5px 10px; font-size:12px; border-radius:7px; white-space:nowrap; }
-.instrument-sections button.selected { background:#fffefb; color:#234f3e; box-shadow:0 1px 4px #234f3e15; }
+.instrument-sections button.selected { background:var(--surface-0); color:var(--accent); box-shadow:0 1px 4px #234f3e15; }
 .app-shell .app-header { gap:18px; }
 .app-shell .main-nav { gap:10px; }
 .app-shell [hidden] { display:none !important; }
 .guitar-fret-scroll { overflow-x:auto; max-height:180px; padding:3px 18px 8px; }
 .guitar-fret-grid { min-width:780px; max-width:1200px; margin:auto; }
 .guitar-string { display:grid; grid-template-columns:65px repeat(13,minmax(36px,1fr)); align-items:center; }
-.guitar-string>span { font-size:10px; color:#697b63; }
-.guitar-string button { min-height:23px; border-right:2px solid #b9c3ac; border-bottom:1px solid #bbc5b2; color:#53664a; font-size:10px; background:#e3e9d9; }
-.guitar-string button:first-of-type { border-right:4px solid #9da98d; background:#f5f6ef; }
-.guitar-string button:hover,.guitar-string button.active-right,.guitar-string button.active-left { background:#abc99c; color:#163f27; }
+.guitar-string>span { font-size:10px; color:var(--text-mid); }
+.guitar-string button { min-height:23px; border-right:2px solid var(--text-5); border-bottom:1px solid var(--sage-light); color:var(--text-2); font-size:10px; background:var(--border); }
+.guitar-string button:first-of-type { border-right:4px solid var(--sage); background:var(--surface-2); }
+.guitar-string button:hover,.guitar-string button.active-right,.guitar-string button.active-left { background:var(--sage-bright); color:var(--pine); }
 .guitar-string button:nth-of-type(4),.guitar-string button:nth-of-type(6),.guitar-string button:nth-of-type(8),.guitar-string button:nth-of-type(10),.guitar-string button:nth-of-type(13) { font-weight:700; }
-.guitar-notation .notation-help { margin:0 0 20px; font-size:11px; line-height:1.8; color:#7c897a; }
+.guitar-notation .notation-help { margin:0 0 20px; font-size:11px; line-height:1.8; color:var(--text-3); }
 .guitar-notation .notation-systems { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr)); gap:22px 18px; }
 .guitar-notation .notation-system>svg { display:block; width:100%; height:auto; }
 .guitar-notation [role="button"] { cursor:pointer; outline:none; }
-.guitar-notation [role="button"]:focus>rect,.guitar-notation [role="button"]:hover>rect { stroke:#4b7550; stroke-width:2; }
+.guitar-notation [role="button"]:focus>rect,.guitar-notation [role="button"]:hover>rect { stroke:var(--accent-2); stroke-width:2; }
 @media screen and (max-width:1200px) { .app-shell .app-header { gap:10px; padding-left:18px; padding-right:18px; } .app-shell .main-nav { gap:2px; } .app-shell .nav-tab { gap:4px; padding:0 5px; } .app-shell .header-actions { gap:4px; } }
 @media screen and (max-width:1000px) { .app-shell .nav-tab .online-badge { display:none; } .app-shell .header-actions [data-fullscore-jobs] { display:none; } }
 @media screen and (max-width:700px) { .instrument-sections button { padding:4px 8px; min-height:32px; font-size:11px; gap:4px; } .instrument-sections svg { width:15px; height:15px; } .app-shell .app-header { gap:9px; } .app-shell .header-actions [data-upload] span { display:none; } .app-shell .brand>span:last-child { font-size:19px; } .guitar-notation .notation-systems { display:flex; flex-direction:column; } }

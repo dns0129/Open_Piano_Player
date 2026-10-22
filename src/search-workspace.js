@@ -1,7 +1,6 @@
 import { preserveOriginalFile } from "./library.js";
 import { $, $$, esc, icon, refreshIcons } from "./ui.js";
 import { validateScore } from "../lib/score.mjs";
-import { importScore } from "../lib/importers.mjs";
 import { mountSourceBrowser } from "./source-browser.js";
 import { STATIC_NOTICE } from "./capabilities.js";
 export function createSearchWorkspace({
@@ -356,6 +355,7 @@ export function createSearchWorkspace({
       await receiveFile(new File([data], filename, { type: mime }), source);
       return;
     }
+    const { importScore } = await import("../lib/importers.mjs");
     const { score, warnings } = await importScore(data, filename);
     if (
       entry.pianoSourceVerified &&

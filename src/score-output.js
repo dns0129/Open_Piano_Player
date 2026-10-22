@@ -1,5 +1,4 @@
 import { $, $$, esc, icon, read } from "./ui.js";
-import { exportMusicXML, exportMidi } from "../lib/exporters.mjs";
 import { readScoreDocument } from "../lib/score-document.ts";
 import { normalizePrintStyle, printStylePreferences, PRINT_DEFAULTS, PRINT_TEXT_FONTS, PRINT_MUSIC_FONTS, PRINT_PAGE_STYLES } from '../lib/score-print-style.mjs';
 export function createScoreOutput({
@@ -98,8 +97,13 @@ ${number('页边距（mm）', 'marginMM', 10, 24)}${number('谱面大小（%）'
     );
     $$("[data-format]").forEach(
       (b) =>
-        (b.onclick = () => {
+        (b.onclick = async () => {
           try {
+            // Exporters bring the MIDI and MusicXML libraries; load them on first export.
+            const { exportMusicXML, exportMidi } =
+              b.dataset.format === "xml" || b.dataset.format === "midi"
+                ? await import("../lib/exporters.mjs")
+                : {};
             const name = state.score.title.replace(/[\\/:*?"<>|]/g, "_"),
               format = b.dataset.format;
             if (format === "xml")

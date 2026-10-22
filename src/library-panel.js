@@ -56,6 +56,9 @@ export function createLibraryPanel({
         if (pending === initialization) await client.refresh();
         else await (initialization = pending);
         state.shared = client.scores;
+        // The header count was rendered before the library finished loading.
+        const count = $('.main-nav [data-nav="library"] small');
+        if (count) count.textContent = availableScores().length;
         if (state.view === "library" && !$("#modal-root")?.childElementCount) {
           const query = $("#library-query")?.value || "";
           render();
