@@ -197,7 +197,7 @@ npm run scores:reread-five -- --run --import --publish
 
 `python3 scripts/prepare-string-assets.py` 可重新制作弦乐素材（需要 numpy、scipy、ffmpeg 和网络）；普通安装、构建和播放使用已经打包的文件，无需重新下载。素材清单记录固定源版本、原始路径与处理前后SHA256。
 
-`output/timbres/` 中保留三段约21秒的MP3试听。开发时可用 `node node_modules/vite/bin/vite.js --host 127.0.0.1 --port 5173` 启动源码服务，再运行 `node scripts/render-instrument-demos.mjs` 重新导出；此可选工具需要额外提供 Playwright、Chromium 和 ffmpeg。也可用 `QINBAN_PLAYWRIGHT_MODULE` 指定 Playwright 模块路径、`QINBAN_CHROMIUM` 指定浏览器路径。
+音色试听 MP3（约21秒）导出到本机 `output/timbres/`，不随仓库提供；`output/` 下除 `output/scores/` 外均为本机实验与验证产物，不纳入版本管理。开发时可用 `node node_modules/vite/bin/vite.js --host 127.0.0.1 --port 5173` 启动源码服务，再运行 `node scripts/render-instrument-demos.mjs` 重新导出；此可选工具需要额外提供 Playwright、Chromium 和 ffmpeg。也可用 `QINBAN_PLAYWRIGHT_MODULE` 指定 Playwright 模块路径、`QINBAN_CHROMIUM` 指定浏览器路径。
 
 新版试听工具默认导出醇厚、A3、四个型号、小提琴和合奏共八段；可用 `node scripts/render-instrument-demos.mjs http://127.0.0.1:5173 output/timbres/models-and-violin-20261020` 指定单独输出目录，之后可追加所需音色ID。`QINBAN_FFMPEG` 可指定 ffmpeg 路径。导出使用实际播放器调度器并记录峰值、RMS、削波和非有限采样数，发现无声或无效音频即报错。
 

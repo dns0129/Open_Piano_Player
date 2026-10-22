@@ -1,1 +1,0 @@
-{"excludedFromBenchmark":true,"reason":"SVG rasterizer did not apply CSS currentColor strokes; every fixture lost staff lines and stems. All ten initial local OMR preflight failures preserved separately; no AI request was made. Inputs repaired before final manifest freeze."}

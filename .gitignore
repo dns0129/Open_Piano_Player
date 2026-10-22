@@ -15,3 +15,7 @@ dist-pages/
 dist-hosted/
 __pycache__/
 *.pyc
+
+# Experiment and verification output stays local; only the published score files are tracked.
+output/*
+!output/scores/
