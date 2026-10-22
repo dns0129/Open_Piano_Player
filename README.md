@@ -17,7 +17,7 @@
 
 乐谱文档已引入 TypeScript v2 模型，分别生成演奏时间线和显示表示；原有 v1 可继续导入。曲库统一本机磁盘与网页 IndexedDB 两种存储，旧浏览器曲库在持久保存成功后迁移；localStorage 仅保存偏好。我的曲库新增完整备份、恢复和修订历史，备份包含已保存原文件与原谱图片，并保留旧版。
 
-运行 `npm run typecheck` 或 `npm run check` 验证。[架构、v1 迁移规则、备份和接口说明](docs/architecture.md)。新核心直接运行需 Node.js >=22.19，启动器会检查版本。
+运行 `npm run typecheck` 或 `npm run check` 验证（含类型检查、`npm run lint`、src/ 格式检查、测试与曲库校验）；修改 src/ 后运行 `npm run format` 统一格式。[架构、v1 迁移规则、备份和接口说明](docs/architecture.md)。新核心直接运行需 Node.js >=22.19，启动器会检查版本。
 
 邀请制账号、修订、回收站、完整备份和选择迁移见 [账号与私有曲库说明](docs/account-private-library-implementation.md)、[设计](docs/account-private-library-design.md) 与 [v1 接口契约](docs/contracts/account-private-library-v1.openapi.json)。`启动账号版.command` 和 `accounts:*` 命令继续兼容，商业版仍使用 `.local/accounts-v1/`；不会另建一个空目录替换已有账号数据。
 
