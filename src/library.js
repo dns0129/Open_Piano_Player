@@ -1,7 +1,11 @@
 import { createBrowserLibrary } from "./library-indexeddb.js";
 import { readLegacySources, sourceMatchesScore } from "./source-library.js";
 import { readScoreDocument } from "../lib/score-document.ts";
-import { contentHash, createLibraryBackup, readLibraryBackup } from "../lib/library-format.ts";
+import {
+  contentHash,
+  createLibraryBackup,
+  readLibraryBackup,
+} from "../lib/library-format.ts";
 
 // Groups records so each restore request stays well below the server JSON limit;
 // a record larger than the limit is sent alone (single saves allow up to 72 MB).
@@ -37,7 +41,10 @@ export function createDiskLibrary(api, { restoreBatchChars } = {}) {
       // Verify the whole backup once here, then send it in independently verified parts.
       const restored = [],
         conflicts = [];
-      for (const batch of restoreBatches(await readLibraryBackup(backup), restoreBatchChars)) {
+      for (const batch of restoreBatches(
+        await readLibraryBackup(backup),
+        restoreBatchChars,
+      )) {
         const result = await api.json("/api/library/restore", {
           backup: await createLibraryBackup(batch),
         });
@@ -87,7 +94,12 @@ export function createUnifiedLibrary({
     warnings = [],
     initialization;
   let cacheGeneration = 0;
-  const checkGeneration = generation => { if (generation !== cacheGeneration) throw Object.assign(new Error("账号已切换，旧操作已停止。"), {code:"IDENTITY_CHANGED"}); };
+  const checkGeneration = (generation) => {
+    if (generation !== cacheGeneration)
+      throw Object.assign(new Error("账号已切换，旧操作已停止。"), {
+        code: "IDENTITY_CHANGED",
+      });
+  };
   const urls = new Map();
   async function refresh() {
     const result = await adapter.list();
@@ -279,12 +291,15 @@ export function createUnifiedLibrary({
           let blob;
           if (sourceAsset) {
             if (!(sourceAsset.blob instanceof Blob) || !sourceAsset.blob.size)
-              throw new Error("原谱图片数据为空，乐谱未保存。请重新打开原谱后再试。");
+              throw new Error(
+                "原谱图片数据为空，乐谱未保存。请重新打开原谱后再试。",
+              );
             blob = sourceAsset.blob;
           } else {
             try {
               const response = await fetchImpl(s.imageUrl);
-              if (!response.ok) throw new Error("Image response was not successful");
+              if (!response.ok)
+                throw new Error("Image response was not successful");
               blob = await response.blob();
             } catch (cause) {
               throw Object.assign(
@@ -371,7 +386,13 @@ export function createUnifiedLibrary({
       return adapter.get(id);
     },
     release,
-    reset() { cacheGeneration++; for (const id of urls.keys()) release(id); cache = []; warnings = []; initialization = null; },
+    reset() {
+      cacheGeneration++;
+      for (const id of urls.keys()) release(id);
+      cache = [];
+      warnings = [];
+      initialization = null;
+    },
   };
 }
 
@@ -383,15 +404,21 @@ export function createLibraryClient({
   legacySources,
   hosted,
 } = {}) {
-  const adapter = capabilities.mode === "hosted" ? hosted :
-    capabilities.mode === "local" ? createDiskLibrary(api) : browser;
+  const adapter =
+    capabilities.mode === "hosted"
+      ? hosted
+      : capabilities.mode === "local"
+        ? createDiskLibrary(api)
+        : browser;
   const client = createUnifiedLibrary({
     adapter,
-    metadata: capabilities.mode === "hosted" ? hosted.metadata : browser.metadata,
+    metadata:
+      capabilities.mode === "hosted" ? hosted.metadata : browser.metadata,
     storage,
     migrateLegacy: capabilities.mode !== "hosted",
     ...(legacySources ? { legacySources } : {}),
   });
-  client.metadata = capabilities.mode === "hosted" ? hosted.metadata : browser.metadata;
+  client.metadata =
+    capabilities.mode === "hosted" ? hosted.metadata : browser.metadata;
   return client;
 }

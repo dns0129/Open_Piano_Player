@@ -1,5 +1,5 @@
-import { scoreSection, sectionKey } from '../lib/instrument-sections.mjs';
-import { guitarStarterScore } from '../lib/guitar.mjs';
+import { scoreSection, sectionKey } from "../lib/instrument-sections.mjs";
+import { guitarStarterScore } from "../lib/guitar.mjs";
 import { $, $$, esc, icon } from "./ui.js";
 import { assetURL } from "../lib/asset-url.mjs";
 import { tonalityLabel } from "../lib/score-arrangement.mjs";
@@ -21,7 +21,10 @@ export function createLibraryPanel({
   const HOSTED = capabilities.mode === "hosted";
   const STATIC_SITE = capabilities.mode !== "local",
     library = [starterScore];
-  const availableScores = () => client.scores.filter(score => scoreSection(score) === (state.section || 'piano'));
+  const availableScores = () =>
+    client.scores.filter(
+      (score) => scoreSection(score) === (state.section || "piano"),
+    );
   async function remember(score, sourceRecord, originalFile, options = {}) {
     const saved = await client.save(score, {
       sourceRecord,
@@ -33,7 +36,8 @@ export function createLibraryPanel({
   }
   async function loadAvailablePracticeSource(score) {
     // Built-in exercises have no saved original, so skip the guaranteed 404.
-    if ([starterScore.id, guitarStarterScore.id].includes(score.id)) return null;
+    if ([starterScore.id, guitarStarterScore.id].includes(score.id))
+      return null;
     try {
       return await client.readSource(score);
     } catch (e) {
@@ -112,9 +116,14 @@ export function createLibraryPanel({
   function libraryView() {
     const cloud = state.libraryTab === "cloud",
       scores = cloud
-        ? searchCloudScores(state.cloudScores.filter(score => scoreSection(score) === (state.section || 'piano')), state.cloudLibraryQuery)
+        ? searchCloudScores(
+            state.cloudScores.filter(
+              (score) => scoreSection(score) === (state.section || "piano"),
+            ),
+            state.cloudLibraryQuery,
+          )
         : availableScores();
-    return `<section class="content-page"><div class="page-heading"><div><span class="eyebrow">YOUR MUSIC LIBRARY</span><h1>${state.section === "guitar" ? "吉他" : "钢琴"}${cloud ? (HOSTED ? "公开曲库" : "云端曲库") : (HOSTED ? "账号曲库" : "本地曲库")}</h1><p>${HOSTED ? (cloud ? "选择公开曲目，保存到自己的账号后练习。" : "乐谱私有保存到当前账号，回收站和历史可在账号页面管理。") : cloud ? "下载到本地后即可练习；本地删除不影响云端。" : "下载和导入的曲谱按乐器分区保存，可随时删除。"}</p></div>${state.section === "guitar" ? `<button class="button primary" data-guitar-example>${icon("guitar")}打开吉他示例</button><button class="button secondary" data-upload>导入吉他谱</button>` : capabilities.scoreSearch ? `<button class="button primary" data-ai>${icon("search")}按歌名找谱</button>` : `<button class="button primary" data-upload>${icon("upload")}导入数字谱</button>`}</div>
+    return `<section class="content-page"><div class="page-heading"><div><span class="eyebrow">YOUR MUSIC LIBRARY</span><h1>${state.section === "guitar" ? "吉他" : "钢琴"}${cloud ? (HOSTED ? "公开曲库" : "云端曲库") : HOSTED ? "账号曲库" : "本地曲库"}</h1><p>${HOSTED ? (cloud ? "选择公开曲目，保存到自己的账号后练习。" : "乐谱私有保存到当前账号，回收站和历史可在账号页面管理。") : cloud ? "下载到本地后即可练习；本地删除不影响云端。" : "下载和导入的曲谱按乐器分区保存，可随时删除。"}</p></div>${state.section === "guitar" ? `<button class="button primary" data-guitar-example>${icon("guitar")}打开吉他示例</button><button class="button secondary" data-upload>导入吉他谱</button>` : capabilities.scoreSearch ? `<button class="button primary" data-ai>${icon("search")}按歌名找谱</button>` : `<button class="button primary" data-upload>${icon("upload")}导入数字谱</button>`}</div>
   ${!cloud ? `<div class="library-backup-actions"><button class="button secondary" data-library-backup>备份完整曲库</button><button class="button secondary" data-library-restore>恢复曲库</button></div><button class="continue-practice" data-nav="practice"><span class="continue-icon">${icon("file-music")}</span><span><small>继续练习</small><strong>${esc(state.score.title)}</strong><span>${esc(state.score.composer || "钢琴练习曲")} · ${state.tempo} BPM</span></span><span class="continue-play">${icon("play")}</span></button>` : ""}
   <div class="cloud-library-tabs"><button class="button ${!cloud ? "primary" : "secondary"}" data-library-tab="local">${HOSTED ? "账号曲库" : "本地曲库"}</button><button class="button ${cloud ? "primary" : "secondary"}" data-library-tab="cloud">${HOSTED ? "公开曲库" : "云端曲库"}</button>${cloud && state.section === "guitar" ? '<button class="button secondary" data-guitar-beginners>吉他入门</button>' : ""}${cloud ? `<button class="button quiet" data-cloud-refresh ${state.cloudBusy ? "disabled" : ""}>${state.cloudBusy ? "正在处理…" : "刷新云端"}</button>` : ""}</div>
   ${cloud && state.cloudError ? `<p class="cloud-library-error" role="alert">${esc(state.cloudError)}</p>` : ""}
@@ -144,7 +153,9 @@ export function createLibraryPanel({
   // A piano-roll sketch of the opening bars gives each card a recognisable shape.
   function noteSketch(score) {
     const span = Math.min(score.durationBeats || 16, 16);
-    const notes = (score.notes || []).filter((n) => n.beat < span).slice(0, 240);
+    const notes = (score.notes || [])
+      .filter((n) => n.beat < span)
+      .slice(0, 240);
     if (!notes.length) return "";
     const pitches = notes.map((n) => n.midi),
       low = Math.min(...pitches) - 1,
@@ -152,7 +163,10 @@ export function createLibraryPanel({
     const bars = notes
       .map((n) => {
         const x = (n.beat / span) * 100,
-          w = Math.max(0.8, Math.min(n.duration, span - n.beat) / span * 100 - 0.4),
+          w = Math.max(
+            0.8,
+            (Math.min(n.duration, span - n.beat) / span) * 100 - 0.4,
+          ),
           y = (1 - (n.midi - low) / range) * 40;
         return `<rect class="${n.hand === "left" ? "left" : "right"}" x="${x.toFixed(2)}" y="${(y - 0.9).toFixed(2)}" width="${w.toFixed(2)}" height="1.8" rx="0.6"/>`;
       })
@@ -168,7 +182,9 @@ export function createLibraryPanel({
       .join("");
   }
   function bindLibrary() {
-    $('[data-guitar-example]')?.addEventListener('click', () => setScore(guitarStarterScore));
+    $("[data-guitar-example]")?.addEventListener("click", () =>
+      setScore(guitarStarterScore),
+    );
     $$("[data-open]").forEach(
       (b) =>
         (b.onclick = () => {
@@ -188,8 +204,8 @@ export function createLibraryPanel({
           if (state.libraryTab === "cloud") void syncCloudLibrary();
         }),
     );
-    $('[data-guitar-beginners]')?.addEventListener('click', () => {
-      state.cloudLibraryDraft = state.cloudLibraryQuery = '吉他入门';
+    $("[data-guitar-beginners]")?.addEventListener("click", () => {
+      state.cloudLibraryDraft = state.cloudLibraryQuery = "吉他入门";
       render();
       if (!state.cloudLoaded && !state.cloudBusy) void syncCloudLibrary();
     });
@@ -209,7 +225,11 @@ export function createLibraryPanel({
               throw new Error("云端下载曲目不匹配，未保存。");
             await client.saveBundle(bundle);
             await syncLocalLibrary();
-            toast(HOSTED ? "已保存到账号曲库，原谱图片一并保存。" : "已下载到本地曲库，原谱图片一并保存。");
+            toast(
+              HOSTED
+                ? "已保存到账号曲库，原谱图片一并保存。"
+                : "已下载到本地曲库，原谱图片一并保存。",
+            );
           })),
     );
     $$("[data-cloud-delete]").forEach(
@@ -285,18 +305,30 @@ export function createLibraryPanel({
           void cloudAction(async () => {
             const id = b.dataset.delete;
             if (
-              !confirm(HOSTED ? "将这首乐谱移到账号回收站？30 天内可恢复。" : "删除本地曲库中的这首乐谱？原识谱任务与云端曲目会保留。")
+              !confirm(
+                HOSTED
+                  ? "将这首乐谱移到账号回收站？30 天内可恢复。"
+                  : "删除本地曲库中的这首乐谱？原识谱任务与云端曲目会保留。",
+              )
             )
               return;
             await client.remove(id);
             state.shared = client.scores;
             if (state.score.id === id) {
               client.release(id);
-              setScore(state.section === "guitar" ? guitarStarterScore : starterScore);
-              localStorage.removeItem(sectionKey("qinban-active-score", state.section));
+              setScore(
+                state.section === "guitar" ? guitarStarterScore : starterScore,
+              );
+              localStorage.removeItem(
+                sectionKey("qinban-active-score", state.section),
+              );
               state.view = "library";
             }
-            toast(HOSTED ? "已移到账号回收站，30 天内可恢复。" : "已删除本地副本，云端曲目保留。");
+            toast(
+              HOSTED
+                ? "已移到账号回收站，30 天内可恢复。"
+                : "已删除本地副本，云端曲目保留。",
+            );
           })),
     );
     $("[data-library-backup]")?.addEventListener(
@@ -313,7 +345,10 @@ export function createLibraryPanel({
         }),
     );
     $("[data-library-restore]")?.addEventListener("click", () => {
-      if (HOSTED) { location.href = "/account.html"; return; }
+      if (HOSTED) {
+        location.href = "/account.html";
+        return;
+      }
       const input = document.createElement("input");
       input.type = "file";
       input.accept = ".json";
@@ -338,7 +373,10 @@ export function createLibraryPanel({
     $$("[data-revisions]").forEach(
       (button) =>
         (button.onclick = async () => {
-          if (HOSTED) { location.href = "/account.html"; return; }
+          if (HOSTED) {
+            location.href = "/account.html";
+            return;
+          }
           button.disabled = true;
           try {
             const history = await client.revisions(button.dataset.revisions);

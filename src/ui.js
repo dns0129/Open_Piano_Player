@@ -78,7 +78,9 @@ const icons = {
 export const $ = (selector, root = document) => root.querySelector(selector);
 // Playback follow-scrolling jumps instead of gliding when the viewer asks for less motion.
 export const scrollBehavior = () =>
-  globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+  globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+    ? "auto"
+    : "smooth";
 export const $$ = (selector, root = document) => [
   ...root.querySelectorAll(selector),
 ];

@@ -164,8 +164,14 @@ export async function transcribeAudio(file, options = {}) {
           startSeconds: segment.start,
           onsetThreshold: options.onsetThreshold ?? 0.5,
           frameThreshold: options.frameThreshold ?? 0.3,
-          modelUrl: new URL(assetURL("/models/basic-pitch/model.json"), globalThis.location.origin).href,
-          wasmPath: new URL(assetURL("/models/basic-pitch/"), globalThis.location.origin).href,
+          modelUrl: new URL(
+            assetURL("/models/basic-pitch/model.json"),
+            globalThis.location.origin,
+          ).href,
+          wasmPath: new URL(
+            assetURL("/models/basic-pitch/"),
+            globalThis.location.origin,
+          ).href,
         },
       },
       [samples.buffer],

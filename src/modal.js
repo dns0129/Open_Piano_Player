@@ -17,7 +17,11 @@ export function createModal({ state, player }) {
   }
   // Closing while recognition runs discards the model request, so ask first.
   function requestCloseModal() {
-    if (state.busy && !confirm("识谱仍在进行，关闭将取消本次识别。确定关闭吗？")) return;
+    if (
+      state.busy &&
+      !confirm("识谱仍在进行，关闭将取消本次识别。确定关闭吗？")
+    )
+      return;
     closeModal();
   }
   function modal(title, body, subtitle = "") {
@@ -34,7 +38,9 @@ export function createModal({ state, player }) {
     };
     setTimeout(
       () =>
-        $(".modal input:not([type=hidden]),.modal select,.modal button")?.focus(),
+        $(
+          ".modal input:not([type=hidden]),.modal select,.modal button",
+        )?.focus(),
       0,
     );
   }

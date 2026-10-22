@@ -39,7 +39,10 @@ export function createImportFlows({
       return;
     }
     if (!attachment) return openSearch();
-    modal("选择识谱范围", '<p class="form-note">正在读取原图、检测双手谱行…</p>');
+    modal(
+      "选择识谱范围",
+      '<p class="form-note">正在读取原图、检测双手谱行…</p>',
+    );
     const openingEpoch = modalEpoch();
     let selector = null,
       currentPage = 0,
@@ -54,9 +57,8 @@ export function createImportFlows({
     };
     setModalCleanup(cleanup);
     try {
-      const { prepareScoreImage, mountScoreImageSelector } = await import(
-        "./score-image.js"
-      );
+      const { prepareScoreImage, mountScoreImageSelector } =
+        await import("./score-image.js");
       const totalPages = attachment.totalPages || attachment.images.length;
       const pageNumber = (index) =>
         totalPages === 1 ? attachment.source?.page || 1 : index + 1;
@@ -68,7 +70,8 @@ export function createImportFlows({
           `data:${image.mimeType};base64,${image.data}`,
           {
             page: pageNumber(index),
-            pianoSourceVerified: attachment.source?.pianoSourceVerified === true,
+            pianoSourceVerified:
+              attachment.source?.pianoSourceVerified === true,
             sourceLabel:
               attachment.source?.instrumentEvidence ||
               attachment.source?.label ||
@@ -155,7 +158,8 @@ export function createImportFlows({
           const scopeLabel = `第 ${pageNumber(currentPage)} 页 · ${selection.mode === "page" ? "当前整页" : selection.mode === "manual" ? "手动选段" : `第 ${indices.map((i) => i + 1).join("、")} 行`}`;
           state.busy = true;
           state.abort = new AbortController();
-          button.innerHTML = icon("loader-circle", "spin") + "正在识别选定范围…";
+          button.innerHTML =
+            icon("loader-circle", "spin") + "正在识别选定范围…";
           button.disabled = true;
           $("#ocr-page")?.setAttribute("disabled", "");
           $("#score-image-host").inert = true;
@@ -250,12 +254,13 @@ export function createImportFlows({
     });
   }
   function openImportChooser() {
-    if (capabilities.coreOnly || state.section === 'guitar') {
-      $('#file-input').accept = '.xml,.musicxml,.mxl,.mid,.midi,.json';
-      $('#file-input').click();
+    if (capabilities.coreOnly || state.section === "guitar") {
+      $("#file-input").accept = ".xml,.musicxml,.mxl,.mid,.midi,.json";
+      $("#file-input").click();
       return;
     }
-    $('#file-input').accept = '.xml,.musicxml,.mxl,.mid,.midi,.json,.pdf,.png,.jpg,.jpeg,.webp';
+    $("#file-input").accept =
+      ".xml,.musicxml,.mxl,.mid,.midi,.json,.pdf,.png,.jpg,.jpeg,.webp";
     modal(
       "导入乐谱",
       '<div class="import-choices"><button class="import-choice" data-import-local><strong>上传本地乐谱</strong><span>PDF、乐谱图片、MusicXML 或 MIDI</span></button><button class="import-choice" data-import-netease><strong>粘贴网易云分享链接</strong><span>查看谱页与总页数，核验后进入整谱识别</span></button></div>',
@@ -293,7 +298,9 @@ export function createImportFlows({
           response.headers.get("x-score-filename") || "netease-score.pdf",
         ),
         source: JSON.parse(
-          decodeURIComponent(response.headers.get("x-score-source") || "%7B%7D"),
+          decodeURIComponent(
+            response.headers.get("x-score-source") || "%7B%7D",
+          ),
         ),
       };
     }
@@ -309,10 +316,17 @@ export function createImportFlows({
   }
   async function receiveFile(file, source = null) {
     const importSection = state.section;
-    if (state.section === 'guitar' && /\.(pdf|png|jpe?g|webp)$/i.test(file.name))
-      return toast('吉他第一版支持 MusicXML、MIDI 和 JSON，请导入数字乐谱。', true);
+    if (
+      state.section === "guitar" &&
+      /\.(pdf|png|jpe?g|webp)$/i.test(file.name)
+    )
+      return toast(
+        "吉他第一版支持 MusicXML、MIDI 和 JSON，请导入数字乐谱。",
+        true,
+      );
     if (isAudioFile(file)) {
-      if (state.section === 'guitar') return toast('吉他第一版支持数字乐谱导入。', true);
+      if (state.section === "guitar")
+        return toast("吉他第一版支持数字乐谱导入。", true);
       return receiveAudio(file);
     }
     const maxMb = /\.pdf$/i.test(file.name) ? 50 : 20;
@@ -340,9 +354,15 @@ export function createImportFlows({
       toast("正在读取乐谱…");
       const { importScore } = await import("../lib/importers.mjs");
       const imported = await importScore(await file.arrayBuffer(), file.name);
-      const score = validateScore({ ...imported.score, instrument: imported.score.instrument || importSection });
+      const score = validateScore({
+        ...imported.score,
+        instrument: imported.score.instrument || importSection,
+      });
       const warnings = imported.warnings;
-      if (scoreSection(score) === 'guitar') warnings.push('六线谱按标准调弦自动建议指法；未保留原谱的弦号、品位及吉他专用奏法，请核对后使用。');
+      if (scoreSection(score) === "guitar")
+        warnings.push(
+          "六线谱按标准调弦自动建议指法；未保留原谱的弦号、品位及吉他专用奏法，请核对后使用。",
+        );
       await remember(score, undefined, await preserveOriginalFile(file));
       setScore(score, warnings);
       toast("乐谱已导入，点击播放即可练习。");
@@ -367,7 +387,9 @@ export function createImportFlows({
       ids = taskVault.ids().slice(-30).reverse();
     await refreshStatus();
     if (epoch !== modalEpoch()) return;
-    const reports = await Promise.allSettled(ids.map((id) => service.getJob(id)));
+    const reports = await Promise.allSettled(
+      ids.map((id) => service.getJob(id)),
+    );
     if (epoch !== modalEpoch()) return;
     const jobs = reports
       .filter((r) => r.status === "fulfilled")
