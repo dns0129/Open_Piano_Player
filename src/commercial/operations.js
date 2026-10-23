@@ -22,6 +22,9 @@ const root = document.querySelector("#operations-app"),
     retryAt: 0,
     policyDraft: null,
     inviteDraft: null,
+    inviteCodes: [],
+    codeDraft: null,
+    newCode: null,
   };
 const page = createPage(() => {
     Object.assign(state, {
@@ -34,6 +37,9 @@ const page = createPage(() => {
       challenge: null,
       policyDraft: null,
       inviteDraft: null,
+      inviteCodes: [],
+      codeDraft: null,
+      newCode: null,
     });
     render();
   }),
@@ -66,9 +72,9 @@ async function run(fn) {
 async function load() {
   await client.initialize();
   if (client.session?.user.role !== "operator") return;
-  const [overview, users, jobs, feedback, audit] = await Promise.all(
-    ["overview", "users", "jobs", "feedback", "audit"].map((p) =>
-      client.json("/operator/" + p),
+  const [overview, users, jobs, feedback, audit, codes] = await Promise.all(
+    ["overview", "users", "jobs", "feedback", "audit", "invite-codes"].map(
+      (p) => client.json("/operator/" + p),
     ),
   );
   Object.assign(state, {
@@ -77,18 +83,32 @@ async function load() {
     jobs: jobs.jobs,
     feedback: feedback.feedback,
     audit: audit.events,
+    inviteCodes: codes.codes,
   });
 }
 function settings() {
   const p = state.overview.policy;
-  return `<section class="commerce-card"><h2>任务与成本控制</h2><p>按每人每月任务数控制，不按页或谱行扣次。成本以服务端单价计算，包含未结算预留；供应商实际账单需另外核对。</p><p class="commerce-notice">${state.overview.providerConfigured ? "服务端模型配置已就绪。" : "服务端模型凭据或单价尚未配置；当前不可开启识谱。"}${p.pausedReason ? " 当前暂停原因：" + esc(p.pausedReason) : ""}</p><form data-policy><div class="commerce-form-grid"><label>默认每人每月任务数<input name="defaultTaskLimit" type="number" min="0" max="10000" value="${p.defaultTaskLimit}" required></label><label>全站同时处理任务数<input name="maxActive" type="number" min="1" max="4" value="${p.maxActive}" required></label><label>每日成本上限（USD）<input name="dailyCap" type="number" min="0" max="1000000" step=".01" value="${dollars(p.dailyCap)}" required></label><label>每月成本上限（USD）<input name="monthlyCap" type="number" min="0" max="1000000" step=".01" value="${dollars(p.monthlyCap)}" required></label><label>单任务成本上限（USD）<input name="jobCap" type="number" min="0" max="1000000" step=".01" value="${dollars(p.jobCap)}" required></label><label class="commerce-wide">公开公告<textarea name="announcement" maxlength="1000">${esc(p.announcement)}</textarea></label><label class="commerce-wide">帮助页联系说明<input name="supportContact" maxlength="300" value="${esc(p.supportContact)}"></label><label class="commerce-wide"><input name="enabled" type="checkbox" ${p.enabled ? "checked" : ""}>开启识谱接单（暂停原因清除前须核对全部未知用量）</label><label class="commerce-wide">调整原因<input name="reason" maxlength="500" required placeholder="本次预算、名额或公告调整的原因"></label></div><button class="primary" type="submit" ${state.busy ? "disabled" : ""}>保存运营设置</button><p class="commerce-muted">启用时须满足：0 &lt; 单任务上限 ≤ 每日上限 ≤ 每月上限。超出预算时保留任务并停止后续调用。</p></form></section>`;
+  return `<section class="commerce-card"><h2>任务与成本控制</h2><p>按每人每月任务数控制，不按页或谱行扣次。成本以服务端单价计算，包含未结算预留；供应商实际账单需另外核对。</p><p class="commerce-notice">${state.overview.providerConfigured ? "服务端模型配置已就绪。" : "服务端模型凭据或单价尚未配置；当前不可开启识谱。"}${p.pausedReason ? " 当前暂停原因：" + esc(p.pausedReason) : ""}</p><form data-policy><div class="commerce-form-grid"><label>默认每人每月任务数<input name="defaultTaskLimit" type="number" min="0" max="10000" value="${p.defaultTaskLimit}" required></label><label>全站同时处理任务数<input name="maxActive" type="number" min="1" max="4" value="${p.maxActive}" required></label><label>每日成本上限（USD）<input name="dailyCap" type="number" min="0" max="1000000" step=".01" value="${dollars(p.dailyCap)}" required></label><label>每月成本上限（USD）<input name="monthlyCap" type="number" min="0" max="1000000" step=".01" value="${dollars(p.monthlyCap)}" required></label><label>单任务成本上限（USD）<input name="jobCap" type="number" min="0" max="1000000" step=".01" value="${dollars(p.jobCap)}" required></label><label class="commerce-wide">公开公告<textarea name="announcement" maxlength="1000">${esc(p.announcement)}</textarea></label><label class="commerce-wide">帮助页联系说明<input name="supportContact" maxlength="300" value="${esc(p.supportContact)}"></label><label class="commerce-wide"><input name="enabled" type="checkbox" ${p.enabled ? "checked" : ""}>开启识谱接单（暂停原因清除前须核对全部未知用量）</label><label class="commerce-wide"><input name="openRegistration" type="checkbox" ${p.openRegistration ? "checked" : ""}>开放注册（关闭后新用户须填写邀请码或收到邮箱邀请）</label><label>每个用户可生成的好友邀请码<input name="friendInvitesPerUser" type="number" min="0" max="50" value="${p.friendInvitesPerUser ?? 3}" required></label><label>好友邀请赠送识谱任务<input name="friendInviteBonus" type="number" min="0" max="100" value="${p.friendInviteBonus ?? 2}" required></label><label class="commerce-wide">调整原因<input name="reason" maxlength="500" required placeholder="本次预算、名额或公告调整的原因"></label></div><button class="primary" type="submit" ${state.busy ? "disabled" : ""}>保存运营设置</button><p class="commerce-muted">启用时须满足：0 &lt; 单任务上限 ≤ 每日上限 ≤ 每月上限。超出预算时保留任务并停止后续调用。</p></form></section>`;
 }
 function overview() {
   const o = state.overview;
-  return `<section class="commerce-summary"><div><div class="commerce-eyebrow">QINBAN OPERATIONS</div><h1>运营控制台</h1><p>${esc(client.session.user.email)} · 仅运营账号可见</p></div><button class="commerce-button" data-refresh>刷新数据</button></section><div class="commerce-grid"><section class="commerce-card"><span class="commerce-muted">今日成本与预留</span><h2>${money(o.budget.dayCommitted)}</h2><small>上限 ${money(o.policy.dailyCap)} · ${esc(o.budget.day)} UTC</small></section><section class="commerce-card"><span class="commerce-muted">本月成本与预留</span><h2>${money(o.budget.monthCommitted)}</h2><small>上限 ${money(o.policy.monthlyCap)} · ${esc(o.budget.month)}</small></section><section class="commerce-card"><span class="commerce-muted">需要核对用量的调用</span><h2>${o.budget.unknown} 笔</h2><small>未知调用保留完整预留，不当作零成本。</small></section></div><section class="commerce-card"><h2>再次验证邮箱</h2><p>调整名额、预算、账号或反馈回复，需要最近 10 分钟内验证邮箱。</p><button data-send-reauth ${Date.now() < state.retryAt ? "disabled" : ""}>发送再次验证的验证码</button>${state.challenge ? '<form data-verify-reauth><label>8 位验证码<input name="code" inputmode="numeric" pattern="[0-9]{8}" maxlength="8" required autocomplete="one-time-code"></label><button type="submit">完成再次验证</button></form>' : ""}<a class="commerce-toplink" href="/account.html">账号与本机验证邮箱说明</a></section>${settings()}${users()}${tasks()}${attempts()}${feedback()}${audit()}`;
+  return `<section class="commerce-summary"><div><div class="commerce-eyebrow">QINBAN OPERATIONS</div><h1>运营控制台</h1><p>${esc(client.session.user.email)} · 仅运营账号可见</p></div><button class="commerce-button" data-refresh>刷新数据</button></section><div class="commerce-grid"><section class="commerce-card"><span class="commerce-muted">今日成本与预留</span><h2>${money(o.budget.dayCommitted)}</h2><small>上限 ${money(o.policy.dailyCap)} · ${esc(o.budget.day)} UTC</small></section><section class="commerce-card"><span class="commerce-muted">本月成本与预留</span><h2>${money(o.budget.monthCommitted)}</h2><small>上限 ${money(o.policy.monthlyCap)} · ${esc(o.budget.month)}</small></section><section class="commerce-card"><span class="commerce-muted">需要核对用量的调用</span><h2>${o.budget.unknown} 笔</h2><small>未知调用保留完整预留，不当作零成本。</small></section></div><section class="commerce-card"><h2>再次验证邮箱</h2><p>调整名额、预算、账号或反馈回复，需要最近 10 分钟内验证邮箱。</p><button data-send-reauth ${Date.now() < state.retryAt ? "disabled" : ""}>发送再次验证的验证码</button>${state.challenge ? '<form data-verify-reauth><label>8 位验证码<input name="code" inputmode="numeric" pattern="[0-9]{8}" maxlength="8" required autocomplete="one-time-code"></label><button type="submit">完成再次验证</button></form>' : ""}<a class="commerce-toplink" href="/account.html">账号与本机验证邮箱说明</a></section>${settings()}${inviteCodes()}${users()}${tasks()}${attempts()}${feedback()}${audit()}`;
+}
+function inviteCodeState(c) {
+  if (c.disabled) return "已停用";
+  if (c.expiresAt && new Date(c.expiresAt) <= new Date()) return "已过期";
+  if (c.uses >= c.maxUses) return "已用完";
+  return "可用";
+}
+// Operator invite codes: the full code is shown once, right after creation.
+function inviteCodes() {
+  const reveal = state.newCode
+    ? `<div class="commerce-reveal"><p>新邀请码（完整码只显示这一次）</p><code>${esc(state.newCode)}</code><div class="commerce-actions"><button type="button" data-copy="${esc(state.newCode)}">复制邀请码</button><button type="button" data-copy="${esc(location.origin + "/account.html?invite=" + encodeURIComponent(state.newCode))}">复制注册链接</button></div></div>`
+    : "";
+  return `<section class="commerce-card"><h2>邀请码</h2><p class="commerce-muted">邀请码可在注册时填写，新账号获赠识谱任务；关闭开放注册后，邀请码也是注册的凭证。数据库只保存邀请码的散列值。</p><form data-invite-code class="commerce-form-grid"><label>可用次数<input name="maxUses" type="number" min="1" max="10000" value="10" required></label><label>注册赠送识谱任务<input name="bonusTasks" type="number" min="0" max="1000" value="3" required></label><label>有效天数（留空为长期）<input name="expiresInDays" type="number" min="1" max="3650" value="30"></label><label>备注<input name="note" maxlength="200" placeholder="例如：钢琴老师首批"></label><label class="commerce-wide">生成原因<input name="reason" maxlength="500" required></label><div><button class="primary" type="submit">生成邀请码</button></div></form>${reveal}<div class="commerce-table-wrap"><table class="commerce-table"><thead><tr><th>邀请码</th><th>类型</th><th>已用 / 上限</th><th>赠送</th><th>创建人 / 备注</th><th>状态</th><th>操作</th></tr></thead><tbody>${state.inviteCodes.map((c) => `<tr><td><code>QB-•••••-•${esc(c.hint)}</code><br><small>${date(c.createdAt)}</small></td><td>${c.kind === "friend" ? "好友邀请" : "运营"}</td><td>${c.uses} / ${c.maxUses}</td><td>${c.bonusTasks} 个任务</td><td>${esc(c.creatorEmail || "命令行")}${c.note ? "<br><small>" + esc(c.note) + "</small>" : ""}</td><td>${inviteCodeState(c)}${c.expiresAt ? "<br><small>至 " + date(c.expiresAt) + "</small>" : ""}</td><td>${inviteCodeState(c) === "可用" ? `<button data-invite-disable="${c.id}">停用</button>` : ""}</td></tr>`).join("") || '<tr><td colspan="7">还没有邀请码。</td></tr>'}</tbody></table></div></section>`;
 }
 function users() {
-  return `<section class="commerce-card"><h2>邀请与账号</h2><form data-invite class="commerce-form-grid"><label>邀请邮箱<input name="email" type="email" required autocomplete="off"></label><label>邀请原因<input name="reason" maxlength="500" required></label><div><button type="submit">建立邀请</button></div></form><p class="commerce-muted">邀请建立后，用户通过自己的邮箱验证码登录；此操作不会替用户登录。</p><div class="commerce-table-wrap"><table class="commerce-table"><thead><tr><th>账号</th><th>状态</th><th>本月任务</th><th>操作</th></tr></thead><tbody>${state.users.map((u) => `<tr><td>${esc(u.email)}${u.isOperator ? "<br><small>运营账号</small>" : ""}</td><td>${esc({ active: "正常", disabled: "已暂停", deletion_pending: "注销等待期", deleting: "清理中" }[u.state] || u.state)}</td><td>${u.quota.used} / ${u.quota.limit}<br><small>${u.quota.period}</small></td><td>${["active", "disabled"].includes(u.state) ? `<button data-user="${u.id}">调整名额 / 状态</button>` : ""}</td></tr>`).join("")}</tbody></table></div></section>`;
+  return `<section class="commerce-card"><h2>邀请与账号</h2><form data-invite class="commerce-form-grid"><label>邀请邮箱<input name="email" type="email" required autocomplete="off"></label><label>邀请原因<input name="reason" maxlength="500" required></label><div><button type="submit">建立邀请</button></div></form><p class="commerce-muted">邀请建立后，用户通过自己的邮箱验证码登录；此操作不会替用户登录。</p><div class="commerce-table-wrap"><table class="commerce-table"><thead><tr><th>账号</th><th>状态</th><th>本月任务</th><th>操作</th></tr></thead><tbody>${state.users.map((u) => `<tr><td>${esc(u.email)}${u.isOperator ? "<br><small>运营账号</small>" : ""}</td><td>${esc({ active: "正常", disabled: "已暂停", deletion_pending: "注销等待期", deleting: "清理中" }[u.state] || u.state)}</td><td>${u.quota.used} / ${u.quota.limit}${u.quota.credits ? ` · 赠送 ${u.quota.credits}` : ""}<br><small>${u.quota.period}</small></td><td>${["active", "disabled"].includes(u.state) ? `<button data-user="${u.id}">调整名额 / 状态</button>` : ""}</td></tr>`).join("")}</tbody></table></div></section>`;
 }
 function tasks() {
   return `<section class="commerce-card"><h2>最近任务与失败处理</h2><p class="commerce-muted">这里显示任务状态、调用数与成本，不提供用户私有曲谱或原图。</p><div class="commerce-table-wrap"><table class="commerce-table"><thead><tr><th>任务</th><th>账号</th><th>状态</th><th>调用 / 成本</th><th>名额</th></tr></thead><tbody>${state.jobs.map((j) => `<tr><td>${esc(j.jobId.slice(0, 12))}<br><small>${date(j.createdAt)}</small></td><td>${esc(state.users.find((u) => u.id === j.userId)?.email || j.userId.slice(0, 12))}</td><td>${esc(stateLabels[j.state] || j.state)}${j.errorCode ? "<br><small>" + esc(j.errorCode) + "</small>" : ""}</td><td>${j.dispatched} 次<br>${money(j.cost)}</td><td>${j.slotReleased ? "已退回名额" : ["queued", "running"].includes(j.state) ? "处理中" : `<button data-refund="${j.jobId}">补偿名额</button>`}</td></tr>`).join("")}</tbody></table></div></section>`;
@@ -110,6 +130,9 @@ function dialog() {
     const u = state.users.find((u) => u.id === d.id);
     fields = `<p>${esc(u.email)}</p><label>每月任务上限<input name="taskLimit" type="number" min="0" max="10000" value="${u.quota.limit}" required></label><label>账号状态<select name="state"><option value="active" ${u.state === "active" ? "selected" : ""}>正常</option><option value="disabled" ${u.state === "disabled" ? "selected" : ""}>暂停并退出全部设备</option></select></label>`;
   }
+  if (d.type === "inviteDisable")
+    fields =
+      "<p>停用后，这个邀请码不能再用于注册或兑换；已发放的赠送任务保留。</p>";
   if (d.type === "resolve")
     fields =
       '<label>核对后的该次成本（USD）<input name="cost" type="number" min="0" max="1000" step=".000001" required></label>';
@@ -119,7 +142,7 @@ function dialog() {
   } else
     fields +=
       '<label>调整原因<input name="reason" maxlength="500" required></label>';
-  return `<dialog class="commerce-dialog commerce-card" open aria-label="运营调整"><h2>${esc({ user: "调整账号", refund: "补偿 1 个任务名额", resolve: "核对未知成本", reply: "处理反馈" }[d.type])}</h2><form data-dialog>${fields}<div class="commerce-actions"><button class="primary" type="submit">确认保存</button><button type="button" data-close-dialog>取消</button></div></form></dialog>`;
+  return `<dialog class="commerce-dialog commerce-card" open aria-label="运营调整"><h2>${esc({ user: "调整账号", refund: "补偿 1 个任务名额", resolve: "核对未知成本", reply: "处理反馈", inviteDisable: "停用邀请码" }[d.type])}</h2><form data-dialog>${fields}<div class="commerce-actions"><button class="primary" type="submit">确认保存</button><button type="button" data-close-dialog>取消</button></div></form></dialog>`;
 }
 function render() {
   const s = client.session,
@@ -165,6 +188,9 @@ function bind() {
         jobCap: micro(f.get("jobCap")),
         announcement: f.get("announcement"),
         supportContact: f.get("supportContact"),
+        openRegistration: f.has("openRegistration"),
+        friendInvitesPerUser: Number(f.get("friendInvitesPerUser")),
+        friendInviteBonus: Number(f.get("friendInviteBonus")),
         reason: f.get("reason"),
       };
       await client.json("/operator/policy", { method: "PUT", body: input });
@@ -209,8 +235,46 @@ function bind() {
       state.message = "再次验证已完成。";
     });
   });
-  for (const type of ["user", "refund", "resolve", "reply"])
-    $$("[data-" + type + "]").forEach(
+  $("[data-invite-code]")?.addEventListener("input", (e) => {
+    state.codeDraft = Object.fromEntries(new FormData(e.currentTarget));
+  });
+  $("[data-invite-code]")?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const f = new FormData(e.target);
+    run(async () => {
+      const created = await client.json("/operator/invite-codes", {
+        method: "POST",
+        body: {
+          maxUses: Number(f.get("maxUses")),
+          bonusTasks: Number(f.get("bonusTasks")),
+          expiresInDays: f.get("expiresInDays")
+            ? Number(f.get("expiresInDays"))
+            : null,
+          note: f.get("note"),
+          reason: f.get("reason"),
+        },
+      });
+      state.newCode = created.code;
+      state.codeDraft = null;
+      await load();
+      state.message = "邀请码已生成；完整码只显示这一次。";
+    });
+  });
+  $$("[data-copy]").forEach((b) =>
+    b.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(b.dataset.copy);
+        state.message = "已复制。";
+      } catch {
+        state.message = "无法自动复制，请手动选中复制。";
+      }
+      render();
+    }),
+  );
+  for (const type of ["user", "refund", "resolve", "reply", "inviteDisable"])
+    $$(
+      `[data-${type.replace(/[A-Z]/g, (c) => "-" + c.toLowerCase())}]`,
+    ).forEach(
       (b) =>
         (b.onclick = () => {
           state.dialog = { type, id: b.dataset[type] };
@@ -236,12 +300,16 @@ function bind() {
           ? "/operator/tasks/" + d.id + "/refund"
           : d.type === "resolve"
             ? "/operator/attempts/" + d.id + "/reconcile"
-            : "/operator/feedback/" + d.id;
+            : d.type === "inviteDisable"
+              ? "/operator/invite-codes/" + d.id
+              : "/operator/feedback/" + d.id;
     run(async () => {
       if (d.type === "user") input.taskLimit = Number(input.taskLimit);
       if (d.type === "resolve") input.cost = micro(input.cost);
       await client.json(path, {
-        method: ["user", "reply"].includes(d.type) ? "PUT" : "POST",
+        method: ["user", "reply", "inviteDisable"].includes(d.type)
+          ? "PUT"
+          : "POST",
         body: input,
       });
       state.dialog = null;
@@ -255,6 +323,7 @@ function bind() {
   for (const [selector, draft] of [
     ["[data-policy]", state.policyDraft],
     ["[data-invite]", state.inviteDraft],
+    ["[data-invite-code]", state.codeDraft],
     ["[data-dialog]", state.dialog?.input],
   ])
     if (draft) {

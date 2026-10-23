@@ -33,7 +33,7 @@ async function bootAccountPage(t,url){
 
 test('the two-step login card focuses each step, accepts a pasted code and returns to the requesting page',async t=>{
  const {w,doc,requests,navigations}=await bootAccountPage(t,'http://127.0.0.1:8793/account.html?next=%2Frecognition.html');
- assert.match(doc.querySelector('.login-card h1').textContent,/登录后继续/);
+ assert.match(doc.querySelector('.auth-card h1').textContent,/登录后继续/);
  assert.equal(doc.querySelector('[data-login] select'),null,'不再要求选择「用途」');
  await until(()=>doc.activeElement===doc.querySelector('[data-login] input[name=email]'),'邮箱输入框应自动获得焦点');
 
@@ -41,7 +41,7 @@ test('the two-step login card focuses each step, accepts a pasted code and retur
  await until(()=>doc.querySelector('[data-verify]'),'应进入输入验证码这一步');
  assert.deepEqual(requests.find(r=>r.path==='/api/v1/auth/code').body,{email:'new@example.test',purpose:'login'});
  assert.equal(doc.querySelector('[data-login]'),null,'邮箱表单不再与验证码表单叠在一起');
- assert.match(doc.querySelector('.login-card').textContent,/new@example\.test/);
+ assert.match(doc.querySelector('.auth-card').textContent,/new@example\.test/);
  const code=doc.querySelector('[data-verify] input[name=code]');
  assert.equal(doc.activeElement,code,'验证码输入框应自动获得焦点');
  assert.match(doc.querySelector('[data-resend]').textContent,/秒后可重新发送/);
@@ -55,7 +55,7 @@ test('the two-step login card focuses each step, accepts a pasted code and retur
 
 test('without a return page, a first sign-in confirms registration',async t=>{
  const {doc,w}=await bootAccountPage(t,'http://127.0.0.1:8793/account.html');
- assert.match(doc.querySelector('.login-card h1').textContent,/登录或注册/);
+ assert.match(doc.querySelector('.auth-card h1').textContent,/欢迎回来/);
  await until(()=>!doc.querySelector('.account-busy')?.textContent,'初始加载完成');
  const form=doc.querySelector('[data-login]');form.querySelector('[name=email]').value='new@example.test';form.requestSubmit();
  await until(()=>doc.querySelector('[data-verify]'),'应进入输入验证码这一步');

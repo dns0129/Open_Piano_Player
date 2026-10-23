@@ -1,8 +1,15 @@
 body {
   margin: 0;
-  background: #f4f5ef;
-  color: #24392f;
-  font-family: var(--font-ui, system-ui, sans-serif);
+  background: var(--surface-2);
+  color: var(--text);
+  font-family: var(--font-ui);
+}
+/* Headings share the practice room's display face. */
+.account-card h1,
+.account-card h2,
+.account-heading {
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
 }
 .account-shell {
   max-width: 1040px;
@@ -22,16 +29,16 @@ body {
 }
 .account-heading a,
 .account-record a {
-  color: #214d3e;
+  color: var(--accent);
 }
 .account-card {
   padding: 28px;
   margin: 20px 0;
-  background: #fff;
-  border: 1px solid #dbe2d5;
+  background: var(--surface-0);
+  border: 1px solid var(--border);
   border-radius: 14px;
 }
-.login-card {
+.auth-card {
   max-width: 520px;
   margin: 50px auto;
 }
@@ -56,20 +63,20 @@ body {
   width: 100%;
   padding: 12px;
   margin: 8px 0;
-  border: 1px solid #ccd7c9;
+  border: 1px solid var(--border-strong);
   border-radius: 8px;
   font: inherit;
-  background: #fff;
+  background: var(--surface-0);
 }
 .account-card button,
 .account-file,
 .account-record a {
   display: inline-block;
-  border: 1px solid #cbd7c8;
+  border: 1px solid var(--border-strong);
   border-radius: 8px;
   padding: 10px 14px;
-  background: #f6f8f2;
-  color: #214d3e;
+  background: var(--surface-2);
+  color: var(--accent);
   font: inherit;
   cursor: pointer;
   text-decoration: none;
@@ -78,8 +85,8 @@ body {
   opacity: 0.5;
 }
 .account-card form button[type="submit"] {
-  background: #214d3e;
-  color: #fff;
+  background: var(--accent);
+  color: var(--on-accent);
 }
 .account-actions {
   display: flex;
@@ -96,33 +103,33 @@ body {
   justify-content: space-between;
   gap: 16px;
   padding: 20px 0;
-  border-top: 1px solid #e3e8df;
+  border-top: 1px solid var(--border);
 }
 .account-record small {
   display: block;
   margin-top: 8px;
-  color: #687b6d;
+  color: var(--text-mid);
 }
 .account-record button {
   margin-left: 8px;
 }
 .account-notice {
   padding: 14px 18px;
-  background: #eef3e6;
+  background: var(--surface-3);
   border-radius: 10px;
   line-height: 1.6;
 }
 .account-error {
-  color: #a12f26;
+  color: var(--danger);
   line-height: 1.6;
   overflow-wrap: anywhere;
 }
 .account-message {
-  color: #32633f;
+  color: var(--accent-2);
 }
 .account-empty {
   padding: 30px 0;
-  color: #718071;
+  color: var(--text-mid);
 }
 .account-help {
   font-size: 13px;
@@ -132,12 +139,12 @@ body {
   position: sticky;
   bottom: 10px;
   text-align: center;
-  background: #eff5e9;
+  background: var(--surface-3);
   border-radius: 8px;
   line-height: 2;
 }
 .account-card .danger {
-  color: #a12f26;
+  color: var(--danger);
   margin-top: 16px;
 }
 .account-row {
@@ -180,11 +187,11 @@ body {
   .account-card h1 {
     font-size: 24px;
   }
-  .login-card {
+  .auth-card {
     margin: 25px auto;
   }
 }
-.login-card form button[type="submit"] {
+.auth-card form button[type="submit"] {
   width: 100%;
   padding: 12px;
   margin-top: 4px;
@@ -205,15 +212,146 @@ body {
   border: 0;
   background: none;
   padding: 6px 0;
-  color: #214d3e;
+  color: var(--accent);
   text-decoration: underline;
 }
 .account-card .link-button:disabled {
-  color: #6b7a70;
+  color: var(--text-mid);
   text-decoration: none;
   opacity: 1;
 }
 .account-hint {
-  color: #5f6f64;
+  color: var(--text-mid);
   font-size: 13px;
+}
+/* Sign-in / registration card */
+.auth-card {
+  max-width: 460px;
+  margin: 48px auto;
+  padding: 32px;
+}
+.auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  margin: 0 0 24px;
+  border-radius: 10px;
+  background: var(--surface-3);
+}
+.account-card .auth-tabs button {
+  border: 0;
+  border-radius: 7px;
+  padding: 9px 0;
+  background: transparent;
+  color: var(--text-mid);
+  font-weight: 600;
+}
+.account-card .auth-tabs button[aria-selected="true"] {
+  background: var(--surface-0);
+  color: var(--accent);
+  box-shadow: 0 1px 3px #1e3e2c18;
+}
+.auth-card h1 {
+  margin-bottom: 6px;
+}
+.auth-lead {
+  margin: 0 0 8px;
+  color: var(--text-mid);
+}
+.auth-card label .optional {
+  margin-left: 8px;
+  font-size: 12px;
+  color: var(--text-4);
+}
+.auth-card input[name="invite"] {
+  font-family: var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.invite-status {
+  min-height: 1.4em;
+  margin: -4px 0 8px;
+  font-size: 13px;
+}
+.invite-ok {
+  color: var(--accent-2);
+}
+.invite-bad {
+  color: var(--danger);
+}
+.invite-pending {
+  color: var(--text-4);
+}
+.invite-chip {
+  margin: 0 0 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--text-1);
+  font-size: 13px;
+}
+.invite-chip code,
+.invite-list code,
+.invite-code {
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+}
+/* Invite friends */
+.invite-reveal {
+  margin: 16px 0;
+  padding: 16px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+.invite-reveal p {
+  margin: 0 0 8px;
+  color: var(--text-mid);
+  font-size: 13px;
+}
+.invite-code {
+  display: block;
+  font-size: 22px;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+.invite-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.invite-list {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+}
+.invite-list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+.invite-list small {
+  color: var(--text-4);
+}
+.invite-state {
+  font-size: 13px;
+  color: var(--text-mid);
+}
+.invite-list button {
+  margin-left: auto;
+}
+.invite-redeem {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.invite-redeem label {
+  flex: 1;
+  min-width: 200px;
+  margin: 0;
 }

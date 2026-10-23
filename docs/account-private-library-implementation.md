@@ -58,6 +58,6 @@ npm run accounts:start
 
 ## 正式接入前仍需完成
 
-正式配置使用 `QINBAN_ACCOUNT_PROFILE=production`、`QINBAN_PUBLIC_ORIGIN`、`QINBAN_ACCOUNT_SECRET`、`QINBAN_AUTH_DATABASE_URL`、`QINBAN_LIBRARY_DATABASE_URL`、`QINBAN_SMTP_URL` 和 `QINBAN_MAIL_FROM`。密钥只放服务器配置；运行时不自动用管理员身份迁移数据库。先以独立维护身份依次执行 `db/accounts-v1.sql` 和增量 `db/accounts-commerce-v1.sql`，再建立分别继承 qinban_identity / qinban_library 的两个 LOGIN 角色，运行账户不能同时继承另一角色，也不能拥有表。
+正式配置使用 `QINBAN_ACCOUNT_PROFILE=production`、`QINBAN_PUBLIC_ORIGIN`、`QINBAN_ACCOUNT_SECRET`、`QINBAN_AUTH_DATABASE_URL`、`QINBAN_LIBRARY_DATABASE_URL`、`QINBAN_SMTP_URL` 和 `QINBAN_MAIL_FROM`。密钥只放服务器配置；运行时不自动用管理员身份迁移数据库。先以独立维护身份依次执行 `db/accounts-v1.sql` 、增量 `db/accounts-commerce-v1.sql` 和 `db/accounts-invites-v1.sql`，再建立分别继承 qinban_identity / qinban_library 的两个 LOGIN 角色，运行账户不能同时继承另一角色，也不能拥有表。
 
 当前文件 Adapter 是服务器私有文件目录，正式部署必须配置持久卷、数据库与文件的一致备份和恢复演练；尚未接入 S3 等外部对象存储。还需实际完成 PostgreSQL 服务连接、真实邮件、域名与 TLS、反向代理、付费模型、多设备切换与权限传播验收。支付与教师分享尚未实现。本机验收不能代替这些部署证据。

@@ -123,7 +123,11 @@ export function createAccountClient({
     },
     code: (input) => api.json("/auth/code", { method: "POST", body: input }),
     async verify(input) {
-      const { isNewAccount = false, ...s } = await api.json("/auth/verify", {
+      const {
+        isNewAccount = false,
+        invite = null,
+        ...s
+      } = await api.json("/auth/verify", {
         method: "POST",
         body: input,
       });
@@ -131,7 +135,7 @@ export function createAccountClient({
       update(s);
       context = null;
       announce();
-      return { session: s, isNewAccount };
+      return { session: s, isNewAccount, invite };
     },
     async logout() {
       if (session)

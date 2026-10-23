@@ -65,8 +65,8 @@ export function layout({
   return `${navigation(active, session)}<main class="commerce-shell">${info?.announcement ? `<aside class="commerce-notice" role="status">${esc(info.announcement)}</aside>` : ""}<div class="commerce-alert" role="alert">${esc(error)}</div><div class="commerce-message" role="status">${esc(message)}</div>${body}</main><footer class="commerce-footer">琴伴 · 私有乐谱与日常练习<span>AI 识谱结果需对照原图核对</span></footer><div class="commerce-processing" role="status" ${busy ? "" : "hidden"}><span class="commerce-spinner"></span>正在处理，请稍候…</div>`;
 }
 // Sign-in links return to the page the visitor is on.
-export function currentSignInHref() {
-  return signInHref(location.pathname + location.search);
+export function currentSignInHref(mode) {
+  return signInHref(location.pathname + location.search, { mode });
 }
 export function loginPrompt(expired = false) {
   return `<section class="commerce-card commerce-empty"><h1>${expired ? "登录已过期" : "让自己的乐谱随时可用"}</h1><p>${expired ? "为保护私有曲库，请重新登录，完成后会回到这里。" : "登录后上传原谱、查看识别任务，并在自己的私有曲库中继续练习。"}</p><a class="commerce-button primary" href="${currentSignInHref()}">${expired ? "重新登录" : "登录或注册"}</a></section>`;

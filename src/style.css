@@ -1,188 +1,7 @@
-/* Design tokens. Every color in the app stylesheets resolves to one of these roles.
-   Score paper and piano keys stay light in dark mode, like printed music and a real keyboard. */
-:root,
-[data-theme="light"],
-.score-stage,
-.piano-keys,
-#print-preview-paper,
-.audio-score-preview,
-.note-editor-preview {
-  --surface-0: #fffefb;
-  --surface-1: #f9faf6;
-  --surface-2: #f2f5ee;
-  --surface-3: #edf3e7;
-  --surface-4: #e6eddf;
-  --border: #e1e7d9;
-  --border-strong: #cfdcc6;
-  --text: #2d3932;
-  --text-strong: #202820;
-  --text-1: #3e4d3d;
-  --text-2: #526849;
-  --text-mid: #687969;
-  --text-3: #7c8472;
-  --text-3b: #8a9a7e;
-  --text-4: #9aa28f;
-  --text-5: #b0b8a6;
-  --accent: #234f3e;
-  --accent-1: #355c41;
-  --accent-2: #39734f;
-  --accent-soft: #eaf1e6;
-  --moss: #617c50;
-  --olive: #728a60;
-  --moss-light: #8aa472;
-  --moss-dark: #4a6d38;
-  --pine: #183e2d;
-  --sage: #a6b496;
-  --sage-bright: #9cb98f;
-  --sage-light: #c4d1bc;
-  --sage-strong: #829873;
-  --mint: #5f9a74;
-  --teal: #2b796b;
-  --warm: #a4735e;
-  --copper: #aa7052;
-  --ochre: #b3966a;
-  --parchment: #e9e2c9;
-  --warm-strong: #8e654e;
-  --warm-light: #c5a46d;
-  --sand: #b6a07e;
-  --bronze: #816130;
-  --warm-surface: #faf4e7;
-  --rose-surface: #fbebe7;
-  --danger: #a04d39;
-  --info: #94a9c1;
-  --hand-right: #9bbda1;
-  --hand-left: #a2b6c4;
-  --slate: #8a9eab;
-  --info-surface: #e4ebf2;
-  --on-accent: #fffefb;
-  color-scheme: light;
-}
-/* Aliases and inherited text resolve per element, so light islands get light values. */
-:root,
-[data-theme],
-.score-stage,
-.piano-keys,
-#print-preview-paper,
-.audio-score-preview,
-.note-editor-preview {
-  --green: var(--accent);
-  --green-light: var(--accent-soft);
-  --muted: var(--text-4);
-  --paper: var(--surface-0);
-  color: var(--text);
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --surface-0: #232b25;
-    --surface-1: #1b211d;
-    --surface-2: #262f28;
-    --surface-3: #2b352d;
-    --surface-4: #323d34;
-    --border: #364238;
-    --border-strong: #47554a;
-    --text: #e3e9e0;
-    --text-strong: #f2f5ef;
-    --text-1: #d3dcd0;
-    --text-2: #bccbb1;
-    --text-mid: #aab6a6;
-    --text-3: #9ba596;
-    --text-3b: #96a68c;
-    --text-4: #848e7f;
-    --text-5: #6d776a;
-    --accent: #86c39d;
-    --accent-1: #97cba8;
-    --accent-2: #79b48e;
-    --accent-soft: #263a2e;
-    --moss: #9fc189;
-    --olive: #a5b991;
-    --moss-light: #b6cfa0;
-    --moss-dark: #8fb779;
-    --pine: #a8d5b6;
-    --sage: #677760;
-    --sage-bright: #6d8a67;
-    --sage-light: #4a5848;
-    --sage-strong: #8c9f7f;
-    --mint: #72b48c;
-    --teal: #62b5a4;
-    --warm: #d29b82;
-    --copper: #d79b79;
-    --ochre: #d3b585;
-    --parchment: #4a4535;
-    --warm-strong: #c8967a;
-    --warm-light: #d8bb86;
-    --sand: #b9a585;
-    --bronze: #cba363;
-    --warm-surface: #3a3226;
-    --rose-surface: #3d2b27;
-    --danger: #e58b74;
-    --info: #a0b7cf;
-    --hand-right: #4f7d5b;
-    --hand-left: #4e6577;
-    --slate: #90a7b6;
-    --info-surface: #2a3541;
-    --on-accent: #10241a;
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --surface-0: #232b25;
-  --surface-1: #1b211d;
-  --surface-2: #262f28;
-  --surface-3: #2b352d;
-  --surface-4: #323d34;
-  --border: #364238;
-  --border-strong: #47554a;
-  --text: #e3e9e0;
-  --text-strong: #f2f5ef;
-  --text-1: #d3dcd0;
-  --text-2: #bccbb1;
-  --text-mid: #aab6a6;
-  --text-3: #9ba596;
-  --text-3b: #96a68c;
-  --text-4: #848e7f;
-  --text-5: #6d776a;
-  --accent: #86c39d;
-  --accent-1: #97cba8;
-  --accent-2: #79b48e;
-  --accent-soft: #263a2e;
-  --moss: #9fc189;
-  --olive: #a5b991;
-  --moss-light: #b6cfa0;
-  --moss-dark: #8fb779;
-  --pine: #a8d5b6;
-  --sage: #677760;
-  --sage-bright: #6d8a67;
-  --sage-light: #4a5848;
-  --sage-strong: #8c9f7f;
-  --mint: #72b48c;
-  --teal: #62b5a4;
-  --warm: #d29b82;
-  --copper: #d79b79;
-  --ochre: #d3b585;
-  --parchment: #4a4535;
-  --warm-strong: #c8967a;
-  --warm-light: #d8bb86;
-  --sand: #b9a585;
-  --bronze: #cba363;
-  --warm-surface: #3a3226;
-  --rose-surface: #3d2b27;
-  --danger: #e58b74;
-  --info: #a0b7cf;
-  --hand-right: #4f7d5b;
-  --hand-left: #4e6577;
-  --slate: #90a7b6;
-  --info-surface: #2a3541;
-  --on-accent: #10241a;
-  color-scheme: dark;
-}
+@import "./tokens.css";
+
 :root {
-  font-family:
-    "DM Sans",
-    -apple-system,
-    BlinkMacSystemFont,
-    "PingFang SC",
-    "Microsoft YaHei",
-    sans-serif;
+  font-family: var(--font-ui);
   color: var(--text);
   background: var(--surface-1);
   font-synthesis: none;
@@ -288,17 +107,12 @@ input[type="checkbox"] {
   height: 23px;
 }
 .brand > span:last-child {
-  font:
-    600 23px/1.1 "Songti SC",
-    "STSong",
-    serif;
+  font: 600 23px/1.1 var(--font-display);
   letter-spacing: 3px;
 }
 .brand small {
   display: block;
-  font:
-    7px/1.5 "DM Sans",
-    sans-serif;
+  font: 10px/1.5 var(--font-ui);
   letter-spacing: 3.6px;
   margin-top: 4px;
 }
@@ -788,10 +602,7 @@ main.view-practice {
   flex-shrink: 0;
 }
 .score-document-heading h1 {
-  font:
-    600 26px/1.5 "Songti SC",
-    "STSong",
-    serif;
+  font: 600 26px/1.5 var(--font-display);
   letter-spacing: 2px;
   color: var(--text-1);
   overflow-wrap: anywhere;
@@ -912,10 +723,7 @@ main.view-practice {
   margin-bottom: 12px;
 }
 .page-heading h1 {
-  font:
-    500 29px/1.5 "Songti SC",
-    "STSong",
-    serif;
+  font: 500 29px/1.5 var(--font-display);
   letter-spacing: 1px;
   color: var(--accent-1);
 }
@@ -1069,9 +877,7 @@ main.view-practice {
   padding: 17px;
 }
 .card-info h3 {
-  font:
-    500 16px/1.5 "Songti SC",
-    serif;
+  font: 500 16px/1.5 var(--font-display);
   color: var(--moss);
   letter-spacing: 0.5px;
   overflow-wrap: anywhere;
@@ -1409,9 +1215,7 @@ main.view-practice {
   stroke-width: 1.2;
 }
 .search-loading strong {
-  font:
-    500 19px/1.8 "Songti SC",
-    serif;
+  font: 500 19px/1.8 var(--font-display);
   letter-spacing: 0.7px;
   color: var(--moss-light);
 }
@@ -2843,7 +2647,7 @@ main.view-practice {
 }
 .audio-output-empty h2 {
   font-size: 20px;
-  font-family: "Songti SC", "STSong", serif;
+  font-family: var(--font-display);
   font-weight: 500;
   color: var(--text-2);
   margin-bottom: 13px;
@@ -2912,7 +2716,7 @@ main.view-practice {
   padding: 25px 24px 16px;
 }
 .audio-result-title h2 {
-  font-family: "Songti SC", "STSong", serif;
+  font-family: var(--font-display);
   font-size: 21px;
   font-weight: 500;
   overflow-wrap: anywhere;
