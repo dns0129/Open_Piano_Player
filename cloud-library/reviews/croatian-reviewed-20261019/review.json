@@ -1,0 +1,338 @@
+{
+  "version": 1,
+  "status": "approved",
+  "actor": "Codex",
+  "method": "full-source-visual-review",
+  "authorizedByUser": true,
+  "humanConfirmed": false,
+  "approvedAt": "2026-10-19T05:35:06.054Z",
+  "originalVersion": "full-score-croatian-skill-high-20261019",
+  "coverage": {
+    "pages": 6,
+    "systems": 29,
+    "measures": 83,
+    "notes": 1882
+  },
+  "rows": [
+    {
+      "page": 1,
+      "id": "p1s1",
+      "measureStart": 1,
+      "measureEnd": 3,
+      "checked": true,
+      "findings": []
+    },
+    {
+      "page": 1,
+      "id": "p1s2",
+      "measureStart": 4,
+      "measureEnd": 6,
+      "checked": true,
+      "findings": []
+    },
+    {
+      "page": 1,
+      "id": "p1s3",
+      "measureStart": 7,
+      "measureEnd": 10,
+      "checked": true,
+      "findings": []
+    },
+    {
+      "page": 1,
+      "id": "p1s4",
+      "measureStart": 11,
+      "measureEnd": 13,
+      "checked": true,
+      "findings": []
+    },
+    {
+      "page": 1,
+      "id": "p1s5",
+      "measureStart": 14,
+      "measureEnd": 16,
+      "checked": true,
+      "findings": []
+    },
+    {
+      "page": 2,
+      "id": "p2s1",
+      "measureStart": 17,
+      "measureEnd": 19,
+      "checked": true,
+      "findings": []
+    },
+    {
+      "page": 2,
+      "id": "p2s2",
+      "measureStart": 20,
+      "measureEnd": 22,
+      "checked": true,
+      "findings": []
+    },
+    {
+      "page": 2,
+      "id": "p2s3",
+      "measureStart": 23,
+      "measureEnd": 25,
+      "checked": true,
+      "findings": []
+    },
+    {
+      "page": 2,
+      "id": "p2s4",
+      "measureStart": 26,
+      "measureEnd": 28,
+      "checked": true,
+      "findings": []
+    },
+    {
+      "page": 2,
+      "id": "p2s5",
+      "measureStart": 29,
+      "measureEnd": 31,
+      "checked": true,
+      "findings": []
+    },
+    {
+      "page": 3,
+      "id": "p3s1",
+      "measureStart": 32,
+      "measureEnd": 33,
+      "checked": true,
+      "findings": []
+    },
+    {
+      "page": 3,
+      "id": "p3s2",
+      "measureStart": 34,
+      "measureEnd": 35,
+      "checked": true,
+      "findings": []
+    },
+    {
+      "page": 3,
+      "id": "p3s3",
+      "measureStart": 36,
+      "measureEnd": 37,
+      "checked": true,
+      "findings": []
+    },
+    {
+      "page": 3,
+      "id": "p3s4",
+      "measureStart": 38,
+      "measureEnd": 40,
+      "checked": true,
+      "findings": []
+    },
+    {
+      "page": 3,
+      "id": "p3s5",
+      "measureStart": 41,
+      "measureEnd": 43,
+      "checked": true,
+      "findings": []
+    },
+    {
+      "page": 4,
+      "id": "p4s1",
+      "measureStart": 44,
+      "measureEnd": 46,
+      "checked": true,
+      "findings": []
+    },
+    {
+      "page": 4,
+      "id": "p4s2",
+      "measureStart": 47,
+      "measureEnd": 49,
+      "checked": true,
+      "findings": []
+    },
+    {
+      "page": 4,
+      "id": "p4s3",
+      "measureStart": 50,
+      "measureEnd": 52,
+      "checked": true,
+      "findings": []
+    },
+    {
+      "page": 4,
+      "id": "p4s4",
+      "measureStart": 53,
+      "measureEnd": 54,
+      "checked": true,
+      "findings": []
+    },
+    {
+      "page": 4,
+      "id": "p4s5",
+      "measureStart": 55,
+      "measureEnd": 57,
+      "checked": true,
+      "findings": []
+    },
+    {
+      "page": 5,
+      "id": "p5s1",
+      "measureStart": 58,
+      "measureEnd": 60,
+      "checked": true,
+      "findings": []
+    },
+    {
+      "page": 5,
+      "id": "p5s2",
+      "measureStart": 61,
+      "measureEnd": 63,
+      "checked": true,
+      "findings": []
+    },
+    {
+      "page": 5,
+      "id": "p5s3",
+      "measureStart": 64,
+      "measureEnd": 66,
+      "checked": true,
+      "findings": []
+    },
+    {
+      "page": 5,
+      "id": "p5s4",
+      "measureStart": 67,
+      "measureEnd": 69,
+      "checked": true,
+      "findings": []
+    },
+    {
+      "page": 5,
+      "id": "p5s5",
+      "measureStart": 70,
+      "measureEnd": 72,
+      "checked": true,
+      "findings": []
+    },
+    {
+      "page": 6,
+      "id": "p6s1",
+      "measureStart": 73,
+      "measureEnd": 75,
+      "checked": true,
+      "findings": [
+        "m73/m75: corrected two explicit-accidental records; sounding pitches unchanged"
+      ]
+    },
+    {
+      "page": 6,
+      "id": "p6s2",
+      "measureStart": 76,
+      "measureEnd": 78,
+      "checked": true,
+      "findings": []
+    },
+    {
+      "page": 6,
+      "id": "p6s3",
+      "measureStart": 79,
+      "measureEnd": 80,
+      "checked": true,
+      "findings": []
+    },
+    {
+      "page": 6,
+      "id": "p6s4",
+      "measureStart": 81,
+      "measureEnd": 83,
+      "checked": true,
+      "findings": []
+    }
+  ],
+  "corrections": [
+    {
+      "noteId": "p6s1n16",
+      "measure": 73,
+      "hand": "left",
+      "field": "printedAccidental",
+      "before": 1,
+      "after": null,
+      "effectivePitch": {
+        "step": "D",
+        "alter": 1,
+        "octave": 3
+      },
+      "reason": "原谱左手和弦只有一个显式升号，其中心对应B2；D3的升高来自四升号调号，并未另印升号。"
+    },
+    {
+      "noteId": "p6s1n61",
+      "measure": 75,
+      "hand": "left",
+      "field": "printedAccidental",
+      "before": 1,
+      "after": null,
+      "effectivePitch": {
+        "step": "D",
+        "alter": 1,
+        "octave": 3
+      },
+      "reason": "原谱左手和弦只有一个显式升号，其中心对应B2；D3的升高来自四升号调号，并未另印升号。"
+    }
+  ],
+  "unresolvedNoteIssues": [],
+  "checks": [
+    "all 29 original system images visually inspected against per-measure pitch/rhythm tables",
+    "source clefs, key change at measure 56, explicit accidentals, voice rests, ties, octave lines and ending fermatas reviewed"
+  ],
+  "limits": [
+    "代理视觉校对与确定性校验；未有人工逐音参考，独立准确率未知。",
+    "原谱rit.无数值，播放维持95 BPM；踏板与渐强线保留在MusicXML，琴伴播放不模拟这些连续控制。",
+    "开头3段踏板释放线不与确定音头严格对齐，导出采用既有近似边界，保留原图供演奏者判断。",
+    "原谱没有逐音定位坐标；图片作为原谱参考，数字谱用于跟随练习。"
+  ],
+  "additionalExternalModelCalls": 0,
+  "sourcePageHashes": [
+    {
+      "page": 1,
+      "sha256": "7af3c6503b02abc77a4932e49910a132e2539173f81041aef2d4eb17d5ca07d1"
+    },
+    {
+      "page": 2,
+      "sha256": "6c7c155356c4d3ecffa403b201502832f42e6d9f9a3ecef9c08e2e9447542089"
+    },
+    {
+      "page": 3,
+      "sha256": "08f33d291ccf8229f88fc2b74260e41d792b7d67a82522bcd5bf56e84b39151f"
+    },
+    {
+      "page": 4,
+      "sha256": "bc77255386251c08f9457f23796f0e8200a94480f703ba3b34c1259d7c43bd04"
+    },
+    {
+      "page": 5,
+      "sha256": "5e439be5508ac6c813833d276c34761c931276f2d9c4559a4e6d3d50acc063bf"
+    },
+    {
+      "page": 6,
+      "sha256": "a1096a69d10328b7dcde4f9da39049ca1e2e5bc983629bbd44300c4f7c68cbf2"
+    }
+  ],
+  "soundingEventsUnchanged": true,
+  "reviewVersion": "croatian-reviewed-20261019",
+  "playback": {
+    "startedAt": "2026-10-19T05:34:01.100Z",
+    "endedAt": "2026-10-19T05:37:32.915Z",
+    "tempo": "95",
+    "elapsed": "3:30",
+    "position": "第 83 / 83 小节",
+    "finalBeat": "332",
+    "naturalEnd": true,
+    "speedMultiplier": 1,
+    "engine": "browser WebAudio synth",
+    "audibleHumanListening": false,
+    "pageErrors": [],
+    "noteEventsSha256": "8aeee971c1609dd1b4a481b02a813231e0557eff43820c188a5e85ea321b7eee",
+    "testedVersion": "full-score-croatian-skill-high-20261019",
+    "sameSoundingEventsAsApprovedVersion": true
+  }
+}
