@@ -1,6 +1,6 @@
 import { renderGuitarTab } from "./guitar-notation.js";
 import { createDisplayRepresentation } from "../lib/score-representations.ts";
-import { VexFlow } from "vexflow/bravura";
+import { VexFlow, Font } from "vexflow/bravura";
 import {
   normalizePrintStyle,
   printSVGColor,
@@ -17,6 +17,16 @@ import { Gonville } from "../node_modules/vexflow/build/esm/src/fonts/gonville.j
 import { Petaluma } from "../node_modules/vexflow/build/esm/src/fonts/petaluma.js";
 import { PetalumaScript } from "../node_modules/vexflow/build/esm/src/fonts/petalumascript.js";
 const MUSIC_DATA = { Bravura, Gonville, Petaluma };
+// The Bravura-only VexFlow entry registers just Bravura and Academico. Register the
+// print-only faces too, so layout measures the same glyphs the exported page draws.
+const printFontsReady =
+  typeof FontFace === "undefined"
+    ? Promise.resolve()
+    : Promise.allSettled([
+        Font.load("Gonville", Gonville, { display: "block" }),
+        Font.load("Petaluma", Petaluma, { display: "block" }),
+        Font.load("Petaluma Script", PetalumaScript, { display: "swap" }),
+      ]);
 
 const WIDTH = 750,
   HEIGHT = (WIDTH * 297) / 210,
@@ -213,6 +223,7 @@ export async function createScorePages(
   };
   // Text faces and glyph faces must be ready before measuring the page or SVG.
   await fontsReady;
+  await printFontsReady;
   await document.fonts.load(`24px ${font}`);
   await document.fonts.load(`32px ${appearance.musicFont}`);
   await document.fonts.load('12px "Petaluma Script"');
