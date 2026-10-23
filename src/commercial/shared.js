@@ -1,4 +1,5 @@
 import { createAccountClient } from "../accounts/client.js";
+import { signInHref } from "../accounts/sign-in.js";
 import "./style.css";
 if ("serviceWorker" in navigator)
   void navigator.serviceWorker
@@ -50,7 +51,7 @@ export const errorLabels = {
 };
 export const money = (value) => "$" + (Number(value) / 1000000).toFixed(6);
 export function navigation(active, session) {
-  return `<header class="commerce-header"><a class="commerce-brand" href="/"><img src="/favicon.svg" alt="" width="30" height="30"><span>琴伴<small>自己的谱，自己的练习</small></span></a><nav aria-label="商业版导航"><a href="/" ${active === "library" ? 'aria-current="page"' : ""}>我的曲库</a><a href="/recognition.html" ${active === "recognition" ? 'aria-current="page"' : ""}>上传识谱</a><a href="/#support">帮助与反馈</a><a href="/account.html">${session ? "账号与资料" : "登录"}</a>${session?.user.role === "operator" ? `<a href="/operations.html" ${active === "operations" ? 'aria-current="page"' : ""}>运营</a>` : ""}</nav></header>`;
+  return `<header class="commerce-header"><a class="commerce-brand" href="/"><img src="/favicon.svg" alt="" width="30" height="30"><span>琴伴<small>自己的谱，自己的练习</small></span></a><nav aria-label="商业版导航"><a href="/" ${active === "library" ? 'aria-current="page"' : ""}>我的曲库</a><a href="/recognition.html" ${active === "recognition" ? 'aria-current="page"' : ""}>上传识谱</a><a href="/#support">帮助与反馈</a><a href="${session ? "/account.html" : currentSignInHref()}">${session ? "账号与资料" : "登录"}</a>${session?.user.role === "operator" ? `<a href="/operations.html" ${active === "operations" ? 'aria-current="page"' : ""}>运营</a>` : ""}</nav></header>`;
 }
 export function layout({
   active,
@@ -63,8 +64,12 @@ export function layout({
 }) {
   return `${navigation(active, session)}<main class="commerce-shell">${info?.announcement ? `<aside class="commerce-notice" role="status">${esc(info.announcement)}</aside>` : ""}<div class="commerce-alert" role="alert">${esc(error)}</div><div class="commerce-message" role="status">${esc(message)}</div>${body}</main><footer class="commerce-footer">琴伴 · 私有乐谱与日常练习<span>AI 识谱结果需对照原图核对</span></footer><div class="commerce-processing" role="status" ${busy ? "" : "hidden"}><span class="commerce-spinner"></span>正在处理，请稍候…</div>`;
 }
-export function loginPrompt() {
-  return '<section class="commerce-card commerce-empty"><h1>让自己的乐谱随时可用</h1><p>登录后上传原谱、查看识别任务，并在自己的私有曲库中继续练习。</p><a class="commerce-button primary" href="/account.html">登录账号</a></section>';
+// Sign-in links return to the page the visitor is on.
+export function currentSignInHref() {
+  return signInHref(location.pathname + location.search);
+}
+export function loginPrompt(expired = false) {
+  return `<section class="commerce-card commerce-empty"><h1>${expired ? "登录已过期" : "让自己的乐谱随时可用"}</h1><p>${expired ? "为保护私有曲库，请重新登录，完成后会回到这里。" : "登录后上传原谱、查看识别任务，并在自己的私有曲库中继续练习。"}</p><a class="commerce-button primary" href="${currentSignInHref()}">${expired ? "重新登录" : "登录或注册"}</a></section>`;
 }
 export function createPage(onIdentityChange) {
   const client = createAccountClient(),

@@ -166,7 +166,7 @@ function render() {
     session: client.session,
     ...state,
     body: !client.session
-      ? loginPrompt()
+      ? loginPrompt(client.sessionExpired)
       : `<section class="commerce-summary"><div><div class="commerce-eyebrow">UPLOAD & RECOGNIZE</div><h1>从自己的原谱开始。</h1><p>原图保留，任务可追踪，完成后先核对再练习。</p></div>${state.quota ? `<aside class="commerce-quota"><strong>${state.quota.remaining}</strong> 个本月可用任务<small>已用 ${state.quota.used} / ${state.quota.limit}</small></aside>` : ""}</section>${!state.info?.recognitionAvailable ? '<p class="commerce-notice">当前识谱服务暂不可用。仍可上传保存原谱；服务恢复后再开始任务。</p>' : ""}${inputPanel()}${selectionPanel()}${taskPanel()}${history()}`,
   });
   bind();

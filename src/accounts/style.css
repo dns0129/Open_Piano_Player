@@ -184,3 +184,36 @@ body {
     margin: 25px auto;
   }
 }
+.login-card form button[type="submit"] {
+  width: 100%;
+  padding: 12px;
+  margin-top: 4px;
+}
+.login-code {
+  font-size: 24px;
+  letter-spacing: 0.3em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.login-links {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+}
+.account-card .link-button {
+  border: 0;
+  background: none;
+  padding: 6px 0;
+  color: #214d3e;
+  text-decoration: underline;
+}
+.account-card .link-button:disabled {
+  color: #6b7a70;
+  text-decoration: none;
+  opacity: 1;
+}
+.account-hint {
+  color: #5f6f64;
+  font-size: 13px;
+}

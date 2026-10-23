@@ -4,7 +4,8 @@ export function createAccountClient({
 } = {}) {
   let session = null,
     context = null,
-    epoch = 0;
+    epoch = 0,
+    expired = false;
   const listeners = new Set();
   const checkEpoch = (generation) => {
     if (generation !== epoch)
@@ -58,7 +59,11 @@ export function createAccountClient({
       });
     if (!r.ok) {
       const e = await r.json().catch(() => ({}));
-      if (r.status === 401) update(null);
+      if (r.status === 401) {
+        // A session that stops working mid-use is "expired"; a visitor who never signed in is not.
+        if (session) expired = true;
+        update(null);
+      }
       throw Object.assign(new Error(e.message || "操作未完成。"), {
         code: e.code,
         status: r.status,
@@ -90,6 +95,9 @@ export function createAccountClient({
     get epoch() {
       return epoch;
     },
+    get sessionExpired() {
+      return expired;
+    },
     subscribe(fn) {
       listeners.add(fn);
       return () => listeners.delete(fn);
@@ -115,11 +123,15 @@ export function createAccountClient({
     },
     code: (input) => api.json("/auth/code", { method: "POST", body: input }),
     async verify(input) {
-      const s = await api.json("/auth/verify", { method: "POST", body: input });
+      const { isNewAccount = false, ...s } = await api.json("/auth/verify", {
+        method: "POST",
+        body: input,
+      });
+      expired = false;
       update(s);
       context = null;
       announce();
-      return s;
+      return { session: s, isNewAccount };
     },
     async logout() {
       if (session)

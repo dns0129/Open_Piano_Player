@@ -1,5 +1,11 @@
 import { navigation } from "../commercial/shared.js";
 import { createAccountClient } from "./client.js";
+import {
+  createSignInFlow,
+  normalizeCode,
+  safeNext,
+  CODE_LENGTH,
+} from "./sign-in.js";
 import { importScore } from "../../lib/importers.mjs";
 import { readScoreDocument } from "../../lib/score-document.ts";
 import "../style.css";
@@ -24,8 +30,8 @@ const account = createAccountClient(),
     busy: false,
     error: "",
     message: "",
-    challenge: null,
-    purpose: "login",
+    codeDraft: "",
+    emailDraft: null,
     context: null,
     devices: [],
     preview: null,
@@ -34,6 +40,14 @@ const account = createAccountClient(),
     groups: [],
     pendingImages: [],
   };
+let sessionStore = null;
+try {
+  sessionStore = window.sessionStorage;
+} catch {}
+const signIn = createSignInFlow({ account, storage: sessionStore });
+// Where to return after signing in, e.g. account.html?next=/recognition.html
+const next = safeNext(new URLSearchParams(location.search).get("next"));
+let resendTimer = null;
 const $ = (s) => root.querySelector(s),
   $$ = (s) => [...root.querySelectorAll(s)];
 async function run(fn) {
@@ -63,8 +77,98 @@ function render() {
   root.innerHTML = `${navigation("account", s)}<main class="account-shell"><header class="account-heading"><a href="/">← 返回我的曲库</a><span>账号与原始资料</span></header>${state.context?.profile === "local-validation" ? '<div class="account-notice">商业版本机预览：账号和文件保存在独立数据库。验证码写入开发邮箱，未发送真实邮件。</div>' : ""}<div role="alert" class="account-error">${esc(state.error)}</div><div role="status" class="account-message">${esc(state.message)}</div>${!s ? login() : s.user.state === "deletion_pending" ? `<section class="account-card"><h1>恢复账号</h1><p>已验证 ${esc(s.user.email)}，可以在等待期内恢复账号。</p><button data-recover>恢复账号</button></section>` : dashboard(s)}<div class="account-busy" role="status">${state.busy ? "正在处理，请稍候…" : ""}</div></main>`;
   bind();
 }
+function resendLabel(seconds) {
+  return seconds > 0 ? `${seconds} 秒后可重新发送` : "重新发送验证码";
+}
+// Invite-only: an invited email's first sign-in creates the account, so one
+// two-step card covers both registration and login.
 function login() {
-  return `<section class="account-card login-card"><p class="eyebrow">QINBAN PRIVATE LIBRARY</p><h1>自己的乐谱，妥善保存。</h1><p>受邀后使用邮箱验证码登录。现有本设备曲库不会自动上传。</p><form data-login><label>邮箱<input type="email" name="email" autocomplete="email" value="${esc(state.email || "")}" required></label><label>用途<select name="purpose"><option value="login">登录账号</option><option value="recover" ${state.purpose === "recover" ? "selected" : ""}>恢复注销等待期账号</option></select></label><button type="submit" ${state.busy || Date.now() < (state.retryAt || 0) ? "disabled" : ""}>发送验证码</button></form>${state.challenge ? `<form data-verify><label>8 位验证码<input name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{8}" maxlength="8" required></label><button type="submit" ${state.busy ? "disabled" : ""}>验证并继续</button></form>` : ""}${state.context?.mailboxDirectory ? `<p class="account-help">本机开发邮箱：<code>${esc(state.context.mailboxDirectory)}</code>。邀请账号请在启动前运行 <code>npm run accounts:invite -- 邮箱</code>。</p>` : ""}</section>`;
+  const flow = signIn.state,
+    busy = state.busy || flow.busy;
+  const mailbox = state.context?.mailboxDirectory
+    ? `<p class="account-help">本机开发邮箱：<code>${esc(state.context.mailboxDirectory)}</code>。邀请账号请运行 <code>npm run accounts:invite -- 邮箱</code>。</p>`
+    : "";
+  if (flow.step === "code")
+    return `<section class="account-card login-card"><p class="eyebrow">第 2 步，共 2 步</p><h1>输入验证码</h1><p>验证码已发往 <strong>${esc(flow.email)}</strong>，10 分钟内有效。只有受邀邮箱会收到邮件。</p><form data-verify><label>${CODE_LENGTH} 位验证码<input class="login-code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="20" placeholder="${"0".repeat(CODE_LENGTH)}" value="${esc(state.codeDraft)}" required></label><button type="submit" ${busy ? "disabled" : ""}>${busy ? "正在验证…" : "登录"}</button></form><div class="login-links"><button type="button" class="link-button" data-resend ${busy || flow.secondsUntilResend > 0 ? "disabled" : ""}>${resendLabel(flow.secondsUntilResend)}</button><button type="button" class="link-button" data-change-email>换个邮箱</button></div>${mailbox}</section>`;
+  return `<section class="account-card login-card"><p class="eyebrow">第 1 步，共 2 步</p><h1>${next ? "登录后继续" : "登录或注册"}</h1><p>输入受邀邮箱获取验证码。受邀邮箱首次登录即完成注册；本设备曲库不会自动上传。</p><form data-login><label>邮箱<input type="email" name="email" autocomplete="email" value="${esc(state.emailDraft ?? flow.email)}" required></label><button type="submit" ${busy ? "disabled" : ""}>${busy ? "正在发送…" : "获取验证码"}</button></form><p class="account-hint">账号在注销等待期内？用原邮箱登录即可恢复。</p>${mailbox}</section>`;
+}
+// After a successful sign-in, go back to the page that asked for it.
+async function afterSignIn({ session, isNewAccount }) {
+  state.codeDraft = "";
+  if (next && session.user.state !== "deletion_pending") {
+    state.message = "已登录，正在返回…";
+    location.replace(next);
+    return;
+  }
+  await load();
+  state.message =
+    session.user.state === "deletion_pending"
+      ? "邮箱已验证，可以恢复账号。"
+      : isNewAccount
+        ? "注册完成，账号已创建。曲谱默认私有保存，可以从「上传识谱」开始。"
+        : "欢迎回来，已登录。";
+}
+function bindSignIn() {
+  clearInterval(resendTimer);
+  const emailInput = $("[data-login] input[name=email]"),
+    codeInput = $("[data-verify] input[name=code]");
+  if (!state.busy)
+    (codeInput || (emailInput?.value ? null : emailInput))?.focus();
+  emailInput?.addEventListener("input", () => {
+    state.emailDraft = emailInput.value;
+  });
+  $("[data-login]")?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const email = new FormData(e.target).get("email");
+    run(async () => {
+      await signIn.requestCode(email);
+      state.emailDraft = null;
+      state.codeDraft = "";
+      state.message = "如果该邮箱已受邀，验证码会在一分钟内送达。";
+    });
+  });
+  if (codeInput) {
+    codeInput.focus();
+    codeInput.setSelectionRange(codeInput.value.length, codeInput.value.length);
+    codeInput.addEventListener("input", () => {
+      const digits = normalizeCode(codeInput.value);
+      codeInput.value = digits;
+      state.codeDraft = digits;
+      // Submit as soon as the full code is typed or pasted.
+      if (digits.length === CODE_LENGTH && !state.busy)
+        $("[data-verify]").requestSubmit();
+    });
+    $("[data-verify]").addEventListener("submit", (e) => {
+      e.preventDefault();
+      run(async () => {
+        const result = await signIn.verify(codeInput.value);
+        if (result) await afterSignIn(result);
+      });
+    });
+    const resend = $("[data-resend]");
+    // Count down in place; re-rendering every second would reset the code field.
+    resendTimer = setInterval(() => {
+      const seconds = signIn.state.secondsUntilResend;
+      resend.textContent = resendLabel(seconds);
+      resend.disabled = state.busy || seconds > 0;
+      if (!seconds) clearInterval(resendTimer);
+    }, 1000);
+    resend.addEventListener("click", () =>
+      run(async () => {
+        await signIn.resend();
+        state.codeDraft = "";
+        state.message =
+          "如果该邮箱已受邀，新的验证码会在一分钟内送达；旧验证码随即失效。";
+      }),
+    );
+    $("[data-change-email]").addEventListener("click", () => {
+      signIn.changeEmail();
+      state.codeDraft = "";
+      state.message = "";
+      state.error = "";
+      render();
+    });
+  }
 }
 function dashboard(s) {
   return `<section class="account-card"><div class="account-row"><div><h1>我的私有曲库</h1><p>${esc(s.user.email)} · ${state.records.length} 首${state.trash ? "已回收" : ""}曲目</p></div><button data-logout>退出账号</button></div><div class="account-actions"><label class="account-file">导入数字乐谱<input data-digital type="file" accept=".json,.mid,.midi,.xml,.musicxml,.mxl" hidden></label><label class="account-file">保存原始图片<input data-images type="file" accept="image/png,image/jpeg,image/webp" multiple hidden></label><label class="account-file">保存原始 PDF<input data-pdf type="file" accept="application/pdf,.pdf" hidden></label><button data-export>下载完整备份</button><label class="account-file">恢复备份<input data-backup type="file" accept=".json" hidden></label><button data-local>选择导入本机曲库</button><button data-trash>${state.trash ? "返回曲库" : "回收站"}</button></div>${state.group ? `<p class="account-notice">原始资料已私有保存：${state.group.pages.length} 页，来源组 ${esc(state.group.sourceGroupId)}。本页面不调用识谱模型。</p>` : ""}<div class="account-list">${state.records.length ? state.records.map((r) => `<article class="account-record"><div><strong>${esc(r.title)}</strong><small>修订 ${r.revision} · ${esc(new Date(r.updatedAt).toLocaleString())} · 私有</small></div><div>${state.trash ? `<button data-restore="${r.entryId}">恢复</button>` : `<a href="/practice.html?entry=${r.entryId}">打开练习</a><button data-history="${r.entryId}">历史</button><button data-delete="${r.entryId}">移到回收站</button>`}</div></article>`).join("") : '<p class="account-empty">曲库暂无内容。导入不会公开曲谱。</p>'}</div></section>${state.pendingImages.length ? imageOrder() : ""}${sourceGroups()}${state.preview ? preview() : ""}${state.localRecords.length ? localSelection() : ""}<section class="account-card"><h2>设备与账号</h2>${state.devices.map((d) => `<div class="account-row"><span>${esc(d.device)} ${d.current ? "（当前设备）" : ""}</span><button data-revoke="${d.id}">退出此设备</button></div>`).join("")}<form data-reauth><p>备份、退出所有设备和注销需要近期邮箱验证。</p><button type="submit">重新发送验证邮件</button>${state.reauthChallenge ? '<input name="code" placeholder="8 位验证码" inputmode="numeric" pattern="[0-9]{8}"><button data-reauth-verify type="button">完成再次验证</button>' : ""}</form><button data-logout-all>退出所有设备</button><button data-delete-account class="danger">申请注销账号</button></section>`;
@@ -83,41 +187,15 @@ function localSelection() {
   return `<section class="account-card"><h2>选择本机曲库内容</h2><p>只上传勾选的曲目及其原图和历史，目标账号 ${esc(account.session.user.email)}。</p>${state.localRecords.map((r) => `<label class="account-row"><span>${esc(r.title)} · 修订 ${r.revision}</span><input type="checkbox" data-local-id="${esc(r.id)}"></label>`).join("")}<button data-local-import>上传选中内容并预览</button><button data-local-cancel>取消</button></section>`;
 }
 function bind() {
-  if ($("[data-login]"))
-    $("[data-login]").onsubmit = (e) => {
-      e.preventDefault();
-      const f = new FormData(e.target);
-      state.email = f.get("email");
-      state.purpose = f.get("purpose");
-      run(async () => {
-        state.context = await account.loginContext();
-        state.challenge = await account.code({
-          email: state.email,
-          purpose: state.purpose,
-        });
-        state.retryAt = Date.now() + 60000;
-        setTimeout(render, 60000);
-        state.message = "如邮箱已受邀，验证码已投递。";
-      });
-    };
-  if ($("[data-verify]"))
-    $("[data-verify]").onsubmit = (e) => {
-      e.preventDefault();
-      const code = new FormData(e.target).get("code");
-      run(async () => {
-        await account.verify({
-          challengeId: state.challenge.challengeId,
-          code,
-        });
-        state.challenge = null;
-        await load();
-        state.message = "已登录，曲谱默认私有保存。";
-      });
-    };
+  bindSignIn();
   $("[data-recover]")?.addEventListener("click", () =>
     run(async () => {
       await account.json("/account/recover", { method: "POST", body: {} });
       await account.initialize();
+      if (next) {
+        location.replace(next);
+        return;
+      }
       await load();
       state.message = "账号已恢复。";
     }),
@@ -452,14 +530,25 @@ account.subscribe(() => {
 run(async () => {
   state.context = await account.loginContext();
   await account.initialize();
+  // Already signed in (for example in another tab): go straight on.
+  if (
+    next &&
+    account.session &&
+    account.session.user.state !== "deletion_pending"
+  ) {
+    location.replace(next);
+    return;
+  }
   await load();
 });
+// Returning to the window refreshes the data of a signed-in account. On the sign-in
+// card it only checks quietly whether another tab signed in, so typed input stays.
 window.addEventListener("focus", () => {
-  if (!state.busy)
-    void run(async () => {
-      await account.initialize();
-      await load();
-    });
+  if (state.busy) return;
+  void account
+    .initialize()
+    .then(() => (account.session ? run(load) : undefined))
+    .catch(() => {});
 });
 window.addEventListener("pagehide", () => account.clearLocal());
 window.addEventListener("pageshow", (event) => {

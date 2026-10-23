@@ -1,4 +1,11 @@
-import { esc, date, stateLabels, layout, createPage } from "./shared.js";
+import {
+  esc,
+  date,
+  stateLabels,
+  layout,
+  createPage,
+  currentSignInHref,
+} from "./shared.js";
 const root = document.querySelector("#commercial-app"),
   state = {
     records: [],
@@ -54,7 +61,7 @@ async function load() {
   state.feedback = results[3].feedback;
 }
 function guest() {
-  return `<section class="commerce-hero"><div><div class="commerce-eyebrow">QINBAN · PRIVATE MUSIC LIBRARY</div><h1>把手里的谱，<br>变成每天都想练的谱。</h1><p>原谱私有保存，识别后对照核对。用自己的速度，分手、循环、反复练习。换一台设备，仍从自己的曲库开始。</p><div class="commerce-actions"><a class="commerce-button primary" href="/account.html">登录，建立自己的曲库</a><a class="commerce-button" href="/practice.html">体验练习室</a></div><p class="commerce-muted">邀请制开放。上传保存与识谱分开，识别任务开始前会检查可用名额。</p></div><div class="commerce-hero-art" aria-hidden="true"><div class="commerce-mini-score"><b>今天，慢一点也很好。</b><div class="commerce-staff">𝄞 ♩ ♫ ♩</div><small>自己的谱 · 自己的速度 · 每一次进步</small></div></div></section><div class="commerce-grid"><section class="commerce-card"><span class="commerce-tag">01 私有保存</span><h3>原谱和修改版都留下</h3><p>图片、PDF、数字谱放进自己的账号，历史修订随时可查。</p></section><section class="commerce-card"><span class="commerce-tag">02 托管识谱</span><h3>手机上传，后台处理</h3><p>选择完整谱行后开始任务，关闭页面也能回来查看进度。</p></section><section class="commerce-card"><span class="commerce-tag">03 对照练习</span><h3>核对后，按自己的节奏练</h3><p>把结构通过的识别结果另存为草稿，再核对、修改和播放。</p></section></div>`;
+  return `<section class="commerce-hero"><div><div class="commerce-eyebrow">QINBAN · PRIVATE MUSIC LIBRARY</div><h1>把手里的谱，<br>变成每天都想练的谱。</h1><p>原谱私有保存，识别后对照核对。用自己的速度，分手、循环、反复练习。换一台设备，仍从自己的曲库开始。</p><div class="commerce-actions"><a class="commerce-button primary" href="${currentSignInHref()}">登录，建立自己的曲库</a><a class="commerce-button" href="/practice.html">体验练习室</a></div><p class="commerce-muted">邀请制开放。上传保存与识谱分开，识别任务开始前会检查可用名额。</p></div><div class="commerce-hero-art" aria-hidden="true"><div class="commerce-mini-score"><b>今天，慢一点也很好。</b><div class="commerce-staff">𝄞 ♩ ♫ ♩</div><small>自己的谱 · 自己的速度 · 每一次进步</small></div></div></section><div class="commerce-grid"><section class="commerce-card"><span class="commerce-tag">01 私有保存</span><h3>原谱和修改版都留下</h3><p>图片、PDF、数字谱放进自己的账号，历史修订随时可查。</p></section><section class="commerce-card"><span class="commerce-tag">02 托管识谱</span><h3>手机上传，后台处理</h3><p>选择完整谱行后开始任务，关闭页面也能回来查看进度。</p></section><section class="commerce-card"><span class="commerce-tag">03 对照练习</span><h3>核对后，按自己的节奏练</h3><p>把结构通过的识别结果另存为草稿，再核对、修改和播放。</p></section></div>`;
 }
 function library() {
   const q = state.query.toLowerCase(),

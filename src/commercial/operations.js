@@ -124,7 +124,7 @@ function dialog() {
 function render() {
   const s = client.session,
     body = !s
-      ? loginPrompt()
+      ? loginPrompt(client.sessionExpired)
       : s.user.role !== "operator"
         ? '<section class="commerce-card commerce-empty"><h1>此页面仅向运营账号开放</h1><a class="commerce-button" href="/">返回自己的曲库</a></section>'
         : state.overview
