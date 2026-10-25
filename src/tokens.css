@@ -1,5 +1,5 @@
 /* Design tokens. Every color in the app stylesheets resolves to one of these roles.
-   Score paper and piano keys stay light in dark mode, like printed music and a real keyboard. */
+   The pages use this light palette only; there is no automatic dark theme. */
 :root,
 [data-theme="light"],
 .score-stage,
@@ -71,111 +71,6 @@
   --paper: var(--surface-0);
   color: var(--text);
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --surface-0: #232b25;
-    --surface-1: #1b211d;
-    --surface-2: #262f28;
-    --surface-3: #2b352d;
-    --surface-4: #323d34;
-    --border: #364238;
-    --border-strong: #47554a;
-    --text: #e3e9e0;
-    --text-strong: #f2f5ef;
-    --text-1: #d3dcd0;
-    --text-2: #bccbb1;
-    --text-mid: #aab6a6;
-    --text-3: #9ba596;
-    --text-3b: #96a68c;
-    --text-4: #848e7f;
-    --text-5: #6d776a;
-    --accent: #86c39d;
-    --accent-1: #97cba8;
-    --accent-2: #79b48e;
-    --accent-soft: #263a2e;
-    --moss: #9fc189;
-    --olive: #a5b991;
-    --moss-light: #b6cfa0;
-    --moss-dark: #8fb779;
-    --pine: #a8d5b6;
-    --sage: #677760;
-    --sage-bright: #6d8a67;
-    --sage-light: #4a5848;
-    --sage-strong: #8c9f7f;
-    --mint: #72b48c;
-    --teal: #62b5a4;
-    --warm: #d29b82;
-    --copper: #d79b79;
-    --ochre: #d3b585;
-    --parchment: #4a4535;
-    --warm-strong: #c8967a;
-    --warm-light: #d8bb86;
-    --sand: #b9a585;
-    --bronze: #cba363;
-    --warm-surface: #3a3226;
-    --rose-surface: #3d2b27;
-    --danger: #e58b74;
-    --info: #a0b7cf;
-    --hand-right: #4f7d5b;
-    --hand-left: #4e6577;
-    --slate: #90a7b6;
-    --info-surface: #2a3541;
-    --on-accent: #10241a;
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --surface-0: #232b25;
-  --surface-1: #1b211d;
-  --surface-2: #262f28;
-  --surface-3: #2b352d;
-  --surface-4: #323d34;
-  --border: #364238;
-  --border-strong: #47554a;
-  --text: #e3e9e0;
-  --text-strong: #f2f5ef;
-  --text-1: #d3dcd0;
-  --text-2: #bccbb1;
-  --text-mid: #aab6a6;
-  --text-3: #9ba596;
-  --text-3b: #96a68c;
-  --text-4: #848e7f;
-  --text-5: #6d776a;
-  --accent: #86c39d;
-  --accent-1: #97cba8;
-  --accent-2: #79b48e;
-  --accent-soft: #263a2e;
-  --moss: #9fc189;
-  --olive: #a5b991;
-  --moss-light: #b6cfa0;
-  --moss-dark: #8fb779;
-  --pine: #a8d5b6;
-  --sage: #677760;
-  --sage-bright: #6d8a67;
-  --sage-light: #4a5848;
-  --sage-strong: #8c9f7f;
-  --mint: #72b48c;
-  --teal: #62b5a4;
-  --warm: #d29b82;
-  --copper: #d79b79;
-  --ochre: #d3b585;
-  --parchment: #4a4535;
-  --warm-strong: #c8967a;
-  --warm-light: #d8bb86;
-  --sand: #b9a585;
-  --bronze: #cba363;
-  --warm-surface: #3a3226;
-  --rose-surface: #3d2b27;
-  --danger: #e58b74;
-  --info: #a0b7cf;
-  --hand-right: #4f7d5b;
-  --hand-left: #4e6577;
-  --slate: #90a7b6;
-  --info-surface: #2a3541;
-  --on-accent: #10241a;
-  color-scheme: dark;
-}
-
 /* Type. One stack everywhere: the practice room, the commercial pages and the account page.
    System fonts only: the pages load no web fonts (the CSP allows only same-origin assets). */
 :root {
