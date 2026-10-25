@@ -11,6 +11,7 @@
     "dev": "node scripts/dev.mjs",
     "prebuild": "node scripts/require-node.mjs",
     "build": "node scripts/prepare-assets.mjs && vite build",
+    "site:assets": "node scripts/build-site-assets.mjs",
     "prestart": "node scripts/require-node.mjs",
     "start": "node server.mjs",
     "launch": "node scripts/launch.mjs",
