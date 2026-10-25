@@ -84,6 +84,14 @@ export function createFullScoreClient({
       completed(
         await request(route(id, "confirm-region", region), { result }, id),
       ),
+    assessRegion: (id, region) =>
+      request(route(id, "assess-source", region), {}, id),
+    diagnoseRegion: (id, region, input) =>
+      request(route(id, "diagnose-source", region), input, id),
+    applyRevision: (id, region, input) =>
+      request(route(id, "apply-revision", region), input, id),
+    undoRevision: (id, region, input) =>
+      request(route(id, "undo-revision", region), input, id),
     exportDraft: (id, input = {}) => request(route(id, "draft"), input, id),
     confirmJob: async (id, input = {}) =>
       completed(await request(route(id, "confirm"), input, id)),

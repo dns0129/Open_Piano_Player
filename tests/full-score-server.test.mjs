@@ -14,6 +14,7 @@ test('full-document HTTP routes preserve session/CSRF boundaries and explicit re
     readRegionImage:record('read-image',{buffer:Buffer.from('png'),mimeType:'image/png'}),
     startJob:record('start',{status:'running'}),retryRegion:record('retry',{status:'running'}),retryRegions:record('retry-failed',{status:'running'}),
     cancelJob:record('cancel',{status:'cancelled'}),confirmRegion:record('review',{status:'needs-review'}),
+    assessRegion:record('assess-source',{id:'test-job'}),diagnoseRegion:record('diagnose-source',{id:'test-job'}),applyRevision:record('apply-revision',{id:'test-job'}),undoRevision:record('undo-revision',{id:'test-job'}),
     confirmJob:record('confirm',{status:'complete'}),close:record('close',undefined),
   };
   const server=createAppServer({developerMode:true,fullScoreJobs:store,statusReader:async()=>({available:false}),settingsStore:{read:async()=>({})}});
@@ -34,6 +35,14 @@ test('full-document HTTP routes preserve session/CSRF boundaries and explicit re
   assert.deepEqual(calls.find(c=>c.method==='retry').args[3],{engine:'pi',expectedVersion:3});
   assert.equal((await post('/api/full-score-jobs/test-job/retry-failed',{engine:'deepseek',expectedVersion:4,regionIds:['row-2']},headers)).status,200);
   assert.deepEqual(calls.find(c=>c.method==='retry-failed').args[2],{engine:'deepseek',expectedVersion:4,regionIds:['row-2']});
+  await post('/api/full-score-jobs/test-job/assess-source/row',{},headers);
+  await post('/api/full-score-jobs/test-job/diagnose-source/row',{confirmed:true,baseHash:'hash',sessionId:'forged'},headers);
+  await post('/api/full-score-jobs/test-job/apply-revision/row',{confirmed:true,proposalId:'proposal'},headers);
+  await post('/api/full-score-jobs/test-job/undo-revision/row',{revisionId:'proposal'},headers);
+  assert.deepEqual(calls.find(c=>c.method==='diagnose-source').args[2],{confirmed:true,baseHash:'hash'});
+  assert.equal(calls.find(c=>c.method==='diagnose-source').args[3].token,'private-test-token');
+  assert.deepEqual(calls.find(c=>c.method==='apply-revision').args[2],{confirmed:true,proposalId:'proposal'});
+  assert.equal((await post('/api/full-score-jobs/test-job/apply-revision/row',{confirmed:true,proposalId:'proposal'},{...headers,origin:'https://foreign.example'})).status,403);
   await post('/api/full-score-jobs/test-job/confirm',{scopeConfirmed:true},headers);
   assert.deepEqual(calls.find(c=>c.method==='confirm').args[2],{scopeConfirmed:true});
   const pdf=await fetch(url+'/api/full-score-jobs/test-job/document',{headers});assert.equal(pdf.headers.get('content-type'),'application/pdf');assert.equal(await pdf.text(),'%PDF-test');

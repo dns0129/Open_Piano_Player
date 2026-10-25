@@ -3791,3 +3791,33 @@ main.view-practice {
     scroll-behavior: auto !important;
   }
 }
+
+.fsi-diagnosis {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid #d8c9a9;
+  border-radius: 12px;
+  background: #fffcf5;
+  overflow-wrap: anywhere;
+}
+.fsi-diagnosis h3,
+.fsi-diagnosis h4 {
+  margin: 0 0 0.6rem;
+}
+.fsi-revision {
+  overflow-x: auto;
+  margin-top: 1rem;
+}
+.fsi-revision table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.fsi-revision th,
+.fsi-revision td {
+  padding: 0.55rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid #e2d9c6;
+  min-width: 7rem;
+}

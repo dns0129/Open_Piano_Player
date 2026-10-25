@@ -180,6 +180,10 @@ export function createAppServer({developerMode=false,distDir=resolve('dist'),set
           else if(action==='retry-failed')result=await scoreJobs.retryRegions(id,auth,{engine:input.engine,expectedVersion:input.expectedVersion,regionIds:input.regionIds});
           else if(action==='cancel')result=await scoreJobs.cancelJob(id,auth);
           else if(action==='confirm-region'&&regionId)result=await scoreJobs.confirmRegion(id,regionId,input.result||input,auth);
+          else if(action==='assess-source'&&regionId)result=await scoreJobs.assessRegion(id,regionId,input,auth);
+          else if(action==='diagnose-source'&&regionId)result=await scoreJobs.diagnoseRegion(id,regionId,{confirmed:input.confirmed===true,baseHash:input.baseHash},auth);
+          else if(action==='apply-revision'&&regionId)result=await scoreJobs.applyRevision(id,regionId,{confirmed:input.confirmed===true,proposalId:input.proposalId},auth);
+          else if(action==='undo-revision'&&regionId)result=await scoreJobs.undoRevision(id,regionId,{revisionId:input.revisionId},auth);
           else if(action==='draft')result=await scoreJobs.exportDraft(id,auth,{scopeConfirmed:input.scopeConfirmed===true});
           else if(action==='confirm')result=await scoreJobs.confirmJob(id,auth,{scopeConfirmed:input.scopeConfirmed===true});
           else throw userError('识谱任务操作不存在。','NOT_FOUND',404);

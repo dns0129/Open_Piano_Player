@@ -20,3 +20,12 @@ test('exact PDF reuse is isolated by recognition provider',async()=>{
  assert.equal((await findReviewedPdf(hash,['ds'],async()=>ds,'deepseek')).reusedExactPdf,true);
  assert.equal(await findReviewedPdf(hash,['ds'],async()=>ds,'pi'),null);
 });
+
+test('accepted source revisions never become an exact-PDF faithful-read cache',async()=>{
+ const edited=structuredClone(job);edited.regions[0].revisionHistory=[{id:'revision',undoneAt:null}];
+ assert.equal(await findReviewedPdf(hash,['edited'],async()=>edited),null);
+ edited.regions[0].revisionHistory[0].undoneAt='2026-10-26T00:00:00Z';
+ assert.equal((await findReviewedPdf(hash,['restored'],async()=>edited)).reusedExactPdf,true);
+ edited.regions[0].result.manualRevisions=[{kind:'add-rest'}];
+ assert.equal(await findReviewedPdf(hash,['legacy-manual'],async()=>edited),null);
+});

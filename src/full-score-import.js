@@ -1,3 +1,4 @@
+import { scoreDiagnosisCard } from "./score-diagnosis-card.js";
 import { assetURL } from "../lib/asset-url.mjs";
 import { prepareScoreImage, mountScoreImageSelector } from "./score-image.js";
 import { normalizeCropRect } from "../lib/score-image-layout.mjs";
@@ -372,6 +373,17 @@ export function mountFullScoreImport(
             ? `<div class="fsi-error">${escapeHTML(current.error || "此行识别失败，完整导入已被阻止。")}</div><button type="button" data-action="retry-region" ${isRunning() ? "disabled" : ""}>重试此行</button><button type="button" data-action="retry-enlarged" ${isRunning() ? "disabled" : ""}>放大原图后重试此行</button>`
             : ""
       }
+      ${
+        state.job && current
+          ? scoreDiagnosisCard(
+              state.job.regions?.find((r) => r.id === current.id),
+              {
+                busy: state.busy || isRunning() || state.importing,
+                dirty: current.dirty,
+              },
+            )
+          : ""
+      }
       </main></div>
       <footer class="fsi-footer"><div><strong>${summary.reviewedCount} / ${summary.selectedCount} 行完成审核 · ${summary.noteCount} 音符</strong><p>${summary.musicExcluded ? "已排除含音乐的页面或谱行，导入名称会明确标注“所选谱段”。" : "仅全部选中谱行成功且逐行审核后，才能导入完整全谱。"}</p>${!summary.canImport && !state.scanning ? `<p class="fsi-muted">${escapeHTML(summary.issues[0]?.message || "")}</p>` : ""}</div><label><input type="checkbox" data-scope-reviewed ${state.scopeReviewed ? "checked" : ""}> 我已确认全部页和谱行的处理范围，排除项均已检查</label><button type="button" class="fsi-primary" data-action="import" ${!summary.canImport || state.importing || isRunning() || !state.scopeReviewed ? "disabled" : ""}>${state.importing ? "正在保存…" : summary.musicExcluded ? "审核后导入所选片段" : "审核后导入完整全谱"}</button>${state.job && state.job.regions.every((r) => r.result) ? `<button type="button" data-action="import-draft" ${state.importing || isRunning() || !state.scopeReviewed ? "disabled" : ""}>导入AI草稿（待校对）</button>` : ""}</footer>`;
     if (state.busy || state.importing)
@@ -715,6 +727,10 @@ export function mountFullScoreImport(
           local.reviewed = !local.dirty;
         local.status = "complete";
       } else if (remote.status === "failed") {
+        delete local.notes;
+        delete local.score;
+        local.reviewed = false;
+        remoteSignatures.delete(remote.id);
         local.status = "failed";
         local.error =
           typeof remote.error === "object"
@@ -1464,6 +1480,10 @@ export function mountFullScoreImport(
     if (
       (state.busy || state.importing) &&
       [
+        "assess-source",
+        "diagnose-source",
+        "apply-revision",
+        "undo-revision",
         "approve-all",
         "retry-failed",
         "import-draft",
@@ -1638,6 +1658,59 @@ export function mountFullScoreImport(
           region.internalTies = [];
           edited(region);
           render();
+          break;
+        }
+        case "assess-source":
+        case "diagnose-source":
+        case "apply-revision":
+        case "undo-revision": {
+          const region = activeRegion();
+          const remote = state.job?.regions?.find((r) => r.id === region?.id);
+          if (!remote || region.dirty)
+            throw new Error("请先保存当前人工编辑，再继续诊断。");
+          const kind = action.dataset.action;
+          const method = {
+            "assess-source": "assessRegion",
+            "diagnose-source": "diagnoseRegion",
+            "apply-revision": "applyRevision",
+            "undo-revision": "undoRevision",
+          }[kind];
+          const input =
+            kind === "diagnose-source"
+              ? { confirmed: true }
+              : kind === "apply-revision"
+                ? { confirmed: true, proposalId: remote.diagnosis?.id }
+                : kind === "undo-revision"
+                  ? {
+                      revisionId: remote.revisionHistory
+                        ?.filter((h) => !h.undoneAt)
+                        .at(-1)?.id,
+                    }
+                  : {};
+          state.busy = true;
+          state.message =
+            kind === "assess-source"
+              ? "识谱智能体正在评估原谱疑点…"
+              : kind === "diagnose-source"
+                ? "已确认移交；独立诊断智能体正在准备方案，不会自动修改乐谱…"
+                : "正在保存修订操作…";
+          render();
+          try {
+            applySnapshot(
+              await requireApi(method)(state.job.id, region.id, input),
+            );
+            state.message =
+              kind === "assess-source"
+                ? "概率与证据已更新；可确认移交独立诊断。"
+                : kind === "diagnose-source"
+                  ? "诊断已完成，请查看修改前后差异并决定是否接受。"
+                  : kind === "apply-revision"
+                    ? "修订已应用并保留原版本；请对照检查此行后确认。"
+                    : "已撤销修订并恢复原版本。";
+          } finally {
+            state.busy = false;
+            if (!disposed) render();
+          }
           break;
         }
         case "confirm-region":
