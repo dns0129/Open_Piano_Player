@@ -10,6 +10,9 @@ function assertSystemRules(prompt){
   assert.match(prompt,/两条五线谱.*同一个双手系统/u);
   assert.match(prompt,/两个双手系统.*不是四行/u);
   assert.match(prompt,/同一时间轴/u);
+  assert.match(prompt,/灰度.*缺失/u);
+  assert.match(prompt,/同为高音谱号.*缺手/u);
+  assert.match(prompt,/具体.*页.*谱行.*谱表/u);
   assert.match(prompt,/不得将两手.*相加/u);
 }
 const image={mimeType:'image/png',data:Buffer.from([137,80,78,71,13,10,26,10,1]).toString('base64')};

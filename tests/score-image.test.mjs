@@ -141,6 +141,24 @@ test('real piano photograph, book cover and guitar TAB cannot become Pi OCR inpu
   }
 });
 
+test('gray resampling bands do not erase a hand during page and crop validation', async () => {
+  const image=page(800,500);
+  staff(image,100);staff(image,230);
+  ink(image,65,100,2,164);
+  // Pale interpolation ink joins two bass lines only at the default threshold.
+  ink(image,64,232,672,7,205);
+  const fixed=detectScoreSystems(image,{lineThreshold:210,pianoSourceVerified:true});
+  assert.equal(fixed.assessment.reasonCode,'GRAND_STAFF_UNCONFIRMED');
+  await withPreparedImage(image,{pianoSourceVerified:true},prepared=>{
+    assert.equal(prepared.systems.length,1);
+    assert.equal(prepared.systems[0].staffs.length,2);
+    assert.equal(prepared.getAssessment().canRequestOcr,true);
+    assert.equal(prepared.getSelection()[0].assessment.hasGrandStaff,true);
+    // A complete page must not authorize a manually cropped single hand.
+    assert.equal(prepared.getAssessment({mode:'manual',rect:{x:0,y:70,width:800,height:90}}).canRequestOcr,false);
+  });
+});
+
 test('six parallel guitar TAB lines cannot be silently reduced to a five-line piano staff', async () => {
   const image=page(800,500);
   for(const top of[110,220])for(let i=0;i<6;i++)ink(image,64,top+i*8,672,2);
