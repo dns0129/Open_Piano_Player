@@ -164,12 +164,13 @@ test('revision markers identify changed and uncertain bars in all three notation
     dom.window.HTMLCanvasElement.prototype.getContext=()=>({font:'',measureText:text=>({width:String(text).length*8,actualBoundingBoxAscent:8,actualBoundingBoxDescent:2})});
     Element.setTextMeasurementCanvas(document.createElement('canvas'));
     const host=document.querySelector('#host');Object.defineProperty(host,'clientWidth',{value:720});
-    const score={tempo:80,timeSignature:[4,4],keySignature:0,durationBeats:8,notes:[{id:'r',beat:0,duration:8,midi:60,hand:'right'},{id:'l',beat:0,duration:8,midi:48,hand:'left'}],measureMap:[{beat:0,duration:4,timeSignature:[4,4],revision:{changed:true,uncertain:true,summary:'<script>unsafe</script>半拍修订'}},{beat:4,duration:4,timeSignature:[4,4]}]};
+    const score={tempo:80,timeSignature:[4,4],keySignature:0,durationBeats:12,notes:[{id:'r',beat:0,duration:12,midi:60,hand:'right'},{id:'l',beat:0,duration:12,midi:48,hand:'left'}],measureMap:[{beat:0,duration:4,timeSignature:[4,4],revision:{changed:true,uncertain:true,summary:'<script>unsafe</script>半拍修订'}},{beat:4,duration:4,timeSignature:[4,4],revision:{missingSource:true,uncertain:true,summary:'来源缺失，静音仅占位'}},{beat:8,duration:4,timeSignature:[4,4]}]};
     for(const mode of ['staff','numbered','roll']) {
       renderer=renderNotation(host,score,{mode,autoScroll:false});
       const mark=host.querySelector('.notation-revision-mark');assert(mark,mode);
       assert.equal(mark.childNodes[0].textContent,'修订·待核');assert.match(mark.getAttribute('aria-label'),/第1小节/);
-      assert.equal(host.querySelectorAll('script').length,0);assert.equal(host.querySelectorAll('.notation-revision-mark').length,1);
+      assert.equal(host.querySelectorAll('script').length,0);assert.equal(host.querySelectorAll('.notation-revision-mark').length,2);
+      assert.match(host.querySelectorAll('.notation-revision-mark')[1].textContent,/缺谱·待核/);
       renderer.destroy();renderer=null;
     }
   } finally {

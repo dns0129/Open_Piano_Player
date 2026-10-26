@@ -339,6 +339,7 @@ export function renderNotation(container, score, options = {}) {
       (revision.changed === true || revision.uncertain === true)
     ) {
       const label = [
+        revision.missingSource === true ? "缺谱" : "",
         revision.changed === true ? "修订" : "",
         revision.uncertain === true ? "待核" : "",
       ]
@@ -352,6 +353,9 @@ export function renderNotation(container, score, options = {}) {
           x: info.x + 35,
           y: 14,
           class: "notation-revision-mark",
+          ...(revision.missingSource === true
+            ? { style: "fill: #b43030" }
+            : {}),
           "aria-label": `第${info.index + 1}小节：${label}。${typeof revision.summary === "string" ? revision.summary : ""}`,
         },
         label,
