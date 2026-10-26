@@ -104,7 +104,7 @@ npm start
 
 `npm run build:pages` 生成纯静态基础版到 `dist-pages/`（默认部署在 `/Open_Piano_Player/` 子路径，可用 `PAGES_BASE=/其他路径/` 覆盖）。它包含内置曲库、五线谱/简谱、播放、编辑、变速、分手、循环、移调、导出、MusicXML/MXL/MIDI/JSON 导入和浏览器音频转谱；联网找谱和图片/PDF 识谱仍需本机服务，页面会提示。商业版由 `npm run build:hosted` 单独构建到 `dist-hosted/`，需要独立 Node 后端；推送源码与 Pages 构建不等于部署了商业版。
 
-发布：推送到 `main` 后，`.github/workflows/pages.yml` 自动构建网页版并发布到 `gh-pages` 分支（也可在 Actions 页手动运行），仓库 Settings → Pages 选择 “Deploy from a branch · gh-pages · /(root)”。网页公开可见，其中包括全部内置曲目。
+发布：推送到 `main` 后，`.github/workflows/pages.yml` 自动构建网页版并发布到 `gh-pages` 分支（也可在 Actions 页手动运行），仓库 Settings → Pages 选择 “Deploy from a branch · gh-pages · /(root)”。网页公开可见，其中包括全部内置曲目。同一次发布还把宣传网站 `site/` 复制到 https://dns0129.github.io/Open_Piano_Player/site/ ，说明见 [site/README.md](site/README.md)。
 
 ## 云端曲库仓库（score-repo/）
 

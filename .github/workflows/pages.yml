@@ -25,6 +25,8 @@ jobs:
       - run: npm run build:pages
         env:
           PAGES_BASE: /${{ github.event.repository.name }}/
+      - name: Add the promo site at /site/
+        run: cp -R site dist-pages/site
       - run: touch dist-pages/.nojekyll
       - name: Publish dist-pages to gh-pages
         run: |

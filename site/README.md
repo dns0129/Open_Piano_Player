@@ -27,4 +27,4 @@ python3 -m http.server 8817 --directory site
 
 ## 部署
 
-整个 `site/` 目录可直接放到任意静态托管。现有 GitHub Pages 工作流只发布 App 网页版，不包含本目录。
+推送到 `main` 后，`.github/workflows/pages.yml` 在构建 App 网页版之后把本目录原样复制到 `dist-pages/site/`，发布在 https://dns0129.github.io/Open_Piano_Player/site/ 。整个目录也可直接放到任意其他静态托管。
