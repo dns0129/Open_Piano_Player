@@ -1,4 +1,4 @@
-/* 乐谱 promo site: sound, playback, notation, and the MusicXML → MIDI converter. */
+/* 乐谱 promo site: sound, playback, notation, the MusicXML → MIDI converter and the page artwork. */
 (() => {
   "use strict";
 
@@ -7,6 +7,7 @@
   const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
   const SVGNS = "http://www.w3.org/2000/svg";
   const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const SCORES = window.LEPU_SCORES || {};
   const store = {
     get(key) {
       try {
@@ -35,24 +36,17 @@
     t.textContent = str;
     return t;
   }
+  const unpack = (rows) =>
+    rows.map(([beat, dur, midi, hand, vel]) => ({
+      beat,
+      dur,
+      midi,
+      hand,
+      vel,
+    }));
 
-  const SHARPS = [
-    "C",
-    "C♯",
-    "D",
-    "D♯",
-    "E",
-    "F",
-    "F♯",
-    "G",
-    "G♯",
-    "A",
-    "A♯",
-    "B",
-  ];
   const pcOf = (m) => ((m % 12) + 12) % 12;
   const isBlack = (m) => [1, 3, 6, 8, 10].includes(pcOf(m));
-  const noteName = (m) => SHARPS[pcOf(m)] + (Math.floor(m / 12) - 1);
   const fmtTime = (s) =>
     `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`;
 
@@ -78,7 +72,7 @@
     }
     return notes;
   }
-  // 《欢乐颂》 theme, 16 bars, with a half-note bass line.
+  // 《欢乐颂》 theme, 16 bars, with a half-note bass line (same notes as the MusicXML sample).
   const ODE_RIGHT = jianpu(
     "3 3 4 5 5 4 3 2 1 1 2 3 3. 2_ 2- 3 3 4 5 5 4 3 2 1 1 2 3 2. 1_ 1- " +
       "2 2 3 1 2 3_ 4_ 3 1 2 3_ 4_ 3 2 1 2 5,- 3 3 4 5 5 4 3 2 1 1 2 3 2. 1_ 1-",
@@ -87,16 +81,16 @@
     48, 55, 43, 50, 48, 55, 43, 50, 48, 55, 43, 50, 48, 55, 43, 48,
   ];
   ODE_BASS.push(43, 48, 43, 48, 43, 50, 48, 43, 48, 55, 43, 50, 48, 55, 43, 48);
-  const ODE_LEFT = ODE_BASS.map((midi, i) => ({
-    beat: i * 2,
-    dur: 2,
-    midi,
-    hand: 1,
-    vel: 0.42,
-  }));
-  const ODE = [...ODE_RIGHT, ...ODE_LEFT].sort(
-    (a, b) => a.beat - b.beat || b.midi - a.midi,
-  );
+  const ODE = [
+    ...ODE_RIGHT,
+    ...ODE_BASS.map((midi, i) => ({
+      beat: i * 2,
+      dur: 2,
+      midi,
+      hand: 1,
+      vel: 0.42,
+    })),
+  ].sort((a, b) => a.beat - b.beat || b.midi - a.midi);
   const bars = (notes, from, to, bpb = 4) =>
     notes
       .filter((n) => n.beat >= from * bpb && n.beat < to * bpb)
@@ -227,7 +221,7 @@
         const verb = ctx.createConvolver();
         verb.buffer = impulse(2.6);
         const wet = ctx.createGain();
-        wet.gain.value = 0.22;
+        wet.gain.value = 0.24;
         const shelf = ctx.createBiquadFilter();
         shelf.type = "highshelf";
         shelf.frequency.value = 5000;
@@ -486,7 +480,6 @@
     black: "",
     flag8u: "",
     flag8d: "",
-    flat: "",
     sharp: "",
     digits: (n) =>
       [...String(n)]
@@ -517,19 +510,17 @@
   const addPlayhead = (root, y1, y2) =>
     svg("line", { class: "playhead", x1: 0, x2: 0, y1, y2 }, root);
 
-  // Treble, bass or grand staff. Notes in the same beat and hand are drawn as one chord.
+  // Treble or grand staff. Notes in the same beat and hand are drawn as one chord.
   function drawStaff(host, notes, o) {
     const S = o.S || 9;
     const width = o.width;
-    const bpb = o.beatsPerBar || 4;
     const grand = o.clef === "grand";
     const T = o.padTop ?? 4.6 * S;
     const B = grand ? T + 9 * S : T;
     const height = B + 4 * S + (o.padBottom ?? 4.6 * S);
-    const right = o.right ?? 1.2 * S;
+    const right = 1.2 * S;
     const L = layout({
       beats: o.beats,
-      beatsPerBar: bpb,
       width,
       left: o.timeSig ? 6.6 * S : 4.4 * S,
       right,
@@ -539,13 +530,12 @@
       viewBox: `0 0 ${width} ${height}`,
       class: `notation ${o.className || ""}`,
     });
-    const staves = grand
+    for (const [clef, y0] of grand
       ? [
           ["treble", T],
           ["bass", B],
         ]
-      : [["treble", T]];
-    for (const [clef, y0] of staves) {
+      : [["treble", T]]) {
       for (let i = 0; i < 5; i++)
         svg(
           "line",
@@ -592,11 +582,10 @@
       const n0 = chord[0];
       const bass = grand && n0.hand;
       const y0 = bass ? B : T;
-      const ref = bass ? 18 : 30;
       const heads = chord
         .map((n) => {
           const sp = spell(n.midi);
-          const p = sp.step - ref;
+          const p = sp.step - (bass ? 18 : 30);
           return { p, acc: sp.acc, y: y0 + 4 * S - (p * S) / 2 };
         })
         .sort((a, b) => a.p - b.p);
@@ -643,12 +632,13 @@
       const g = svg("g", { class: "n" }, root);
       const { heads, x, dur, up, y0 } = it;
       svg(
-        "circle",
+        "ellipse",
         {
           class: "halo",
           cx: x + hw / 2,
           cy: (heads[0].y + heads[heads.length - 1].y) / 2,
-          r: 1.5 * S,
+          rx: 1.4 * S,
+          ry: 1.1 * S + (heads[heads.length - 1].y - heads[0].y) / 2,
         },
         g,
       );
@@ -729,7 +719,6 @@
       if (!beam) continue;
       const last = beam.g[beam.g.length - 1];
       const th = 0.5 * S;
-      const owner = els[items.indexOf(first)].el;
       svg(
         "rect",
         {
@@ -738,7 +727,7 @@
           width: Math.max(0, last.sx - first.sx + 0.13 * S),
           height: th,
         },
-        owner,
+        els[items.indexOf(first)].el,
       );
     }
     const playhead = addPlayhead(root, T - 2 * S, yBottom + 2 * S);
@@ -746,7 +735,7 @@
     return { root, els, L, playhead };
   }
 
-  // Numbered notation for one hand, on the same kind of beat grid as the staff.
+  // Numbered notation for one hand.
   const DEG = [
     ["1", 0],
     ["1", 1],
@@ -767,21 +756,19 @@
     const fs = o.fs || 22;
     const L = layout({
       beats: o.beats,
-      beatsPerBar: o.beatsPerBar || 4,
       width,
-      left: o.left ?? 56,
+      left: 56,
       right: 14,
       barGap: 12,
     });
     const root = svg("svg", {
       viewBox: `0 0 ${width} ${height}`,
-      class: "notation",
+      class: `notation ${o.className || ""}`,
     });
     const y = height * 0.56;
-    if (o.label)
-      text(root, o.label, 10, y - 4, { class: "roll-label", "font-size": 12 });
+    if (o.label) text(root, o.label, 6, y - 4, { class: "roll-label" });
     for (let k = 0; k <= L.barCount; k++) {
-      const x = k === 0 ? (o.left ?? 56) - 8 : L.barX(k);
+      const x = k === 0 ? 48 : L.barX(k);
       svg(
         "line",
         {
@@ -866,7 +853,7 @@
     const { width, height, beats } = o;
     const L = layout({
       beats,
-      beatsPerBar: 4,
+      beatsPerBar: o.beatsPerBar || 4,
       width,
       left: 6,
       right: 6,
@@ -894,29 +881,16 @@
           },
           root,
         );
-    for (let b = 4; b < beats; b += 4)
-      svg(
-        "line",
-        {
-          class: "bar-line",
-          x1: L.xAt(b),
-          x2: L.xAt(b),
-          y1: 4,
-          y2: height - 4,
-          "stroke-dasharray": "2 4",
-        },
-        root,
-      );
     const els = notes.map((n) => {
       const el = svg(
         "rect",
         {
           class: `roll-note ${n.hand ? "l" : "r"}`,
           x: L.xAt(n.beat) + 1,
-          y: 6 + (hi - n.midi) * rowH + 1,
-          width: Math.max(3, n.dur * L.ppb - 3),
-          height: Math.max(2, rowH - 2),
-          rx: 3,
+          y: 6 + (hi - n.midi) * rowH + 0.5,
+          width: Math.max(2.5, n.dur * L.ppb - 2),
+          height: Math.max(2, rowH - 1),
+          rx: 2,
         },
         root,
       );
@@ -1266,7 +1240,7 @@
       );
       el.style.setProperty(
         "--delay",
-        `${Math.min(siblings.indexOf(el), 4) * 0.08}s`,
+        `${Math.min(siblings.indexOf(el), 4) * 0.1}s`,
       );
       io.observe(el);
     });
@@ -1294,13 +1268,13 @@
     addEventListener("resize", () => place(current));
     onScroll();
 
-    // The backdrop brightens a little with every note that sounds.
-    const aurora = $(".aurora");
-    const blobs = $$(".blob", aurora);
+    // Stage lighting: the cool (digital) light swells with every note; both lights follow the cursor a little.
+    const backdrop = $(".backdrop");
+    const lights = $$(".light", backdrop);
     let energy = 0;
     const decay = () => {
       energy *= 0.93;
-      aurora.style.setProperty(
+      backdrop.style.setProperty(
         "--energy",
         energy < 0.004 ? "0" : energy.toFixed(3),
       );
@@ -1310,7 +1284,7 @@
       if (reduceMotion) return;
       setTimeout(
         () => {
-          energy = Math.min(1, energy + vel * 0.16);
+          energy = Math.min(1, energy + vel * 0.14);
           frame.add(decay);
         },
         Math.max(0, (time - Sound.now) * 1000),
@@ -1320,14 +1294,14 @@
       "pointermove",
       (e) => {
         if (reduceMotion) return;
-        blobs.forEach((b, i) => {
-          b.style.setProperty(
+        lights.forEach((l, i) => {
+          l.style.setProperty(
             "--px",
-            `${(e.clientX / innerWidth - 0.5) * (i + 1) * 14}px`,
+            `${(e.clientX / innerWidth - 0.5) * (i ? -30 : 30)}px`,
           );
-          b.style.setProperty(
+          l.style.setProperty(
             "--py",
-            `${(e.clientY / innerHeight - 0.5) * (i + 1) * 14}px`,
+            `${(e.clientY / innerHeight - 0.5) * (i ? -24 : 24)}px`,
           );
         });
       },
@@ -1355,99 +1329,220 @@
     new ResizeObserver(place).observe(root);
   }
 
-  /* ---------------- Hero: conversion flow ---------------- */
-  function initFlow() {
-    const flow = $("#flow");
-    const lines = $(".flow-lines", flow);
-    const node = (name) => $(`[data-node="${name}"]`, flow);
-    const draw = () => {
-      const box = flow.getBoundingClientRect();
-      lines.setAttribute("viewBox", `0 0 ${box.width} ${box.height}`);
-      lines.replaceChildren();
-      const rect = (el) => {
-        const r = el.getBoundingClientRect();
-        return {
-          l: r.left - box.left,
-          r: r.right - box.left,
-          t: r.top - box.top,
-          b: r.bottom - box.top,
-          cx: r.left - box.left + r.width / 2,
-          cy: r.top - box.top + r.height / 2,
-        };
-      };
-      [
-        ["photo", "score"],
-        ["xml", "score"],
-        ["score", "midi"],
-        ["score", "play"],
-      ].forEach(([from, to], i) => {
-        const a = rect(node(from));
-        const b = rect(node(to));
-        const d =
-          a.r < b.l
-            ? `M${a.r} ${a.cy} C${(a.r + b.l) / 2} ${a.cy} ${(a.r + b.l) / 2} ${b.cy} ${b.l} ${b.cy}`
-            : `M${a.cx} ${a.b} C${a.cx} ${(a.b + b.t) / 2} ${b.cx} ${(a.b + b.t) / 2} ${b.cx} ${b.t}`;
-        svg("path", { d }, lines);
-        if (reduceMotion) return;
-        const dot = svg("circle", { r: 3 }, lines);
-        svg(
-          "animateMotion",
-          {
-            dur: "2.4s",
-            repeatCount: "indefinite",
-            path: d,
-            begin: `${(i % 2) * 0.6 + (i > 1 ? 1.2 : 0)}s`,
-          },
-          dot,
-        );
-      });
+  /* ---------------- Hero: the page, a reading light, and a river of MIDI ---------------- */
+  // A soft light moves across the real 《致爱丽丝》 page bar by bar; each note it passes leaves the
+  // paper as a streak of light and travels right as a MIDI bar (right hand jade, left hand gold).
+  function initHero() {
+    const S = SCORES.elise;
+    const stage = $("#stage");
+    const front = $(".page.front", stage);
+    const canvas = $(".river", stage);
+    if (!S || !stage) return;
+    const g = canvas.getContext("2d");
+    const notes = unpack(S.notes);
+    const L = S.beats;
+    const lo = Math.min(...notes.map((n) => n.midi));
+    const hi = Math.max(...notes.map((n) => n.midi));
+    let W = 0;
+    let H = 0;
+    let dpr = 1;
+    const resize = () => {
+      const r = stage.getBoundingClientRect();
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      W = r.width;
+      H = r.height;
+      canvas.width = W * dpr;
+      canvas.height = H * dpr;
     };
-    new ResizeObserver(draw).observe(flow);
+    new ResizeObserver(resize).observe(stage);
+    resize();
+
+    const player = new Player({ notes, bpm: S.bpm });
+    const btn = $("#hero-play");
+    player.onState = (on) => {
+      btn.classList.toggle("is-playing", on);
+      $("span", btn).textContent = on ? "暂停" : "听这一页";
+    };
+    btn.addEventListener("click", () => player.toggle());
+
+    const reading = (beat) => {
+      const sys =
+        S.systems.find((s) => beat >= s.from && beat < s.to) ||
+        S.systems[S.systems.length - 1];
+      const k = clamp((beat - sys.from) / (sys.to - sys.from), 0, 1);
+      return {
+        x: sys.x[0] + k * (sys.x[1] - sys.x[0]),
+        y: (sys.top + sys.bottom) / 2,
+      };
+    };
+    const streaks = [];
+    let idle = 0;
+    let last = 0;
+    let lastT = performance.now();
+    let visible = true;
+
+    function draw(t) {
+      const dt = Math.min(0.1, (t - lastT) / 1000);
+      lastT = t;
+      let beat;
+      if (player.playing && !player.starting) beat = idle = player.beat;
+      else beat = idle = (idle + (dt * S.bpm) / 60) % L;
+      const here = reading(beat);
+      front.style.setProperty("--lx", `${(here.x * 100).toFixed(2)}%`);
+      front.style.setProperty("--ly", `${(here.y * 100).toFixed(2)}%`);
+
+      const sr = stage.getBoundingClientRect();
+      const fr = front.getBoundingClientRect();
+      const x0 = fr.right - sr.left - 6;
+      const cy = fr.top - sr.top + fr.height * 0.36;
+      const band = Math.min(H * 0.62, 320);
+      const yOf = (m) => cy + band / 2 - ((m - lo) / (hi - lo || 1)) * band;
+      const ppb = Math.max(46, (W - x0) / 5.5);
+      const px = fr.left - sr.left + here.x * fr.width;
+      const py = fr.top - sr.top + here.y * fr.height;
+
+      // Notes the light just passed leave the page.
+      const wrapped = beat < last;
+      for (const n of notes) {
+        const crossed = wrapped
+          ? n.beat >= last || n.beat < beat
+          : n.beat >= last && n.beat < beat;
+        if (crossed && !reduceMotion)
+          streaks.push({
+            x: px + (Math.random() - 0.5) * 18,
+            y: py + (Math.random() - 0.5) * 14,
+            m: n.midi,
+            hand: n.hand,
+            life: 1,
+          });
+      }
+      last = beat;
+
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      g.clearRect(0, 0, W, H);
+      // five faint guide lines: the staff the notes came from, stretched into MIDI lanes
+      for (let i = 0; i < 5; i++) {
+        const gy = cy - band / 2 + (band * (i + 0.5)) / 5;
+        const guide = g.createLinearGradient(x0, 0, W, 0);
+        guide.addColorStop(0, "rgba(243,220,166,0.16)");
+        guide.addColorStop(1, "rgba(243,220,166,0)");
+        g.fillStyle = guide;
+        g.fillRect(x0, gy, W - x0, 1);
+      }
+      g.globalCompositeOperation = "lighter";
+      for (let i = streaks.length - 1; i >= 0; i--) {
+        const s = streaks[i];
+        s.life -= dt * 2.2;
+        if (s.life <= 0) {
+          streaks.splice(i, 1);
+          continue;
+        }
+        const ty = yOf(s.m);
+        const grad = g.createLinearGradient(s.x, s.y, x0, ty);
+        const c = s.hand ? "217,180,108" : "95,227,184";
+        grad.addColorStop(0, `rgba(${c},0)`);
+        grad.addColorStop(1, `rgba(${c},${0.7 * s.life})`);
+        g.strokeStyle = grad;
+        g.lineWidth = 1.4;
+        g.beginPath();
+        g.moveTo(s.x, s.y);
+        g.quadraticCurveTo((s.x + x0) / 2, Math.min(s.y, ty) - 30, x0, ty);
+        g.stroke();
+      }
+      for (const n of notes) {
+        for (let k = 0; k < 3; k++) {
+          const age = beat - (n.beat - k * L);
+          if (age < 0) continue;
+          const head = x0 + age * ppb;
+          if (head - n.dur * ppb > W) continue;
+          const tail = Math.max(x0, head - Math.max(0.12, n.dur) * ppb + 2);
+          const fade = clamp(1 - (head - x0) / (W - x0 + 1), 0, 1);
+          const live = age < n.dur;
+          const y = yOf(n.midi);
+          const h = n.hand ? 7 : 6;
+          g.globalAlpha = (live ? 1 : 0.85) * (0.3 + 0.7 * fade);
+          g.shadowColor = n.hand ? "#d9b46c" : "#5fe3b8";
+          g.shadowBlur = live ? 22 : 10;
+          g.fillStyle = live ? "#fff6dc" : n.hand ? "#d9b46c" : "#5fe3b8";
+          g.beginPath();
+          if (g.roundRect)
+            g.roundRect(tail, y - h / 2, Math.max(2, head - tail), h, h / 2);
+          else g.rect(tail, y - h / 2, Math.max(2, head - tail), h);
+          g.fill();
+        }
+      }
+      g.globalAlpha = 1;
+      g.shadowBlur = 0;
+      // the seam where paper becomes MIDI
+      const seam = g.createLinearGradient(
+        0,
+        cy - band / 2 - 20,
+        0,
+        cy + band / 2 + 20,
+      );
+      seam.addColorStop(0, "rgba(95,227,184,0)");
+      seam.addColorStop(0.5, "rgba(159,243,255,0.5)");
+      seam.addColorStop(1, "rgba(95,227,184,0)");
+      g.fillStyle = seam;
+      g.fillRect(x0 - 0.5, cy - band / 2 - 20, 1.5, band + 40);
+    }
+    const run = (t) => visible && draw(t);
+    new IntersectionObserver(([e]) => {
+      visible = e.isIntersecting;
+      if (visible) {
+        lastT = performance.now();
+        frame.add(run);
+      } else frame.remove(run);
+    }).observe(stage);
+
+    // The pages lean a little toward the cursor.
+    const hero = $(".hero");
+    hero.addEventListener("pointermove", (e) => {
+      if (e.pointerType !== "mouse" || reduceMotion) return;
+      const r = hero.getBoundingClientRect();
+      const dx = (e.clientX - r.left) / r.width - 0.5;
+      const dy = (e.clientY - r.top) / r.height - 0.5;
+      for (const p of $$(".page", stage)) {
+        p.style.setProperty("--tx", `${dx * 18}px`);
+        p.style.setProperty("--ty", `${dy * 14}px`);
+      }
+    });
   }
 
-  /* ---------------- 01 Score → MIDI demo ---------------- */
+  /* ---------------- 01 Score photo → MIDI ---------------- */
   function initOcr() {
-    const panel = $("#ocr-demo");
-    const paper = $(".paper", panel);
-    const beam = $(".scan-beam", panel);
+    const S = SCORES.chopin;
+    if (!S) return;
+    const photo = $(".photo");
     const status = $("#ocr-status");
     const runBtn = $("#ocr-run");
     const playBtn = $("#ocr-play");
     const dlBtn = $("#ocr-download");
-    const piece = bars(ODE, 0, 8);
-    const systems = [0, 1].map((s) => {
-      const div = document.createElement("div");
-      $(".paper-systems", panel).appendChild(div);
-      const notes = bars(ODE, s * 4, s * 4 + 4);
-      return {
-        div,
-        view: drawStaff(div, notes, {
-          beats: 16,
-          clef: "grand",
-          className: "ink",
-          timeSig: s ? null : [4, 4],
-          S: 7,
-          width: 520,
-          padTop: 20,
-          padBottom: 18,
-        }),
-      };
+    const notes = unpack(S.notes);
+    const boxes = S.systems.map((s, i) => {
+      const box = document.createElement("div");
+      box.className = "sys-box";
+      box.style.top = `${s.top * 100}%`;
+      box.style.height = `${(s.bottom - s.top) * 100}%`;
+      box.innerHTML = `<span>第 ${i + 1} 行 · 复读一致</span>`;
+      $(".sys-boxes", photo).appendChild(box);
+      return box;
     });
-    const roll = drawRoll($(".ocr-roll", panel), piece, {
-      width: 520,
-      height: 230,
-      beats: 32,
+    const roll = drawRoll($(".ocr-roll"), notes, {
+      width: 560,
+      height: 250,
+      beats: S.beats,
+      beatsPerBar: 3,
     });
-    const player = new Player({ notes: piece, bpm: 104 });
+    const player = new Player({ notes, bpm: S.bpm });
     const tick = () => {
       const beat = player.beat;
       const live = player.playing;
       paint(roll, beat, live);
-      systems.forEach((s, i) =>
-        paint(
-          s.view,
-          beat - i * 16,
-          live && beat >= i * 16 && beat < i * 16 + 16,
+      S.systems.forEach((s, i) =>
+        boxes[i].classList.toggle(
+          "playing",
+          live && beat >= s.from && beat < s.to,
         ),
       );
     };
@@ -1462,8 +1557,24 @@
     };
     new IntersectionObserver(
       ([e]) => !e.isIntersecting && player.pause(),
-    ).observe(panel);
+    ).observe(photo);
 
+    const sweep = (from, to, ms) =>
+      new Promise((done) => {
+        const t0 = performance.now();
+        const step = (t) => {
+          const k = clamp((t - t0) / ms, 0, 1);
+          const y =
+            from +
+            (to - from) *
+              (k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2);
+          photo.style.setProperty("--scan", `${y * 100}%`);
+          photo.style.setProperty("--reveal", `${y * 100}%`);
+          if (k < 1) requestAnimationFrame(step);
+          else done();
+        };
+        requestAnimationFrame(step);
+      });
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     let running = false;
     runBtn.addEventListener("click", async () => {
@@ -1472,47 +1583,27 @@
       player.pause();
       runBtn.disabled = playBtn.disabled = dlBtn.disabled = true;
       roll.els.forEach((e) => e.el.classList.remove("shown"));
-      systems.forEach((s) => s.div.classList.remove("is-read"));
-      paper.dataset.state = "scanning";
-      await wait(700);
-      for (const [i, s] of systems.entries()) {
+      boxes.forEach((b) => b.classList.remove("read"));
+      photo.style.setProperty("--reveal", "0%");
+      photo.dataset.state = "scanning";
+      await wait(900);
+      let at = 0;
+      for (const [i, s] of S.systems.entries()) {
         status.textContent = `正在识别第 ${i + 1} 行…`;
-        const top = s.div.offsetTop - 40;
-        const scan = reduceMotion ? 200 : 1300;
-        beam.animate(
-          [
-            { opacity: 0, transform: `translateY(${top}px)` },
-            {
-              opacity: 1,
-              transform: `translateY(${top + 20}px)`,
-              offset: 0.15,
-            },
-            {
-              opacity: 1,
-              transform: `translateY(${top + s.div.offsetHeight}px)`,
-              offset: 0.9,
-            },
-            {
-              opacity: 0,
-              transform: `translateY(${top + s.div.offsetHeight}px)`,
-            },
-          ],
-          { duration: scan, easing: "ease-in-out" },
-        );
-        await wait(scan);
-        s.div.classList.add("is-read");
-        const fresh = roll.els.filter(
-          (e) => e.beat >= i * 16 && e.beat < i * 16 + 16,
-        );
+        await sweep(at, s.bottom, reduceMotion ? 50 : 1500);
+        at = s.bottom;
+        boxes[i].classList.add("read");
+        const fresh = roll.els.filter((e) => e.beat >= s.from && e.beat < s.to);
         fresh.forEach((e, k) =>
-          setTimeout(() => e.el.classList.add("shown"), k * 18),
+          setTimeout(() => e.el.classList.add("shown"), k * 8),
         );
         status.innerHTML = `第 ${i + 1} 行 · 识别完成 · <b>复读一致</b>`;
-        await wait(fresh.length * 18 + 300);
+        await wait(fresh.length * 8 + 250);
       }
-      const right = piece.filter((n) => !n.hand).length;
-      status.innerHTML = `完成：8 小节 · 右手 ${right} 个音 · 左手 ${piece.length - right} 个音 → <b>双轨 MIDI</b>`;
-      paper.dataset.state = "done";
+      await sweep(at, 1, 300);
+      const right = notes.filter((n) => !n.hand).length;
+      status.innerHTML = `完成：16 小节 · 右手 ${right} 个音 · 左手 ${notes.length - right} 个音 → <b>双轨 MIDI</b>`;
+      photo.dataset.state = "done";
       runBtn.textContent = "重新识别";
       runBtn.disabled = playBtn.disabled = dlBtn.disabled = false;
       running = false;
@@ -1520,17 +1611,17 @@
     playBtn.addEventListener("click", () => player.toggle());
     dlBtn.addEventListener("click", () => {
       const tracks = [
-        { name: "右手", notes: piece.filter((n) => !n.hand) },
-        { name: "左手", notes: piece.filter((n) => n.hand) },
+        { name: "右手", notes: notes.filter((n) => !n.hand) },
+        { name: "左手", notes: notes.filter((n) => n.hand) },
       ];
       download(
         writeMidi({
-          title: "欢乐颂（识谱结果）",
+          title: "肖邦 A 大调前奏曲 Op.28 No.7",
           tracks,
-          tempos: [{ beat: 0, bpm: 104 }],
-          timeSig: [4, 4],
+          tempos: [{ beat: 0, bpm: S.bpm }],
+          timeSig: [3, 4],
         }),
-        "欢乐颂-识谱结果",
+        "肖邦-A大调前奏曲-Op28No7",
       );
     });
   }
@@ -1553,10 +1644,35 @@
           "里姆斯基-科萨科夫 曲 · Kevin W. K. Yeung 钢琴编配 · CC BY-SA 3.0（IMSLP）· 由乐谱从 7 页原版 PDF 转写",
       },
     };
-    const COLORS = ["#46f0b8", "#63c7ff", "#ffc56e", "#ff7f8f"];
+    const COLORS = ["#5fe3b8", "#d9b46c", "#9ff3ff", "#ff9f8a"];
     const player = new Player({});
     let score = null;
     let bytes = null;
+
+    // Sample thumbnail for 《欢乐颂》, and the slow drift of real MusicXML behind the panel.
+    drawStaff($(".ode-thumb"), bars(ODE, 0, 2), {
+      beats: 8,
+      clef: "grand",
+      className: "ink",
+      timeSig: [4, 4],
+      S: 6.5,
+      width: 300,
+      padTop: 18,
+      padBottom: 14,
+    });
+    const STEPS = ["C", "C", "D", "D", "E", "F", "F", "G", "G", "A", "A", "B"];
+    const TYPES = { 0.5: "eighth", 1: "quarter", 1.5: "quarter", 2: "half" };
+    const xml = [];
+    ODE_RIGHT.forEach((n, i) => {
+      if (n.beat % 4 === 0) xml.push(`<measure number="${n.beat / 4 + 1}">`);
+      xml.push(
+        `  <note><pitch><step>${STEPS[n.midi % 12]}</step><octave>${Math.floor(n.midi / 12) - 1}</octave></pitch>` +
+          `<duration>${n.dur * 2}</duration><type>${TYPES[n.dur]}</type><staff>1</staff></note>`,
+      );
+      if ((ODE_RIGHT[i + 1]?.beat ?? 64) % 4 === 0) xml.push("</measure>");
+    });
+    const art = $(".xml-art");
+    art.innerHTML = `<div>${[...xml, ...xml].map((l) => l.replace(/</g, "&lt;")).join("\n")}</div>`;
 
     const fail = (message) => {
       error.textContent = message;
@@ -1593,8 +1709,8 @@
       const cells = [
         ["小节", score.measures],
         ["MIDI 音符", score.notes.length.toLocaleString("en-US")],
-        ["轨道", `${score.tracks.length} 条`],
-        ["速度", score.tempos.length > 1 ? `${bpm} BPM 起` : `${bpm} BPM`],
+        ["轨道", score.tracks.length],
+        ["速度 BPM", score.tempos.length > 1 ? `${bpm}+` : bpm],
         ["时长", fmtTime(seconds)],
       ];
       $(".result-stats", result).innerHTML = cells
@@ -1629,15 +1745,19 @@
       const midis = score.notes.map((n) => n.midi);
       const lo = Math.min(...midis) - 2;
       const hi = Math.max(...midis) + 2;
-      const x = (b) => 10 + (b / score.beats) * (w - 20);
-      const y = (m) => 8 + ((hi - m) / (hi - lo)) * (h - 16);
-      const rowH = Math.max(1.5, (h - 16) / (hi - lo) - 0.5);
+      const x = (b) => 12 + (b / score.beats) * (w - 24);
+      const y = (m) => 10 + ((hi - m) / (hi - lo)) * (h - 20);
+      const rowH = Math.max(1.5, (h - 20) / (hi - lo) - 0.4);
       const beat = player.beat;
       const live = player.playing;
+      g.globalCompositeOperation = "lighter";
       for (const n of score.notes) {
         const on = live && beat >= n.beat && beat < n.beat + n.dur;
-        g.fillStyle = on ? "#ffffff" : COLORS[n.track % COLORS.length];
-        g.globalAlpha = on ? 1 : 0.8;
+        const c = COLORS[n.track % COLORS.length];
+        g.fillStyle = on ? "#fff6dc" : c;
+        g.shadowColor = c;
+        g.shadowBlur = on ? 12 : 3;
+        g.globalAlpha = on ? 1 : 0.78;
         g.fillRect(
           x(n.beat),
           y(n.midi) - rowH / 2,
@@ -1646,8 +1766,15 @@
         );
       }
       g.globalAlpha = 1;
+      g.shadowBlur = 0;
+      g.globalCompositeOperation = "source-over";
       if (live || player.pos > 0) {
-        g.fillStyle = "#46f0b8";
+        const grad = g.createLinearGradient(x(beat) - 30, 0, x(beat) + 2, 0);
+        grad.addColorStop(0, "rgba(217,180,108,0)");
+        grad.addColorStop(1, "rgba(243,220,166,0.35)");
+        g.fillStyle = grad;
+        g.fillRect(x(beat) - 30, 0, 32, h);
+        g.fillStyle = "#f3dca6";
         g.fillRect(x(beat) - 1, 0, 2, h);
       }
     }
@@ -1673,13 +1800,14 @@
     canvas.addEventListener("click", (e) => {
       if (!score) return;
       const r = canvas.getBoundingClientRect();
-      player.seek(((e.clientX - r.left - 10) / (r.width - 20)) * score.beats);
+      player.seek(((e.clientX - r.left - 12) / (r.width - 24)) * score.beats);
       if (!player.playing) player.play();
       drawRoll();
     });
 
     async function readFile(file) {
       if (!file) return;
+      $$(".sample", panel).forEach((b) => b.classList.remove("is-on"));
       if (/\.mxl$/i.test(file.name))
         return fail(
           "MXL 是压缩格式：请先解压出其中的 .musicxml，或直接在乐谱 App 里导入 MXL。",
@@ -1700,9 +1828,12 @@
       e.preventDefault();
       readFile(e.dataTransfer.files[0]);
     });
-    $$("[data-sample]", panel).forEach((b) =>
+    $$(".sample", panel).forEach((b) =>
       b.addEventListener("click", async () => {
         const sample = SAMPLES[b.dataset.sample];
+        $$(".sample", panel).forEach((x) =>
+          x.classList.toggle("is-on", x === b),
+        );
         try {
           const res = await fetch(sample.url);
           if (!res.ok) throw new Error();
@@ -1714,7 +1845,7 @@
     );
   }
 
-  /* ---------------- 03 Follow playback ---------------- */
+  /* ---------------- 03 Follow playback on paper ---------------- */
   function initFollow() {
     const panel = $("#follower");
     const view = $(".follow-view", panel);
@@ -1752,6 +1883,7 @@
             drawStaff(div, notes, {
               beats: per * 4,
               clef: "grand",
+              className: "ink",
               timeSig: s ? null : [4, 4],
               S,
               width,
@@ -1768,6 +1900,7 @@
             width,
             fs: width >= 640 ? 24 : 20,
             height: 62,
+            className: "ink",
           };
           views.push(
             drawJianpu(r, notes, { ...o, hand: 0, label: "右手" }),
@@ -1846,7 +1979,7 @@
   initChrome();
   // Each part starts on its own, so one failing demo never takes the rest of the page down.
   const boot = () => {
-    for (const init of [initFlow, initOcr, initConverter, initFollow]) {
+    for (const init of [initHero, initOcr, initConverter, initFollow]) {
       try {
         init();
       } catch (err) {

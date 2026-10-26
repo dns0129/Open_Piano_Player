@@ -6,13 +6,14 @@
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
-    <meta name="theme-color" content="#05080a" />
+    <meta name="theme-color" content="#0d0b09" />
     <meta
       name="description"
-      content="乐谱：乐谱转 MIDI、MusicXML 转 MIDI，在线跟着谱面播放。照片、PDF、MusicXML 转成双轨 MIDI，五线谱与简谱逐音高亮。"
+      content="乐谱：把乐谱变成 MIDI。照片、PDF、MusicXML 转成左右手分轨的 MIDI，在线跟着谱面播放。"
     />
-    <title>乐谱 · 乐谱转 MIDI，在线跟着谱播放</title>
+    <title>乐谱 · 把乐谱变成 MIDI</title>
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+    <link rel="preload" href="assets/img/elise-page.webp" as="image" />
     <link
       rel="preload"
       href="assets/fonts/Bravura.woff2"
@@ -23,8 +24,8 @@
     <link rel="stylesheet" href="assets/site.css" />
   </head>
   <body>
-    <div class="aurora" aria-hidden="true">
-      <i class="blob b1"></i><i class="blob b2"></i><i class="blob b3"></i>
+    <div class="backdrop" aria-hidden="true">
+      <i class="light warm"></i><i class="light cool"></i>
     </div>
     <div class="grain" aria-hidden="true"></div>
 
@@ -49,7 +50,7 @@
         <span class="sound-label">声音开</span>
       </button>
       <a
-        class="btn btn-primary btn-sm nav-cta"
+        class="btn btn-gold btn-sm nav-cta"
         href="https://dns0129.github.io/Open_Piano_Player/"
         target="_blank"
         rel="noopener"
@@ -59,110 +60,107 @@
 
     <main>
       <section class="hero" id="top">
-        <p class="badge glass">
-          <span class="dot"></span>钢琴乐谱 App · 网页版打开即用
-        </p>
-        <h1 class="wordmark">乐谱</h1>
-        <p class="hero-lead">乐谱转 MIDI，在线跟着谱播放。</p>
-        <p class="hero-sub">
-          照片、PDF、MusicXML 都能转成左右手分轨的
-          MIDI；播放时五线谱和简谱逐音高亮、自动翻行。
-        </p>
-        <div class="hero-cta">
-          <a
-            class="btn btn-primary"
-            href="https://dns0129.github.io/Open_Piano_Player/"
-            target="_blank"
-            rel="noopener"
-          >
-            在线打开
-            <svg viewBox="0 0 20 20" aria-hidden="true">
-              <path d="M5 10h10m-4-4 4 4-4 4" />
-            </svg>
-          </a>
-          <a class="btn btn-glass" href="#xml-to-midi">试试 MusicXML 转 MIDI</a>
+        <div class="hero-text">
+          <p class="kicker">乐谱 · 钢琴乐谱 App</p>
+          <h1 class="display">
+            <span>把乐谱，</span><span>变成 <em>MIDI</em>。</span>
+          </h1>
+          <p class="lede">
+            照片、PDF、MusicXML 转成左右手分轨的
+            MIDI；打开网页，就能跟着谱面播放。
+          </p>
+          <div class="cta">
+            <a
+              class="btn btn-gold"
+              href="https://dns0129.github.io/Open_Piano_Player/"
+              target="_blank"
+              rel="noopener"
+            >
+              在线打开
+              <svg viewBox="0 0 20 20" aria-hidden="true">
+                <path d="M5 10h10m-4-4 4 4-4 4" />
+              </svg>
+            </a>
+            <button class="btn btn-glass" id="hero-play" type="button">
+              <svg viewBox="0 0 20 20" class="ic-play">
+                <path d="M6 4.5v11l9-5.5z" />
+              </svg>
+              <svg viewBox="0 0 20 20" class="ic-pause">
+                <path d="M6 4h3v12H6zM11 4h3v12h-3z" />
+              </svg>
+              <span>听这一页</span>
+            </button>
+          </div>
         </div>
 
         <div
-          class="flow"
-          id="flow"
-          aria-label="转换流程：照片或 PDF、MusicXML 先变成数字谱，再导出 MIDI 或跟随播放"
+          class="stage"
+          id="stage"
+          aria-label="三页真实乐谱，音符从《致爱丽丝》这一页流出，变成 MIDI 音轨"
         >
-          <svg class="flow-lines" aria-hidden="true"></svg>
-          <a class="flow-node glass" data-node="photo" href="#score-to-midi">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <rect x="3" y="6" width="18" height="14" rx="3" />
-              <circle cx="12" cy="13" r="3.5" />
-              <path d="M8 6l1.5-2h5L16 6" />
-            </svg>
-            <span><b>照片 / PDF</b><small>识谱</small></span>
-          </a>
-          <a class="flow-node glass" data-node="xml" href="#xml-to-midi">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16" />
-            </svg>
-            <span><b>MusicXML</b><small>.musicxml / .xml</small></span>
-          </a>
-          <a class="flow-node glass" data-node="score" href="#follow">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M3 6h18M3 10h18M3 14h18M3 18h18" />
-              <ellipse cx="9" cy="16" rx="2.6" ry="2" class="fill" />
-              <path d="M11.5 16V7" />
-            </svg>
-            <span><b>数字谱</b><small>音高 · 时值 · 左右手</small></span>
-          </a>
-          <a class="flow-node glass" data-node="midi" href="#xml-to-midi">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <rect x="3" y="5" width="18" height="14" rx="2" />
-              <path d="M7 5v8M11 5v8M15 5v8" />
-            </svg>
-            <span><b>MIDI</b><small>双轨 · 可下载</small></span>
-          </a>
-          <a class="flow-node glass" data-node="play" href="#follow">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="12" cy="12" r="9" />
-              <path d="M10 8.5v7l6-3.5z" class="fill" />
-            </svg>
-            <span><b>跟随播放</b><small>逐音高亮</small></span>
-          </a>
+          <figure class="page back b1">
+            <img src="assets/img/bach-page.webp" alt="" />
+          </figure>
+          <figure class="page back b2">
+            <img src="assets/img/bee-page.webp" alt="" />
+          </figure>
+          <figure class="page front">
+            <img
+              src="assets/img/elise-page.webp"
+              alt="贝多芬《致爱丽丝》第一页乐谱"
+            />
+            <i class="ink-light" aria-hidden="true"></i>
+          </figure>
+          <canvas class="river" aria-hidden="true"></canvas>
+          <p class="stage-tag paper-tag">
+            纸上的谱<small>Für Elise · p.1</small>
+          </p>
+          <p class="stage-tag midi-tag">
+            MIDI<small>右手 · 左手 两条轨</small>
+          </p>
         </div>
       </section>
 
       <!-- 01 乐谱转 MIDI -->
-      <section class="section" id="score-to-midi">
-        <header class="section-head" data-reveal>
-          <p class="eyebrow">01 · 乐谱转 MIDI</p>
-          <h2>拍一张谱，得到一份 MIDI</h2>
-          <p class="section-sub">
-            照片、扫描图或整份 PDF 逐行识别成数字谱，再导出成右手、左手两条轨的
-            MIDI 文件。
-          </p>
+      <section class="chapter" id="score-to-midi">
+        <header class="chapter-head" data-reveal>
+          <span class="numeral">01</span>
+          <div>
+            <p class="eyebrow">乐谱转 MIDI</p>
+            <h2>
+              <span class="nw">拍一张谱，</span
+              ><span class="nw">得到一份 MIDI</span>
+            </h2>
+            <p class="sub">
+              照片、扫描图或整份 PDF 逐行识别成数字谱，再导出右手、左手两条轨的
+              MIDI 文件。
+            </p>
+          </div>
         </header>
 
-        <div class="panel glass" id="ocr-demo" data-reveal>
-          <div class="ocr-grid">
-            <div class="paper" data-state="idle">
-              <p class="paper-title">欢乐颂<small>贝多芬 曲</small></p>
-              <div class="paper-systems"></div>
-              <div class="scan-beam"></div>
-            </div>
-            <div class="ocr-arrow" aria-hidden="true">
-              <svg viewBox="0 0 48 24"><path d="M2 12h40m-8-8 8 8-8 8" /></svg>
-            </div>
-            <div class="ocr-midi">
+        <div class="ocr" id="ocr" data-reveal>
+          <figure class="photo" data-state="idle">
+            <img
+              src="assets/img/chopin-page.webp"
+              alt="肖邦 A 大调前奏曲 Op.28 No.7 的乐谱"
+            />
+            <i class="ink-light" aria-hidden="true"></i>
+            <i class="scan-line" aria-hidden="true"></i>
+            <div class="sys-boxes" aria-hidden="true"></div>
+          </figure>
+          <div class="ocr-side">
+            <div class="roll-card glass">
               <div class="track-labels">
                 <span class="r">轨 1 · 右手</span
                 ><span class="l">轨 2 · 左手</span>
               </div>
               <div class="ocr-roll"></div>
             </div>
-          </div>
-          <div class="panel-bar">
             <p class="status" id="ocr-status" aria-live="polite">
-              一页双手钢琴谱 · 2 行 · 8 小节
+              肖邦《A 大调前奏曲》Op.28 No.7 · 1 页 · 3 行 · 16 小节
             </p>
-            <div class="panel-actions">
-              <button class="btn btn-primary btn-sm" id="ocr-run" type="button">
+            <div class="actions">
+              <button class="btn btn-gold btn-sm" id="ocr-run" type="button">
                 开始识别
               </button>
               <button
@@ -188,53 +186,65 @@
                 下载 .mid
               </button>
             </div>
+            <ul class="facts">
+              <li><b>照片、图片、PDF</b>单个 PDF 最多 50 MB、200 页</li>
+              <li><b>每行识别两次</b>独立复读核对，漏检的行可以手动补框</li>
+              <li>
+                <b>1,313 个音符</b>《野蜂飞舞》7 页 PDF，全部音高与原谱复核一致
+              </li>
+            </ul>
           </div>
         </div>
-
-        <ul class="facts" data-reveal>
-          <li>
-            <b>照片、图片、PDF</b>单个 PDF 最多 50 MB、200 页，逐页检测谱行
-          </li>
-          <li><b>每行识别两次</b>识别后独立复读核对；漏检的行可以手动补框</li>
-          <li>
-            <b>1,313 个音符</b>《野蜂飞舞》7 页 PDF 转写，全部音高与原谱复核一致
-          </li>
-        </ul>
-        <p class="note">
-          上面是识谱过程的演示动画，生成的 MIDI 是真实文件。图片 / PDF
-          识谱在本机版和账号版中提供。
+        <p class="note" data-reveal>
+          识谱过程为演示动画；音符取自乐谱曲库中这首曲子的数字谱，下载的 MIDI
+          是真实文件。图片 / PDF 识谱在本机版和账号版中提供。
         </p>
       </section>
 
       <!-- 02 MusicXML 转 MIDI -->
-      <section class="section" id="xml-to-midi">
-        <header class="section-head" data-reveal>
-          <p class="eyebrow">02 · MusicXML 转 MIDI</p>
-          <h2>MusicXML 拖进来，MIDI 拿走</h2>
-          <p class="section-sub">
-            就在这个页面里转换，文件不会离开你的浏览器。钢琴的上下两个谱表分成两条
-            MIDI 轨。
-          </p>
+      <section class="chapter" id="xml-to-midi">
+        <div class="xml-art" aria-hidden="true"></div>
+        <header class="chapter-head" data-reveal>
+          <span class="numeral">02</span>
+          <div>
+            <p class="eyebrow">MusicXML 转 MIDI</p>
+            <h2>
+              <span class="nw">MusicXML 拖进来，</span
+              ><span class="nw">MIDI 拿走</span>
+            </h2>
+            <p class="sub">
+              就在这个页面里转换，文件不会离开你的浏览器。钢琴的上下两个谱表分成两条
+              MIDI 轨。
+            </p>
+          </div>
         </header>
 
-        <div class="panel glass" id="converter" data-reveal>
-          <label class="drop" id="drop">
-            <input type="file" id="xml-file" accept=".musicxml,.xml" />
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path
-                d="M12 15V4m-4 4 4-4 4 4M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"
-              />
-            </svg>
-            <b>拖入 .musicxml / .xml 文件，或点这里选择</b>
-            <small>不上传，转换在本机完成</small>
-          </label>
-          <div class="samples">
-            <span>或用示例：</span>
-            <button class="chip-btn" type="button" data-sample="ode">
-              欢乐颂 · 16 小节
+        <div class="converter glass" id="converter" data-reveal>
+          <div class="conv-grid">
+            <label class="drop" id="drop">
+              <input type="file" id="xml-file" accept=".musicxml,.xml" />
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M12 15V4m-4 4 4-4 4 4M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"
+                />
+              </svg>
+              <b>拖入 .musicxml / .xml</b>
+              <small>或点这里选择文件 · 不上传，本机完成</small>
+            </label>
+            <button class="sample" type="button" data-sample="bee">
+              <span class="thumb"
+                ><img src="assets/img/bee-page.webp" alt=""
+              /></span>
+              <span class="sample-text"
+                ><b>野蜂飞舞</b
+                ><small>7 页 · 105 小节 · 1,313 个音</small></span
+              >
             </button>
-            <button class="chip-btn" type="button" data-sample="bee">
-              野蜂飞舞 · 7 页 105 小节
+            <button class="sample" type="button" data-sample="ode">
+              <span class="thumb ode-thumb"></span>
+              <span class="sample-text"
+                ><b>欢乐颂</b><small>16 小节 · 双手</small></span
+              >
             </button>
           </div>
 
@@ -244,7 +254,7 @@
                 <h3 class="result-title"></h3>
                 <p class="result-sub"></p>
               </div>
-              <div class="panel-actions">
+              <div class="actions">
                 <button
                   class="btn btn-glass btn-sm"
                   id="xml-play"
@@ -259,7 +269,7 @@
                   <span>播放</span>
                 </button>
                 <button
-                  class="btn btn-primary btn-sm"
+                  class="btn btn-gold btn-sm"
                   id="xml-download"
                   type="button"
                 >
@@ -270,7 +280,7 @@
             <dl class="result-stats"></dl>
             <canvas
               class="result-roll"
-              aria-label="转换出的 MIDI 音符总览"
+              aria-label="转换出的 MIDI 音符总览，点击可定位播放"
             ></canvas>
             <p class="note result-note"></p>
           </div>
@@ -279,18 +289,24 @@
       </section>
 
       <!-- 03 跟随播放 -->
-      <section class="section" id="follow">
-        <header class="section-head" data-reveal>
-          <p class="eyebrow">03 · 在线跟随播放</p>
-          <h2>播放到哪，谱就亮到哪</h2>
-          <p class="section-sub">
-            逐音高亮、自动翻行；点任意一个音，就从那里开始。速度 20–300
-            BPM，播放中改速不丢拍位。
-          </p>
+      <section class="chapter" id="follow">
+        <header class="chapter-head" data-reveal>
+          <span class="numeral">03</span>
+          <div>
+            <p class="eyebrow">在线跟随播放</p>
+            <h2>
+              <span class="nw">播放到哪，</span
+              ><span class="nw">谱就亮到哪</span>
+            </h2>
+            <p class="sub">
+              逐音高亮、自动翻行；点任意一个音，就从那里开始。速度 20–300
+              BPM，播放中改速不丢拍位。
+            </p>
+          </div>
         </header>
 
-        <div class="panel glass" id="follower" data-reveal>
-          <div class="follow-bar">
+        <div class="follower" id="follower" data-reveal>
+          <div class="follow-bar glass">
             <button
               class="play-round"
               id="follow-play"
@@ -327,48 +343,55 @@
               <output>100 BPM</output>
             </label>
           </div>
-          <div class="follow-view">
-            <div class="follow-page"></div>
+          <div class="sheet">
+            <div class="sheet-head">
+              <b>欢乐颂</b><small>贝多芬 曲 · 主题 16 小节</small>
+            </div>
+            <div class="follow-view">
+              <div class="follow-page"></div>
+            </div>
           </div>
-          <p class="note follow-status">
-            《欢乐颂》主题 16 小节 · 1 = C · 4/4 · 点音符可定位
-          </p>
         </div>
       </section>
 
-      <section class="section finale" data-reveal>
-        <div class="finale-card glass">
-          <h2>打开就能用</h2>
-          <p>
-            网页版支持 MusicXML / MXL / MIDI
-            导入、跟随播放、变速与分手练习，并可导出 MIDI、MusicXML 和 PDF。
-          </p>
-          <a
-            class="btn btn-primary"
-            href="https://dns0129.github.io/Open_Piano_Player/"
-            target="_blank"
-            rel="noopener"
-          >
-            在线打开乐谱
-            <svg viewBox="0 0 20 20" aria-hidden="true">
-              <path d="M5 10h10m-4-4 4 4-4 4" />
-            </svg>
-          </a>
+      <section class="finale" data-reveal>
+        <div class="finale-pages" aria-hidden="true">
+          <img src="assets/img/bach-page.webp" alt="" />
+          <img src="assets/img/elise-page.webp" alt="" />
+          <img src="assets/img/chopin-page.webp" alt="" />
         </div>
+        <h2>打开就能用</h2>
+        <p>
+          网页版支持 MusicXML / MXL / MIDI
+          导入、跟随播放、变速与分手练习，并可导出 MIDI、MusicXML 和 PDF。
+        </p>
+        <a
+          class="btn btn-gold"
+          href="https://dns0129.github.io/Open_Piano_Player/"
+          target="_blank"
+          rel="noopener"
+        >
+          在线打开乐谱
+          <svg viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M5 10h10m-4-4 4 4-4 4" />
+          </svg>
+        </a>
       </section>
     </main>
 
     <footer class="footer">
       <p>
+        乐谱图片：《致爱丽丝》、巴赫 BWV 846、肖邦 Op.28 No.7 来自 Mutopia
+        Project，排版者置于公有领域；《野蜂飞舞》Kevin W. K. Yeung 钢琴编配，CC
+        BY-SA 3.0（IMSLP）。
+      </p>
+      <p>
         钢琴音色：Salamander Grand Piano，Alexander Holm，CC BY
         3.0。谱面字形：Bravura，Steinberg，SIL OFL 1.1。
       </p>
-      <p>
-        《野蜂飞舞》示例：里姆斯基-科萨科夫 曲，Kevin W. K. Yeung 钢琴编配，CC
-        BY-SA 3.0（IMSLP）。《欢乐颂》旋律为公版。
-      </p>
     </footer>
 
+    <script src="assets/scores.js"></script>
     <script src="assets/site.js"></script>
   </body>
 </html>

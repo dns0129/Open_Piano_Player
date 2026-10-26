@@ -1,26 +1,208 @@
-// Builds the promo site's assets (site/assets/) from files already in this repo: the MusicXML
-// samples for the in-page MusicXML → MIDI converter, the Salamander piano samples and the Bravura font.
+// Builds the promo site's assets (site/assets/) from files already in this repo:
+// score-page images rendered from the library PDFs, matching note data, the MusicXML samples
+// for the in-page converter, the Salamander piano samples and the Bravura font.
 // Run: npm run site:assets
 import {
   copyFileSync,
+  existsSync,
   mkdirSync,
   readFileSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { createCanvas } from "@napi-rs/canvas";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const out = `${root}site/assets/`;
+const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
 rmSync(`${out}cases.js`, { force: true });
-
-// Samples: the App's own MusicXML export of the 7-page Bumblebee transcription, unchanged…
+mkdirSync(`${out}img`, { recursive: true });
 mkdirSync(`${out}samples`, { recursive: true });
+
+/* ---------- Page images ---------- */
+async function renderPage(file, pageNo, width) {
+  const pdf = await pdfjs.getDocument({
+    data: new Uint8Array(readFileSync(root + file)),
+    isEvalSupported: false,
+    standardFontDataUrl: `${root}node_modules/pdfjs-dist/standard_fonts/`,
+  }).promise;
+  const page = await pdf.getPage(pageNo);
+  const base = page.getViewport({ scale: 1 });
+  const viewport = page.getViewport({ scale: (width * 2) / base.width }); // 2× then downscale for clean edges
+  const canvas = createCanvas(
+    Math.round(viewport.width),
+    Math.round(viewport.height),
+  );
+  const g = canvas.getContext("2d");
+  g.fillStyle = "#fff";
+  g.fillRect(0, 0, canvas.width, canvas.height);
+  await page.render({ canvasContext: g, viewport }).promise;
+  return canvas;
+}
+// crop: [top, bottom] as fractions of the page height.
+function save(page, name, width, crop = [0, 1]) {
+  const sy = Math.round(page.height * crop[0]);
+  const sh = Math.round(page.height * (crop[1] - crop[0]));
+  const height = Math.round((sh * width) / page.width);
+  const canvas = createCanvas(width, height);
+  const g = canvas.getContext("2d");
+  g.imageSmoothingQuality = "high";
+  g.drawImage(page, 0, sy, page.width, sh, 0, 0, width, height);
+  writeFileSync(`${out}img/${name}.webp`, canvas.toBuffer("image/webp", 82));
+  return canvas;
+}
+// Ink only: black with alpha = darkness, so CSS can paint the notes in any colour through a mask.
+function saveInk(canvas, name) {
+  const g = canvas.getContext("2d");
+  const img = g.getImageData(0, 0, canvas.width, canvas.height);
+  const d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+    d[i] = d[i + 1] = d[i + 2] = 0;
+    d[i + 3] = 255 - lum;
+  }
+  const ink = createCanvas(canvas.width, canvas.height);
+  ink.getContext("2d").putImageData(img, 0, 0);
+  writeFileSync(`${out}img/${name}.webp`, ink.toBuffer("image/webp", 80));
+}
+// Grand-staff systems from staff-line rows: returns [top, bottom] fractions with room for ledger lines.
+function findSystems(canvas) {
+  const g = canvas.getContext("2d");
+  const { data, width, height } = g.getImageData(
+    0,
+    0,
+    canvas.width,
+    canvas.height,
+  );
+  const lines = [];
+  for (let y = 0; y < height; y++) {
+    let dark = 0;
+    for (let x = 0; x < width; x++) if (data[(y * width + x) * 4] < 140) dark++;
+    if (dark < width * 0.4) continue;
+    if (lines.length && y - lines[lines.length - 1].end <= 1)
+      lines[lines.length - 1].end = y;
+    else lines.push({ start: y, end: y });
+  }
+  // Notes can hide a line here and there, so group by gaps: within a staff ≈ 1 space,
+  // between the two staves of a system ≈ 8 spaces, between systems clearly more.
+  const gaps = lines.slice(1).map((l, i) => l.start - lines[i].end);
+  const space = gaps.filter((g) => g < 20).sort((a, b) => a - b)[
+    Math.floor(gaps.filter((g) => g < 20).length / 2)
+  ];
+  const systems = [[lines[0].start, lines[0].end]];
+  lines.slice(1).forEach((l, i) => {
+    if (gaps[i] > 11 * space) systems.push([l.start, l.end]);
+    else systems[systems.length - 1][1] = l.end;
+  });
+  return systems.map(([top, bottom]) =>
+    [(top - 4.2 * space) / height, (bottom + 4.6 * space) / height].map(
+      (v) => Math.round(v * 1000) / 1000,
+    ),
+  );
+}
+
+const elise = await renderPage(
+  "public/intermediate-sources/intermediate-beethoven-woo59/original.pdf",
+  1,
+  1000,
+);
+const elisePage = save(elise, "elise-page", 1000);
+saveInk(elisePage, "elise-ink");
+const eliseSystems = findSystems(elisePage);
+// These two source PDFs live in the local, untracked evidence/ folder; without them the committed images stay.
+for (const [file, name] of [
+  ["evidence/general-fullscore/bach-prelude-mutopia.pdf", "bach-page"],
+  ["evidence/international-imslp-yeung.pdf", "bee-page"],
+]) {
+  if (existsSync(root + file)) save(await renderPage(file, 1, 760), name, 760);
+  else console.warn(`skipped ${name}: ${file} not found`);
+}
+const chopinPage = await renderPage(
+  "public/intermediate-sources/intermediate-chopin-op28-07/original.pdf",
+  1,
+  1100,
+);
+const chopin = save(chopinPage, "chopin-page", 1100, [0.02, 0.665]);
+saveInk(chopin, "chopin-ink");
+const chopinSystems = findSystems(chopin);
+
+/* ---------- Note data for the pictured pages ---------- */
+const readScore = (path) => {
+  const data = JSON.parse(readFileSync(root + path, "utf8"));
+  return data.score || data;
+};
+const pack = (notes, from, to) =>
+  notes
+    .filter((n) => n.beat >= from && n.beat < to)
+    .sort((a, b) => a.beat - b.beat || a.midi - b.midi)
+    .map((n) => [
+      Math.round((n.beat - from) * 1000) / 1000,
+      Math.round(n.duration * 1000) / 1000,
+      n.midi,
+      n.hand === "left" ? 1 : 0,
+      Math.round((n.velocity ?? 0.7) * 100) / 100,
+    ]);
+const eliseScore = readScore(
+  "score-repo/scores/intermediate-beethoven-woo59.json",
+);
+const chopinScore = readScore(
+  "score-repo/scores/intermediate-chopin-op28-07.json",
+);
+// Page systems hold the pickup + bars 1–5, bars 6–11 and bars 12–16 (3/4: pickup is one beat).
+const systemBeats = [
+  [0, 16],
+  [16, 34],
+  [34, chopinScore.durationBeats + 1],
+];
+const scores = {
+  // Pickup + bars 1–8 as played: system 1 holds bars 1–5, system 2 starts with bars 6–8 (x: staff span on the page).
+  elise: {
+    notes: pack(eliseScore.notes, 0, 12.5),
+    beats: 12.5,
+    bpm: 72,
+    systems: [
+      {
+        top: eliseSystems[0][0],
+        bottom: eliseSystems[0][1],
+        from: 0,
+        to: 8,
+        x: [0.2, 0.96],
+      },
+      {
+        top: eliseSystems[1][0],
+        bottom: eliseSystems[1][1],
+        from: 8,
+        to: 12.5,
+        x: [0.08, 0.5],
+      },
+    ],
+  },
+  chopin: {
+    notes: pack(chopinScore.notes, 0, chopinScore.durationBeats + 1),
+    beats: chopinScore.durationBeats,
+    bpm: 72,
+    systems: chopinSystems.map(([top, bottom], i) => ({
+      top,
+      bottom,
+      from: systemBeats[i][0],
+      to: systemBeats[i][1],
+    })),
+  },
+};
+writeFileSync(
+  `${out}scores.js`,
+  `// Generated by scripts/build-site-assets.mjs from score-repo/. Do not edit by hand.\n` +
+    `// notes: [beat, duration (quarter beats), MIDI, hand (0 right, 1 left), velocity]\n` +
+    `window.LEPU_SCORES = ${JSON.stringify(scores)};\n`,
+);
+
+/* ---------- MusicXML samples ---------- */
+// The App's own MusicXML export of the 7-page Bumblebee transcription, unchanged…
 copyFileSync(
   `${root}output/scores/野蜂飞舞-Yeung-完整7页.musicxml`,
   `${out}samples/flight-of-the-bumblebee-yeung.musicxml`,
 );
-
 // …and a small two-staff 《欢乐颂》 written here (public-domain melody, same notes as site.js).
 const SCALE = [0, 2, 4, 5, 7, 9, 11];
 function jianpu(src) {
@@ -50,7 +232,6 @@ const right = jianpu(
 const bass = [48, 55, 43, 50, 48, 55, 43, 50, 48, 55, 43, 50, 48, 55, 43, 48];
 bass.push(43, 48, 43, 48, 43, 50, 48, 43, 48, 55, 43, 50, 48, 55, 43, 48);
 const left = bass.map((midi, i) => ({ beat: i * 2, dur: 2, midi }));
-
 const STEPS = ["C", "C", "D", "D", "E", "F", "F", "G", "G", "A", "A", "B"];
 const TYPES = { 0.5: "eighth", 1: "quarter", 1.5: "quarter", 2: "half" };
 const noteXml = (n, staff) => {
@@ -94,7 +275,8 @@ writeFileSync(
     `<part id="P1">${measures.join("")}</part></score-partwise>\n`,
 );
 
-// Piano samples: every recorded minor third from A1 to C7, unchanged.
+/* ---------- Piano samples and font ---------- */
+// Every recorded minor third from A1 to C7, unchanged.
 const SAMPLES = [
   "A1",
   "C2",
@@ -132,7 +314,6 @@ for (const name of [
     `${out}audio/piano/${name}`,
   );
 }
-
 // Bravura as shipped (unmodified) inside VexFlow 5, written out as a woff2 file.
 const bravura = readFileSync(
   `${root}node_modules/vexflow/build/esm/src/fonts/bravura.js`,
@@ -145,5 +326,5 @@ writeFileSync(
 );
 
 console.log(
-  `site assets: 2 MusicXML samples, ${SAMPLES.length} piano samples, Bravura.woff2`,
+  `site assets: page images, systems ${JSON.stringify({ eliseSystems, chopinSystems })}, 2 MusicXML samples, ${SAMPLES.length} piano samples, Bravura`,
 );
