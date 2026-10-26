@@ -297,3 +297,11 @@ test('review of trusted digital fallback keeps missing positions explicit and pe
   await store.confirmRegion(id,'row-1',null,auth);const job=await store.confirmJob(id,auth,{scopeConfirmed:true});
   assert.equal(job.status,'complete');assert.equal(job.result.reviewStatus,'human-confirmed');assert.equal(job.result.sourceNotation.notePositionsComplete,false);assert.deepEqual(job.result.sourceNotation.notes,[]);
 });
+
+test('mixed-meter rows validate each bar against its explicit meter, without relaxing overfull checks', () => {
+  const region={id:'mixed',page:1,system:1,rect:{x:0,y:0,width:200,height:100}};
+  const raw={score:{title:'6/8 into 12/8',tempo:80,timeSignature:[6,8],keySignature:0,durationBeats:9,notes:[{id:'r1',beat:0,duration:3,midi:60,hand:'right'},{id:'l1',beat:0,duration:3,midi:48,hand:'left'},{id:'r2',beat:3,duration:6,midi:62,hand:'right'},{id:'l2',beat:3,duration:6,midi:50,hand:'left'}]},coverage:{complete:true,measureCount:2,measureDurations:[3,6],measureTimeSignatures:[[6,8],[12,8]]},positions:['r1','l1','r2','l2'].map((noteId,i)=>({noteId,x:20+i*30,y:i%2?80:25})),rests:[],continuity:{tieIn:[],tieOut:[]}};
+  assert.equal(validateRegionResult(raw,region).checks.passed,true);
+  const wrong=structuredClone(raw);wrong.coverage.measureTimeSignatures[1]=[6,8];
+  assert(validateRegionResult(wrong,region).checks.errors.some(e=>e.code==='OVERFULL_MEASURE'&&e.measure===2));
+});

@@ -333,6 +333,38 @@ export function renderNotation(container, score, options = {}) {
         String(info.index + 1),
       ),
     );
+    const revision = score.measureMap?.[info.index]?.revision;
+    if (
+      revision &&
+      (revision.changed === true || revision.uncertain === true)
+    ) {
+      const label = [
+        revision.changed === true ? "修订" : "",
+        revision.uncertain === true ? "待核" : "",
+      ]
+        .filter(Boolean)
+        .join("·");
+      group.classList.add("notation-revision");
+      group.dataset.revision = label;
+      const mark = svgElement(
+        "text",
+        {
+          x: info.x + 35,
+          y: 14,
+          class: "notation-revision-mark",
+          "aria-label": `第${info.index + 1}小节：${label}。${typeof revision.summary === "string" ? revision.summary : ""}`,
+        },
+        label,
+      );
+      mark.append(
+        svgElement(
+          "title",
+          {},
+          typeof revision.summary === "string" ? revision.summary : label,
+        ),
+      );
+      group.append(mark);
+    }
   }
   function makeVoice(info, hand, stave) {
     const clef = hand === "right" ? "treble" : "bass",

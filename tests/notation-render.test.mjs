@@ -152,3 +152,29 @@ test('extended glyphs, rests, compound duplets, nested tuplets and real imported
   assert.deepEqual(errors,[]);
  }finally{renderer?.destroy();console.error=priorError;Element.setTextMeasurementCanvas(canvas);for(const[k,v]of Object.entries(saved)){if(v===undefined)delete globalThis[k];else globalThis[k]=v;}dom.window.close();}
 });
+
+test('revision markers identify changed and uncertain bars in all three notation views and escape descriptions', async () => {
+  await fontsReady;
+  const dom=new JSDOM('<div id="host"></div>');
+  const saved={document:globalThis.document,window:globalThis.window,cancelAnimationFrame:globalThis.cancelAnimationFrame};
+  const measurementCanvas=Element.getTextMeasurementCanvas();
+  let renderer;
+  try {
+    globalThis.document=dom.window.document;globalThis.window=dom.window;globalThis.cancelAnimationFrame=()=>{};
+    dom.window.HTMLCanvasElement.prototype.getContext=()=>({font:'',measureText:text=>({width:String(text).length*8,actualBoundingBoxAscent:8,actualBoundingBoxDescent:2})});
+    Element.setTextMeasurementCanvas(document.createElement('canvas'));
+    const host=document.querySelector('#host');Object.defineProperty(host,'clientWidth',{value:720});
+    const score={tempo:80,timeSignature:[4,4],keySignature:0,durationBeats:8,notes:[{id:'r',beat:0,duration:8,midi:60,hand:'right'},{id:'l',beat:0,duration:8,midi:48,hand:'left'}],measureMap:[{beat:0,duration:4,timeSignature:[4,4],revision:{changed:true,uncertain:true,summary:'<script>unsafe</script>半拍修订'}},{beat:4,duration:4,timeSignature:[4,4]}]};
+    for(const mode of ['staff','numbered','roll']) {
+      renderer=renderNotation(host,score,{mode,autoScroll:false});
+      const mark=host.querySelector('.notation-revision-mark');assert(mark,mode);
+      assert.equal(mark.childNodes[0].textContent,'修订·待核');assert.match(mark.getAttribute('aria-label'),/第1小节/);
+      assert.equal(host.querySelectorAll('script').length,0);assert.equal(host.querySelectorAll('.notation-revision-mark').length,1);
+      renderer.destroy();renderer=null;
+    }
+  } finally {
+    renderer?.destroy();Element.setTextMeasurementCanvas(measurementCanvas);
+    for(const [key,value]of Object.entries(saved)){if(value===undefined)delete globalThis[key];else globalThis[key]=value;}
+    dom.window.close();
+  }
+});
