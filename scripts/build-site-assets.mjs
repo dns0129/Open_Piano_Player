@@ -1,144 +1,97 @@
-// Builds the promo site's assets (site/assets/) from files already in this repo:
-// real score excerpts for the demo cases, the Salamander piano samples and the Bravura music font.
-// Run after changing a case below: node scripts/build-site-assets.mjs
-import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+// Builds the promo site's assets (site/assets/) from files already in this repo: the MusicXML
+// samples for the in-page MusicXML → MIDI converter, the Salamander piano samples and the Bravura font.
+// Run: npm run site:assets
+import {
+  copyFileSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const out = `${root}site/assets/`;
-const readScore = (path) => {
-  const data = JSON.parse(readFileSync(root + path, "utf8"));
-  return data.score || data;
+rmSync(`${out}cases.js`, { force: true });
+
+// Samples: the App's own MusicXML export of the 7-page Bumblebee transcription, unchanged…
+mkdirSync(`${out}samples`, { recursive: true });
+copyFileSync(
+  `${root}output/scores/野蜂飞舞-Yeung-完整7页.musicxml`,
+  `${out}samples/flight-of-the-bumblebee-yeung.musicxml`,
+);
+
+// …and a small two-staff 《欢乐颂》 written here (public-domain melody, same notes as site.js).
+const SCALE = [0, 2, 4, 5, 7, 9, 11];
+function jianpu(src) {
+  let beat = 0;
+  return src
+    .trim()
+    .split(/\s+/)
+    .map((token) => {
+      let dur = token.includes("_") ? 0.5 : 1;
+      if (token.includes(".")) dur *= 1.5;
+      dur += (token.match(/-/g) || []).length;
+      const oct =
+        (token.match(/'/g) || []).length - (token.match(/,/g) || []).length;
+      const note = {
+        beat,
+        dur,
+        midi: 60 + SCALE[Number(token[0]) - 1] + 12 * oct,
+      };
+      beat += dur;
+      return note;
+    });
+}
+const right = jianpu(
+  "3 3 4 5 5 4 3 2 1 1 2 3 3. 2_ 2- 3 3 4 5 5 4 3 2 1 1 2 3 2. 1_ 1- " +
+    "2 2 3 1 2 3_ 4_ 3 1 2 3_ 4_ 3 2 1 2 5,- 3 3 4 5 5 4 3 2 1 1 2 3 2. 1_ 1-",
+);
+const bass = [48, 55, 43, 50, 48, 55, 43, 50, 48, 55, 43, 50, 48, 55, 43, 48];
+bass.push(43, 48, 43, 48, 43, 50, 48, 43, 48, 55, 43, 50, 48, 55, 43, 48);
+const left = bass.map((midi, i) => ({ beat: i * 2, dur: 2, midi }));
+
+const STEPS = ["C", "C", "D", "D", "E", "F", "F", "G", "G", "A", "A", "B"];
+const TYPES = { 0.5: "eighth", 1: "quarter", 1.5: "quarter", 2: "half" };
+const noteXml = (n, staff) => {
+  const pc = n.midi % 12;
+  const alter = STEPS[pc] === STEPS[(pc + 11) % 12] ? "<alter>1</alter>" : "";
+  return (
+    `<note><pitch><step>${STEPS[pc]}</step>${alter}<octave>${Math.floor(n.midi / 12) - 1}</octave></pitch>` +
+    `<duration>${n.dur * 2}</duration><voice>${staff === 1 ? 1 : 5}</voice><type>${TYPES[n.dur]}</type>` +
+    `${n.dur === 1.5 ? "<dot/>" : ""}<staff>${staff}</staff></note>`
+  );
 };
-
-// Each case plays [from, to) beats of the full score; the stats describe the whole score.
-const CASES = [
-  {
-    id: "bumblebee",
-    file: "output/scores/野蜂飞舞-Yeung-完整7页.score.json",
-    title: "野蜂飞舞",
-    subtitle: "钢琴独奏版 · 7 页全谱",
-    composer: "里姆斯基-科萨科夫 曲 · Kevin W. K. Yeung 编配",
-    license: "CC BY-SA 3.0",
-    sourceUrl:
-      "https://imslp.org/wiki/File:PMLP03170-Flight_of_the_Bumblebee_--_for_Piano_Solo_(Yeung).pdf",
-    sourceLabel: "IMSLP 原版 PDF",
-    pages: 7,
-    from: 0,
-    to: 24,
-    excerpt: "第 1–12 小节",
-  },
-  {
-    id: "fur-elise",
-    file: "score-repo/scores/intermediate-beethoven-woo59.json",
-    title: "致爱丽丝",
-    subtitle: "Für Elise · WoO 59 · 完整曲",
-    composer: "贝多芬 曲 · Mutopia 排版 Stelios Samelis",
-    license: "Public Domain",
-    sourceUrl: "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=931",
-    sourceLabel: "Mutopia #931",
-    from: 0,
-    to: 12.5,
-    excerpt: "弱起 + 第 2–9 小节",
-  },
-  {
-    id: "moonlight",
-    file: "score-repo/scores/intermediate-beethoven-op27-2-m1.json",
-    title: "月光奏鸣曲 · 第一乐章",
-    subtitle: "Op.27 No.2 · I",
-    composer: "贝多芬 曲 · Mutopia 排版 Stewart Holmes",
-    license: "CC BY-SA 2.5",
-    sourceUrl: "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=276",
-    sourceLabel: "Mutopia #276",
-    from: 0,
-    to: 24,
-    excerpt: "第 1–6 小节",
-  },
-  {
-    id: "bwv846",
-    file: "score-repo/scores/full-score-483da5cbff9d2b5ec2e86e6c6ba0f3cb267a.json",
-    title: "C 大调前奏曲",
-    subtitle: "BWV 846 · 用户上传 PDF 识谱",
-    composer: "巴赫 曲 · 整份 PDF 逐行识别，人工逐行审核",
-    license: "作品为公版",
-    from: 0,
-    to: 16,
-    excerpt: "第 1–4 小节",
-    tempo: 72,
-  },
-  {
-    id: "chopin-7",
-    file: "score-repo/scores/intermediate-chopin-op28-07.json",
-    title: "A 大调前奏曲",
-    subtitle: "Op.28 No.7 · 整首",
-    composer: "肖邦 曲 · Mutopia 排版 Magnus Lewis-Smith",
-    license: "Public Domain",
-    sourceUrl: "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=470",
-    sourceLabel: "Mutopia #470",
-    from: 0,
-    to: 48,
-    excerpt: "整首 17 小节",
-    tempo: 66,
-  },
-  {
-    id: "invention-1",
-    file: "score-repo/scores/intermediate-bach-bwv772.json",
-    title: "C 大调二部创意曲第 1 首",
-    subtitle: "BWV 772",
-    composer: "巴赫 曲 · Mutopia 排版 jeff covey",
-    license: "CC BY-SA 3.0",
-    sourceUrl: "https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=40",
-    sourceLabel: "Mutopia #40",
-    from: 0,
-    to: 16,
-    excerpt: "第 1–4 小节",
-  },
-];
-
-const round = (value) => Math.round(value * 1000) / 1000;
-const cases = CASES.map(({ file, from, to, tempo, ...meta }) => {
-  const score = readScore(file);
-  const [num, den] = score.timeSignature;
-  const beatsPerBar = (num * 4) / den;
-  const bars =
-    score.measureMap?.length || Math.round(score.durationBeats / beatsPerBar);
-  const hands = { right: 0, left: 0 };
-  for (const note of score.notes)
-    hands[note.hand === "left" ? "left" : "right"] += 1;
-  const notes = score.notes
-    .filter((note) => note.beat >= from && note.beat < to)
-    .sort((a, b) => a.beat - b.beat || a.midi - b.midi)
-    .map((note) => [
-      round(note.beat - from),
-      round(Math.min(note.duration, to - note.beat)),
-      note.midi,
-      note.hand === "left" ? 1 : 0,
-      Math.round((note.velocity ?? 0.7) * 100) / 100,
-    ]);
-  return {
-    ...meta,
-    timeSignature: [num, den],
-    keySignature: score.keySignature,
-    tempo: tempo || score.tempo,
-    originalTempo: score.tempo,
-    stats: {
-      bars,
-      notes: score.notes.length,
-      right: hands.right,
-      left: hands.left,
-      seconds: Math.round((score.durationBeats * 60) / (tempo || score.tempo)),
-    },
-    beats: to - from,
-    notes,
-  };
+const measures = Array.from({ length: 16 }, (_, m) => {
+  const inBar = (n) => n.beat >= m * 4 && n.beat < m * 4 + 4;
+  const head =
+    m === 0
+      ? `<attributes><divisions>2</divisions><key><fifths>0</fifths></key><time><beats>4</beats><beat-type>4</beat-type></time>` +
+        `<staves>2</staves><clef number="1"><sign>G</sign><line>2</line></clef><clef number="2"><sign>F</sign><line>4</line></clef></attributes>` +
+        `<direction placement="above"><direction-type><metronome><beat-unit>quarter</beat-unit><per-minute>100</per-minute></metronome></direction-type><sound tempo="100"/></direction>`
+      : "";
+  return (
+    `<measure number="${m + 1}">${head}` +
+    right
+      .filter(inBar)
+      .map((n) => noteXml(n, 1))
+      .join("") +
+    `<backup><duration>8</duration></backup>` +
+    left
+      .filter(inBar)
+      .map((n) => noteXml(n, 2))
+      .join("") +
+    `</measure>`
+  );
 });
-
-mkdirSync(out, { recursive: true });
 writeFileSync(
-  `${out}cases.js`,
-  `// Generated by scripts/build-site-assets.mjs from the app's score library. Do not edit by hand.\n` +
-    `// notes: [beat, duration (quarter-note beats), MIDI, hand (0 right, 1 left), velocity]\n` +
-    `window.LEPU_CASES = ${JSON.stringify(cases)};\n`,
+  `${out}samples/ode-to-joy.musicxml`,
+  `<?xml version="1.0" encoding="UTF-8"?>\n` +
+    `<!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 4.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">\n` +
+    `<score-partwise version="4.0"><work><work-title>欢乐颂</work-title></work>` +
+    `<identification><creator type="composer">Ludwig van Beethoven</creator></identification>` +
+    `<part-list><score-part id="P1"><part-name>Piano</part-name></score-part></part-list>` +
+    `<part id="P1">${measures.join("")}</part></score-partwise>\n`,
 );
 
 // Piano samples: every recorded minor third from A1 to C7, unchanged.
@@ -154,9 +107,20 @@ const SAMPLES = [
   "A3",
   "C4",
   "Ds4",
-  "Fs4",
 ];
-SAMPLES.push("A4", "C5", "Ds5", "Fs5", "A5", "C6", "Ds6", "Fs6", "A6", "C7");
+SAMPLES.push(
+  "Fs4",
+  "A4",
+  "C5",
+  "Ds5",
+  "Fs5",
+  "A5",
+  "C6",
+  "Ds6",
+  "Fs6",
+  "A6",
+  "C7",
+);
 mkdirSync(`${out}audio/piano`, { recursive: true });
 for (const name of [
   ...SAMPLES.map((note) => `${note}.mp3`),
@@ -174,11 +138,12 @@ const bravura = readFileSync(
   `${root}node_modules/vexflow/build/esm/src/fonts/bravura.js`,
   "utf8",
 );
-const base64 = bravura.match(/base64,([A-Za-z0-9+/=]+)/)[1];
 mkdirSync(`${out}fonts`, { recursive: true });
-writeFileSync(`${out}fonts/Bravura.woff2`, Buffer.from(base64, "base64"));
+writeFileSync(
+  `${out}fonts/Bravura.woff2`,
+  Buffer.from(bravura.match(/base64,([A-Za-z0-9+/=]+)/)[1], "base64"),
+);
 
 console.log(
-  `site assets: ${cases.length} cases (${cases.reduce((sum, c) => sum + c.notes.length, 0)} notes), ` +
-    `${SAMPLES.length} piano samples, Bravura.woff2`,
+  `site assets: 2 MusicXML samples, ${SAMPLES.length} piano samples, Bravura.woff2`,
 );

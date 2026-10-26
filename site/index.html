@@ -9,9 +9,9 @@
     <meta name="theme-color" content="#05080a" />
     <meta
       name="description"
-      content="乐谱：钢琴乐谱与练习 App。图片 / PDF 识谱，五线谱、简谱、钢琴卷帘同步播放，20–300 BPM 变速、左右手分开、按小节循环，导出 MusicXML、MIDI、PDF。"
+      content="乐谱：乐谱转 MIDI、MusicXML 转 MIDI，在线跟着谱面播放。照片、PDF、MusicXML 转成双轨 MIDI，五线谱与简谱逐音高亮。"
     />
-    <title>乐谱 · 拍下一页谱，马上听它、练它、改它</title>
+    <title>乐谱 · 乐谱转 MIDI，在线跟着谱播放</title>
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
     <link
       rel="preload"
@@ -24,30 +24,26 @@
   </head>
   <body>
     <div class="aurora" aria-hidden="true">
-      <i class="blob b1"></i><i class="blob b2"></i><i class="blob b3"></i
-      ><i class="blob b4"></i>
+      <i class="blob b1"></i><i class="blob b2"></i><i class="blob b3"></i>
     </div>
     <div class="grain" aria-hidden="true"></div>
-    <canvas id="fx" aria-hidden="true"></canvas>
 
-    <header class="nav glass" id="nav">
+    <header class="nav glass">
       <a class="logo" href="#top" aria-label="乐谱 首页">
         <img src="assets/favicon.svg" alt="" width="26" height="26" />
         <span>乐谱</span>
       </a>
       <nav class="nav-links" aria-label="页面导航">
         <span class="nav-pill" aria-hidden="true"></span>
-        <a href="#product">产品</a>
-        <a href="#features">功能</a>
-        <a href="#cases">案例</a>
-        <a href="#play">玩一下</a>
+        <a href="#score-to-midi">乐谱转 MIDI</a>
+        <a href="#xml-to-midi">MusicXML</a>
+        <a href="#follow">跟随播放</a>
       </nav>
       <button
         class="sound-toggle"
         id="sound-toggle"
         type="button"
         aria-pressed="true"
-        data-silent
       >
         <span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
         <span class="sound-label">声音开</span>
@@ -62,272 +58,118 @@
     </header>
 
     <main>
-      <!-- 产品首屏 -->
       <section class="hero" id="top">
-        <div class="hero-copy">
-          <a class="badge glass" href="#play"
-            ><span class="dot"></span>钢琴乐谱练习 App · 网页版打开即用</a
+        <p class="badge glass">
+          <span class="dot"></span>钢琴乐谱 App · 网页版打开即用
+        </p>
+        <h1 class="wordmark">乐谱</h1>
+        <p class="hero-lead">乐谱转 MIDI，在线跟着谱播放。</p>
+        <p class="hero-sub">
+          照片、PDF、MusicXML 都能转成左右手分轨的
+          MIDI；播放时五线谱和简谱逐音高亮、自动翻行。
+        </p>
+        <div class="hero-cta">
+          <a
+            class="btn btn-primary"
+            href="https://dns0129.github.io/Open_Piano_Player/"
+            target="_blank"
+            rel="noopener"
           >
-          <h1 class="wordmark" aria-label="乐谱">
-            <span>乐</span><span>谱</span>
-          </h1>
-          <p class="hero-lead">拍下一页谱，马上听它、练它、改它。</p>
-          <p class="hero-sub">
-            图片 / PDF 识谱成数字谱；五线谱、简谱、钢琴卷帘同步播放；20–300 BPM
-            变速，左右手分开，按小节循环。
-          </p>
-          <div class="hero-cta">
-            <a
-              class="btn btn-primary magnetic"
-              href="https://dns0129.github.io/Open_Piano_Player/"
-              target="_blank"
-              rel="noopener"
-            >
-              在线打开
-              <svg viewBox="0 0 20 20" aria-hidden="true">
-                <path d="M5 10h10m-4-4 4 4-4 4" />
-              </svg>
-            </a>
-            <button
-              class="btn btn-glass magnetic"
-              id="hero-play"
-              type="button"
-              data-silent
-            >
-              <svg viewBox="0 0 20 20" aria-hidden="true" class="ic-play">
-                <path d="M6 4.5v11l9-5.5z" />
-              </svg>
-              <span>让五线谱弹一句</span>
-            </button>
-          </div>
+            在线打开
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M5 10h10m-4-4 4 4-4 4" />
+            </svg>
+          </a>
+          <a class="btn btn-glass" href="#xml-to-midi">试试 MusicXML 转 MIDI</a>
         </div>
 
         <div
-          class="strings"
-          id="strings"
-          role="img"
-          aria-label="可拨动的五线谱：划过线和间会发出对应音高"
+          class="flow"
+          id="flow"
+          aria-label="转换流程：照片或 PDF、MusicXML 先变成数字谱，再导出 MIDI 或跟随播放"
         >
-          <svg class="strings-svg" preserveAspectRatio="none"></svg>
-          <div class="strings-labels" aria-hidden="true"></div>
-        </div>
-        <p class="strings-hint" id="strings-hint">
-          <span class="hint-hand" aria-hidden="true"></span
-          ><span class="hint-text">先点一下页面开启声音，再划过五线谱</span>
-          <span>五条线是 <b>E G B D F</b>，四个间是 <b>F A C E</b></span>
-        </p>
-
-        <ul class="hero-chips" aria-label="主要能力">
-          <li class="chip glass float" style="--d: 0s">五线谱 · 简谱 · 卷帘</li>
-          <li class="chip glass float" style="--d: -2s">
-            MusicXML / MIDI / PDF
-          </li>
-          <li class="chip glass float" style="--d: -4s">左右手分开练</li>
-          <li class="chip glass float" style="--d: -1s">40 首公版曲目内置</li>
-        </ul>
-      </section>
-
-      <!-- 关键数字 -->
-      <section class="stats" aria-label="关键数字">
-        <div class="stat glass" data-reveal>
-          <b
-            ><span data-count="20">20</span>–<span data-count="300"
-              >300</span
-            ></b
-          >
-          <span>BPM 变速范围。播放中改速，从当前拍继续，不改曲谱原速。</span>
-        </div>
-        <div class="stat glass" data-reveal>
-          <b><span data-count="3">3</span> 种视图</b>
-          <span>五线谱、简谱、钢琴卷帘共用同一组音高与时间轴。</span>
-        </div>
-        <div class="stat glass" data-reveal>
-          <b><span data-count="1313">1,313</span></b>
-          <span
-            >《野蜂飞舞》7 页全谱的音符数，全部音高与原 PDF 独立复算，0
-            处差异。</span
-          >
-        </div>
-        <div class="stat glass" data-reveal>
-          <b><span data-count="48">48</span> 首</b>
-          <span
-            >内置练习曲：40 首 Mutopia 钢琴曲（初级、进阶各 20）+ 8
-            首吉他入门。</span
-          >
+          <svg class="flow-lines" aria-hidden="true"></svg>
+          <a class="flow-node glass" data-node="photo" href="#score-to-midi">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="3" y="6" width="18" height="14" rx="3" />
+              <circle cx="12" cy="13" r="3.5" />
+              <path d="M8 6l1.5-2h5L16 6" />
+            </svg>
+            <span><b>照片 / PDF</b><small>识谱</small></span>
+          </a>
+          <a class="flow-node glass" data-node="xml" href="#xml-to-midi">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16" />
+            </svg>
+            <span><b>MusicXML</b><small>.musicxml / .xml</small></span>
+          </a>
+          <a class="flow-node glass" data-node="score" href="#follow">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3 6h18M3 10h18M3 14h18M3 18h18" />
+              <ellipse cx="9" cy="16" rx="2.6" ry="2" class="fill" />
+              <path d="M11.5 16V7" />
+            </svg>
+            <span><b>数字谱</b><small>音高 · 时值 · 左右手</small></span>
+          </a>
+          <a class="flow-node glass" data-node="midi" href="#xml-to-midi">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="3" y="5" width="18" height="14" rx="2" />
+              <path d="M7 5v8M11 5v8M15 5v8" />
+            </svg>
+            <span><b>MIDI</b><small>双轨 · 可下载</small></span>
+          </a>
+          <a class="flow-node glass" data-node="play" href="#follow">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M10 8.5v7l6-3.5z" class="fill" />
+            </svg>
+            <span><b>跟随播放</b><small>逐音高亮</small></span>
+          </a>
         </div>
       </section>
 
-      <!-- 产品介绍 -->
-      <section class="section product" id="product">
+      <!-- 01 乐谱转 MIDI -->
+      <section class="section" id="score-to-midi">
         <header class="section-head" data-reveal>
-          <p class="eyebrow">产品</p>
-          <h2>从一页纸，到一份能练的谱</h2>
+          <p class="eyebrow">01 · 乐谱转 MIDI</p>
+          <h2>拍一张谱，得到一份 MIDI</h2>
           <p class="section-sub">
-            乐谱把纸质谱、PDF、MIDI
-            或一段录音，变成能播放、能编辑、能导出的数字谱。下面四步就是它的完整流程。
+            照片、扫描图或整份 PDF 逐行识别成数字谱，再导出成右手、左手两条轨的
+            MIDI 文件。
           </p>
         </header>
 
-        <div class="story">
-          <div class="story-steps">
-            <article class="step is-active" data-step="0">
-              <span class="step-no">01</span>
-              <h3>导入</h3>
-              <p>
-                手机拍照、图片或 PDF 都能直接上传；已经是数字谱的，拖入
-                MusicXML、MXL、MIDI 或 JSON 即可。
-              </p>
-              <ul class="facts">
-                <li><b>50 MB / 200 页</b>单个 PDF 上限</li>
-                <li><b>音频转谱</b>录音在浏览器里转成音符</li>
-              </ul>
-            </article>
-            <article class="step" data-step="1">
-              <span class="step-no">02</span>
-              <h3>识别</h3>
-              <p>
-                逐页检测谱行，左右手两行配成一个系统。每行识别后再独立复读一次；漏检的行可以手动补框，封面和空白页可以排除。
-              </p>
-              <ul class="facts">
-                <li><b>2 次</b>每行识别 + 独立复读</li>
-                <li><b>待校对</b>逐行确认后才进入已校对曲库</li>
-              </ul>
-            </article>
-            <article class="step" data-step="2">
-              <span class="step-no">03</span>
-              <h3>练习</h3>
-              <p>
-                点哪个音就从哪里播。变速、左右手开关、节拍器、小节循环、半音移调都在侧栏；空格键播放
-                / 暂停。
-              </p>
-              <ul class="facts">
-                <li><b>20–300</b>BPM，播放中改速保留拍位</li>
-                <li><b>专注模式</b>只留乐谱和播放键</li>
-              </ul>
-            </article>
-            <article class="step" data-step="3">
-              <span class="step-no">04</span>
-              <h3>改编 · 导出</h3>
-              <p>
-                改单音的音高、时值和演奏手；把一个音替换成和弦；加颤音、波音、琶音和力度。改动可撤销，首次保存另存为修改版。
-              </p>
-              <ul class="facts">
-                <li><b>4 种格式</b>MusicXML、双轨 MIDI、JSON、PDF</li>
-                <li><b>A4 分页</b>PDF 在浏览器本地生成</li>
-              </ul>
-            </article>
-          </div>
-
-          <div class="story-stage">
-            <div class="device glass" id="device" data-scene="0">
-              <div class="device-bar">
-                <i></i><i></i><i></i>
-                <span class="device-title" id="device-title">导入乐谱</span>
+        <div class="panel glass" id="ocr-demo" data-reveal>
+          <div class="ocr-grid">
+            <div class="paper" data-state="idle">
+              <p class="paper-title">欢乐颂<small>贝多芬 曲</small></p>
+              <div class="paper-systems"></div>
+              <div class="scan-beam"></div>
+            </div>
+            <div class="ocr-arrow" aria-hidden="true">
+              <svg viewBox="0 0 48 24"><path d="M2 12h40m-8-8 8 8-8 8" /></svg>
+            </div>
+            <div class="ocr-midi">
+              <div class="track-labels">
+                <span class="r">轨 1 · 右手</span
+                ><span class="l">轨 2 · 左手</span>
               </div>
-              <div class="device-screen">
-                <!-- 场景 1、2：纸谱照片与识别 -->
-                <div class="scene scene-paper">
-                  <div class="paper" id="paper">
-                    <div class="paper-head">
-                      欢乐颂<small>贝多芬 · 第九交响曲主题</small>
-                    </div>
-                    <div class="paper-staff" id="paper-staff"></div>
-                    <div class="scan-beam"></div>
-                    <div class="row-box rb1">
-                      <span>第 1 行 · 复读一致</span>
-                    </div>
-                    <div class="row-box rb2">
-                      <span>第 2 行 · 复读一致</span>
-                    </div>
-                    <div class="row-box rb3 manual"><span>手动补框</span></div>
-                  </div>
-                  <ul class="file-chips">
-                    <li class="glass">IMG_2041.JPG</li>
-                    <li class="glass">练习曲.pdf · 7 页</li>
-                    <li class="glass">ode.musicxml</li>
-                    <li class="glass">left-hand.mid</li>
-                    <li class="glass">哼唱.m4a</li>
-                  </ul>
-                </div>
-                <!-- 场景 3：练习 -->
-                <div class="scene scene-practice">
-                  <div class="mini-toolbar">
-                    <button
-                      class="mini-play"
-                      id="device-play"
-                      type="button"
-                      aria-label="播放示例"
-                      data-silent
-                    >
-                      <svg viewBox="0 0 20 20" class="ic-play">
-                        <path d="M6 4.5v11l9-5.5z" />
-                      </svg>
-                      <svg viewBox="0 0 20 20" class="ic-pause">
-                        <path d="M6 4h3v12H6zM11 4h3v12h-3z" />
-                      </svg>
-                    </button>
-                    <span class="tag">92 BPM</span
-                    ><span class="tag on-r">右手</span
-                    ><span class="tag on-l">左手</span
-                    ><span class="tag">循环 1–2</span
-                    ><span class="tag">节拍器</span>
-                  </div>
-                  <div class="digital" id="device-digital"></div>
-                  <div class="device-keys" id="device-keys"></div>
-                </div>
-                <!-- 场景 4：改编与导出 -->
-                <div class="scene scene-edit">
-                  <div class="digital" id="device-edit"></div>
-                  <div class="popover glass">
-                    <p>替换为和弦</p>
-                    <div class="pop-chips">
-                      <span class="on">大三</span><span>小三</span
-                      ><span>属七</span><span>大七</span><span>小七</span
-                      ><span>减三</span><span>挂四</span>
-                    </div>
-                    <p>演奏效果</p>
-                    <div class="pop-chips">
-                      <span>颤音</span><span>波音</span><span>琶音</span
-                      ><span>断奏</span><span>重音</span>
-                    </div>
-                  </div>
-                  <div class="export-row">
-                    <span>MusicXML</span><span>MIDI · 双轨</span
-                    ><span>JSON</span><span>PDF · A4</span>
-                  </div>
-                </div>
-              </div>
+              <div class="ocr-roll"></div>
             </div>
           </div>
-        </div>
-      </section>
-
-      <!-- 功能介绍 -->
-      <section class="section features" id="features">
-        <header class="section-head" data-reveal>
-          <p class="eyebrow">功能</p>
-          <h2>每个功能，都能在这里直接试</h2>
-          <p class="section-sub">
-            下面的卡片会真的发声。用的是 App 里同一套钢琴音色（Salamander Grand
-            Piano 采样）。
-          </p>
-        </header>
-
-        <div class="bento">
-          <!-- 三种视图 -->
-          <article class="card glass span-7" id="f-views" data-reveal>
-            <div class="card-head">
-              <div>
-                <h3>一份谱，三种读法</h3>
-                <p>
-                  五线谱、简谱、钢琴卷帘共用同一组音高和时间轴。切换视图不打断播放，高亮始终落在同一个音上。
-                </p>
-              </div>
+          <div class="panel-bar">
+            <p class="status" id="ocr-status" aria-live="polite">
+              一页双手钢琴谱 · 2 行 · 8 小节
+            </p>
+            <div class="panel-actions">
+              <button class="btn btn-primary btn-sm" id="ocr-run" type="button">
+                开始识别
+              </button>
               <button
-                class="play-btn"
+                class="btn btn-glass btn-sm"
+                id="ocr-play"
                 type="button"
-                aria-label="播放《欢乐颂》"
-                data-silent
+                disabled
               >
                 <svg viewBox="0 0 20 20" class="ic-play">
                   <path d="M6 4.5v11l9-5.5z" />
@@ -335,9 +177,134 @@
                 <svg viewBox="0 0 20 20" class="ic-pause">
                   <path d="M6 4h3v12H6zM11 4h3v12h-3z" />
                 </svg>
+                <span>播放 MIDI</span>
+              </button>
+              <button
+                class="btn btn-glass btn-sm"
+                id="ocr-download"
+                type="button"
+                disabled
+              >
+                下载 .mid
               </button>
             </div>
-            <div class="seg" role="tablist" aria-label="视图">
+          </div>
+        </div>
+
+        <ul class="facts" data-reveal>
+          <li>
+            <b>照片、图片、PDF</b>单个 PDF 最多 50 MB、200 页，逐页检测谱行
+          </li>
+          <li><b>每行识别两次</b>识别后独立复读核对；漏检的行可以手动补框</li>
+          <li>
+            <b>1,313 个音符</b>《野蜂飞舞》7 页 PDF 转写，全部音高与原谱复核一致
+          </li>
+        </ul>
+        <p class="note">
+          上面是识谱过程的演示动画，生成的 MIDI 是真实文件。图片 / PDF
+          识谱在本机版和账号版中提供。
+        </p>
+      </section>
+
+      <!-- 02 MusicXML 转 MIDI -->
+      <section class="section" id="xml-to-midi">
+        <header class="section-head" data-reveal>
+          <p class="eyebrow">02 · MusicXML 转 MIDI</p>
+          <h2>MusicXML 拖进来，MIDI 拿走</h2>
+          <p class="section-sub">
+            就在这个页面里转换，文件不会离开你的浏览器。钢琴的上下两个谱表分成两条
+            MIDI 轨。
+          </p>
+        </header>
+
+        <div class="panel glass" id="converter" data-reveal>
+          <label class="drop" id="drop">
+            <input type="file" id="xml-file" accept=".musicxml,.xml" />
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M12 15V4m-4 4 4-4 4 4M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"
+              />
+            </svg>
+            <b>拖入 .musicxml / .xml 文件，或点这里选择</b>
+            <small>不上传，转换在本机完成</small>
+          </label>
+          <div class="samples">
+            <span>或用示例：</span>
+            <button class="chip-btn" type="button" data-sample="ode">
+              欢乐颂 · 16 小节
+            </button>
+            <button class="chip-btn" type="button" data-sample="bee">
+              野蜂飞舞 · 7 页 105 小节
+            </button>
+          </div>
+
+          <div class="result" id="xml-result" hidden>
+            <div class="result-head">
+              <div>
+                <h3 class="result-title"></h3>
+                <p class="result-sub"></p>
+              </div>
+              <div class="panel-actions">
+                <button
+                  class="btn btn-glass btn-sm"
+                  id="xml-play"
+                  type="button"
+                >
+                  <svg viewBox="0 0 20 20" class="ic-play">
+                    <path d="M6 4.5v11l9-5.5z" />
+                  </svg>
+                  <svg viewBox="0 0 20 20" class="ic-pause">
+                    <path d="M6 4h3v12H6zM11 4h3v12h-3z" />
+                  </svg>
+                  <span>播放</span>
+                </button>
+                <button
+                  class="btn btn-primary btn-sm"
+                  id="xml-download"
+                  type="button"
+                >
+                  下载 .mid
+                </button>
+              </div>
+            </div>
+            <dl class="result-stats"></dl>
+            <canvas
+              class="result-roll"
+              aria-label="转换出的 MIDI 音符总览"
+            ></canvas>
+            <p class="note result-note"></p>
+          </div>
+          <p class="error" id="xml-error" role="alert" hidden></p>
+        </div>
+      </section>
+
+      <!-- 03 跟随播放 -->
+      <section class="section" id="follow">
+        <header class="section-head" data-reveal>
+          <p class="eyebrow">03 · 在线跟随播放</p>
+          <h2>播放到哪，谱就亮到哪</h2>
+          <p class="section-sub">
+            逐音高亮、自动翻行；点任意一个音，就从那里开始。速度 20–300
+            BPM，播放中改速不丢拍位。
+          </p>
+        </header>
+
+        <div class="panel glass" id="follower" data-reveal>
+          <div class="follow-bar">
+            <button
+              class="play-round"
+              id="follow-play"
+              type="button"
+              aria-label="播放"
+            >
+              <svg viewBox="0 0 20 20" class="ic-play">
+                <path d="M6 4.5v11l9-5.5z" />
+              </svg>
+              <svg viewBox="0 0 20 20" class="ic-pause">
+                <path d="M6 4h3v12H6zM11 4h3v12h-3z" />
+              </svg>
+            </button>
+            <div class="seg" role="tablist" aria-label="谱面">
               <span class="seg-pill" aria-hidden="true"></span>
               <button role="tab" aria-selected="true" data-view="staff">
                 五线谱
@@ -345,668 +312,63 @@
               <button role="tab" aria-selected="false" data-view="jianpu">
                 简谱
               </button>
-              <button role="tab" aria-selected="false" data-view="roll">
-                钢琴卷帘
-              </button>
-              <button role="tab" aria-selected="false" data-view="all">
-                三层对齐
-              </button>
             </div>
-            <div class="views" data-view="staff">
-              <div class="view view-staff"></div>
-              <div class="view view-jianpu"></div>
-              <div class="view view-roll"></div>
-            </div>
-            <p class="card-foot">示例：《欢乐颂》主题前 4 小节 · 1 = C · 4/4</p>
-          </article>
-
-          <!-- 变速 -->
-          <article class="card glass span-5" id="f-tempo" data-reveal>
-            <div class="card-head">
-              <div>
-                <h3>20–300 BPM 变速</h3>
-                <p>
-                  拖动滑杆或直接输入整数。播放中改速从当前拍继续，只改练习速度，不改曲谱原速。
-                </p>
-              </div>
-              <button
-                class="play-btn"
-                type="button"
-                aria-label="播放"
-                data-silent
-              >
-                <svg viewBox="0 0 20 20" class="ic-play">
-                  <path d="M6 4.5v11l9-5.5z" />
-                </svg>
-                <svg viewBox="0 0 20 20" class="ic-pause">
-                  <path d="M6 4h3v12H6zM11 4h3v12h-3z" />
-                </svg>
-              </button>
-            </div>
-            <div class="tempo-face">
-              <div class="metronome" aria-hidden="true">
-                <i class="arm"></i><i class="base"></i>
-              </div>
-              <label class="bpm">
-                <input
-                  type="number"
-                  min="20"
-                  max="300"
-                  step="1"
-                  value="100"
-                  aria-label="BPM"
-                />
-                <span>BPM</span>
-              </label>
-            </div>
-            <input
-              class="range"
-              type="range"
-              min="20"
-              max="300"
-              step="1"
-              value="100"
-              aria-label="速度"
-            />
-            <div class="range-marks">
-              <span>20</span><span>原速 100</span><span>300</span>
-            </div>
-            <label class="switch"
-              ><input type="checkbox" checked /><span></span>节拍器</label
-            >
-          </article>
-
-          <!-- 分手练习 -->
-          <article class="card glass span-4" id="f-hands" data-reveal>
-            <div class="card-head">
-              <div>
-                <h3>左右手分开练</h3>
-                <p>
-                  任意一只手可以单独静音。巴赫《二部创意曲》第 1
-                  首：先听右手主题，再加入左手模仿。
-                </p>
-              </div>
-              <button
-                class="play-btn"
-                type="button"
-                aria-label="播放"
-                data-silent
-              >
-                <svg viewBox="0 0 20 20" class="ic-play">
-                  <path d="M6 4.5v11l9-5.5z" />
-                </svg>
-                <svg viewBox="0 0 20 20" class="ic-pause">
-                  <path d="M6 4h3v12H6zM11 4h3v12h-3z" />
-                </svg>
-              </button>
-            </div>
-            <div class="hand-roll"></div>
-            <div class="hand-toggles">
-              <button
-                class="hand on r"
-                type="button"
-                data-hand="0"
-                aria-pressed="true"
-              >
-                右手 <small>240 音</small>
-              </button>
-              <button
-                class="hand on l"
-                type="button"
-                data-hand="1"
-                aria-pressed="true"
-              >
-                左手 <small>218 音</small>
-              </button>
-            </div>
-          </article>
-
-          <!-- 小节循环 -->
-          <article class="card glass span-4" id="f-loop" data-reveal>
-            <div class="card-head">
-              <div>
-                <h3>按小节循环</h3>
-                <p>
-                  点两下选定起止小节，反复播放这一段。配合慢速，把卡住的两小节单独练顺。
-                </p>
-              </div>
-              <button
-                class="play-btn"
-                type="button"
-                aria-label="播放"
-                data-silent
-              >
-                <svg viewBox="0 0 20 20" class="ic-play">
-                  <path d="M6 4.5v11l9-5.5z" />
-                </svg>
-                <svg viewBox="0 0 20 20" class="ic-pause">
-                  <path d="M6 4h3v12H6zM11 4h3v12h-3z" />
-                </svg>
-              </button>
-            </div>
-            <div class="bars" role="group" aria-label="选择循环小节"></div>
-            <p class="loop-status">
-              <span class="loop-range">循环 第 3–4 小节</span
-              ><span class="loop-count">已播放 0 遍</span>
-            </p>
-          </article>
-
-          <!-- 移调 -->
-          <article class="card glass span-4" id="f-transpose" data-reveal>
-            <div class="card-head">
-              <div>
-                <h3>半音移调</h3>
-                <p>
-                  按半音升降，播放和五线谱位置一起改变。适合把谱移到自己顺手或适合伴唱的调。
-                </p>
-              </div>
-              <button
-                class="play-btn"
-                type="button"
-                aria-label="播放"
-                data-silent
-              >
-                <svg viewBox="0 0 20 20" class="ic-play">
-                  <path d="M6 4.5v11l9-5.5z" />
-                </svg>
-                <svg viewBox="0 0 20 20" class="ic-pause">
-                  <path d="M6 4h3v12H6zM11 4h3v12h-3z" />
-                </svg>
-              </button>
-            </div>
-            <div class="stepper">
-              <button type="button" data-step="-1" aria-label="降半音">
-                −
-              </button>
-              <output
-                ><b class="key-name">C</b
-                ><small class="semi">0 半音</small></output
-              >
-              <button type="button" data-step="1" aria-label="升半音">+</button>
-            </div>
-            <div class="transpose-staff"></div>
-          </article>
-
-          <!-- 和弦替换 -->
-          <article class="card glass span-6" id="f-chords" data-reveal>
-            <div class="card-head">
-              <div>
-                <h3>一个音，换成和弦</h3>
-                <p>
-                  选中音符后替换为同一时刻、同一只手的和弦，另一只手和其他时刻的音符保持不变。点一下听听：
-                </p>
-              </div>
-            </div>
-            <div class="chord-chips">
-              <button type="button" data-chord="maj">大三</button>
-              <button type="button" data-chord="min">小三</button>
-              <button type="button" data-chord="dom7">属七</button>
-              <button type="button" data-chord="maj7">大七</button>
-              <button type="button" data-chord="min7">小七</button>
-              <button type="button" data-chord="dim">减三</button>
-              <button type="button" data-chord="sus4">挂四</button>
-            </div>
-            <div class="chord-view">
-              <div class="chord-staff"></div>
-              <div class="mini-keys chord-keys"></div>
-            </div>
-            <p class="card-foot chord-readout">根音 C4 · 点上面的和弦</p>
-          </article>
-
-          <!-- 演奏效果 -->
-          <article class="card glass span-6" id="f-effects" data-reveal>
-            <div class="card-head">
-              <div>
-                <h3>演奏效果，逐音设置</h3>
-                <p>
-                  力度、重音、断奏、颤音、波音、琶音都会改变实际发声，而不只是谱面上的记号。
-                </p>
-              </div>
-            </div>
-            <div class="effect-chips">
-              <button type="button" data-fx="plain">原音</button>
-              <button type="button" data-fx="dyn">pp → ff</button>
-              <button type="button" data-fx="accent">重音</button>
-              <button type="button" data-fx="staccato">断奏</button>
-              <button type="button" data-fx="trill">颤音</button>
-              <button type="button" data-fx="mordent">波音</button>
-              <button type="button" data-fx="arp">琶音</button>
-            </div>
-            <div class="effect-roll"></div>
-            <p class="card-foot effect-readout">
-              每个效果都按 App 的发声规则展开，下方是实际发出的音。
-            </p>
-          </article>
-
-          <!-- 大小调 -->
-          <article class="card glass span-5" id="f-mode" data-reveal>
-            <div class="card-head">
-              <div>
-                <h3>大调 ⇄ 小调</h3>
-                <p>
-                  按同主音大调 /
-                  自然小调规则，改写音阶内的音高与调号；调外音保留原音高。
-                </p>
-              </div>
-              <button
-                class="play-btn"
-                type="button"
-                aria-label="播放《小星星》"
-                data-silent
-              >
-                <svg viewBox="0 0 20 20" class="ic-play">
-                  <path d="M6 4.5v11l9-5.5z" />
-                </svg>
-                <svg viewBox="0 0 20 20" class="ic-pause">
-                  <path d="M6 4h3v12H6zM11 4h3v12h-3z" />
-                </svg>
-              </button>
-            </div>
-            <div class="mode-switch" role="radiogroup" aria-label="调式">
-              <button
-                type="button"
-                role="radio"
-                aria-checked="true"
-                data-mode="major"
-              >
-                C 大调
-              </button>
-              <button
-                type="button"
-                role="radio"
-                aria-checked="false"
-                data-mode="minor"
-              >
-                c 小调
-              </button>
-              <span class="mode-thumb" aria-hidden="true"></span>
-            </div>
-            <div class="mode-jianpu"></div>
-            <p class="card-foot mode-readout">
-              《小星星》前 4 小节 · 播放中也可以切换
-            </p>
-          </article>
-
-          <!-- 打印 -->
-          <article class="card glass span-7" id="f-print" data-reveal>
-            <div class="print-layout">
-              <div>
-                <h3>打印成 PDF</h3>
-                <p>
-                  A4 纵向分页，每行保持完整，附曲名、作者、原速和页码。PDF
-                  在浏览器本地生成，网页版也能用。
-                </p>
-                <div class="print-opts">
-                  <p>谱面风格</p>
-                  <div class="opt-chips" data-opt="theme">
-                    <button type="button" class="on" data-v="classic">
-                      经典黑白
-                    </button>
-                    <button type="button" data-v="modern">现代简约</button>
-                    <button type="button" data-v="warm">暖色手稿</button>
-                  </div>
-                  <p>抬头</p>
-                  <div class="opt-chips" data-opt="head">
-                    <button type="button" class="on" data-v="center">
-                      居中
-                    </button>
-                    <button type="button" data-v="left">左对齐</button>
-                    <button type="button" data-v="frame">边框</button>
-                  </div>
-                </div>
-                <p class="card-foot">
-                  还可选宋体 / 黑体 / 楷体，Bravura / Gonville / Petaluma
-                  谱字，10–24 mm 页边距。
-                </p>
-              </div>
-              <div class="sheet" data-theme="classic" data-head="center">
-                <div class="sheet-head">
-                  <b>欢乐颂</b><small>贝多芬 曲</small>
-                </div>
-                <div class="sheet-meta">
-                  <span>♩ = 100</span><span>作谱：你的名字</span>
-                </div>
-                <div class="sheet-staff"></div>
-                <div class="sheet-staff s2"></div>
-                <div class="sheet-staff s3"></div>
-                <span class="sheet-page">1 / 1</span>
-              </div>
-            </div>
-          </article>
-
-          <!-- 格式与设备 -->
-          <article
-            class="card glass span-12 formats"
-            id="f-formats"
-            data-reveal
-          >
-            <div class="formats-col">
-              <h3>进得来，也出得去</h3>
-              <div class="format-rows">
-                <p>
-                  <span class="lbl">导入</span
-                  ><span class="pill">JPG / PNG</span
-                  ><span class="pill">PDF</span
-                  ><span class="pill">MusicXML</span
-                  ><span class="pill">MXL</span><span class="pill">MIDI</span
-                  ><span class="pill">JSON</span><span class="pill">音频</span>
-                </p>
-                <p>
-                  <span class="lbl">导出</span><span class="pill">MusicXML</span
-                  ><span class="pill">双轨 MIDI</span
-                  ><span class="pill">JSON</span
-                  ><span class="pill">PDF / 打印</span>
-                </p>
-              </div>
-            </div>
-            <div class="formats-col">
-              <h3>钢琴，也有吉他</h3>
-              <p>
-                吉他六线谱视图，附 8 首吉他入门曲：空弦、单音旋律到 C 与 Am
-                分解。
-              </p>
-            </div>
-            <div class="formats-col">
-              <h3>电脑、iPad、iPhone</h3>
-              <p>
-                iPad 竖屏、iPhone
-                横屏默认进入专注模式；顶栏、侧栏和键盘可分别收起，旋转屏幕不重置播放进度。
-              </p>
-            </div>
-          </article>
-        </div>
-      </section>
-
-      <!-- 示范案例 -->
-      <section class="section cases-section" id="cases">
-        <header class="section-head" data-reveal>
-          <p class="eyebrow">案例</p>
-          <h2>真实曲目，原样数据</h2>
-          <p class="section-sub">
-            下面的片段直接取自乐谱内置曲库的数字谱，音符、力度和左右手都未改动。拖动瀑布流可以定位。
+            <label class="tempo">
+              <span>速度</span>
+              <input
+                class="range"
+                type="range"
+                min="20"
+                max="300"
+                step="1"
+                value="100"
+                aria-label="速度 BPM"
+              />
+              <output>100 BPM</output>
+            </label>
+          </div>
+          <div class="follow-view">
+            <div class="follow-page"></div>
+          </div>
+          <p class="note follow-status">
+            《欢乐颂》主题 16 小节 · 1 = C · 4/4 · 点音符可定位
           </p>
-        </header>
-
-        <div class="cases glass" id="case-player" data-reveal>
-          <div class="case-tabs" role="tablist" aria-label="选择曲目"></div>
-          <div class="case-main">
-            <div class="case-stage">
-              <canvas class="case-canvas" aria-label="钢琴瀑布流"></canvas>
-              <div class="case-bar-label"></div>
-              <button
-                class="case-big-play"
-                type="button"
-                aria-label="播放"
-                data-silent
-              >
-                <svg viewBox="0 0 20 20" class="ic-play">
-                  <path d="M6 4.5v11l9-5.5z" />
-                </svg>
-                <svg viewBox="0 0 20 20" class="ic-pause">
-                  <path d="M6 4h3v12H6zM11 4h3v12h-3z" />
-                </svg>
-              </button>
-            </div>
-            <aside class="case-info">
-              <p class="case-kicker"></p>
-              <h3 class="case-title"></h3>
-              <p class="case-sub"></p>
-              <dl class="case-stats"></dl>
-              <p class="case-tip"></p>
-              <div class="case-controls">
-                <div class="ctl-row">
-                  <span class="ctl-label">速度</span>
-                  <div class="opt-chips case-speed">
-                    <button type="button" data-rate="0.5">50%</button>
-                    <button type="button" data-rate="0.75">75%</button>
-                    <button type="button" class="on" data-rate="1">原速</button>
-                  </div>
-                  <output class="case-bpm"></output>
-                </div>
-                <div class="ctl-row">
-                  <span class="ctl-label">分手</span>
-                  <button
-                    class="hand on r"
-                    type="button"
-                    data-hand="0"
-                    aria-pressed="true"
-                  >
-                    右手
-                  </button>
-                  <button
-                    class="hand on l"
-                    type="button"
-                    data-hand="1"
-                    aria-pressed="true"
-                  >
-                    左手
-                  </button>
-                </div>
-              </div>
-              <p class="case-source"></p>
-            </aside>
-          </div>
         </div>
       </section>
 
-      <!-- 玩一下 -->
-      <section class="section play-section" id="play">
-        <header class="section-head" data-reveal>
-          <p class="eyebrow">玩一下</p>
-          <h2>弹、接、哼，三种玩法</h2>
-          <p class="section-sub">
-            全部在浏览器里实时发声。电脑可以直接用键盘弹：A S D F G H J K
-            是白键，W E T Y U 是黑键。
-          </p>
-        </header>
-
-        <div class="play glass" data-reveal>
-          <div class="seg play-tabs" role="tablist" aria-label="玩法">
-            <span class="seg-pill" aria-hidden="true"></span>
-            <button role="tab" aria-selected="true" data-pane="free">
-              自由弹奏
-            </button>
-            <button role="tab" aria-selected="false" data-pane="game">
-              下落挑战
-            </button>
-            <button role="tab" aria-selected="false" data-pane="hum">
-              哼一句
-            </button>
-          </div>
-
-          <!-- 自由弹奏 -->
-          <div class="pane is-active" data-pane="free">
-            <div class="pane-top">
-              <p class="pane-tip">
-                弹下的每个音会同时写进五线谱和简谱；同时按住几个键，会认出是什么和弦。
-              </p>
-              <div class="pane-actions">
-                <span
-                  class="chord-name"
-                  id="free-chord"
-                  aria-live="polite"
-                ></span>
-                <button
-                  class="btn btn-glass btn-sm"
-                  id="free-rec"
-                  type="button"
-                  data-silent
-                >
-                  <i class="rec-dot"></i><span>录音</span>
-                </button>
-                <button
-                  class="btn btn-glass btn-sm"
-                  id="free-replay"
-                  type="button"
-                  disabled
-                  data-silent
-                >
-                  回放
-                </button>
-                <button
-                  class="btn btn-glass btn-sm"
-                  id="free-clear"
-                  type="button"
-                >
-                  清空
-                </button>
-              </div>
-            </div>
-            <div class="free-score">
-              <div class="free-staff" id="free-staff"></div>
-              <div class="free-jianpu" id="free-jianpu"></div>
-            </div>
-            <div class="keyboard" id="free-keys"></div>
-            <div class="octave">
-              <button type="button" id="oct-down" aria-label="降八度">
-                ‹ 低八度
-              </button>
-              <span id="oct-label">C4–C6</span>
-              <button type="button" id="oct-up" aria-label="升八度">
-                高八度 ›
-              </button>
-            </div>
-          </div>
-
-          <!-- 下落挑战 -->
-          <div class="pane" data-pane="game">
-            <div class="pane-top">
-              <div class="game-pick">
-                <div class="opt-chips" id="game-songs"></div>
-                <div class="opt-chips" id="game-speed">
-                  <button type="button" data-bpm="70">慢 70</button>
-                  <button type="button" class="on" data-bpm="96">中 96</button>
-                  <button type="button" data-bpm="126">快 126</button>
-                </div>
-              </div>
-              <div class="game-hud">
-                <span>得分 <b id="g-score">0</b></span>
-                <span>连击 <b id="g-combo">0</b></span>
-                <span>准确率 <b id="g-acc">—</b></span>
-              </div>
-            </div>
-            <div class="game-stage">
-              <canvas class="game-canvas" aria-label="下落音符游戏"></canvas>
-              <div class="game-judge" id="g-judge" aria-live="polite"></div>
-              <div class="game-overlay" id="g-overlay">
-                <p class="go-title">音符落到键盘线时按下对应的键</p>
-                <p class="go-sub">
-                  电脑按键盘字母，手机直接点琴键。速度按 BPM 计，和 App
-                  里的变速是同一个单位。
-                </p>
-                <div class="go-actions">
-                  <button
-                    class="btn btn-primary"
-                    id="g-start"
-                    type="button"
-                    data-silent
-                  >
-                    开始
-                  </button>
-                  <button
-                    class="btn btn-glass"
-                    id="g-demo"
-                    type="button"
-                    data-silent
-                  >
-                    先看演示
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 哼一句 -->
-          <div class="pane" data-pane="hum">
-            <div class="pane-top">
-              <p class="pane-tip">
-                打开麦克风，哼或唱一句单音旋律，音高会实时画出来并落成音符。声音只在你的浏览器里分析，不上传。
-              </p>
-              <div class="pane-actions">
-                <button
-                  class="btn btn-primary btn-sm"
-                  id="hum-start"
-                  type="button"
-                  data-silent
-                >
-                  打开麦克风
-                </button>
-                <button
-                  class="btn btn-glass btn-sm"
-                  id="hum-play"
-                  type="button"
-                  disabled
-                  data-silent
-                >
-                  用钢琴回放
-                </button>
-                <button
-                  class="btn btn-glass btn-sm"
-                  id="hum-clear"
-                  type="button"
-                >
-                  清空
-                </button>
-              </div>
-            </div>
-            <div class="hum-stage">
-              <canvas class="hum-canvas" aria-label="实时音高曲线"></canvas>
-              <div class="hum-now">
-                <b id="hum-note">—</b><small id="hum-hz">等待声音</small>
-              </div>
-            </div>
-            <div class="free-score">
-              <div class="free-staff" id="hum-staff"></div>
-              <div class="free-jianpu" id="hum-jianpu"></div>
-            </div>
-            <p class="card-foot">
-              这里是单音演示。App 内的「音频转谱」在浏览器里运行 Basic Pitch
-              模型，可以转写多声部录音。
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <!-- 收尾 -->
       <section class="section finale" data-reveal>
         <div class="finale-card glass">
-          <h2>打开就能练</h2>
+          <h2>打开就能用</h2>
           <p>
-            网页版包含内置曲库、五线谱 /
-            简谱、播放、编辑、变速、分手、循环、移调、导入导出和音频转谱。图片 /
-            PDF 识谱与联网找谱需要本机版或账号版。
+            网页版支持 MusicXML / MXL / MIDI
+            导入、跟随播放、变速与分手练习，并可导出 MIDI、MusicXML 和 PDF。
           </p>
-          <div class="hero-cta">
-            <a
-              class="btn btn-primary magnetic"
-              href="https://dns0129.github.io/Open_Piano_Player/"
-              target="_blank"
-              rel="noopener"
-            >
-              在线打开乐谱
-              <svg viewBox="0 0 20 20" aria-hidden="true">
-                <path d="M5 10h10m-4-4 4 4-4 4" />
-              </svg>
-            </a>
-            <a class="btn btn-glass magnetic" href="#play">再玩一次</a>
-          </div>
+          <a
+            class="btn btn-primary"
+            href="https://dns0129.github.io/Open_Piano_Player/"
+            target="_blank"
+            rel="noopener"
+          >
+            在线打开乐谱
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M5 10h10m-4-4 4 4-4 4" />
+            </svg>
+          </a>
         </div>
       </section>
     </main>
 
     <footer class="footer">
       <p>
-        钢琴音色：Salamander Grand Piano，Alexander Holm，CC BY 3.0（经 Tone.js
-        发布的 MP3，未改动）。
+        钢琴音色：Salamander Grand Piano，Alexander Holm，CC BY
+        3.0。谱面字形：Bravura，Steinberg，SIL OFL 1.1。
       </p>
       <p>
-        谱面字形：Bravura，Steinberg Media Technologies，SIL Open Font License
-        1.1。
+        《野蜂飞舞》示例：里姆斯基-科萨科夫 曲，Kevin W. K. Yeung 钢琴编配，CC
+        BY-SA 3.0（IMSLP）。《欢乐颂》旋律为公版。
       </p>
-      <p>案例曲目来源与许可见各案例卡片；《欢乐颂》《小星星》旋律为公版。</p>
     </footer>
 
-    <script src="assets/cases.js"></script>
     <script src="assets/site.js"></script>
   </body>
 </html>
