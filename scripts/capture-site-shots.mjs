@@ -3,13 +3,31 @@
 //   - the public web app: 《致爱丽丝》 playing (staff, jianpu, export dialog, phone) and the recognised BWV 846 over its original page;
 //   - the local app (QINBAN_URL, default http://127.0.0.1:8792): the PDF import preview for Chopin Op.28 No.7.
 //     It only opens the preview, which runs in the browser; it never starts recognition, so nothing is written to .local/.
-// Needs Node ≥ 22 (global WebSocket) and Chrome. Run: node scripts/capture-site-shots.mjs [desktop source phone local]
-import { spawn } from "node:child_process";
+// Needs Chrome and Node ≥ 21 (on 21 it reruns itself with --experimental-websocket).
+// Run: node scripts/capture-site-shots.mjs [desktop source phone local]
+import { spawn, spawnSync } from "node:child_process";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createCanvas, loadImage } from "@napi-rs/canvas";
+
+// Node 21 has WebSocket behind a flag; rerun once with it instead of failing.
+if (typeof WebSocket === "undefined") {
+  if (
+    Number(process.versions.node.split(".")[0]) >= 21 &&
+    !process.execArgv.includes("--experimental-websocket")
+  ) {
+    const run = spawnSync(
+      process.execPath,
+      ["--experimental-websocket", ...process.argv.slice(1)],
+      { stdio: "inherit" },
+    );
+    process.exit(run.status ?? 1);
+  }
+  console.error(`需要 Node.js 21 或更新版本（当前 ${process.version}）。`);
+  process.exit(1);
+}
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const WEB =
@@ -254,7 +272,7 @@ if (want("local")) {
       objectId: input.result.objectId,
     });
     await sleep(9000);
-    await save(await local.png(), "scan-rows", 1400, [158, 734, 2564, 1023]);
+    await save(await local.png(), "scan-rows", 1400, [158, 734, 2564, 990]);
   } catch (err) {
     console.warn(
       `skipped scan-rows.webp (local app at ${LOCAL}): ${err.message}`,

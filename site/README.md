@@ -18,10 +18,10 @@ python3 -m http.server 8817 --directory site
 
 ## 截图
 
-`npm run site:shots`（`scripts/capture-site-shots.mjs`，需 Node ≥ 22 和本机 Chrome）用无界面 Chrome 和一次性配置目录重新截取 `assets/shots/`：
+`npm run site:shots`（`scripts/capture-site-shots.mjs`，需本机 Chrome 和 Node ≥ 21）用无界面 Chrome 和一次性配置目录重新截取 `assets/shots/`：
 
 - 公开网页版：《致爱丽丝》播放中的五线谱、简谱、导出窗口和手机视图；识谱得到的 BWV 846 叠在原谱上播放。
-- 本机版（`QINBAN_URL`，默认 `http://127.0.0.1:8792/`）：导入肖邦 Op.28 No.7 PDF 后的谱行预览。只打开预览，不开始识谱，不会写入 `.local/`；本机服务没开时跳过，保留已有截图。
+- 本机版（`QINBAN_URL`，默认 `http://127.0.0.1:8792/`）：导入肖邦 Op.28 No.7 PDF 后的谱行预览。只打开预览，不开始识谱，不会写入 `.local/`；本机服务没开时跳过，保留已有截图；先用 `启动琴伴.command` 或 `npm start` 打开本机版再截。
 
 可以只截某一部分：`node scripts/capture-site-shots.mjs desktop source phone local`。
 
