@@ -12,9 +12,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: npm
       - run: npm ci
       - run: npm run check
+      - run: npm ci --ignore-scripts --prefix skills/piano-score-to-musicxml
+      - run: npm test --prefix skills/piano-score-to-musicxml
       - run: npm run build
       - run: npm run build:pages

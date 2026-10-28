@@ -33,7 +33,7 @@
     "lint": "node scripts/lint.mjs",
     "format": "prettier --write src",
     "format:check": "prettier --check src",
-    "check": "npm run typecheck && npm run lint && npm run format:check && npm test && npm run scores:verify",
+    "check": "npm run recognition:versions && npm run recognition:release && npm run typecheck && npm run lint && npm run format:check && npm test && npm run scores:verify",
     "prebuild:hosted": "node scripts/require-node.mjs",
     "build:hosted": "node scripts/prepare-assets.mjs && VITE_HOSTED_SITE=1 vite build --outDir dist-hosted",
     "accounts:start": "node scripts/accounts.mjs start",
@@ -42,7 +42,11 @@
     "commercial:build": "npm run build:hosted",
     "commercial:start": "node scripts/accounts.mjs start",
     "commercial:operator": "node scripts/accounts.mjs operator",
-    "accounts:operator": "node scripts/accounts.mjs operator"
+    "accounts:operator": "node scripts/accounts.mjs operator",
+    "precheck": "node scripts/require-node.mjs",
+    "recognition:versions": "node scripts/check-recognition-versions.mjs",
+    "recognition:regression": "node scripts/recognition-regression.mjs",
+    "recognition:release": "node scripts/check-recognition-release.mjs"
   },
   "dependencies": {
     "@earendil-works/pi-agent-core": "1.1.0",

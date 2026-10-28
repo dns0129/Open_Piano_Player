@@ -16,6 +16,19 @@ npm test
 
 `--no-render` 仅导出 XML/MIDI/JSON；`--draft` 允许未完成复核的结构有效草稿。输入错误、漏页、哈希不符、音高/临时记号矛盾仍然失败。输出目录须为新目录，避免覆盖上次制谱结果。按页图顺序提交多个输入文件；工具不会猜文件名中的数字顺序。
 
+## v1.3 原子交付与续跑
+
+结果先写入输出目录旁的 `.名称.partial`，每个完成文件保存哈希和大小。所有 XML、MIDI、JSON、可选 SVG/预览与报告完成校验后，再一次发布正式目录，并附 `artifact-manifest.json`。artifactSetComplete 只表示产物文件集齐全；转录是否完成仍以 transcriptionStatus、报告的 checked/draft 和原图复核证据为准。
+
+中断后，确认旧进程已结束，可对相同输入、清单、工具实现和构建选项追加 `--resume`。恢复先核对输入/代码指纹及已有产物，复用正确文件；输入变化、用户修改的文件、未知文件或仍在运行的构建不会被覆盖。已完成输出只有在清单和全部文件哈希吻合时才可按 --resume 读回。
+
+```bash
+node scripts/score_pipeline.mjs --input work/transcription.json \
+  --manifest work/pages/manifest.json --out work/result --resume
+```
+
+新输出目录默认不覆盖旧结果。崩溃遗留的暂存、锁和中断临时文件用于恢复/排查；工具不会以清理其他目录来继续任务。
+
 ## 转录 envelope
 
 完整示例在 [自编符号测试谱数据](../assets/transcription-example.json)。该示例的页哈希是占位标识，不能作为任何真实乐谱的识别答案。测试脚本生成自己的临时页图与真实哈希。

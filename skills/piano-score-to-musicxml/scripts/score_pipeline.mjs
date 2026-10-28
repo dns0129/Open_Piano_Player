@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import fs from 'node:fs/promises';
+import {artifactOutput,verifyArtifactOutput} from './artifact-output.mjs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
@@ -297,52 +298,63 @@ export function usageSummary(calls=[]) {
   })),note:'逐字段只累计实际返回值；缓存/思考字段可能包含于 input/output/total，不能再相加。空缺不是0。'};
 }
 
-export async function build(input,manifestFile,out,{draft=false,render=true}={}) {
-  const started=performance.now(), raw=JSON.parse(await fs.readFile(input,'utf8'));
-  const manifest=JSON.parse(await fs.readFile(manifestFile,'utf8'));
-  // Verify the actual images still match the evidence, not just matching JSON strings.
-  for(const p of manifest.pages) {
+async function implementationFingerprint(){
+  const folder=path.dirname(fileURLToPath(import.meta.url)),files=[];
+  async function walk(dir){for(const entry of await fs.readdir(dir,{withFileTypes:true})){const full=path.join(dir,entry.name);if(entry.isDirectory())await walk(full);else if(entry.name.endsWith('.mjs'))files.push(full);}}
+  await walk(folder);
+  const sources=[];for(const file of files.sort())sources.push([path.relative(folder,file),sha(await fs.readFile(file))]);
+  return sha(JSON.stringify(sources));
+}
+export async function build(input,manifestFile,out,{draft=false,render=true,resume=false,onArtifact}={}) {
+  const started=performance.now(),inputBytes=await fs.readFile(input),manifestBytes=await fs.readFile(manifestFile),raw=JSON.parse(inputBytes),manifest=JSON.parse(manifestBytes);
+  for(const p of manifest.pages){
     assert(!path.isAbsolute(p.file)&&!p.file.split(/[\\/]/).includes('..'),'manifest 中的页图必须在清单目录内');
     assert(sha(await fs.readFile(path.resolve(path.dirname(manifestFile),p.file)))===p.sha256,`原图第 ${p.page} 页已变化`);
   }
-  const checked=validateTranscription(raw,manifest,{draft});
-  assert(!await fs.stat(out).then(()=>true,()=>false),'输出目录已存在；选择新目录以保留上次结果');
-  await fs.mkdir(out,{recursive:true});
-  const xml=musicXML(checked), midiBytes=midi(checked);
-  await fs.writeFile(path.join(out,'score.musicxml'),xml);
-  await fs.writeFile(path.join(out,'score.mid'),midiBytes);
-  await fs.writeFile(path.join(out,'score.qinban.json'),JSON.stringify(checked.score,null,2)+'\n');
-  await fs.copyFile(input,path.join(out,'transcription.json'));
-  await fs.copyFile(manifestFile,path.join(out,'source-manifest.json'));
-  let engravedPages=null;
-  if(render) {
-    const [{default:createModule},{VerovioToolkit}]=await Promise.all([import('verovio/wasm'),import('verovio/esm')]);
-    const tk=new VerovioToolkit(await createModule());
-    try {
-      tk.setOptions({inputFrom:'musicxml',breaks:'auto',pageWidth:2100,pageHeight:2970,scale:40,svgViewBox:true,svgHtml5:true,header:'none',footer:'none'});
-      assert(tk.loadData(xml),'Verovio 无法加载生成的 MusicXML');engravedPages=tk.getPageCount();
-      assert(engravedPages>0,'没有生成重绘谱页');
-      for(let p=1;p<=engravedPages;p++)await fs.writeFile(path.join(out,`engraved-${String(p).padStart(3,'0')}.svg`),tk.renderToSVG(p));
-    } finally {tk.destroy();}
-    const html='<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>重新制谱</title><style>body{margin:0;background:#eee}img{display:block;width:100%;max-width:1100px;margin:16px auto;background:white}@media print{img{break-after:page;margin:0;max-width:100%}}</style>'+Array.from({length:engravedPages},(_,i)=>`<img alt="重绘第${i+1}页" src="engraved-${String(i+1).padStart(3,'0')}.svg">`).join('');
-    await fs.writeFile(path.join(out,'index.html'),html);
-  }
-  const report={schema:'piano-score-report/v1',status:checked.blockers.length?'draft':'checked',review:raw.review,humanConfirmed:raw.review?.humanConfirmed===true,
-    sourcePages:manifest.pages.length,coverage:checked.coverage,measures:checked.score.measureMap.length,writtenMainNotes:checked.score.notes.length,
-    writtenGraces:(checked.notation.graces||[]).length,performedEvents:performanceNotes(checked.score).length,engravedPages,
-    blockers:checked.blockers,warnings:checked.warnings,recognition:raw.provenance||null,usage:usageSummary(raw.provenance?.calls),
-    accuracy:{measured:false,reason:'未提供独立参考并逐音评分；结构通过、模型复核及可播放不等于识别准确率'},
-    conversionSeconds:(performance.now()-started)/1000,hashes:{musicxml:sha(xml),midi:sha(midiBytes)}};
-  await fs.writeFile(path.join(out,'report.json'),JSON.stringify(report,null,2)+'\n');
-  return report;
+  const checked=validateTranscription(raw,manifest,{draft}),version=JSON.parse(await fs.readFile(new URL('../package.json',import.meta.url),'utf8')).version;
+  const fingerprint=sha(JSON.stringify({input:sha(inputBytes),manifest:sha(manifestBytes),implementation:await implementationFingerprint(),version,draft,render}));
+  const transaction=await artifactOutput(out,{fingerprint,version,resume,onArtifact});
+  if(transaction.completed)return JSON.parse(await fs.readFile(path.join(out,'report.json'),'utf8'));
+  let failure;
+  try{
+    const xml=musicXML(checked),midiBytes=midi(checked);assert(parseMidi(midiBytes).tracks.length>0,'MIDI 回读失败');
+    await transaction.put('score.musicxml',xml);await transaction.put('score.mid',midiBytes);
+    await transaction.put('score.qinban.json',JSON.stringify(checked.score,null,2)+'\n');
+    await transaction.put('transcription.json',inputBytes);await transaction.put('source-manifest.json',manifestBytes);
+    let engravedPages=null;
+    if(render){
+      const [{default:createModule},{VerovioToolkit}]=await Promise.all([import('verovio/wasm'),import('verovio/esm')]);
+      const tk=new VerovioToolkit(await createModule());
+      try{
+        tk.setOptions({inputFrom:'musicxml',breaks:'auto',pageWidth:2100,pageHeight:2970,scale:40,svgViewBox:true,svgHtml5:true,header:'none',footer:'none'});
+        assert(tk.loadData(xml),'Verovio 无法加载生成的 MusicXML');engravedPages=tk.getPageCount();assert(engravedPages>0,'没有生成重绘谱页');
+        for(let page=1;page<=engravedPages;page++){
+          const name=`engraved-${String(page).padStart(3,'0')}.svg`;
+          if(await transaction.has(name))continue;
+          const svg=tk.renderToSVG(page);assert(/<svg[\s>]/.test(svg),'重绘 SVG 无效');await transaction.put(name,svg);
+        }
+      }finally{tk.destroy();}
+      const html='<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>重新制谱</title><style>body{margin:0;background:#eee}img{display:block;width:100%;max-width:1100px;margin:16px auto;background:white}@media print{img{break-after:page;margin:0;max-width:100%}}</style>'+Array.from({length:engravedPages},(_,i)=>`<img alt="重绘第${i+1}页" src="engraved-${String(i+1).padStart(3,'0')}.svg">`).join('');
+      await transaction.put('index.html',html);
+    }
+    const report={schema:'piano-score-report/v1',status:checked.blockers.length?'draft':'checked',review:raw.review,humanConfirmed:raw.review?.humanConfirmed===true,
+      sourcePages:manifest.pages.length,coverage:checked.coverage,measures:checked.score.measureMap.length,writtenMainNotes:checked.score.notes.length,
+      writtenGraces:(checked.notation.graces||[]).length,performedEvents:performanceNotes(checked.score).length,engravedPages,
+      blockers:checked.blockers,warnings:checked.warnings,recognition:raw.provenance||null,usage:usageSummary(raw.provenance?.calls),
+      accuracy:{measured:false,reason:'未提供独立参考并逐音评分；结构通过、模型复核及可播放不等于识别准确率'},
+      conversionSeconds:(performance.now()-started)/1000,hashes:{musicxml:sha(xml),midi:sha(midiBytes)},artifactManifest:'artifact-manifest.json'};
+    await transaction.put('report.json',JSON.stringify(report,null,2)+'\n');
+    await transaction.commit({transcriptionStatus:report.status});await verifyArtifactOutput(out,{fingerprint});return report;
+  }catch(error){failure=error;error.message+='；未完成产物保留在 '+transaction.folder+'，输入未变时可加 --resume 继续';throw error;}
+  finally{await transaction.close(failure);}
 }
 
 if(process.argv[1]&&fileURLToPath(import.meta.url)===path.resolve(process.argv[1])) {
   const args=process.argv.slice(2), flag=k=>args.includes(k), value=k=>args[args.indexOf(k)+1];
   if(!flag('--input')||!flag('--manifest')||!flag('--out')) {
-    console.error('node score_pipeline.mjs --input transcription.json --manifest pages/manifest.json --out NEW_DIRECTORY [--draft] [--no-render]');process.exitCode=2;
+    console.error('node score_pipeline.mjs --input transcription.json --manifest pages/manifest.json --out NEW_DIRECTORY [--draft] [--no-render] [--resume]');process.exitCode=2;
   } else {
-    try {console.log(JSON.stringify(await build(value('--input'),value('--manifest'),value('--out'),{draft:flag('--draft'),render:!flag('--no-render')}),null,2));}
+    try {console.log(JSON.stringify(await build(value('--input'),value('--manifest'),value('--out'),{draft:flag('--draft'),render:!flag('--no-render'),resume:flag('--resume')}),null,2));}
     catch(error){console.error(error.message);process.exitCode=1;}
   }
 }

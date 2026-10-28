@@ -10,11 +10,18 @@ import MidiFilePackage from 'midi-file';
 import { build, validateTranscription, musicXML, midi, usageSummary } from './score_pipeline.mjs';
 import { performanceNotes } from './core/note-effects.mjs';
 import {recordMeasureReview} from './review-evidence.mjs';
+import {execFileSync} from 'node:child_process';
+import {verifyArtifactOutput} from './artifact-output.mjs';
 const {parseMidi}=MidiFilePackage;
 const example=JSON.parse(await fs.readFile(fileURLToPath(new URL('../assets/transcription-example.json',import.meta.url)),'utf8'));
 const stamp=raw=>{raw.review.evidence=raw.score.measureMap.map((_,i)=>recordMeasureReview(raw,i+1,{method:'model-original-reread',reviewer:'synthetic-test-fixture',reviewedAt:'2026-10-28T00:00:00Z'}));return raw;};
 const clone=()=>stamp(structuredClone(example));
 const manifestFor=raw=>({schema:'piano-score-pages/v1',pages:raw.pages.map(p=>({page:p.page,sha256:p.sha256,file:`page-${p.page}.png`}))});
+async function fileFixture(dir){
+  const raw=clone(),manifest=manifestFor(raw),png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a3ioAAAAASUVORK5CYII=','base64');
+  for(let i=0;i<raw.pages.length;i++){raw.pages[i].sha256=manifest.pages[i].sha256=createHash('sha256').update(png).digest('hex');await fs.writeFile(path.join(dir,manifest.pages[i].file),png);}stamp(raw);
+  const input=path.join(dir,'input.json'),mf=path.join(dir,'manifest.json'),out=path.join(dir,'out');await fs.writeFile(input,JSON.stringify(raw));await fs.writeFile(mf,JSON.stringify(manifest));return {raw,input,mf,out};
+}
 
 test('review flags are strict booleans even in drafts; stale measure and tie evidence cannot pass',()=>{
   for(const change of [r=>r.pages[0].reviewed='false',r=>r.pages[0].systems[0].complete='true',r=>r.pages[0].systems[0].reviewed=1,r=>r.notation.notes.bb.checked='false',r=>r.review.humanConfirmed='false']){
@@ -144,4 +151,28 @@ test('explicit source rests and independent voices survive cross-staff engraving
  const parsed=new XMLParser({ignoreAttributes:false}).parse(musicXML(checked)),all=parsed['score-partwise'].part.measure.note;
  assert.equal(all.find(n=>n['@_id']==='note-R-m1').staff,2);assert.ok(all.some(n=>n.rest!==undefined&&n.staff===2));
  raw.notation.rests=[];const draft=validateTranscription(raw,manifestFor(raw),{draft:true});assert.ok(draft.blockers.some(s=>s.includes('空缺')||s.includes('缺少原谱')));assert.throws(()=>validateTranscription(raw,manifestFor(raw)));
+});
+
+test('a killed build publishes no half-result; explicit resume verifies reused files and atomically completes delivery',async t=>{
+ const dir=await fs.mkdtemp(path.join(os.tmpdir(),'piano-skill-crash-'));t.after(()=>fs.rm(dir,{recursive:true,force:true}));const {input,mf,out}=await fileFixture(dir);
+ const source=new URL('./score_pipeline.mjs',import.meta.url).href;
+ const code=`import {build} from ${JSON.stringify(source)};await build(${JSON.stringify(input)},${JSON.stringify(mf)},${JSON.stringify(out)},{render:false,onArtifact:name=>{if(name==='score.mid')process.kill(process.pid,'SIGKILL');}});`;
+ assert.throws(()=>execFileSync(process.execPath,['--input-type=module','--eval',code],{stdio:'pipe'}),error=>error.signal==='SIGKILL');
+ await assert.rejects(fs.stat(out),{code:'ENOENT'});const stage=path.join(dir,'.out.partial'),before=await fs.stat(path.join(stage,'score.musicxml'));
+ const report=await build(input,mf,out,{render:false,resume:true});assert.equal(report.status,'checked');assert.equal((await fs.stat(path.join(out,'score.musicxml'))).mtimeMs,before.mtimeMs);
+ const receipt=await verifyArtifactOutput(out);assert.equal(receipt.artifactSetComplete,true);assert.equal(receipt.transcriptionStatus,'checked');
+ const saved=JSON.parse(await fs.readFile(path.join(out,'report.json'),'utf8')),score=JSON.parse(await fs.readFile(path.join(out,'score.qinban.json'),'utf8'));assert.equal(saved.writtenMainNotes,score.notes.length);
+ assert.deepEqual(await build(input,mf,out,{render:false,resume:true}),report);await assert.rejects(build(input,mf,out,{render:false}),/已存在/);
+});
+test('resume refuses changed inputs or edited stage files and never overwrites them',async t=>{
+ const dir=await fs.mkdtemp(path.join(os.tmpdir(),'piano-skill-tamper-'));t.after(()=>fs.rm(dir,{recursive:true,force:true}));const {input,mf,out}=await fileFixture(dir);
+ await assert.rejects(build(input,mf,out,{render:false,onArtifact:name=>{if(name==='score.mid')throw Error('injected disk interruption');}}),/--resume/);
+ await assert.rejects(build(input,mf,out,{render:true,resume:true}),{code:'ARTIFACT_FINGERPRINT'});
+ const changed=path.join(dir,'.out.partial','score.mid');await fs.writeFile(changed,'explicit user edit');await assert.rejects(build(input,mf,out,{render:false,resume:true}),{code:'ARTIFACT_TAMPERED'});assert.equal(await fs.readFile(changed,'utf8'),'explicit user edit');await assert.rejects(fs.stat(out),{code:'ENOENT'});
+});
+test('concurrent builders cannot publish to or steal the same output location',async t=>{
+ const dir=await fs.mkdtemp(path.join(os.tmpdir(),'piano-skill-lock-'));t.after(()=>fs.rm(dir,{recursive:true,force:true}));const {input,mf,out}=await fileFixture(dir);let ready,release;const entered=new Promise(r=>ready=r),hold=new Promise(r=>release=r);
+ const first=build(input,mf,out,{render:false,onArtifact:async name=>{if(name==='score.musicxml'){ready();await hold;}}});await entered;
+ try{await assert.rejects(build(input,mf,out,{render:false,resume:true}),{code:'ARTIFACT_BUILD_BUSY'});}finally{release();}
+ await first;assert.equal((await verifyArtifactOutput(out)).artifactSetComplete,true);
 });

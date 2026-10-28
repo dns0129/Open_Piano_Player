@@ -1,10 +1,12 @@
 # 琴伴接入
 
+<!-- recognition-current {"release":"recognition-p2-v1-20261028","prompt":"piano-written-evidence-v8-20261028","accidentals":"accidentals-v2-20261018","wire":"compact-v5","cache":"reviewed-source-v4-p1","geometry":"geometry-native-pdf-v1","corpus":"recognition-corpus-v1-20261028","skill":"1.3.0","nodeMinimum":"22.19.0","nodePreferred":"24"} -->
+
 ## 模型和凭据
 
 优先复用目标项目的已认证后端；Skill 不包含登录 cookie、API key、Pi OAuth、用户配额或预设远程服务。执行前读取目标仓库的 AGENTS.md 和启动方式。用户指定模型与思考强度优先；不要静默降档、换供应商或用本机 OMR 替代。
 
-琴伴参考实现：[Open_Piano_Player](https://github.com/dns0129/Open_Piano_Player)。本 Skill 1.2 对应 2026-10-28 的 P1 转录契约；路由与字段以当前仓库源码为准。
+琴伴参考实现：[Open_Piano_Player](https://github.com/dns0129/Open_Piano_Player)。本 Skill 1.3 承接 2026-10-28 的 P1 转录契约与 P2 交付治理；路由与字段以当前仓库源码为准。
 
 主线 `24f8d1e` 已取消全谱第二遍 AI 校验。此 Skill 默认同样不自动启动额外全谱复读；逻辑上分音高/节奏/符号填写不等于多次调用。独立复读仅在用户要求或具体疑点需要时执行。
 
@@ -40,3 +42,13 @@ App 的原图复核批准现在需有 `review.approval.basis`，通过 `lib/revi
 5. 云端 App 需另行确认部署状态，并在云端浏览器实际打开曲目；代码推送、目录可见与完整播放是三种不同证据。
 
 如果本次仅创建制谱产物，不启动 App、不改变曲库、不清理缓存、不自动发布曲目。生成 Skill 本身也不授权未来每次使用都公开用户乐谱。
+
+## P2 版本、回归与用量
+
+App 的组件版本由 `lib/recognition-versions.mjs` 统一登记；提示词、协议、升降规则、缓存和 Skill 版本各有语义。仓库检查会阻止当前文档与实际版本漂移；历史报告保留原值。
+
+固定回归把同版独立 MusicXML、未经人工确认的视觉子集和既有模型/人工校对稿分开。离线回放不调用模型；只有显式 live 和足够预算才执行新识读，参考答案不传给读取请求。修改模型输入文本或图像预处理不能沿用旧响应宣称视觉质量已验证。
+
+DeepSeek 为实验 / 第二意见，保持用户选择的 high，不自动切换供应商或降低思考强度。官方 Chat Completions 在思考模式不支持 required / 指名工具选择；使用 auto 并严格验收。同一次响应中的完整 JSON 可以进入公共校验，普通说明和缺字段不能充当完成结果。[官方接口说明](https://api-docs.deepseek.com/api/create-chat-completion/)
+
+整个计划的 usage 包含首读、恢复与复读；同一审计 ID 续跑不重复累计。未返回的 total / 缓存 / 思考字段保留未知，托管仍按原有有效 input/output 结算规则处理，不将未知消耗当作免费。

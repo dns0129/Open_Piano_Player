@@ -1,0 +1,74 @@
+{
+  "schema": "recognition-regression-corpus/v1",
+  "version": "recognition-corpus-v1-20261028",
+  "mode": "offline-by-default",
+  "toleranceQuarterBeats": 0.0001,
+  "matching": "maximum one-to-one; fixed alignment; all extras and refused/missing reference denominators retained",
+  "partition": "development-only",
+  "datasets": [
+    {
+      "id": "dense-pdf",
+      "cases": 16,
+      "sources": 3,
+      "referenceLevel": "independent-musicxml",
+      "eventUnit": "ordinary-written-head",
+      "referenceEvents": 1292
+    },
+    {
+      "id": "prelude",
+      "cases": 1,
+      "sourcePages": 2,
+      "referenceLevel": "independent-musicxml",
+      "eventUnit": "ordinary-written-head",
+      "referenceEvents": 604,
+      "historicalPerformedEvents": 602,
+      "conditions": [
+        "low",
+        "high",
+        "max"
+      ]
+    },
+    {
+      "id": "phone-photos",
+      "cases": 24,
+      "referenceLevel": "agent-visual-subset-unconfirmed",
+      "annotatedPhotos": 2,
+      "annotatedBars": 3,
+      "referenceEvents": 36,
+      "humanConfirmed": false
+    },
+    {
+      "id": "phone-system-crop",
+      "cases": 1,
+      "referenceEvents": 16,
+      "overlaps": "phone-photos annotated subset; not an extra independent sample"
+    },
+    {
+      "id": "p1-development-conditions",
+      "cases": 2,
+      "referenceEvents": 142,
+      "overlaps": "dense-pdf",
+      "conditions": [
+        "with original source context",
+        "initial without context; both failures retained"
+      ]
+    }
+  ],
+  "scopeCases": 42,
+  "conditions": 9,
+  "printedAccidentalTruth": null,
+  "restTruth": null,
+  "excludedCandidates": [
+    {
+      "id": "hanting",
+      "historicalCount": 1068,
+      "reason": "Earlier source-reviewed transcription is not an independent gold reference; not promoted to accuracy truth"
+    },
+    {
+      "id": "bwv846",
+      "historicalPerformedEvents": 549,
+      "historicalWrittenHeads": 617,
+      "reason": "No frozen independent page/row reference adapter established for this release; reviewed app output is not substituted"
+    }
+  ]
+}

@@ -16,7 +16,7 @@ def load_xml(path):
  for e in root.iter():e.tag=e.tag.split('}')[-1]
  return root,raw
 
-def read_score(path):
+def read_score(path, include_written=False):
  root,raw=load_xml(path);parts=root.findall('part');allparts=[];issues=[]
  if not parts:raise ValueError('No score parts')
  if len(parts)>2:raise ValueError('Not solo piano')
@@ -44,14 +44,18 @@ def read_score(path):
      step=p.findtext('step');midi=12*(int(p.findtext('octave'))+1)+dict(C=0,D=2,E=4,F=5,G=7,A=9,B=11)[step]+int(p.findtext('alter','0'))
      staff=int(e.findtext('staff','1'));hand=('right' if pi==0 else 'left') if len(parts)==2 else ('right' if staff==1 else 'left')
      ties={n.get('type') for n in e.findall('tie')}|{n.get('type') for n in e.findall('notations/tied')}
-     events.append(dict(id=f'p{pi}-m{ix}-n{len(events)}',measure=ix,localBeat=float(beat),beat=float(offset+beat),duration=float(duration),midi=midi,hand=hand,voice=e.findtext('voice','1'),grace=grace,tieStart='start' in ties,tieStop='stop' in ties))
+     record=dict(id=f'p{pi}-m{ix}-n{len(events)}',measure=ix,localBeat=float(beat),beat=float(offset+beat),duration=float(duration),midi=midi,hand=hand,voice=e.findtext('voice','1'),grace=grace,tieStart='start' in ties,tieStop='stop' in ties)
+     if include_written:record['written']=dict(step=step,octave=int(p.findtext('octave')),alter=int(p.findtext('alter','0')))
+     events.append(record)
    nominal=F(meter[0]*4,meter[1]);actual=maximum if maximum>0 else nominal
    if maximum>nominal:issues.append({'measure':ix,'issue':'OVERFULL','expected':float(nominal),'actual':float(maximum)})
    bars.append(dict(measure=ix,beat=float(offset),duration=float(actual),timeSignature=list(meter),keySignature=key));offset+=actual;notes+=events
   allparts.append(dict(notes=notes,bars=bars,durationBeats=float(offset)))
  bars=allparts[0]['bars']
  if any(p['bars']!=bars for p in allparts[1:]):raise ValueError('Part measure maps differ')
- return dict(title=root.findtext('work/work-title') or root.findtext('movement-title') or '',composer='; '.join(n.text or '' for n in root.findall("identification/creator[@type='composer']")),notes=[n for p in allparts for n in p['notes']],measures=bars,durationBeats=allparts[0]['durationBeats'],issues=issues,sourceSha256=hashlib.sha256(Path(path).read_bytes()).hexdigest())
+ result=dict(title=root.findtext('work/work-title') or root.findtext('movement-title') or '',composer='; '.join(n.text or '' for n in root.findall("identification/creator[@type='composer']")),notes=[n for p in allparts for n in p['notes']],measures=bars,durationBeats=allparts[0]['durationBeats'],issues=issues,sourceSha256=hashlib.sha256(Path(path).read_bytes()).hexdigest())
+ if include_written:result['sourceOctaveShiftMeasures']=sorted({i for p in parts for i,m in enumerate(p.findall('measure'),1) if m.findall('.//octave-shift') or m.findall('.//clef-octave-change')})
+ return result
 
 if __name__=='__main__':
- p=Path(sys.argv[1]);out=Path(sys.argv[2]);r=read_score(p);out.write_text(json.dumps(r,ensure_ascii=False,indent=2));print(json.dumps({'file':str(p),'bars':len(r['measures']),'notes':len(r['notes']),'graces':sum(n['grace'] for n in r['notes']),'issues':r['issues'][:5]},ensure_ascii=False))
+ p=Path(sys.argv[1]);out=Path(sys.argv[2]);r=read_score(p,include_written='--written' in sys.argv[3:]);out.write_text(json.dumps(r,ensure_ascii=False,indent=2));print(json.dumps({'file':str(p),'bars':len(r['measures']),'notes':len(r['notes']),'graces':sum(n['grace'] for n in r['notes']),'issues':r['issues'][:5]},ensure_ascii=False))

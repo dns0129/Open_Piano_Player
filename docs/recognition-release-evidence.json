@@ -1,0 +1,2322 @@
+{
+  "schema": "recognition-release-evidence/v1",
+  "release": "recognition-p2-v1-20261028",
+  "recordedAt": "2026-10-28T10:16:28.622Z",
+  "implementation": {
+    "digest": "d3e808c1b2e4a3d105bdc181438d63811bd37af6cfdbc6dabad90fc08327bb77",
+    "files": [
+      {
+        "path": "lib/accounts/recognition-budget.mjs",
+        "sha256": "6f0644e94a2af0ce536adcf824e40174d2b3e1ccd770dec3190bde6bbc63464e"
+      },
+      {
+        "path": "lib/accounts/recognition-jobs.mjs",
+        "sha256": "bf4a33f3e342a0c2e98f114e5f0bb0ba10c9a6cec0d1977e9371c83214468e8d"
+      },
+      {
+        "path": "lib/accounts/recognition-provider.mjs",
+        "sha256": "1f4b7193f1cdfb2853b30ba28382b4f5ff2c1690f4950ec5640c074ed5adb78f"
+      },
+      {
+        "path": "lib/accounts/recognition-source.mjs",
+        "sha256": "ab7c6f230bdc6209bde07819ef4540739a40fa0fc9b1a36344f996476863449f"
+      },
+      {
+        "path": "lib/ai.mjs",
+        "sha256": "2184127eb2082bdd0212b95e1561442c9e164b83cf0c9b7972b5fe19a047b2da"
+      },
+      {
+        "path": "lib/deepseek-vision.mjs",
+        "sha256": "311591d25a6b4b9c82d68494fe67ae21d8292090da8e754e0dabd068c63519ef"
+      },
+      {
+        "path": "lib/digital-recognition.mjs",
+        "sha256": "2c2a015e5ff1cd017b9f0b2ac443c2835efcb2b19b75b6750d91ce98b1f3171a"
+      },
+      {
+        "path": "lib/exporters.mjs",
+        "sha256": "653ac57f9d26c4f66a71fdd75c1a1daef31bb667fd3a07eca34de0db6ac627db"
+      },
+      {
+        "path": "lib/full-score-jobs.mjs",
+        "sha256": "d99e9e4f0a8cad1c550a72f724b794218c46eba6fc9113309a83e8f15edb6932"
+      },
+      {
+        "path": "lib/full-score-recovery.mjs",
+        "sha256": "6380206afcdfb80cfdd8b7b13c67d043ba2337a86aecd66504aa3260b881d7d6"
+      },
+      {
+        "path": "lib/full-score-review.mjs",
+        "sha256": "df79b47a25244058832f2890d12dd54ad126d8d2ca3859f6114bb2500bb3a401"
+      },
+      {
+        "path": "lib/importers.mjs",
+        "sha256": "8a11a1b8ce8021fc998ff2cc78b31b26de0a49a1f8e8ee1f7fd2498410cf8627"
+      },
+      {
+        "path": "lib/node-runtime.mjs",
+        "sha256": "9a9ef7007a2a7e33222285c715e17a3a60fd51fcc49f67e2ab893b68e3f5fffa"
+      },
+      {
+        "path": "lib/omr-review.mjs",
+        "sha256": "7e7c38a766e6619df1e08115306081176f69c10963be6b1fe69b361391c1687a"
+      },
+      {
+        "path": "lib/recognition-accounting.mjs",
+        "sha256": "079921c94ddc1e94918ffb43d1760d860c2e88217d033a56aac9a722ad6d2603"
+      },
+      {
+        "path": "lib/recognition-cache.mjs",
+        "sha256": "befe26846276984f1008940b5bdc113ffa43a2e1a5b9328d0c9f029da198fe5b"
+      },
+      {
+        "path": "lib/recognition-comparison.mjs",
+        "sha256": "b9522bbad3ceb9b8e4f310645a9d73fc6ebf1400830ca168ec0d6aae9716ee9a"
+      },
+      {
+        "path": "lib/recognition-edit.mjs",
+        "sha256": "774b79d2b9f40a5d39dfb24833482511f1efeda3111d3f3c1e5961288243650c"
+      },
+      {
+        "path": "lib/recognition-gate.mjs",
+        "sha256": "a2dab03dd7c078fd96e92aa95f10b1b76804d8b30260750e9489e05889f34677"
+      },
+      {
+        "path": "lib/recognition-governance.mjs",
+        "sha256": "9c4967d45befdecef4a7cea02ff06a307c85dd5f936896927887888f8985c04c"
+      },
+      {
+        "path": "lib/recognition-image-input.mjs",
+        "sha256": "208464b69f6d08ce26ae42d5ce3d5f9dc7fe7c13b894405a143ed41473471625"
+      },
+      {
+        "path": "lib/recognition-live-regression.mjs",
+        "sha256": "4ed3fa008591cb84daebe8be5e5cec81ceb3ec68104e4a79b0ed88df81428fdb"
+      },
+      {
+        "path": "lib/recognition-notation.mjs",
+        "sha256": "14c6ad26a7d7585040e75afd8387b0bf737466fabb63b2c4ddbb14616d17c2e7"
+      },
+      {
+        "path": "lib/recognition-plan.mjs",
+        "sha256": "7288241acd74b87511142b8459de1ebaf1f2ae4bc6225b65df558f60699c5aec"
+      },
+      {
+        "path": "lib/recognition-policy.mjs",
+        "sha256": "5b23ce7bebee32e587e44561cb5e2e90749a19a730bb640c165617a1d0bbc57f"
+      },
+      {
+        "path": "lib/recognition-prompts.mjs",
+        "sha256": "8ae2962616ed365d86f36ac383cfe4903aebf1b11be3b1e05e61dec3934eed0b"
+      },
+      {
+        "path": "lib/recognition-regions.mjs",
+        "sha256": "965676261182b9bb9fe4c5779cde1934ae33d1d8de3eb3339bff159a0fe99c4c"
+      },
+      {
+        "path": "lib/recognition-regression-io.mjs",
+        "sha256": "d291a8cefea05485f8a64f43837fc1b89c5fe87f6404d61e60018b9ce781592c"
+      },
+      {
+        "path": "lib/recognition-regression.mjs",
+        "sha256": "61eeb55269ba13cf94ac2a9db214ff131792dc0ca4f898fb27e0051bbf70d57a"
+      },
+      {
+        "path": "lib/recognition-review-actions.mjs",
+        "sha256": "1ba3f1fb9dfec97b19a8ba4f5b695b1e87a1738ce960d9f7e417d0557a3f262d"
+      },
+      {
+        "path": "lib/recognition-submission.mjs",
+        "sha256": "4e63c897aead855aabdf33c21039382b7d2904d86da87ac5c7ef8c032a9aca45"
+      },
+      {
+        "path": "lib/recognition-tempo.mjs",
+        "sha256": "a2d334693b1ffa0973c9faf7b6953b53d406ef65861860ec04db9cdac0a91160"
+      },
+      {
+        "path": "lib/recognition-transcription.mjs",
+        "sha256": "5f689ed4eb62162638f09a048dbdef2895de57e49ad6a28d1d2eee066a094fb6"
+      },
+      {
+        "path": "lib/recognition-usage.mjs",
+        "sha256": "dca419375c9efbe4f4d75069e37368f04209da912c5289ff24be83092be80220"
+      },
+      {
+        "path": "lib/recognition-versions.mjs",
+        "sha256": "fabc013e554d8207e8a821f5381e693c814ed5b3d467ccc84be9c3d3ab14865d"
+      },
+      {
+        "path": "lib/recognition-wire.mjs",
+        "sha256": "c24a4354c7254bebf8e954226e7d8ccf7b4521ef114c94c5720b98eef83f1479"
+      },
+      {
+        "path": "lib/score-image-layout.mjs",
+        "sha256": "46c20a7201edfd578720bacdc86bf9fb5f32e7e0a751da4042c80233ecbc4e12"
+      },
+      {
+        "path": "lib/score-notation-data.ts",
+        "sha256": "753715bd8db9b4d31a2446dae03143f2214e9bd261ba03daaf1119f5879935d2"
+      },
+      {
+        "path": "lib/score-region.mjs",
+        "sha256": "5c6a7d309c927729d25223944741a154e5dc0f44e2df9444274c67d5b81954d7"
+      },
+      {
+        "path": "lib/score-types.ts",
+        "sha256": "7585e0a29b2cd496429cce92e35afe9b0f82f5a98ef0cad83cca63f828a23d4c"
+      },
+      {
+        "path": "lib/score-validation.mjs",
+        "sha256": "a9fd4402848d00bb2535d9bb33dae74143adeb00b48b81d3a071368c2d7aac3c"
+      },
+      {
+        "path": "lib/source-assessment.mjs",
+        "sha256": "afa8829eacdd3841d32a438fd8dacf5211c09088e2ea3bb2cdd2ac930be547fe"
+      },
+      {
+        "path": "scripts/check-recognition-release.mjs",
+        "sha256": "7470e382f1c26f50d3e8f377cb4f2866dcf417523c59689e02532535ba23d1a3"
+      },
+      {
+        "path": "scripts/check-recognition-versions.mjs",
+        "sha256": "f7cdaef23722e6e8173f9de07fc3c419ddeaba3c82da3569a56a918173af1803"
+      },
+      {
+        "path": "scripts/omr-benchmark/reference.py",
+        "sha256": "e41166d94adb47d607cf7f562cea5b4e9c2421470188e85a37510f9ca297c45d"
+      },
+      {
+        "path": "scripts/prepare-recognition-regression.mjs",
+        "sha256": "bbd4d0137c323183f4d1019631e434401579a01cb7fbbb0ce0c3e1b230c0747d"
+      },
+      {
+        "path": "scripts/recognition-regression.mjs",
+        "sha256": "c07a1aea4f25f9647fcc620b23b33a16dbdc3da5ffbf28d058ba1055dd4182b5"
+      },
+      {
+        "path": "scripts/verify-recognition-regression.py",
+        "sha256": "8172c95406ef38c03db48a729030a811da419c3660e5fd94436f50362fb30bb2"
+      },
+      {
+        "path": "scripts/with-node.mjs",
+        "sha256": "03c7d1f84480eecefb5ad243aee34f2e1a495ad06c38e059020f5fbdc4372125"
+      },
+      {
+        "path": "skills/piano-score-to-musicxml/package.json",
+        "sha256": "4117e0ae788141ff50ba722bce92787b1df0ee7cf4cdd99f145a707b5b15b80b"
+      },
+      {
+        "path": "skills/piano-score-to-musicxml/scripts/artifact-output.mjs",
+        "sha256": "333c44f08b9f22768efdcaeda4538e3b7cc1fa0e60bbdc73aba3e33423e058e4"
+      },
+      {
+        "path": "skills/piano-score-to-musicxml/scripts/core/exporters.mjs",
+        "sha256": "5e04f2327c789c9bfe6a7dd7f5c9c994d644807f312f251eaaa8ba73e4e0609b"
+      },
+      {
+        "path": "skills/piano-score-to-musicxml/scripts/core/note-effects.mjs",
+        "sha256": "47bca29f18df904e92ad0073a75dfc699207176f42ab5054ccc623694f7a3276"
+      },
+      {
+        "path": "skills/piano-score-to-musicxml/scripts/core/pitch-spelling.mjs",
+        "sha256": "f91189b7734a39d443ff75c5c5dc68bbea7b008e285838853a26423f9de64ffa"
+      },
+      {
+        "path": "skills/piano-score-to-musicxml/scripts/core/score.mjs",
+        "sha256": "428a14e0a178bd1548e05e602fc4b805c9b64b8a48be52eb8cbd9a2b2f7bb709"
+      },
+      {
+        "path": "skills/piano-score-to-musicxml/scripts/recognition-tempo.mjs",
+        "sha256": "a2d334693b1ffa0973c9faf7b6953b53d406ef65861860ec04db9cdac0a91160"
+      },
+      {
+        "path": "skills/piano-score-to-musicxml/scripts/review-evidence.mjs",
+        "sha256": "239b3709427c9a0c4eaf5bb07bab13b493613a8939eb7f278dd6804a00242e39"
+      },
+      {
+        "path": "skills/piano-score-to-musicxml/scripts/score_pipeline.mjs",
+        "sha256": "39df3941f95748242a0be761c26741b6082c41390ad93044d2601d7e20078ee5"
+      },
+      {
+        "path": "skills/piano-score-to-musicxml/scripts/written-evidence.mjs",
+        "sha256": "14c6ad26a7d7585040e75afd8387b0bf737466fabb63b2c4ddbb14616d17c2e7"
+      },
+      {
+        "path": "src/full-score-import.js",
+        "sha256": "c584dc6e91f7e2fd1be0bb8b923c4fba5514300b46affbbd68a1371dd3f9cc96"
+      },
+      {
+        "path": "src/import-flows.js",
+        "sha256": "0eac471b36a6d5760d09b5930c72824d28df49b1b35f16bcada799b98f8f465c"
+      },
+      {
+        "path": "src/recognition-written-editor.js",
+        "sha256": "a4630e6640641b3223b04cc12acde14ed92e39c124679d4d60c8d8cf1c85be49"
+      }
+    ]
+  },
+  "prompt": {
+    "digest": "5e44d82e7876c4439e347d878f794883a83bbbb97d9d784f700ee8be1a6034b1",
+    "files": [
+      {
+        "file": "lib/ai.mjs",
+        "digest": "4899b9042b6feda3d038662d51d0564b90689090d1e6b0be5fd5755672c250b8"
+      },
+      {
+        "file": "lib/digital-recognition.mjs",
+        "digest": "42cbc33d781b82d6c5c1db81033d355de3f39fb1ee92b81a6f566f4bb7e3e37b"
+      },
+      {
+        "file": "lib/recognition-policy.mjs",
+        "digest": "f2233e631127ef9d814893e4e79b37e8cf703eb923a87acf4f4049cc409efa76"
+      },
+      {
+        "file": "lib/recognition-prompts.mjs",
+        "digest": "b05ec8181faa55a78ddda6e51454d7cfcbdb11e795d18e8d9373824fd64afddc"
+      },
+      {
+        "file": "lib/recognition-wire.mjs",
+        "digest": "74d4520a7c44ebbc01800881e7659e7c92b2ce94cb701f79f9418ea5bc75823b"
+      },
+      {
+        "file": "lib/source-assessment.mjs",
+        "digest": "0fcae9717e019a153dce58cd62ed71663b6028cfc9ff798d6ddff25ca0044bbb"
+      },
+      {
+        "file": "lib/accounts/recognition-provider.mjs",
+        "digest": "193d9985a218ed0fb57663eac93f719da8f10266ac9daad1973b3d10e21439cf"
+      },
+      {
+        "file": "lib/recognition-regions.mjs",
+        "digest": "965676261182b9bb9fe4c5779cde1934ae33d1d8de3eb3339bff159a0fe99c4c"
+      },
+      {
+        "file": "lib/recognition-image-input.mjs",
+        "digest": "208464b69f6d08ce26ae42d5ce3d5f9dc7fe7c13b894405a143ed41473471625"
+      },
+      {
+        "file": "lib/score-image-layout.mjs",
+        "digest": "46c20a7201edfd578720bacdc86bf9fb5f32e7e0a751da4042c80233ecbc4e12"
+      },
+      {
+        "file": "lib/accounts/recognition-source.mjs",
+        "digest": "ab7c6f230bdc6209bde07819ef4540739a40fa0fc9b1a36344f996476863449f"
+      }
+    ]
+  },
+  "corpus": {
+    "version": "recognition-corpus-v1-20261028",
+    "scopeSha256": "7d0bb7d6702205b6e50a2f56c160411382c6eb695514e070dcf367629ce553d4"
+  },
+  "evaluation": {
+    "mode": "offline-frozen-responses",
+    "providerCalls": 0,
+    "sourceEvaluationSha256": "6f468d9f89feca8baac9477c36a7afda45f29ed11ff405a59818f7bb4d860ad6",
+    "suiteSha256": "43a326cb85d9f04afd7dac9a91e30ee6516bc90df6f389d3a05a8308b5b52b8c",
+    "sourceFiles": 158,
+    "baselinePromptDigest": "5e44d82e7876c4439e347d878f794883a83bbbb97d9d784f700ee8be1a6034b1",
+    "independentVerification": {
+      "schema": "recognition-independent-verification/v1",
+      "passed": true,
+      "checkedCases": 42,
+      "errors": [],
+      "providerCalls": 0
+    },
+    "before": [
+      {
+        "trial": "dense-historical-framework",
+        "scopeRows": 16,
+        "rows": [
+          {
+            "caseId": "etude-op10-4/p1-s1"
+          },
+          {
+            "caseId": "etude-op10-4/p1-s2"
+          },
+          {
+            "caseId": "etude-op10-4/p1-s3"
+          },
+          {
+            "caseId": "etude-op10-4/p1-s4"
+          },
+          {
+            "caseId": "etude-op10-4/p1-s5"
+          },
+          {
+            "caseId": "etude-op10-4/p1-s6"
+          },
+          {
+            "caseId": "fantaisie-op66/p1-s1"
+          },
+          {
+            "caseId": "fantaisie-op66/p1-s2"
+          },
+          {
+            "caseId": "fantaisie-op66/p1-s3"
+          },
+          {
+            "caseId": "fantaisie-op66/p1-s4"
+          },
+          {
+            "caseId": "fantaisie-op66/p1-s5"
+          },
+          {
+            "caseId": "rachmaninoff-op3-2/p1-s1"
+          },
+          {
+            "caseId": "rachmaninoff-op3-2/p1-s2"
+          },
+          {
+            "caseId": "rachmaninoff-op3-2/p1-s3"
+          },
+          {
+            "caseId": "rachmaninoff-op3-2/p1-s4"
+          },
+          {
+            "caseId": "rachmaninoff-op3-2/p1-s5"
+          }
+        ],
+        "groups": [
+          {
+            "dataset": "dense-pdf",
+            "eventUnit": "written-head",
+            "referenceLevel": "independent-musicxml",
+            "alignment": "frozen-row-relative",
+            "partition": "development",
+            "trial": "dense-historical-framework",
+            "rows": 16,
+            "scorableRows": 16,
+            "statuses": {
+              "returned": 11,
+              "refused": 4,
+              "failed": 1,
+              "partial": 0,
+              "missing": 0
+            },
+            "refusalRate": 0.25,
+            "strict": {
+              "reference": 1292,
+              "predicted": 833,
+              "correct": 831,
+              "recall": 0.6431888544891641,
+              "precision": 0.9975990396158463,
+              "unmatchedReference": 461,
+              "unmatchedPrediction": 2
+            },
+            "pitchAndHand": {
+              "reference": 1292,
+              "predicted": 833,
+              "correct": 831,
+              "recall": 0.6431888544891641,
+              "precision": 0.9975990396158463,
+              "unmatchedReference": 461,
+              "unmatchedPrediction": 2
+            },
+            "writtenSpelling": {
+              "reference": 1292,
+              "predicted": 0,
+              "correct": 0,
+              "recall": null,
+              "precision": null,
+              "unmatchedReference": 1292,
+              "unmatchedPrediction": 0,
+              "measuredRows": 0,
+              "unknownRows": 16,
+              "accuracy": null,
+              "knownReference": 0,
+              "knownCorrect": 0,
+              "knownSubsetAccuracy": null
+            },
+            "printedAccidentals": {
+              "reference": 0,
+              "predicted": 0,
+              "correct": 0,
+              "recall": null,
+              "precision": null,
+              "unmatchedReference": 0,
+              "unmatchedPrediction": 0,
+              "measuredRows": 0,
+              "unknownRows": 16,
+              "accuracy": null,
+              "knownReference": 0,
+              "knownCorrect": 0,
+              "knownSubsetAccuracy": null
+            },
+            "falseCompletions": 1,
+            "exactScopes": 10,
+            "usage": {
+              "usage": null,
+              "actualRequests": 0,
+              "knownActualRequests": 0,
+              "unknownRequestCounts": 0,
+              "reportedFields": {
+                "input": 0,
+                "output": 0,
+                "totalTokens": 0
+              },
+              "usageComplete": false,
+              "stages": 0
+            }
+          }
+        ]
+      },
+      {
+        "trial": "dense-p0-offline-recovery",
+        "scopeRows": 16,
+        "rows": [
+          {
+            "caseId": "etude-op10-4/p1-s1"
+          },
+          {
+            "caseId": "etude-op10-4/p1-s2"
+          },
+          {
+            "caseId": "etude-op10-4/p1-s3"
+          },
+          {
+            "caseId": "etude-op10-4/p1-s4"
+          },
+          {
+            "caseId": "etude-op10-4/p1-s5"
+          },
+          {
+            "caseId": "etude-op10-4/p1-s6"
+          },
+          {
+            "caseId": "fantaisie-op66/p1-s1"
+          },
+          {
+            "caseId": "fantaisie-op66/p1-s2"
+          },
+          {
+            "caseId": "fantaisie-op66/p1-s3"
+          },
+          {
+            "caseId": "fantaisie-op66/p1-s4"
+          },
+          {
+            "caseId": "fantaisie-op66/p1-s5"
+          },
+          {
+            "caseId": "rachmaninoff-op3-2/p1-s1"
+          },
+          {
+            "caseId": "rachmaninoff-op3-2/p1-s2"
+          },
+          {
+            "caseId": "rachmaninoff-op3-2/p1-s3"
+          },
+          {
+            "caseId": "rachmaninoff-op3-2/p1-s4"
+          },
+          {
+            "caseId": "rachmaninoff-op3-2/p1-s5"
+          }
+        ],
+        "groups": [
+          {
+            "dataset": "dense-pdf",
+            "eventUnit": "written-head",
+            "referenceLevel": "independent-musicxml",
+            "alignment": "frozen-row-relative",
+            "partition": "development",
+            "trial": "dense-p0-offline-recovery",
+            "rows": 16,
+            "scorableRows": 16,
+            "statuses": {
+              "returned": 12,
+              "refused": 4,
+              "failed": 0,
+              "partial": 0,
+              "missing": 0
+            },
+            "refusalRate": 0.25,
+            "strict": {
+              "reference": 1292,
+              "predicted": 935,
+              "correct": 933,
+              "recall": 0.7221362229102167,
+              "precision": 0.9978609625668449,
+              "unmatchedReference": 359,
+              "unmatchedPrediction": 2
+            },
+            "pitchAndHand": {
+              "reference": 1292,
+              "predicted": 935,
+              "correct": 933,
+              "recall": 0.7221362229102167,
+              "precision": 0.9978609625668449,
+              "unmatchedReference": 359,
+              "unmatchedPrediction": 2
+            },
+            "writtenSpelling": {
+              "reference": 1292,
+              "predicted": 0,
+              "correct": 0,
+              "recall": null,
+              "precision": null,
+              "unmatchedReference": 1292,
+              "unmatchedPrediction": 0,
+              "measuredRows": 0,
+              "unknownRows": 16,
+              "accuracy": null,
+              "knownReference": 0,
+              "knownCorrect": 0,
+              "knownSubsetAccuracy": null
+            },
+            "printedAccidentals": {
+              "reference": 0,
+              "predicted": 0,
+              "correct": 0,
+              "recall": null,
+              "precision": null,
+              "unmatchedReference": 0,
+              "unmatchedPrediction": 0,
+              "measuredRows": 0,
+              "unknownRows": 16,
+              "accuracy": null,
+              "knownReference": 0,
+              "knownCorrect": 0,
+              "knownSubsetAccuracy": null
+            },
+            "falseCompletions": 1,
+            "exactScopes": 11,
+            "usage": {
+              "usage": null,
+              "actualRequests": 0,
+              "knownActualRequests": 0,
+              "unknownRequestCounts": 0,
+              "reportedFields": {
+                "input": 0,
+                "output": 0,
+                "totalTokens": 0
+              },
+              "usageComplete": false,
+              "stages": 0
+            }
+          }
+        ]
+      },
+      {
+        "trial": "prelude-client-low",
+        "scopeRows": 1,
+        "rows": [
+          {
+            "caseId": "prelude-two-pages"
+          }
+        ],
+        "groups": [
+          {
+            "dataset": "prelude",
+            "eventUnit": "written-head",
+            "referenceLevel": "independent-musicxml",
+            "alignment": "frozen-document-relative",
+            "partition": "development",
+            "trial": "prelude-client-low",
+            "rows": 1,
+            "scorableRows": 1,
+            "statuses": {
+              "returned": 0,
+              "refused": 0,
+              "failed": 0,
+              "partial": 1,
+              "missing": 0
+            },
+            "refusalRate": 0,
+            "strict": {
+              "reference": 604,
+              "predicted": 539,
+              "correct": 505,
+              "recall": 0.8360927152317881,
+              "precision": 0.9369202226345084,
+              "unmatchedReference": 99,
+              "unmatchedPrediction": 34
+            },
+            "pitchAndHand": {
+              "reference": 604,
+              "predicted": 539,
+              "correct": 509,
+              "recall": 0.8427152317880795,
+              "precision": 0.9443413729128015,
+              "unmatchedReference": 95,
+              "unmatchedPrediction": 30
+            },
+            "writtenSpelling": {
+              "reference": 604,
+              "predicted": 0,
+              "correct": 0,
+              "recall": null,
+              "precision": null,
+              "unmatchedReference": 604,
+              "unmatchedPrediction": 0,
+              "measuredRows": 0,
+              "unknownRows": 1,
+              "accuracy": null,
+              "knownReference": 0,
+              "knownCorrect": 0,
+              "knownSubsetAccuracy": null
+            },
+            "printedAccidentals": {
+              "reference": 0,
+              "predicted": 0,
+              "correct": 0,
+              "recall": null,
+              "precision": null,
+              "unmatchedReference": 0,
+              "unmatchedPrediction": 0,
+              "measuredRows": 0,
+              "unknownRows": 1,
+              "accuracy": null,
+              "knownReference": 0,
+              "knownCorrect": 0,
+              "knownSubsetAccuracy": null
+            },
+            "falseCompletions": 0,
+            "exactScopes": 0,
+            "usage": {
+              "usage": null,
+              "actualRequests": 0,
+              "knownActualRequests": 0,
+              "unknownRequestCounts": 0,
+              "reportedFields": {
+                "input": 0,
+                "output": 0,
+                "totalTokens": 0
+              },
+              "usageComplete": false,
+              "stages": 0
+            }
+          }
+        ]
+      },
+      {
+        "trial": "prelude-client-high",
+        "scopeRows": 1,
+        "rows": [
+          {
+            "caseId": "prelude-two-pages"
+          }
+        ],
+        "groups": [
+          {
+            "dataset": "prelude",
+            "eventUnit": "written-head",
+            "referenceLevel": "independent-musicxml",
+            "alignment": "frozen-document-relative",
+            "partition": "development",
+            "trial": "prelude-client-high",
+            "rows": 1,
+            "scorableRows": 1,
+            "statuses": {
+              "returned": 1,
+              "refused": 0,
+              "failed": 0,
+              "partial": 0,
+              "missing": 0
+            },
+            "refusalRate": 0,
+            "strict": {
+              "reference": 604,
+              "predicted": 605,
+              "correct": 594,
+              "recall": 0.9834437086092715,
+              "precision": 0.9818181818181818,
+              "unmatchedReference": 10,
+              "unmatchedPrediction": 11
+            },
+            "pitchAndHand": {
+              "reference": 604,
+              "predicted": 605,
+              "correct": 597,
+              "recall": 0.9884105960264901,
+              "precision": 0.9867768595041322,
+              "unmatchedReference": 7,
+              "unmatchedPrediction": 8
+            },
+            "writtenSpelling": {
+              "reference": 604,
+              "predicted": 0,
+              "correct": 0,
+              "recall": null,
+              "precision": null,
+              "unmatchedReference": 604,
+              "unmatchedPrediction": 0,
+              "measuredRows": 0,
+              "unknownRows": 1,
+              "accuracy": null,
+              "knownReference": 0,
+              "knownCorrect": 0,
+              "knownSubsetAccuracy": null
+            },
+            "printedAccidentals": {
+              "reference": 0,
+              "predicted": 0,
+              "correct": 0,
+              "recall": null,
+              "precision": null,
+              "unmatchedReference": 0,
+              "unmatchedPrediction": 0,
+              "measuredRows": 0,
+              "unknownRows": 1,
+              "accuracy": null,
+              "knownReference": 0,
+              "knownCorrect": 0,
+              "knownSubsetAccuracy": null
+            },
+            "falseCompletions": 1,
+            "exactScopes": 0,
+            "usage": {
+              "usage": null,
+              "actualRequests": 0,
+              "knownActualRequests": 0,
+              "unknownRequestCounts": 0,
+              "reportedFields": {
+                "input": 0,
+                "output": 0,
+                "totalTokens": 0
+              },
+              "usageComplete": false,
+              "stages": 0
+            }
+          }
+        ]
+      },
+      {
+        "trial": "prelude-client-max",
+        "scopeRows": 1,
+        "rows": [
+          {
+            "caseId": "prelude-two-pages"
+          }
+        ],
+        "groups": [
+          {
+            "dataset": "prelude",
+            "eventUnit": "written-head",
+            "referenceLevel": "independent-musicxml",
+            "alignment": "frozen-document-relative",
+            "partition": "development",
+            "trial": "prelude-client-max",
+            "rows": 1,
+            "scorableRows": 1,
+            "statuses": {
+              "returned": 1,
+              "refused": 0,
+              "failed": 0,
+              "partial": 0,
+              "missing": 0
+            },
+            "refusalRate": 0,
+            "strict": {
+              "reference": 604,
+              "predicted": 604,
+              "correct": 600,
+              "recall": 0.9933774834437086,
+              "precision": 0.9933774834437086,
+              "unmatchedReference": 4,
+              "unmatchedPrediction": 4
+            },
+            "pitchAndHand": {
+              "reference": 604,
+              "predicted": 604,
+              "correct": 600,
+              "recall": 0.9933774834437086,
+              "precision": 0.9933774834437086,
+              "unmatchedReference": 4,
+              "unmatchedPrediction": 4
+            },
+            "writtenSpelling": {
+              "reference": 604,
+              "predicted": 0,
+              "correct": 0,
+              "recall": null,
+              "precision": null,
+              "unmatchedReference": 604,
+              "unmatchedPrediction": 0,
+              "measuredRows": 0,
+              "unknownRows": 1,
+              "accuracy": null,
+              "knownReference": 0,
+              "knownCorrect": 0,
+              "knownSubsetAccuracy": null
+            },
+            "printedAccidentals": {
+              "reference": 0,
+              "predicted": 0,
+              "correct": 0,
+              "recall": null,
+              "precision": null,
+              "unmatchedReference": 0,
+              "unmatchedPrediction": 0,
+              "measuredRows": 0,
+              "unknownRows": 1,
+              "accuracy": null,
+              "knownReference": 0,
+              "knownCorrect": 0,
+              "knownSubsetAccuracy": null
+            },
+            "falseCompletions": 1,
+            "exactScopes": 0,
+            "usage": {
+              "usage": null,
+              "actualRequests": 0,
+              "knownActualRequests": 0,
+              "unknownRequestCounts": 0,
+              "reportedFields": {
+                "input": 0,
+                "output": 0,
+                "totalTokens": 0
+              },
+              "usageComplete": false,
+              "stages": 0
+            }
+          }
+        ]
+      },
+      {
+        "trial": "phone-historical-whole-photo",
+        "scopeRows": 24,
+        "rows": [
+          {
+            "caseId": "phone/p1_q1"
+          },
+          {
+            "caseId": "phone/p1_q5"
+          },
+          {
+            "caseId": "phone/p1_q10"
+          },
+          {
+            "caseId": "phone/p2_q1"
+          },
+          {
+            "caseId": "phone/p5_q1"
+          },
+          {
+            "caseId": "phone/p9_q1"
+          },
+          {
+            "caseId": "phone/p10_q1"
+          },
+          {
+            "caseId": "phone/p10_q5"
+          },
+          {
+            "caseId": "phone/p10_q10"
+          },
+          {
+            "caseId": "phone/p13_q1"
+          },
+          {
+            "caseId": "phone/p17_q1"
+          },
+          {
+            "caseId": "phone/p21_q1"
+          },
+          {
+            "caseId": "phone/p25_q1"
+          },
+          {
+            "caseId": "phone/p29_q1"
+          },
+          {
+            "caseId": "phone/p33_q1"
+          },
+          {
+            "caseId": "phone/p37_q1"
+          },
+          {
+            "caseId": "phone/p41_q1"
+          },
+          {
+            "caseId": "phone/p45_q1"
+          },
+          {
+            "caseId": "phone/p49_q1"
+          },
+          {
+            "caseId": "phone/p53_q1"
+          },
+          {
+            "caseId": "phone/p57_q1"
+          },
+          {
+            "caseId": "phone/p61_q1"
+          },
+          {
+            "caseId": "phone/p65_q1"
+          },
+          {
+            "caseId": "phone/p69_q1"
+          }
+        ],
+        "groups": [
+          {
+            "dataset": "phone-photos",
+            "eventUnit": "written-head",
+            "referenceLevel": "agent-visual-subset-unconfirmed",
+            "alignment": "annotated-bar-local",
+            "partition": "development",
+            "trial": "phone-historical-whole-photo",
+            "rows": 24,
+            "scorableRows": 2,
+            "statuses": {
+              "returned": 6,
+              "refused": 0,
+              "failed": 3,
+              "partial": 15,
+              "missing": 0
+            },
+            "refusalRate": 0,
+            "strict": {
+              "reference": 36,
+              "predicted": 16,
+              "correct": 16,
+              "recall": 0.4444444444444444,
+              "precision": 1,
+              "unmatchedReference": 20,
+              "unmatchedPrediction": 0
+            },
+            "pitchAndHand": {
+              "reference": 36,
+              "predicted": 16,
+              "correct": 16,
+              "recall": 0.4444444444444444,
+              "precision": 1,
+              "unmatchedReference": 20,
+              "unmatchedPrediction": 0
+            },
+            "writtenSpelling": {
+              "reference": 0,
+              "predicted": 0,
+              "correct": 0,
+              "recall": null,
+              "precision": null,
+              "unmatchedReference": 0,
+              "unmatchedPrediction": 0,
+              "measuredRows": 0,
+              "unknownRows": 2,
+              "accuracy": null,
+              "knownReference": 0,
+              "knownCorrect": 0,
+              "knownSubsetAccuracy": null
+            },
+            "printedAccidentals": {
+              "reference": 0,
+              "predicted": 0,
+              "correct": 0,
+              "recall": null,
+              "precision": null,
+              "unmatchedReference": 0,
+              "unmatchedPrediction": 0,
+              "measuredRows": 0,
+              "unknownRows": 2,
+              "accuracy": null,
+              "knownReference": 0,
+              "knownCorrect": 0,
+              "knownSubsetAccuracy": null
+            },
+            "falseCompletions": 0,
+            "exactScopes": 0,
+            "usage": {
+              "usage": null,
+              "actualRequests": 0,
+              "knownActualRequests": 0,
+              "unknownRequestCounts": 0,
+              "reportedFields": {
+                "input": 0,
+                "output": 0,
+                "totalTokens": 0
+              },
+              "usageComplete": false,
+              "stages": 0
+            }
+          }
+        ]
+      },
+      {
+        "trial": "phone-single-system-supplement",
+        "scopeRows": 1,
+        "rows": [
+          {
+            "caseId": "phone/p21-single-system"
+          }
+        ],
+        "groups": [
+          {
+            "dataset": "phone-system-crop",
+            "eventUnit": "written-head",
+            "referenceLevel": "agent-visual-subset-unconfirmed",
+            "alignment": "annotated-bar-local",
+            "partition": "development",
+            "trial": "phone-single-system-supplement",
+            "rows": 1,
+            "scorableRows": 1,
+            "statuses": {
+              "returned": 1,
+              "refused": 0,
+              "failed": 0,
+              "partial": 0,
+              "missing": 0
+            },
+            "refusalRate": 0,
+            "strict": {
+              "reference": 16,
+              "predicted": 16,
+              "correct": 16,
+              "recall": 1,
+              "precision": 1,
+              "unmatchedReference": 0,
+              "unmatchedPrediction": 0
+            },
+            "pitchAndHand": {
+              "reference": 16,
+              "predicted": 16,
+              "correct": 16,
+              "recall": 1,
+              "precision": 1,
+              "unmatchedReference": 0,
+              "unmatchedPrediction": 0
+            },
+            "writtenSpelling": {
+              "reference": 0,
+              "predicted": 0,
+              "correct": 0,
+              "recall": null,
+              "precision": null,
+              "unmatchedReference": 0,
+              "unmatchedPrediction": 0,
+              "measuredRows": 0,
+              "unknownRows": 1,
+              "accuracy": null,
+              "knownReference": 0,
+              "knownCorrect": 0,
+              "knownSubsetAccuracy": null
+            },
+            "printedAccidentals": {
+              "reference": 0,
+              "predicted": 0,
+              "correct": 0,
+              "recall": null,
+              "precision": null,
+              "unmatchedReference": 0,
+              "unmatchedPrediction": 0,
+              "measuredRows": 0,
+              "unknownRows": 1,
+              "accuracy": null,
+              "knownReference": 0,
+              "knownCorrect": 0,
+              "knownSubsetAccuracy": null
+            },
+            "falseCompletions": 0,
+            "exactScopes": 1,
+            "usage": {
+              "usage": null,
+              "actualRequests": 0,
+              "knownActualRequests": 0,
+              "unknownRequestCounts": 0,
+              "reportedFields": {
+                "input": 0,
+                "output": 0,
+                "totalTokens": 0
+              },
+              "usageComplete": false,
+              "stages": 0
+            }
+          }
+        ]
+      },
+      {
+        "trial": "p1-context-live-development",
+        "scopeRows": 2,
+        "rows": [
+          {
+            "caseId": "rachmaninoff-op3-2/p1-s3"
+          },
+          {
+            "caseId": "etude-op10-4/p1-s1"
+          }
+        ],
+        "groups": [
+          {
+            "dataset": "dense-pdf",
+            "eventUnit": "written-head",
+            "referenceLevel": "independent-musicxml",
+            "alignment": "frozen-row-relative",
+            "partition": "development",
+            "trial": "p1-context-live-development",
+            "rows": 2,
+            "scorableRows": 2,
+            "statuses": {
+              "returned": 2,
+              "refused": 0,
+              "failed": 0,
+              "partial": 0,
+              "missing": 0
+            },
+            "refusalRate": 0,
+            "strict": {
+              "reference": 142,
+              "predicted": 142,
+              "correct": 142,
+              "recall": 1,
+              "precision": 1,
+              "unmatchedReference": 0,
+              "unmatchedPrediction": 0
+            },
+            "pitchAndHand": {
+              "reference": 142,
+              "predicted": 142,
+              "correct": 142,
+              "recall": 1,
+              "precision": 1,
+              "unmatchedReference": 0,
+              "unmatchedPrediction": 0
+            },
+            "writtenSpelling": {
+              "reference": 142,
+              "predicted": 142,
+              "correct": 142,
+              "recall": 1,
+              "precision": 1,
+              "unmatchedReference": 0,
+              "unmatchedPrediction": 0,
+              "measuredRows": 2,
+              "unknownRows": 0,
+              "accuracy": 1,
+              "knownReference": 142,
+              "knownCorrect": 142,
+              "knownSubsetAccuracy": 1
+            },
+            "printedAccidentals": {
+              "reference": 0,
+              "predicted": 142,
+              "correct": 0,
+              "recall": null,
+              "precision": null,
+              "unmatchedReference": 0,
+              "unmatchedPrediction": 142,
+              "measuredRows": 0,
+              "unknownRows": 2,
+              "accuracy": null,
+              "knownReference": 0,
+              "knownCorrect": 0,
+              "knownSubsetAccuracy": null
+            },
+            "falseCompletions": 0,
+            "exactScopes": 2,
+            "usage": {
+              "usage": null,
+              "actualRequests": 0,
+              "knownActualRequests": 0,
+              "unknownRequestCounts": 0,
+              "reportedFields": {
+                "input": 0,
+                "output": 0,
+                "totalTokens": 0
+              },
+              "usageComplete": false,
+              "stages": 0
+            }
+          }
+        ]
+      },
+      {
+        "trial": "p1-initial-without-context",
+        "scopeRows": 2,
+        "rows": [
+          {
+            "caseId": "rachmaninoff-op3-2/p1-s3"
+          },
+          {
+            "caseId": "etude-op10-4/p1-s1"
+          }
+        ],
+        "groups": [
+          {
+            "dataset": "dense-pdf",
+            "eventUnit": "written-head",
+            "referenceLevel": "independent-musicxml",
+            "alignment": "frozen-row-relative",
+            "partition": "development",
+            "trial": "p1-initial-without-context",
+            "rows": 2,
+            "scorableRows": 2,
+            "statuses": {
+              "returned": 0,
+              "refused": 1,
+              "failed": 1,
+              "partial": 0,
+              "missing": 0
+            },
+            "refusalRate": 0.5,
+            "strict": {
+              "reference": 142,
+              "predicted": 0,
+              "correct": 0,
+              "recall": 0,
+              "precision": null,
+              "unmatchedReference": 142,
+              "unmatchedPrediction": 0
+            },
+            "pitchAndHand": {
+              "reference": 142,
+              "predicted": 0,
+              "correct": 0,
+              "recall": 0,
+              "precision": null,
+              "unmatchedReference": 142,
+              "unmatchedPrediction": 0
+            },
+            "writtenSpelling": {
+              "reference": 142,
+              "predicted": 0,
+              "correct": 0,
+              "recall": null,
+              "precision": null,
+              "unmatchedReference": 142,
+              "unmatchedPrediction": 0,
+              "measuredRows": 0,
+              "unknownRows": 2,
+              "accuracy": null,
+              "knownReference": 0,
+              "knownCorrect": 0,
+              "knownSubsetAccuracy": null
+            },
+            "printedAccidentals": {
+              "reference": 0,
+              "predicted": 0,
+              "correct": 0,
+              "recall": null,
+              "precision": null,
+              "unmatchedReference": 0,
+              "unmatchedPrediction": 0,
+              "measuredRows": 0,
+              "unknownRows": 2,
+              "accuracy": null,
+              "knownReference": 0,
+              "knownCorrect": 0,
+              "knownSubsetAccuracy": null
+            },
+            "falseCompletions": 0,
+            "exactScopes": 0,
+            "usage": {
+              "usage": null,
+              "actualRequests": 0,
+              "knownActualRequests": 0,
+              "unknownRequestCounts": 0,
+              "reportedFields": {
+                "input": 0,
+                "output": 0,
+                "totalTokens": 0
+              },
+              "usageComplete": false,
+              "stages": 0
+            }
+          }
+        ]
+      }
+    ],
+    "after": [
+      {
+        "trial": "dense-historical-framework",
+        "scopeRows": 16,
+        "rows": [
+          {
+            "caseId": "etude-op10-4/p1-s1"
+          },
+          {
+            "caseId": "etude-op10-4/p1-s2"
+          },
+          {
+            "caseId": "etude-op10-4/p1-s3"
+          },
+          {
+            "caseId": "etude-op10-4/p1-s4"
+          },
+          {
+            "caseId": "etude-op10-4/p1-s5"
+          },
+          {
+            "caseId": "etude-op10-4/p1-s6"
+          },
+          {
+            "caseId": "fantaisie-op66/p1-s1"
+          },
+          {
+            "caseId": "fantaisie-op66/p1-s2"
+          },
+          {
+            "caseId": "fantaisie-op66/p1-s3"
+          },
+          {
+            "caseId": "fantaisie-op66/p1-s4"
+          },
+          {
+            "caseId": "fantaisie-op66/p1-s5"
+          },
+          {
+            "caseId": "rachmaninoff-op3-2/p1-s1"
+          },
+          {
+            "caseId": "rachmaninoff-op3-2/p1-s2"
+          },
+          {
+            "caseId": "rachmaninoff-op3-2/p1-s3"
+          },
+          {
+            "caseId": "rachmaninoff-op3-2/p1-s4"
+          },
+          {
+            "caseId": "rachmaninoff-op3-2/p1-s5"
+          }
+        ],
+        "groups": [
+          {
+            "dataset": "dense-pdf",
+            "eventUnit": "written-head",
+            "referenceLevel": "independent-musicxml",
+            "alignment": "frozen-row-relative",
+            "partition": "development",
+            "trial": "dense-historical-framework",
+            "rows": 16,
+            "scorableRows": 16,
+            "statuses": {
+              "returned": 11,
+              "refused": 4,
+              "failed": 1,
+              "partial": 0,
+              "missing": 0
+            },
+            "refusalRate": 0.25,
+            "strict": {
+              "reference": 1292,
+              "predicted": 833,
+              "correct": 831,
+              "recall": 0.6431888544891641,
+              "precision": 0.9975990396158463,
+              "unmatchedReference": 461,
+              "unmatchedPrediction": 2
+            },
+            "pitchAndHand": {
+              "reference": 1292,
+              "predicted": 833,
+              "correct": 831,
+              "recall": 0.6431888544891641,
+              "precision": 0.9975990396158463,
+              "unmatchedReference": 461,
+              "unmatchedPrediction": 2
+            },
+            "writtenSpelling": {
+              "reference": 1292,
+              "predicted": 0,
+              "correct": 0,
+              "recall": null,
+              "precision": null,
+              "unmatchedReference": 1292,
+              "unmatchedPrediction": 0,
+              "measuredRows": 0,
+              "unknownRows": 16,
+              "accuracy": null,
+              "knownReference": 0,
+              "knownCorrect": 0,
+              "knownSubsetAccuracy": null
+            },
+            "printedAccidentals": {
+              "reference": 0,
+              "predicted": 0,
+              "correct": 0,
+              "recall": null,
+              "precision": null,
+              "unmatchedReference": 0,
+              "unmatchedPrediction": 0,
+              "measuredRows": 0,
+              "unknownRows": 16,
+              "accuracy": null,
+              "knownReference": 0,
+              "knownCorrect": 0,
+              "knownSubsetAccuracy": null
+            },
+            "falseCompletions": 1,
+            "exactScopes": 10,
+            "usage": {
+              "usage": null,
+              "actualRequests": 0,
+              "knownActualRequests": 0,
+              "unknownRequestCounts": 0,
+              "reportedFields": {
+                "input": 0,
+                "output": 0,
+                "totalTokens": 0
+              },
+              "usageComplete": false,
+              "stages": 0
+            }
+          }
+        ]
+      },
+      {
+        "trial": "dense-p0-offline-recovery",
+        "scopeRows": 16,
+        "rows": [
+          {
+            "caseId": "etude-op10-4/p1-s1"
+          },
+          {
+            "caseId": "etude-op10-4/p1-s2"
+          },
+          {
+            "caseId": "etude-op10-4/p1-s3"
+          },
+          {
+            "caseId": "etude-op10-4/p1-s4"
+          },
+          {
+            "caseId": "etude-op10-4/p1-s5"
+          },
+          {
+            "caseId": "etude-op10-4/p1-s6"
+          },
+          {
+            "caseId": "fantaisie-op66/p1-s1"
+          },
+          {
+            "caseId": "fantaisie-op66/p1-s2"
+          },
+          {
+            "caseId": "fantaisie-op66/p1-s3"
+          },
+          {
+            "caseId": "fantaisie-op66/p1-s4"
+          },
+          {
+            "caseId": "fantaisie-op66/p1-s5"
+          },
+          {
+            "caseId": "rachmaninoff-op3-2/p1-s1"
+          },
+          {
+            "caseId": "rachmaninoff-op3-2/p1-s2"
+          },
+          {
+            "caseId": "rachmaninoff-op3-2/p1-s3"
+          },
+          {
+            "caseId": "rachmaninoff-op3-2/p1-s4"
+          },
+          {
+            "caseId": "rachmaninoff-op3-2/p1-s5"
+          }
+        ],
+        "groups": [
+          {
+            "dataset": "dense-pdf",
+            "eventUnit": "written-head",
+            "referenceLevel": "independent-musicxml",
+            "alignment": "frozen-row-relative",
+            "partition": "development",
+            "trial": "dense-p0-offline-recovery",
+            "rows": 16,
+            "scorableRows": 16,
+            "statuses": {
+              "returned": 12,
+              "refused": 4,
+              "failed": 0,
+              "partial": 0,
+              "missing": 0
+            },
+            "refusalRate": 0.25,
+            "strict": {
+              "reference": 1292,
+              "predicted": 935,
+              "correct": 933,
+              "recall": 0.7221362229102167,
+              "precision": 0.9978609625668449,
+              "unmatchedReference": 359,
+              "unmatchedPrediction": 2
+            },
+            "pitchAndHand": {
+              "reference": 1292,
+              "predicted": 935,
+              "correct": 933,
+              "recall": 0.7221362229102167,
+              "precision": 0.9978609625668449,
+              "unmatchedReference": 359,
+              "unmatchedPrediction": 2
+            },
+            "writtenSpelling": {
+              "reference": 1292,
+              "predicted": 0,
+              "correct": 0,
+              "recall": null,
+              "precision": null,
+              "unmatchedReference": 1292,
+              "unmatchedPrediction": 0,
+              "measuredRows": 0,
+              "unknownRows": 16,
+              "accuracy": null,
+              "knownReference": 0,
+              "knownCorrect": 0,
+              "knownSubsetAccuracy": null
+            },
+            "printedAccidentals": {
+              "reference": 0,
+              "predicted": 0,
+              "correct": 0,
+              "recall": null,
+              "precision": null,
+              "unmatchedReference": 0,
+              "unmatchedPrediction": 0,
+              "measuredRows": 0,
+              "unknownRows": 16,
+              "accuracy": null,
+              "knownReference": 0,
+              "knownCorrect": 0,
+              "knownSubsetAccuracy": null
+            },
+            "falseCompletions": 1,
+            "exactScopes": 11,
+            "usage": {
+              "usage": null,
+              "actualRequests": 0,
+              "knownActualRequests": 0,
+              "unknownRequestCounts": 0,
+              "reportedFields": {
+                "input": 0,
+                "output": 0,
+                "totalTokens": 0
+              },
+              "usageComplete": false,
+              "stages": 0
+            }
+          }
+        ]
+      },
+      {
+        "trial": "prelude-client-low",
+        "scopeRows": 1,
+        "rows": [
+          {
+            "caseId": "prelude-two-pages"
+          }
+        ],
+        "groups": [
+          {
+            "dataset": "prelude",
+            "eventUnit": "written-head",
+            "referenceLevel": "independent-musicxml",
+            "alignment": "frozen-document-relative",
+            "partition": "development",
+            "trial": "prelude-client-low",
+            "rows": 1,
+            "scorableRows": 1,
+            "statuses": {
+              "returned": 0,
+              "refused": 0,
+              "failed": 0,
+              "partial": 1,
+              "missing": 0
+            },
+            "refusalRate": 0,
+            "strict": {
+              "reference": 604,
+              "predicted": 539,
+              "correct": 505,
+              "recall": 0.8360927152317881,
+              "precision": 0.9369202226345084,
+              "unmatchedReference": 99,
+              "unmatchedPrediction": 34
+            },
+            "pitchAndHand": {
+              "reference": 604,
+              "predicted": 539,
+              "correct": 509,
+              "recall": 0.8427152317880795,
+              "precision": 0.9443413729128015,
+              "unmatchedReference": 95,
+              "unmatchedPrediction": 30
+            },
+            "writtenSpelling": {
+              "reference": 604,
+              "predicted": 0,
+              "correct": 0,
+              "recall": null,
+              "precision": null,
+              "unmatchedReference": 604,
+              "unmatchedPrediction": 0,
+              "measuredRows": 0,
+              "unknownRows": 1,
+              "accuracy": null,
+              "knownReference": 0,
+              "knownCorrect": 0,
+              "knownSubsetAccuracy": null
+            },
+            "printedAccidentals": {
+              "reference": 0,
+              "predicted": 0,
+              "correct": 0,
+              "recall": null,
+              "precision": null,
+              "unmatchedReference": 0,
+              "unmatchedPrediction": 0,
+              "measuredRows": 0,
+              "unknownRows": 1,
+              "accuracy": null,
+              "knownReference": 0,
+              "knownCorrect": 0,
+              "knownSubsetAccuracy": null
+            },
+            "falseCompletions": 0,
+            "exactScopes": 0,
+            "usage": {
+              "usage": null,
+              "actualRequests": 0,
+              "knownActualRequests": 0,
+              "unknownRequestCounts": 0,
+              "reportedFields": {
+                "input": 0,
+                "output": 0,
+                "totalTokens": 0
+              },
+              "usageComplete": false,
+              "stages": 0
+            }
+          }
+        ]
+      },
+      {
+        "trial": "prelude-client-high",
+        "scopeRows": 1,
+        "rows": [
+          {
+            "caseId": "prelude-two-pages"
+          }
+        ],
+        "groups": [
+          {
+            "dataset": "prelude",
+            "eventUnit": "written-head",
+            "referenceLevel": "independent-musicxml",
+            "alignment": "frozen-document-relative",
+            "partition": "development",
+            "trial": "prelude-client-high",
+            "rows": 1,
+            "scorableRows": 1,
+            "statuses": {
+              "returned": 1,
+              "refused": 0,
+              "failed": 0,
+              "partial": 0,
+              "missing": 0
+            },
+            "refusalRate": 0,
+            "strict": {
+              "reference": 604,
+              "predicted": 605,
+              "correct": 594,
+              "recall": 0.9834437086092715,
+              "precision": 0.9818181818181818,
+              "unmatchedReference": 10,
+              "unmatchedPrediction": 11
+            },
+            "pitchAndHand": {
+              "reference": 604,
+              "predicted": 605,
+              "correct": 597,
+              "recall": 0.9884105960264901,
+              "precision": 0.9867768595041322,
+              "unmatchedReference": 7,
+              "unmatchedPrediction": 8
+            },
+            "writtenSpelling": {
+              "reference": 604,
+              "predicted": 0,
+              "correct": 0,
+              "recall": null,
+              "precision": null,
+              "unmatchedReference": 604,
+              "unmatchedPrediction": 0,
+              "measuredRows": 0,
+              "unknownRows": 1,
+              "accuracy": null,
+              "knownReference": 0,
+              "knownCorrect": 0,
+              "knownSubsetAccuracy": null
+            },
+            "printedAccidentals": {
+              "reference": 0,
+              "predicted": 0,
+              "correct": 0,
+              "recall": null,
+              "precision": null,
+              "unmatchedReference": 0,
+              "unmatchedPrediction": 0,
+              "measuredRows": 0,
+              "unknownRows": 1,
+              "accuracy": null,
+              "knownReference": 0,
+              "knownCorrect": 0,
+              "knownSubsetAccuracy": null
+            },
+            "falseCompletions": 1,
+            "exactScopes": 0,
+            "usage": {
+              "usage": null,
+              "actualRequests": 0,
+              "knownActualRequests": 0,
+              "unknownRequestCounts": 0,
+              "reportedFields": {
+                "input": 0,
+                "output": 0,
+                "totalTokens": 0
+              },
+              "usageComplete": false,
+              "stages": 0
+            }
+          }
+        ]
+      },
+      {
+        "trial": "prelude-client-max",
+        "scopeRows": 1,
+        "rows": [
+          {
+            "caseId": "prelude-two-pages"
+          }
+        ],
+        "groups": [
+          {
+            "dataset": "prelude",
+            "eventUnit": "written-head",
+            "referenceLevel": "independent-musicxml",
+            "alignment": "frozen-document-relative",
+            "partition": "development",
+            "trial": "prelude-client-max",
+            "rows": 1,
+            "scorableRows": 1,
+            "statuses": {
+              "returned": 1,
+              "refused": 0,
+              "failed": 0,
+              "partial": 0,
+              "missing": 0
+            },
+            "refusalRate": 0,
+            "strict": {
+              "reference": 604,
+              "predicted": 604,
+              "correct": 600,
+              "recall": 0.9933774834437086,
+              "precision": 0.9933774834437086,
+              "unmatchedReference": 4,
+              "unmatchedPrediction": 4
+            },
+            "pitchAndHand": {
+              "reference": 604,
+              "predicted": 604,
+              "correct": 600,
+              "recall": 0.9933774834437086,
+              "precision": 0.9933774834437086,
+              "unmatchedReference": 4,
+              "unmatchedPrediction": 4
+            },
+            "writtenSpelling": {
+              "reference": 604,
+              "predicted": 0,
+              "correct": 0,
+              "recall": null,
+              "precision": null,
+              "unmatchedReference": 604,
+              "unmatchedPrediction": 0,
+              "measuredRows": 0,
+              "unknownRows": 1,
+              "accuracy": null,
+              "knownReference": 0,
+              "knownCorrect": 0,
+              "knownSubsetAccuracy": null
+            },
+            "printedAccidentals": {
+              "reference": 0,
+              "predicted": 0,
+              "correct": 0,
+              "recall": null,
+              "precision": null,
+              "unmatchedReference": 0,
+              "unmatchedPrediction": 0,
+              "measuredRows": 0,
+              "unknownRows": 1,
+              "accuracy": null,
+              "knownReference": 0,
+              "knownCorrect": 0,
+              "knownSubsetAccuracy": null
+            },
+            "falseCompletions": 1,
+            "exactScopes": 0,
+            "usage": {
+              "usage": null,
+              "actualRequests": 0,
+              "knownActualRequests": 0,
+              "unknownRequestCounts": 0,
+              "reportedFields": {
+                "input": 0,
+                "output": 0,
+                "totalTokens": 0
+              },
+              "usageComplete": false,
+              "stages": 0
+            }
+          }
+        ]
+      },
+      {
+        "trial": "phone-historical-whole-photo",
+        "scopeRows": 24,
+        "rows": [
+          {
+            "caseId": "phone/p1_q1"
+          },
+          {
+            "caseId": "phone/p1_q5"
+          },
+          {
+            "caseId": "phone/p1_q10"
+          },
+          {
+            "caseId": "phone/p2_q1"
+          },
+          {
+            "caseId": "phone/p5_q1"
+          },
+          {
+            "caseId": "phone/p9_q1"
+          },
+          {
+            "caseId": "phone/p10_q1"
+          },
+          {
+            "caseId": "phone/p10_q5"
+          },
+          {
+            "caseId": "phone/p10_q10"
+          },
+          {
+            "caseId": "phone/p13_q1"
+          },
+          {
+            "caseId": "phone/p17_q1"
+          },
+          {
+            "caseId": "phone/p21_q1"
+          },
+          {
+            "caseId": "phone/p25_q1"
+          },
+          {
+            "caseId": "phone/p29_q1"
+          },
+          {
+            "caseId": "phone/p33_q1"
+          },
+          {
+            "caseId": "phone/p37_q1"
+          },
+          {
+            "caseId": "phone/p41_q1"
+          },
+          {
+            "caseId": "phone/p45_q1"
+          },
+          {
+            "caseId": "phone/p49_q1"
+          },
+          {
+            "caseId": "phone/p53_q1"
+          },
+          {
+            "caseId": "phone/p57_q1"
+          },
+          {
+            "caseId": "phone/p61_q1"
+          },
+          {
+            "caseId": "phone/p65_q1"
+          },
+          {
+            "caseId": "phone/p69_q1"
+          }
+        ],
+        "groups": [
+          {
+            "dataset": "phone-photos",
+            "eventUnit": "written-head",
+            "referenceLevel": "agent-visual-subset-unconfirmed",
+            "alignment": "annotated-bar-local",
+            "partition": "development",
+            "trial": "phone-historical-whole-photo",
+            "rows": 24,
+            "scorableRows": 2,
+            "statuses": {
+              "returned": 6,
+              "refused": 0,
+              "failed": 3,
+              "partial": 15,
+              "missing": 0
+            },
+            "refusalRate": 0,
+            "strict": {
+              "reference": 36,
+              "predicted": 16,
+              "correct": 16,
+              "recall": 0.4444444444444444,
+              "precision": 1,
+              "unmatchedReference": 20,
+              "unmatchedPrediction": 0
+            },
+            "pitchAndHand": {
+              "reference": 36,
+              "predicted": 16,
+              "correct": 16,
+              "recall": 0.4444444444444444,
+              "precision": 1,
+              "unmatchedReference": 20,
+              "unmatchedPrediction": 0
+            },
+            "writtenSpelling": {
+              "reference": 0,
+              "predicted": 0,
+              "correct": 0,
+              "recall": null,
+              "precision": null,
+              "unmatchedReference": 0,
+              "unmatchedPrediction": 0,
+              "measuredRows": 0,
+              "unknownRows": 2,
+              "accuracy": null,
+              "knownReference": 0,
+              "knownCorrect": 0,
+              "knownSubsetAccuracy": null
+            },
+            "printedAccidentals": {
+              "reference": 0,
+              "predicted": 0,
+              "correct": 0,
+              "recall": null,
+              "precision": null,
+              "unmatchedReference": 0,
+              "unmatchedPrediction": 0,
+              "measuredRows": 0,
+              "unknownRows": 2,
+              "accuracy": null,
+              "knownReference": 0,
+              "knownCorrect": 0,
+              "knownSubsetAccuracy": null
+            },
+            "falseCompletions": 0,
+            "exactScopes": 0,
+            "usage": {
+              "usage": null,
+              "actualRequests": 0,
+              "knownActualRequests": 0,
+              "unknownRequestCounts": 0,
+              "reportedFields": {
+                "input": 0,
+                "output": 0,
+                "totalTokens": 0
+              },
+              "usageComplete": false,
+              "stages": 0
+            }
+          }
+        ]
+      },
+      {
+        "trial": "phone-single-system-supplement",
+        "scopeRows": 1,
+        "rows": [
+          {
+            "caseId": "phone/p21-single-system"
+          }
+        ],
+        "groups": [
+          {
+            "dataset": "phone-system-crop",
+            "eventUnit": "written-head",
+            "referenceLevel": "agent-visual-subset-unconfirmed",
+            "alignment": "annotated-bar-local",
+            "partition": "development",
+            "trial": "phone-single-system-supplement",
+            "rows": 1,
+            "scorableRows": 1,
+            "statuses": {
+              "returned": 1,
+              "refused": 0,
+              "failed": 0,
+              "partial": 0,
+              "missing": 0
+            },
+            "refusalRate": 0,
+            "strict": {
+              "reference": 16,
+              "predicted": 16,
+              "correct": 16,
+              "recall": 1,
+              "precision": 1,
+              "unmatchedReference": 0,
+              "unmatchedPrediction": 0
+            },
+            "pitchAndHand": {
+              "reference": 16,
+              "predicted": 16,
+              "correct": 16,
+              "recall": 1,
+              "precision": 1,
+              "unmatchedReference": 0,
+              "unmatchedPrediction": 0
+            },
+            "writtenSpelling": {
+              "reference": 0,
+              "predicted": 0,
+              "correct": 0,
+              "recall": null,
+              "precision": null,
+              "unmatchedReference": 0,
+              "unmatchedPrediction": 0,
+              "measuredRows": 0,
+              "unknownRows": 1,
+              "accuracy": null,
+              "knownReference": 0,
+              "knownCorrect": 0,
+              "knownSubsetAccuracy": null
+            },
+            "printedAccidentals": {
+              "reference": 0,
+              "predicted": 0,
+              "correct": 0,
+              "recall": null,
+              "precision": null,
+              "unmatchedReference": 0,
+              "unmatchedPrediction": 0,
+              "measuredRows": 0,
+              "unknownRows": 1,
+              "accuracy": null,
+              "knownReference": 0,
+              "knownCorrect": 0,
+              "knownSubsetAccuracy": null
+            },
+            "falseCompletions": 0,
+            "exactScopes": 1,
+            "usage": {
+              "usage": null,
+              "actualRequests": 0,
+              "knownActualRequests": 0,
+              "unknownRequestCounts": 0,
+              "reportedFields": {
+                "input": 0,
+                "output": 0,
+                "totalTokens": 0
+              },
+              "usageComplete": false,
+              "stages": 0
+            }
+          }
+        ]
+      },
+      {
+        "trial": "p1-context-live-development",
+        "scopeRows": 2,
+        "rows": [
+          {
+            "caseId": "rachmaninoff-op3-2/p1-s3"
+          },
+          {
+            "caseId": "etude-op10-4/p1-s1"
+          }
+        ],
+        "groups": [
+          {
+            "dataset": "dense-pdf",
+            "eventUnit": "written-head",
+            "referenceLevel": "independent-musicxml",
+            "alignment": "frozen-row-relative",
+            "partition": "development",
+            "trial": "p1-context-live-development",
+            "rows": 2,
+            "scorableRows": 2,
+            "statuses": {
+              "returned": 2,
+              "refused": 0,
+              "failed": 0,
+              "partial": 0,
+              "missing": 0
+            },
+            "refusalRate": 0,
+            "strict": {
+              "reference": 142,
+              "predicted": 142,
+              "correct": 142,
+              "recall": 1,
+              "precision": 1,
+              "unmatchedReference": 0,
+              "unmatchedPrediction": 0
+            },
+            "pitchAndHand": {
+              "reference": 142,
+              "predicted": 142,
+              "correct": 142,
+              "recall": 1,
+              "precision": 1,
+              "unmatchedReference": 0,
+              "unmatchedPrediction": 0
+            },
+            "writtenSpelling": {
+              "reference": 142,
+              "predicted": 142,
+              "correct": 142,
+              "recall": 1,
+              "precision": 1,
+              "unmatchedReference": 0,
+              "unmatchedPrediction": 0,
+              "measuredRows": 2,
+              "unknownRows": 0,
+              "accuracy": 1,
+              "knownReference": 142,
+              "knownCorrect": 142,
+              "knownSubsetAccuracy": 1
+            },
+            "printedAccidentals": {
+              "reference": 0,
+              "predicted": 142,
+              "correct": 0,
+              "recall": null,
+              "precision": null,
+              "unmatchedReference": 0,
+              "unmatchedPrediction": 142,
+              "measuredRows": 0,
+              "unknownRows": 2,
+              "accuracy": null,
+              "knownReference": 0,
+              "knownCorrect": 0,
+              "knownSubsetAccuracy": null
+            },
+            "falseCompletions": 0,
+            "exactScopes": 2,
+            "usage": {
+              "usage": null,
+              "actualRequests": 0,
+              "knownActualRequests": 0,
+              "unknownRequestCounts": 0,
+              "reportedFields": {
+                "input": 0,
+                "output": 0,
+                "totalTokens": 0
+              },
+              "usageComplete": false,
+              "stages": 0
+            }
+          }
+        ]
+      },
+      {
+        "trial": "p1-initial-without-context",
+        "scopeRows": 2,
+        "rows": [
+          {
+            "caseId": "rachmaninoff-op3-2/p1-s3"
+          },
+          {
+            "caseId": "etude-op10-4/p1-s1"
+          }
+        ],
+        "groups": [
+          {
+            "dataset": "dense-pdf",
+            "eventUnit": "written-head",
+            "referenceLevel": "independent-musicxml",
+            "alignment": "frozen-row-relative",
+            "partition": "development",
+            "trial": "p1-initial-without-context",
+            "rows": 2,
+            "scorableRows": 2,
+            "statuses": {
+              "returned": 0,
+              "refused": 1,
+              "failed": 1,
+              "partial": 0,
+              "missing": 0
+            },
+            "refusalRate": 0.5,
+            "strict": {
+              "reference": 142,
+              "predicted": 0,
+              "correct": 0,
+              "recall": 0,
+              "precision": null,
+              "unmatchedReference": 142,
+              "unmatchedPrediction": 0
+            },
+            "pitchAndHand": {
+              "reference": 142,
+              "predicted": 0,
+              "correct": 0,
+              "recall": 0,
+              "precision": null,
+              "unmatchedReference": 142,
+              "unmatchedPrediction": 0
+            },
+            "writtenSpelling": {
+              "reference": 142,
+              "predicted": 0,
+              "correct": 0,
+              "recall": null,
+              "precision": null,
+              "unmatchedReference": 142,
+              "unmatchedPrediction": 0,
+              "measuredRows": 0,
+              "unknownRows": 2,
+              "accuracy": null,
+              "knownReference": 0,
+              "knownCorrect": 0,
+              "knownSubsetAccuracy": null
+            },
+            "printedAccidentals": {
+              "reference": 0,
+              "predicted": 0,
+              "correct": 0,
+              "recall": null,
+              "precision": null,
+              "unmatchedReference": 0,
+              "unmatchedPrediction": 0,
+              "measuredRows": 0,
+              "unknownRows": 2,
+              "accuracy": null,
+              "knownReference": 0,
+              "knownCorrect": 0,
+              "knownSubsetAccuracy": null
+            },
+            "falseCompletions": 0,
+            "exactScopes": 0,
+            "usage": {
+              "usage": null,
+              "actualRequests": 0,
+              "knownActualRequests": 0,
+              "unknownRequestCounts": 0,
+              "reportedFields": {
+                "input": 0,
+                "output": 0,
+                "totalTokens": 0
+              },
+              "usageComplete": false,
+              "stages": 0
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "limitations": [
+    "Historical frozen responses, not a new visual-model trial.",
+    "Development sets only; no holdout guarantee.",
+    "Source tiers and event units are not pooled.",
+    "Printed accidental/rest truth is unknown unless independently supplied."
+  ]
+}
