@@ -122,12 +122,14 @@ export function createAccountClient({
       return context;
     },
     code: (input) => api.json("/auth/code", { method: "POST", body: input }),
-    async verify(input) {
+    passwordLogin: (input) => api.verify(input, "/auth/password"),
+    resetPassword: (input) => api.verify(input, "/auth/password/reset"),
+    async verify(input, path = "/auth/verify") {
       const {
         isNewAccount = false,
         invite = null,
         ...s
-      } = await api.json("/auth/verify", {
+      } = await api.json(path, {
         method: "POST",
         body: input,
       });

@@ -1,3 +1,4 @@
+import { authLayout, authForm } from "./auth-view.js";
 import { navigation } from "../commercial/shared.js";
 import { createAccountClient } from "./client.js";
 import {
@@ -11,6 +12,7 @@ import {
 import { importScore } from "../../lib/importers.mjs";
 import { readScoreDocument } from "../../lib/score-document.ts";
 import "./style.css";
+import "./auth.css";
 const root = document.querySelector("#account-app"),
   esc = (v) =>
     String(v ?? "").replace(
@@ -32,6 +34,12 @@ const account = createAccountClient(),
     error: "",
     message: "",
     codeDraft: "",
+    authMethod: "password",
+    passwordDraft: "",
+    passwordConfirmDraft: "",
+    passwordVisible: false,
+    remember: false,
+    consent: false,
     emailDraft: null,
     inviteDraft: "",
     inviteCheck: null,
@@ -91,6 +99,17 @@ async function load() {
 const registration = () => state.product?.registration || { open: true };
 function render() {
   const s = account.session;
+  document.body.classList.toggle("is-signing-in", !s);
+  if (!s) {
+    root.innerHTML = authLayout({
+      content: login(),
+      error: state.error,
+      message: state.message,
+      busy: state.busy,
+    });
+    bind();
+    return;
+  }
   root.innerHTML = `${navigation("account", s)}<main class="account-shell"><header class="account-heading"><a href="/">← 返回我的曲库</a><span>账号与原始资料</span></header>${state.context?.profile === "local-validation" ? '<div class="account-notice">商业版本机预览：账号和文件保存在独立数据库。验证码写入开发邮箱，未发送真实邮件。</div>' : ""}<div role="alert" class="account-error">${esc(state.error)}</div><div role="status" class="account-message">${esc(state.message)}</div>${!s ? login() : s.user.state === "deletion_pending" ? `<section class="account-card"><h1>恢复账号</h1><p>已验证 ${esc(s.user.email)}，可以在等待期内恢复账号。</p><button data-recover>恢复账号</button></section>` : dashboard(s)}<div class="account-busy" role="status">${state.busy ? "正在处理，请稍候…" : ""}</div></main>`;
   bind();
 }
@@ -108,24 +127,20 @@ function inviteStatus() {
 }
 // One card for both: the email gets a code, and the first verified sign-in creates the account.
 function login() {
-  const flow = signIn.state,
-    busy = state.busy || flow.busy,
-    register = flow.mode === "register",
-    open = registration().open;
-  const mailbox = state.context?.mailboxDirectory
-    ? `<p class="account-help">本机开发邮箱：<code>${esc(state.context.mailboxDirectory)}</code>。生成邀请码：<code>npm run accounts:invite-code -- --uses 10 --bonus 3</code></p>`
-    : "";
-  if (flow.step === "code")
-    return `<section class="account-card auth-card"><p class="eyebrow">${register ? "注册" : "登录"} · 第 2 步，共 2 步</p><h1>输入验证码</h1><p class="auth-lead">验证码已发往 <strong>${esc(flow.email)}</strong>，10 分钟内有效。</p>${register && flow.inviteCode ? `<p class="invite-chip">邀请码 <code>${esc(flow.inviteCode)}</code> 将在注册完成时使用</p>` : ""}<form data-verify><label>${CODE_LENGTH} 位验证码<input class="login-code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="20" placeholder="${"0".repeat(CODE_LENGTH)}" value="${esc(state.codeDraft)}" required></label><button type="submit" ${busy ? "disabled" : ""}>${busy ? "正在验证…" : register ? "完成注册" : "登录"}</button></form><div class="login-links"><button type="button" class="link-button" data-resend ${busy || flow.secondsUntilResend > 0 ? "disabled" : ""}>${resendLabel(flow.secondsUntilResend)}</button><button type="button" class="link-button" data-change-email>换个邮箱</button></div>${mailbox}</section>`;
-  const tabs = `<div class="auth-tabs" role="tablist" aria-label="登录或注册"><button type="button" role="tab" data-auth-mode="login" aria-selected="${!register}">登录</button><button type="button" role="tab" data-auth-mode="register" aria-selected="${register}">注册</button></div>`;
-  const email = `<label>邮箱<input type="email" name="email" autocomplete="email" value="${esc(state.emailDraft ?? flow.email)}" required></label>`;
-  if (register)
-    return `<section class="account-card auth-card">${tabs}<h1>${next ? "注册后继续" : "创建账号"}</h1><p class="auth-lead">${open ? "用邮箱注册，无需密码。曲谱默认私有保存；有邀请码可额外获赠识谱任务。" : "目前仅限邀请注册，请填写邀请码。"}</p><form data-login>${email}<label>邀请码${open ? '<span class="optional">选填</span>' : ""}<input name="invite" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="QB-XXXXX-XXXXX" value="${esc(state.inviteDraft)}" ${open ? "" : "required"}></label><p class="invite-status" data-invite-status role="status">${inviteStatus()}</p><button type="submit" ${busy ? "disabled" : ""}>${busy ? "正在发送…" : "注册并获取验证码"}</button></form><p class="account-hint">已有账号？切换到「登录」即可；本设备曲库不会自动上传。</p>${mailbox}</section>`;
-  return `<section class="account-card auth-card">${tabs}<h1>${next ? "登录后继续" : "欢迎回来"}</h1><p class="auth-lead">用邮箱验证码登录，无需密码。</p><form data-login>${email}<button type="submit" ${busy ? "disabled" : ""}>${busy ? "正在发送…" : "获取验证码"}</button></form><p class="account-hint">还没有账号？切换到「注册」。账号在注销等待期内，用原邮箱登录即可恢复。</p>${mailbox}</section>`;
+  return authForm({
+    flow: signIn.state,
+    state,
+    next,
+    open: registration().open,
+    inviteStatus: inviteStatus(),
+    resendLabel,
+  });
 }
 // After a successful sign-in, go back to the page that asked for it.
 async function afterSignIn({ session, isNewAccount, invite }) {
   state.codeDraft = "";
+  state.passwordDraft = "";
+  state.passwordConfirmDraft = "";
   state.inviteDraft = "";
   state.inviteCheck = null;
   if (next && session.user.state !== "deletion_pending") {
@@ -174,17 +189,107 @@ function scheduleInviteCheck(value) {
 }
 function bindSignIn() {
   clearInterval(resendTimer);
-  const emailInput = $("[data-login] input[name=email]"),
+  const emailInput = $("input[name=email]"),
     inviteInput = $("[data-login] input[name=invite]"),
     codeInput = $("[data-verify] input[name=code]");
   if (!state.busy)
     (codeInput || (emailInput?.value ? null : emailInput))?.focus();
   $$("[data-auth-mode]").forEach((tab) =>
     tab.addEventListener("click", () => {
+      if (state.busy) return;
       signIn.setMode(tab.dataset.authMode);
+      state.passwordDraft = "";
+      state.passwordConfirmDraft = "";
+      state.passwordVisible = false;
       state.error = "";
       state.message = "";
       render();
+    }),
+  );
+  $$("[data-auth-method]").forEach((tab) => {
+    tab.addEventListener("click", () => {
+      if (state.busy) return;
+      state.authMethod = tab.dataset.authMethod;
+      state.error = "";
+      state.passwordDraft = "";
+      state.passwordVisible = false;
+      render();
+    });
+    tab.addEventListener("keydown", (event) => {
+      if (["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) {
+        event.preventDefault();
+        const target =
+          event.key === "Home"
+            ? "password"
+            : event.key === "End"
+              ? "code"
+              : state.authMethod === "password"
+                ? "code"
+                : "password";
+        $(`[data-auth-method="${target}"]`).click();
+        $(`[data-auth-method="${target}"]`).focus();
+      }
+    });
+  });
+  $$("input[name=password], input[name=confirmPassword]").forEach((input) =>
+    input.addEventListener("input", () => {
+      state[
+        input.name === "password" ? "passwordDraft" : "passwordConfirmDraft"
+      ] = input.value;
+      $("input[name=confirmPassword]")?.setCustomValidity("");
+    }),
+  );
+  $("[data-toggle-password]")?.addEventListener("click", () => {
+    state.passwordVisible = !state.passwordVisible;
+    $$("input[name=password], input[name=confirmPassword]").forEach((input) => {
+      input.type = state.passwordVisible ? "text" : "password";
+    });
+    const toggle = $("[data-toggle-password]");
+    toggle.setAttribute("aria-pressed", String(state.passwordVisible));
+    toggle.setAttribute(
+      "aria-label",
+      state.passwordVisible ? "隐藏密码" : "显示密码",
+    );
+  });
+  $("input[name=remember]")?.addEventListener("change", (e) => {
+    state.remember = e.target.checked;
+  });
+  $("input[name=consent]")?.addEventListener("change", (e) => {
+    state.consent = e.target.checked;
+  });
+  $("[data-password-login]")?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const form = new FormData(e.target);
+    run(async () => {
+      await account.loginContext();
+      const result = await account.passwordLogin({
+        email: form.get("email"),
+        password: form.get("password"),
+        remember: form.get("remember") === "on",
+      });
+      await afterSignIn(result);
+    });
+  });
+  const info = {
+    help: [
+      "帮助中心",
+      "已有账号但没有密码？点击“忘记密码”，用账号邮箱验证后即可设置。邮箱验证码为 8 位，10 分钟内有效；未收到时请检查垃圾邮件，倒计时结束后可重新发送。仍可随时选择“验证码登录”。",
+    ],
+    terms: [
+      "用户协议",
+      "琴伴提供乐谱收藏、识别与练习功能。请使用本人邮箱注册，妥善保管密码及验证码，并仅上传有权使用的资料。AI 识别结果需要对照原谱核对。订阅价格与积分消耗以订阅页面显示为准。",
+    ],
+    privacy: [
+      "隐私政策",
+      "账号邮箱用于登录验证和找回密码；密码以加盐哈希保存。你的私有曲谱、原始文件和识别任务按账号隔离。选择云端识谱时，相关谱面会发送到服务配置的识别服务。你可在账号页面导出资料、管理设备或申请注销。本设备曲库不会因登录自动上传。",
+    ],
+  };
+  $$("[data-auth-info]").forEach((button) =>
+    button.addEventListener("click", () => {
+      const [title, content] = info[button.dataset.authInfo];
+      $("#auth-dialog-title").textContent = title;
+      $("[data-auth-info-body]").textContent = content;
+      $(".auth-dialog").showModal();
     }),
   );
   emailInput?.addEventListener("input", () => {
@@ -211,12 +316,19 @@ function bindSignIn() {
       )
         throw new Error("邀请码无效、已过期或已用完；可以清空后直接注册。");
       await signIn.requestCode(form.get("email"), {
-        mode: register ? "register" : "login",
+        mode: register
+          ? "register"
+          : signIn.state.mode === "reset"
+            ? "reset"
+            : "login",
         inviteCode: register ? form.get("invite") || "" : "",
       });
       state.emailDraft = null;
       state.codeDraft = "";
-      state.message = "验证码已发送，通常一分钟内送达。";
+      state.message =
+        signIn.state.mode === "reset"
+          ? "如果该邮箱已注册，重置验证码将发送至邮箱。"
+          : "验证码已发送，通常一分钟内送达。";
     });
   });
   if (codeInput) {
@@ -227,13 +339,23 @@ function bindSignIn() {
       codeInput.value = digits;
       state.codeDraft = digits;
       // Submit as soon as the full code is typed or pasted.
-      if (digits.length === CODE_LENGTH && !state.busy)
+      if (
+        digits.length === CODE_LENGTH &&
+        !state.busy &&
+        signIn.state.mode === "login"
+      )
         $("[data-verify]").requestSubmit();
     });
     $("[data-verify]").addEventListener("submit", (e) => {
       e.preventDefault();
       run(async () => {
-        const result = await signIn.verify(codeInput.value);
+        const needsPassword = ["register", "reset"].includes(signIn.state.mode);
+        if (needsPassword && state.passwordDraft !== state.passwordConfirmDraft)
+          throw new Error("两次输入的密码不一致，请重新确认。");
+        const result = await signIn.verify(
+          codeInput.value,
+          needsPassword ? { password: state.passwordDraft } : {},
+        );
         if (result) await afterSignIn(result);
       });
     });

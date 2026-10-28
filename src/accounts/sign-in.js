@@ -134,7 +134,7 @@ export function createSignInFlow({ account, storage, now = () => Date.now() }) {
         const code = invite ? formatInviteCode(invite) : "";
         const challenge = await account.code({
           email: address,
-          purpose: "login",
+          purpose: mode === "reset" ? "password" : "login",
           ...(code ? { inviteCode: code } : {}),
         });
         set({
@@ -174,7 +174,7 @@ export function createSignInFlow({ account, storage, now = () => Date.now() }) {
         throw error;
       }
     },
-    verify(code) {
+    verify(code, { password } = {}) {
       const digits = normalizeCode(code);
       if (state.step !== "code")
         return Promise.reject(new Error("请先获取验证码。"));
@@ -187,10 +187,14 @@ export function createSignInFlow({ account, storage, now = () => Date.now() }) {
         return Promise.reject(new Error("验证码已过期，请重新获取。"));
       }
       return guarded(async () => {
-        const result = await account.verify({
+        const input = {
           challengeId: state.challengeId,
           code: digits,
-        });
+          ...(password !== undefined ? { password } : {}),
+        };
+        const result = await (state.mode === "reset"
+          ? account.resetPassword(input)
+          : account.verify(input));
         set({ step: "email", mode: "login", email: state.email });
         return result;
       });
