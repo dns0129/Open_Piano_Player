@@ -30,7 +30,7 @@ export function createModal({ state, player }) {
     cleanup = null;
     player.pause();
     $("#modal-root").innerHTML =
-      `<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="modal-heading"><div><h2>${esc(title)}</h2>${subtitle ? `<p>${esc(subtitle)}</p>` : ""}</div><button id="modal-close" class="icon-button" aria-label="关闭">${icon("x")}</button></div>${body}</section></div>`;
+      `<div class="modal-backdrop"><section class="modal" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="modal-heading"><div><h2>${esc(title)}</h2>${subtitle ? `<p>${esc(subtitle)}</p>` : ""}</div><button id="modal-close" class="icon-button" aria-label="关闭">${icon("x")}</button></div><div class="modal-body">${body}</div></section></div>`;
     refreshIcons();
     $("#modal-close").onclick = requestCloseModal;
     $(".modal-backdrop").onclick = (e) => {

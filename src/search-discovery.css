@@ -105,16 +105,15 @@
   display: none;
 }
 #discovery-suggestions {
-  position: absolute;
-  z-index: 20;
-  top: calc(100% + 6px);
-  left: 0;
-  right: 0;
+  position: relative;
+  margin-top: 6px;
+  max-height: 300px;
+  overflow-y: auto;
   border-radius: 10px;
   border: 1px solid var(--border);
   background: var(--surface-0);
   box-shadow: 0 12px 35px #183e2d1a;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 #discovery-suggestions [role="option"] {
   display: flex;
@@ -716,4 +715,17 @@
   .discovery-board h3 {
     font-size: 18px;
   }
+}
+
+.discovery-heading,
+.discovery-section-heading,
+.discovery-results-heading,
+.discovery-scopes {
+  flex-wrap: wrap;
+}
+.discovery-heading > *,
+.discovery-board,
+.discovery-aside,
+.discovery-history > div {
+  min-width: 0;
 }

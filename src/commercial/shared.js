@@ -62,7 +62,7 @@ export function layout({
   busy = false,
   info,
 }) {
-  return `${navigation(active, session)}<main class="commerce-shell">${info?.announcement ? `<aside class="commerce-notice" role="status">${esc(info.announcement)}</aside>` : ""}<div class="commerce-alert" role="alert">${esc(error)}</div><div class="commerce-message" role="status">${esc(message)}</div>${body}</main><footer class="commerce-footer">琴伴 · 私有乐谱与日常练习<span>AI 识谱结果需对照原图核对</span></footer><div class="commerce-processing" role="status" ${busy ? "" : "hidden"}><span class="commerce-spinner"></span>正在处理，请稍候…</div>`;
+  return `${navigation(active, session)}<main class="commerce-shell">${info?.announcement ? `<aside class="commerce-notice" role="status">${esc(info.announcement)}</aside>` : ""}<div class="commerce-alert" role="alert">${esc(error)}</div><div class="commerce-message" role="status">${esc(message)}</div><div class="commerce-processing" role="status" ${busy ? "" : "hidden"}><span class="commerce-spinner"></span>正在处理，请稍候…</div>${body}</main><footer class="commerce-footer">琴伴 · 私有乐谱与日常练习<span>AI 识谱结果需对照原图核对</span></footer>`;
 }
 // Sign-in links return to the page the visitor is on.
 export function currentSignInHref(mode) {

@@ -10,7 +10,6 @@ import {
 } from "./sign-in.js";
 import { importScore } from "../../lib/importers.mjs";
 import { readScoreDocument } from "../../lib/score-document.ts";
-import "../style.css";
 import "./style.css";
 const root = document.querySelector("#account-app"),
   esc = (v) =>

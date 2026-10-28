@@ -1,4 +1,5 @@
 @import "./tokens.css";
+@import "./layout-foundation.css";
 
 :root {
   font-family: var(--font-ui);
@@ -11,7 +12,6 @@
 }
 body {
   margin: 0;
-  overflow: hidden;
 }
 button,
 input,
@@ -222,13 +222,13 @@ input[type="checkbox"] {
   width: 16px;
   height: 16px;
 }
-main {
+.app-shell > main {
   flex: 1;
   min-height: 0;
   min-width: 0;
   overflow: auto;
 }
-main.view-practice {
+.app-shell > main.view-practice {
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1321,12 +1321,17 @@ main.view-practice {
 .modal {
   background: var(--surface-1);
   border: 1px solid var(--accent-soft);
-  width: 500px;
+  --dialog-width: 500px;
+  --dialog-padding: 24px;
+  display: flex;
+  flex-direction: column;
+  width: min(var(--dialog-width), 100%);
   max-width: 100%;
-  max-height: 90dvh;
-  overflow-y: auto;
+  max-height: 100%;
+  min-height: 0;
+  overflow: hidden;
   border-radius: 12px;
-  padding: 28px;
+  padding: 0;
   box-shadow: 0 24px 80px #17251630;
 }
 .modal-heading {
@@ -1334,7 +1339,17 @@ main.view-practice {
   justify-content: space-between;
   align-items: start;
   gap: 14px;
-  margin-bottom: 24px;
+  flex: 0 0 auto;
+  padding: 18px var(--dialog-padding);
+  border-bottom: 1px solid var(--border);
+}
+.modal-body {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding: var(--dialog-padding);
 }
 .modal-heading h2 {
   font:
@@ -2244,8 +2259,7 @@ main.view-practice {
     padding: 15px;
   }
   .modal {
-    padding: 21px;
-    max-height: 92dvh;
+    --dialog-padding: 16px;
   }
   .modal-heading h2 {
     font-size: 19px;
@@ -2898,12 +2912,7 @@ main.view-practice {
   margin-top: 2px;
 }
 .modal:has(#score-image-host) {
-  width: min(760px, calc(100vw - 48px));
-  max-height: calc(100dvh - 48px);
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-gutter: stable;
+  --dialog-width: 760px;
 }
 .ocr-file-heading {
   display: flex;
@@ -3010,8 +3019,8 @@ main.view-practice {
   .modal-backdrop {
     display: none !important;
   }
-  main,
-  main.view-practice,
+  .app-shell > main,
+  .app-shell > main.view-practice,
   .score-stage {
     display: block;
     overflow: visible;
@@ -3083,14 +3092,10 @@ main.view-practice {
   color: var(--teal);
 }
 .source-browser-modal {
-  width: min(1000px, calc(100vw - 40px));
-  max-width: none;
+  --dialog-width: 1000px;
 }
 .full-score-modal {
-  width: min(1320px, calc(100vw - 32px));
-  max-width: none;
-  max-height: 94vh;
-  overflow: auto;
+  --dialog-width: 1320px;
 }
 .search-result-filters {
   display: flex;
@@ -3152,8 +3157,7 @@ main.view-practice {
   margin-top: 7px;
 }
 .netease-modal {
-  width: min(1000px, 95vw) !important;
-  max-width: 1000px !important;
+  --dialog-width: 1000px;
 }
 .netease-import {
   font-size: 13px;
@@ -3326,8 +3330,7 @@ main.view-practice {
 
 /* Compact, one-measure editor for saved scores. */
 .note-editor-modal {
-  width: min(940px, calc(100vw - 32px));
-  max-width: 940px;
+  --dialog-width: 940px;
 }
 .note-editor-toolbar,
 .note-editor-footer {
@@ -3708,12 +3711,11 @@ main.view-practice {
 }
 
 .score-print-modal {
-  width: min(1080px, calc(100vw - 32px));
-  max-width: 1080px;
+  --dialog-width: 1080px;
 }
 .score-print-workspace {
   display: grid;
-  grid-template-columns: minmax(280px, 1fr) minmax(260px, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 28px;
   align-items: start;
 }
@@ -3738,8 +3740,7 @@ main.view-practice {
   font-size: 12px;
 }
 .score-print-preview {
-  position: sticky;
-  top: 0;
+  position: relative;
   min-width: 0;
   padding: 14px;
   border-radius: 10px;

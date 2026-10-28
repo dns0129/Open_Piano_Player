@@ -1,3 +1,5 @@
+@import "../layout-foundation.css";
+
 body {
   margin: 0;
   background: var(--surface-2);
@@ -136,8 +138,8 @@ body {
   overflow-wrap: anywhere;
 }
 .account-busy {
-  position: sticky;
-  bottom: 10px;
+  position: static;
+  margin-top: 16px;
   text-align: center;
   background: var(--surface-3);
   border-radius: 8px;
@@ -354,4 +356,16 @@ body {
   flex: 1;
   min-width: 200px;
   margin: 0;
+}
+
+.account-heading,
+.account-row {
+  flex-wrap: wrap;
+}
+.account-record > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.account-card {
+  min-width: 0;
 }

@@ -1,0 +1,41 @@
+/* Shared containment rules. Page owners define their own grid and scroll areas. */
+:root {
+  --panel-gap: 16px;
+  --panel-radius: 12px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:where(.app-shell, .modal, .commerce-shell, .account-shell, .full-score-import)
+  :where(section, aside, article, header, footer, form, fieldset, div) {
+  min-inline-size: 0;
+}
+
+:where(.app-shell, .modal, .commerce-shell, .account-shell, .full-score-import)
+  :where(h1, h2, h3, p, label, summary, li) {
+  overflow-wrap: anywhere;
+}
+
+:where(.app-shell, .modal, .commerce-shell, .account-shell, .full-score-import)
+  :where(input, select, textarea, button) {
+  max-inline-size: 100%;
+}
+
+:where(.app-shell, .modal, .commerce-shell, .account-shell, .full-score-import)
+  :where(input, select, textarea) {
+  min-inline-size: 0;
+}
+
+:where(.modal, .commerce-card, .account-card, .discovery-board) {
+  isolation: isolate;
+}
+
+:where(.commerce-shell, .account-shell, .commerce-header, .commerce-footer) {
+  min-width: 0;
+  width: 100%;
+  overflow-wrap: anywhere;
+}

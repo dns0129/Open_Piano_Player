@@ -17,7 +17,7 @@ export function reviewJob() {
 // Mock only PDF rasterization/source detection. The production review UI,
 // validators, assembly and event handlers are bundled unchanged.
 export async function reviewBundle() {
-  const result=await build({stdin:{contents:`export {mountFullScoreImport} from './src/full-score-import.js';`,resolveDir:process.cwd()},bundle:true,write:false,format:'iife',globalName:'ReviewUI',platform:'browser',define:{'import.meta.env':JSON.stringify({BASE_URL:'/'}),'import.meta.url':JSON.stringify('http://localhost:8792/src/full-score-import.js')},logLevel:'silent',plugins:[{name:'fixture-pdf',setup(b){
+  const result=await build({stdin:{contents:`export {mountFullScoreImport} from './src/full-score-import.js';`,resolveDir:process.cwd()},bundle:true,write:false,format:'iife',globalName:'ReviewUI',platform:'browser',loader:{'.css':'empty'},define:{'import.meta.env':JSON.stringify({BASE_URL:'/'}),'import.meta.url':JSON.stringify('http://localhost:8792/src/full-score-import.js')},logLevel:'silent',plugins:[{name:'fixture-pdf',setup(b){
     b.onResolve({filter:/^pdfjs-dist$/},()=>({path:'pdf',namespace:'fixture'}));
     b.onResolve({filter:/^\.\/score-image\.js$/},()=>({path:'image',namespace:'fixture'}));
     b.onLoad({filter:/.*/,namespace:'fixture'},({path})=>({contents:path==='pdf'?`

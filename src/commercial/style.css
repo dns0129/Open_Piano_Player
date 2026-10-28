@@ -1,4 +1,5 @@
 @import "../tokens.css";
+@import "../layout-foundation.css";
 
 :root {
   font-family: var(--font-ui);
@@ -104,7 +105,7 @@ button:disabled {
 }
 .commerce-hero {
   display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
   align-items: center;
   gap: 40px;
   padding: 40px 0 50px;
@@ -130,7 +131,6 @@ button:disabled {
   padding: 35px;
   border-radius: 24px;
   background: linear-gradient(140deg, var(--surface-4), var(--warm-surface));
-  transform: rotate(-2deg);
 }
 .commerce-mini-score {
   background: var(--surface-1);
@@ -310,7 +310,9 @@ button:disabled {
   border-radius: 6px;
   background: var(--surface-3);
   color: var(--text-2);
-  width: max-content;
+  width: fit-content;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 .commerce-muted {
   color: var(--text-mid);
@@ -364,11 +366,8 @@ button:disabled {
   gap: 16px;
 }
 .commerce-processing {
-  position: fixed;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 50;
+  position: static;
+  margin: 16px 0;
   border: 1px solid var(--border-strong);
   background: var(--surface-2);
   padding: 14px 24px;
@@ -377,7 +376,7 @@ button:disabled {
   display: flex;
   gap: 12px;
   align-items: center;
-  white-space: nowrap;
+  flex-wrap: wrap;
   font-size: 14px;
 }
 .commerce-spinner {
@@ -751,4 +750,20 @@ button:disabled {
 }
 .commerce-table code {
   font-family: var(--font-mono);
+}
+
+.commerce-card,
+.commerce-grid > *,
+.commerce-hero > * {
+  min-width: 0;
+}
+.commerce-section-heading,
+.commerce-region-list li {
+  flex-wrap: wrap;
+}
+.commerce-task-row > *,
+.commerce-row > *,
+.commerce-source-option > * {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }

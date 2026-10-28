@@ -54,7 +54,7 @@ export function scoreDiagnosisCard(
     ${
       p && d.phase === "diagnose"
         ? `<div class="fsi-revision"><h4>诊断方案${d.status === "applied" ? "（已应用）" : "（待接受）"}</h4>${d.status === "applied" ? '<p class="fsi-muted">以下保留方案生成时的说明；此方案现已接受并应用。</p>' : ""}<p>${escape(p.explanation)}</p><p>诊断智能体对原谱问题的估计：${p.assessment?.probability == null ? "证据不足" : `${Math.round(p.assessment.probability * 100)}%`}，未经校准。</p>${p.assessment?.evidence?.length ? `<details><summary>查看独立诊断证据（${p.assessment.evidence.length} 条）</summary>${list(p.assessment.evidence)}</details>` : ""}
-    ${p.changes?.length ? `<table><thead><tr><th>修改</th><th>修改前</th><th>修改后</th><th>依据</th></tr></thead><tbody>${p.changes.map((c) => `<tr><td>${escape(operations[c.op] || c.op)}</td><td>${escape(eventText(c.before))}</td><td>${escape(eventText(c.after))}</td><td>${escape(c.reason)}</td></tr>`).join("")}</tbody></table>` : "<p>此次未提出可直接应用的修改，请根据诊断建议处理。</p>"}
+    ${p.changes?.length ? `<div class="fsi-review-table"><table><thead><tr><th>修改</th><th>修改前</th><th>修改后</th><th>依据</th></tr></thead><tbody>${p.changes.map((c) => `<tr><td>${escape(operations[c.op] || c.op)}</td><td>${escape(eventText(c.before))}</td><td>${escape(eventText(c.after))}</td><td>${escape(c.reason)}</td></tr>`).join("")}</tbody></table></div>` : "<p>此次未提出可直接应用的修改，请根据诊断建议处理。</p>"}
     ${p.remainingDoubts?.length ? `<p>仍需核对：</p>${list(p.remainingDoubts)}` : ""}
     ${p.candidate?.checks?.errors?.length ? `<p>候选仍未通过结构检查，不能应用：</p>${list(p.candidate.checks.errors.map((e) => e.message))}` : ""}
     ${d.status === "ready" ? button("apply-revision", "接受以上修订并应用", !p.canApply) : ""}</div>`
