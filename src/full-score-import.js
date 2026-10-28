@@ -1,3 +1,9 @@
+import {
+  prepareBulkReview,
+  sourcePoint,
+  rollRange,
+  rollMove,
+} from "../lib/recognition-review-actions.mjs";
 import { scoreDiagnosisCard } from "./score-diagnosis-card.js";
 import { assetURL } from "../lib/asset-url.mjs";
 import { prepareScoreImage, mountScoreImageSelector } from "./score-image.js";
@@ -87,11 +93,12 @@ const css = `
 .full-score-import *{box-sizing:border-box}.full-score-import button,.full-score-import input,.full-score-import select{font:inherit;color:inherit}
 .full-score-import button{padding:7px 11px;border:1px solid var(--fsi-line);border-radius:7px;background:#fff;cursor:pointer}.full-score-import button:disabled{opacity:.45;cursor:not-allowed}.full-score-import .fsi-primary{background:var(--fsi-green);border-color:var(--fsi-green);color:#fff}.full-score-import .fsi-danger{color:#a45338}
 .full-score-import input:not([type=checkbox]),.full-score-import select{border:1px solid var(--fsi-line);border-radius:6px;padding:7px 8px;background:#fff;min-width:0}.full-score-import input[type=checkbox]{accent-color:var(--fsi-green)}
-.full-score-import .fsi-top{display:flex;justify-content:space-between;align-items:flex-start;gap:14px}.full-score-import h2{font-size:19px;margin:0 0 5px}.full-score-import h3{font-size:13px;margin:0 0 8px}.full-score-import p{margin:5px 0}.full-score-import .fsi-muted{color:#7c8c7d;font-size:11px}.full-score-import .fsi-meta{display:grid;grid-template-columns:minmax(130px,2fr) repeat(3,minmax(70px,1fr));gap:8px;margin:13px 0}.full-score-import .fsi-meta label{display:grid;gap:3px}.full-score-import .fsi-actions,.full-score-import .fsi-flags{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:9px 0}
+.full-score-import .fsi-top>button{flex-shrink:0}.full-score-import .fsi-top{display:flex;justify-content:space-between;align-items:flex-start;gap:14px}.full-score-import h2{font-size:19px;margin:0 0 5px}.full-score-import h3{font-size:13px;margin:0 0 8px}.full-score-import p{margin:5px 0}.full-score-import .fsi-muted{color:#7c8c7d;font-size:11px}.full-score-import .fsi-meta{display:grid;grid-template-columns:minmax(130px,2fr) repeat(3,minmax(70px,1fr));gap:8px;margin:13px 0}.full-score-import .fsi-meta label{display:grid;gap:3px}.full-score-import .fsi-actions,.full-score-import .fsi-flags{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:9px 0}
 .full-score-import .fsi-warning,.full-score-import .fsi-error{padding:9px 11px;border-radius:7px;background:#faf2df;color:#8c672c;margin:8px 0}.full-score-import .fsi-error{background:#fcf0e9;color:#9f533b}.full-score-import .fsi-status{padding:10px 12px;border:1px solid var(--fsi-line);border-radius:8px;background:#f6f8f2;margin:12px 0}.full-score-import progress{display:block;width:100%;height:7px;accent-color:var(--fsi-green);margin-top:7px}
 .full-score-import .fsi-workspace{display:grid;grid-template-columns:176px minmax(0,1fr);gap:12px;min-height:380px}.full-score-import .fsi-pages{max-height:630px;overflow:auto;padding-right:5px}.full-score-import .fsi-page{border:1px solid var(--fsi-line);border-radius:7px;padding:7px;margin-bottom:8px;background:#fff}.full-score-import .fsi-page.is-current{border-color:#79a28a;background:#f1f6ed}.full-score-import .fsi-page img{display:block;width:100%;height:118px;object-fit:contain;object-position:center top;background:#fff;margin-bottom:5px}.full-score-import .fsi-page button{width:100%;padding:3px 4px;border:0;background:transparent}.full-score-import .fsi-page select{display:block;width:100%;font-size:10px;padding:4px;margin-top:4px}.full-score-import .fsi-region{display:flex;align-items:center;gap:6px;padding:7px 8px;border-bottom:1px solid #edf1e9}.full-score-import .fsi-region.is-current{background:#edf5e9}.full-score-import .fsi-region>button{flex:1;text-align:left;border:0;padding:3px;background:transparent}.full-score-import .fsi-region small{display:block;color:#7c8c7d}.full-score-import .fsi-regions{border:1px solid var(--fsi-line);border-radius:7px;overflow:auto;max-height:190px;margin:8px 0}.full-score-import .fsi-region select{max-width:135px;font-size:10px;padding:4px}.full-score-import .fsi-view{min-width:0}.full-score-import .fsi-original{position:relative;border:1px solid var(--fsi-line);background:#fff;overflow:auto;max-height:440px;margin:8px 0}.full-score-import .fsi-original img{display:block;width:100%;height:auto}.full-score-import .fsi-original.can-locate{cursor:crosshair}.full-score-import .fsi-position{position:absolute;border:2px solid #cb6f42;width:15px;height:15px;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;background:#ffdb9160}
 .full-score-import .fsi-review-table{overflow:auto;max-height:290px;border:1px solid var(--fsi-line);border-radius:7px}.full-score-import table{border-collapse:collapse;width:100%;font-size:11px}.full-score-import th,.full-score-import td{padding:4px;border-bottom:1px solid #e9eee5;text-align:left;white-space:nowrap}.full-score-import th{position:sticky;top:0;background:#f4f7ef;z-index:1}.full-score-import td input{width:78px;padding:5px!important}.full-score-import td select{padding:5px!important}.full-score-import tr.is-selected{background:#f6efdc}.full-score-import .fsi-note-name{font-size:10px;color:#7b8d7b}.full-score-import .fsi-note-position{color:#9a6345}.full-score-import .fsi-note-position.is-mapped{color:#4d8464}.full-score-import .fsi-mini-notation{max-height:270px;overflow:auto;border:1px solid var(--fsi-line);border-radius:7px;padding:6px;background:#fff;margin:8px 0}.full-score-import .fsi-footer{border-top:1px solid var(--fsi-line);margin-top:12px;padding-top:11px;display:flex;align-items:center;justify-content:space-between;gap:12px}.full-score-import .fsi-footer p{font-size:11px}.full-score-import .fsi-checklist{max-height:95px;overflow:auto;font-size:11px;color:#9b603e;margin:7px 0;padding-left:18px}.full-score-import .score-image-confirmation{display:none}.full-score-import .fsi-selector{border:1px solid var(--fsi-line);border-radius:7px;padding:8px}.full-score-import [hidden]{display:none!important}
-@media(max-width:720px){.full-score-import .fsi-workspace{grid-template-columns:112px minmax(0,1fr);gap:7px}.full-score-import .fsi-meta{grid-template-columns:1fr 1fr}.full-score-import .fsi-page img{height:90px}.full-score-import .fsi-pages{max-height:520px}.full-score-import .fsi-footer{align-items:flex-start;flex-direction:column}.full-score-import .fsi-region{flex-wrap:wrap}.full-score-import .fsi-region select{max-width:100%}}
+.full-score-import .fsi-batch-bar{position:sticky;top:0;z-index:5;padding:3px 12px;background:#f1f7f3;border:1px solid #bad4c8;border-radius:10px;margin:10px 0}.full-score-import .fsi-source-canvas{position:relative}.full-score-import .fsi-source-note{position:absolute;transform:translate(-50%,-50%);width:20px;height:20px;min-width:20px;padding:0;border:1px solid #2b796b;background:#fff9;color:#24543f;border-radius:50%;font-size:10px;line-height:18px;touch-action:none;cursor:grab;z-index:2}.full-score-import .fsi-source-note.is-selected{background:#bf6134;color:#fff;border-color:#a45338;z-index:3}.full-score-import .fsi-source-note:focus-visible,.full-score-import .fsi-roll-note:focus-visible{outline:3px solid #d19a39;outline-offset:2px}.full-score-import .fsi-source-note:active,.full-score-import .fsi-roll-note:active{cursor:grabbing}.full-score-import .fsi-note-details{margin:10px 0}.full-score-import summary{cursor:pointer;padding:7px 0}.full-score-import .fsi-roll-scroll{overflow:auto;border:1px solid var(--fsi-line);border-radius:8px;max-height:330px}.full-score-import .fsi-roll{position:relative;background-color:#fafcf8;background-image:linear-gradient(to right,#dbe5d9 1px,transparent 1px),linear-gradient(to bottom,#e5ebe1 1px,transparent 1px);background-size:calc(100% / var(--roll-beats)) 100%,100% 20px;min-width:100%;margin-top:22px}.full-score-import .fsi-roll-note{position:absolute;padding:0 3px;height:19px;min-width:12px;overflow:hidden;white-space:nowrap;border:1px solid #337b69;background:#b4d8c7;color:#244e3e;border-radius:3px;font-size:10px;line-height:17px;touch-action:none;cursor:grab}.full-score-import .fsi-roll-note.is-left{background:#d1d9f3;border-color:#6178a2}.full-score-import .fsi-roll-note.is-selected{background:#f0bd7d;border-color:#ad682f;z-index:2}.full-score-import .fsi-roll-beat{position:absolute;top:-20px;font-size:10px;color:#66786c;pointer-events:none}.full-score-import .fsi-roll-heading{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:12px}
+@media(max-width:720px){.full-score-import .fsi-workspace{grid-template-columns:minmax(0,1fr);gap:7px}.full-score-import .fsi-meta{grid-template-columns:1fr 1fr}.full-score-import .fsi-page img{height:90px}.full-score-import .fsi-pages{display:flex;gap:8px;max-height:185px;overflow:auto}.full-score-import .fsi-page{flex:0 0 104px}.full-score-import .fsi-footer{align-items:flex-start;flex-direction:column}.full-score-import .fsi-region{flex-wrap:wrap}.full-score-import .fsi-region select{max-width:100%}}
 `;
 
 function installStyles() {
@@ -194,6 +201,8 @@ export function mountFullScoreImport(
     activePrepared,
     preparedPromise,
     pdfQueue = Promise.resolve();
+  let noteDrag = null;
+  const moveHistory = [];
   let operationController = new AbortController();
   const selectedRegions = () =>
     draft.regions
@@ -261,6 +270,29 @@ export function mountFullScoreImport(
 
   function render() {
     if (disposed) return;
+    const sameRegion = root.dataset.viewRegion === state.activeRegionId;
+    const scrollPositions = sameRegion
+      ? [
+          ".fsi-original",
+          ".fsi-roll-scroll",
+          ".fsi-review-table",
+          ".fsi-pages",
+        ].map((selector) => {
+          const element = root.querySelector(selector);
+          return {
+            selector,
+            top: element?.scrollTop || 0,
+            left: element?.scrollLeft || 0,
+          };
+        })
+      : [];
+    const jobSettingsOpen =
+      root.dataset.jobId === (state.job?.id || "") &&
+      root.querySelector(".fsi-job-settings")?.open;
+    root.dataset.jobId = state.job?.id || "";
+    const noteDetailsOpen =
+      sameRegion && root.querySelector(".fsi-note-details")?.open;
+    root.dataset.viewRegion = state.activeRegionId;
     const focus = root.contains(document.activeElement)
       ? {
           noteId: document.activeElement.dataset.noteId,
@@ -288,7 +320,7 @@ export function mountFullScoreImport(
         (region.status !== "confirmed" &&
           region.result?.checks?.passed === false),
     ).length;
-    const completed = state.progress?.confirmed ?? summary.reviewedCount;
+    const completed = summary.reviewedCount;
     const processed = state.progress
       ? (state.progress.needsReview || 0) +
         (state.progress.confirmed || 0) +
@@ -339,7 +371,7 @@ export function mountFullScoreImport(
       current && state.stage === "review"
         ? assets.get(current.id)?.url
         : thumbnails.get(state.activePage)?.url;
-    root.innerHTML = `<div class="fsi-top"><div><h2>完整 PDF 识谱与校对</h2><p class="fsi-muted">所有页均需检查；逐行识别后，与原始钢琴谱逐行核对。失败或未审核的谱行会阻止完整导入。</p></div><button type="button" data-action="close" aria-label="关闭完整 PDF 识谱">关闭</button></div>
+    root.innerHTML = `<div class="fsi-top"><div><h2>完整 PDF 识谱与校对</h2><p class="fsi-muted">识别后可一键审核全部；只需打开有问题的谱行，用拖拽校准位置、音高和拍点。</p></div><button type="button" data-action="close" aria-label="关闭完整 PDF 识谱">关闭</button></div>
       <div class="fsi-meta"><label>乐谱名称<input data-meta="title" value="${escapeHTML(draft.title)}" maxlength="180" aria-label="完整乐谱名称"></label><label>速度 BPM<input data-meta="tempo" type="number" min="20" max="300" placeholder="自动识别" value="${draft.tempo ?? ""}" aria-label="全谱速度"></label><label>拍号<input data-meta="timeSignature" placeholder="例如 2/4" value="${draft.timeSignature?.join("/") || ""}" aria-label="全谱拍号"></label><label>调号<select data-meta="keySignature" aria-label="全谱调号"><option value="" ${draft.keySignature === undefined ? "selected" : ""}>自动识别</option>${Array.from(
         { length: 15 },
         (_, index) => index - 7,
@@ -349,26 +381,26 @@ export function mountFullScoreImport(
             `<option value="${value}" ${draft.keySignature === value ? "selected" : ""}>${value === 0 ? "无升降号" : value > 0 ? `${value} 个升号` : `${-value} 个降号`}</option>`,
         )
         .join("")}</select></label></div>
-      <div class="fsi-flags"><label><input type="checkbox" data-piano-confirmed ${state.pianoConfirmed ? "checked" : ""} ${state.scanning || isRunning() ? "disabled" : ""}> 我已对照谱头/来源，确认这是钢琴双手五线谱</label></div>
+      <details class="fsi-job-settings" ${!state.job || state.job.status === "running" || !state.pianoConfirmed ? "open" : ""}><summary>识别设置与任务控制</summary><div class="fsi-flags"><label><input type="checkbox" data-piano-confirmed ${state.pianoConfirmed ? "checked" : ""} ${state.scanning || isRunning() ? "disabled" : ""}> 我已对照谱头/来源，确认这是钢琴双手五线谱</label></div>
       <div class="fsi-actions"><label>识谱服务商 <select data-recognition-engine ${state.job || isRunning() || state.scanning ? "disabled" : ""}><option value="pi" ${state.engine === "pi" ? "selected" : ""}>Pi Agent / ChatGPT</option><option value="deepseek" ${state.engine === "deepseek" ? "selected" : ""}>DeepSeek · 按 API 用量计费</option></select></label><strong data-recognition-model>${state.engine === "deepseek" ? "DeepSeek Flash" : "GPT-6.1 Sol"} · ${state.job?.recognition?.reasoningEffort === "low" ? "low" : "high"}</strong><label><input type="checkbox" data-auto-continue ${state.autoContinue ? "checked" : ""} ${state.scanning || isRunning() ? "disabled" : ""}> 自动继续全部谱行</label><button type="button" class="fsi-primary" data-action="start" ${state.scanning || state.busy || state.job?.status === "running" || state.importing ? "disabled" : ""}>${state.job ? "继续识别剩余谱行" : "一键识别全部选中谱行"}</button><button type="button" data-action="cancel" ${!state.scanning && !isRunning() ? "disabled" : ""}>停止任务</button>${state.job ? '<button type="button" data-action="reset" ' + (isRunning() ? "disabled" : "") + ">重新选择范围</button>" : ""}</div>
       <p class="fsi-muted">${selectedRegions().length} 个谱行全新识别基线为 ${state.engine === "deepseek" ? "DeepSeek Flash" : "GPT-6.1 Sol"} ${state.job?.recognition?.reasoningEffort === "low" ? "low" : "high"} ${state.job?.estimate?.modelCalls ?? state.job?.estimate?.piCalls ?? selectedRegions().length} 次（每行仅首次识别）；重试另计，最多 100 行并行，可随时停止。相同原图复用已校对结果，中断保留已完成转写。${state.job?.calls ? `${state.job?.reuse?.hits ? ` 已复用 ${state.job.reuse.hits} 行，节省 ${state.job.reuse.savedCalls} 次模型调用。` : ""} ${state.job.reusedExactPdf ? "该任务历史" : "本任务"}已发起 ${state.engine === "deepseek" ? "DeepSeek" : "Pi"} 识别 ${state.job.calls.recognition || 0} 次。` : ""}</p>
-      ${state.job ? `<div class="fsi-actions"><button type="button" class="fsi-primary" data-action="approve-all" ${isRunning() || state.importing || state.scanning || !state.scopeReviewed || !state.pianoConfirmed || selectedRegions().some((r) => r.status !== "complete") ? "disabled" : ""}>一键审核通过并入库</button><label>重识别模型 <select data-retry-engine ${isRunning() || state.importing ? "disabled" : ""}><option value="current" ${state.retryEngine === "current" ? "selected" : ""}>保持当前模型</option><option value="pi" ${state.retryEngine === "pi" ? "selected" : ""}>GPT-6.1 Sol · high</option><option value="deepseek" ${state.retryEngine === "deepseek" ? "selected" : ""}>DeepSeek Flash</option></select></label><label><input type="checkbox" data-retry-enlarge ${state.retryEnlarge ? "checked" : ""} ${isRunning() || state.importing ? "disabled" : ""}> 放大原图识别（最多 2 倍）</label><button type="button" data-action="retry-failed" ${isRunning() || state.importing || !failedCount ? "disabled" : ""}>一键重新识别失败谱行（${failedCount}）</button></div><p class="fsi-muted">点击审核表示你已对照原谱检查全部结果；结构错误仍须修正。重识别仅处理失败或结构检查失败的谱行，保留其他结果；模型调用另计，换模型须先在 AI 设置连接对应服务。放大不会增加原图细节。</p>` : ""}
+      </details>${state.job ? `<div class="fsi-batch-bar"><div class="fsi-actions"><button type="button" class="fsi-primary" data-action="approve-all" ${isRunning() || state.importing || state.scanning || !state.pianoConfirmed || !selectedRegions().length || selectedRegions().some((r) => r.status !== "complete") ? "disabled" : ""}>一键审核全部</button><strong>${summary.reviewedCount} / ${summary.selectedCount} 行已审核</strong><details class="fsi-retry-options"><summary>重试选项（${failedCount} 行失败）</summary><div class="fsi-actions"><label>重识别模型 <select data-retry-engine ${isRunning() || state.importing ? "disabled" : ""}><option value="current" ${state.retryEngine === "current" ? "selected" : ""}>保持当前模型</option><option value="pi" ${state.retryEngine === "pi" ? "selected" : ""}>GPT-6.1 Sol · high</option><option value="deepseek" ${state.retryEngine === "deepseek" ? "selected" : ""}>DeepSeek Flash</option></select></label><label><input type="checkbox" data-retry-enlarge ${state.retryEnlarge ? "checked" : ""} ${isRunning() || state.importing ? "disabled" : ""}> 放大原图识别（最多 2 倍）</label><button type="button" data-action="retry-failed" ${isRunning() || state.importing || !failedCount ? "disabled" : ""}>一键重新识别失败谱行（${failedCount}）</button></div><p class="fsi-muted">重识别保留成功结果；额外模型调用另计。放大不会增加原图细节。</p></details></div><p class="fsi-muted">一键审核会确认全部所选谱行、覆盖范围及识别疑点，无需逐行勾选；审核后仍可编辑，再点击“保存到曲库”。结构错误会定位到对应谱行。</p></div>` : ""}
       <div class="fsi-status" role="status" aria-live="polite"><strong>${escapeHTML(state.message)}</strong><p>已检查 ${state.scannedPages} / ${draft.totalPages || "…"} 页 · ${processed} / ${total} 行已处理 · ${completed} 行已审核${state.busy && state.uploaded ? ` · 已上传 ${state.uploaded} 行` : ""}</p><progress max="${state.scanning ? draft.totalPages || 1 : total || 1}" value="${state.scanning ? state.scannedPages : processed}"></progress></div>
       ${state.error ? `<div class="fsi-error" role="alert">${escapeHTML(state.error)}</div>` : ""}
       <div class="fsi-workspace"><aside class="fsi-pages" aria-label="PDF 所有页面">${pageCards || '<p class="fsi-muted">正在读取页面…</p>'}</aside><main class="fsi-view"><div class="fsi-actions"><h3>第 ${state.activePage} 页${current ? ` · 第 ${current.system} 行` : ""}</h3><button type="button" data-action="scope" ${state.scanning || state.busy ? "disabled" : ""}>页面与范围</button><button type="button" data-action="review" ${!current?.notes ? "disabled" : ""}>逐音校对</button>${!scopeLocked() ? '<button type="button" data-action="select-crop">手动调整/补充谱行</button>' : ""}</div>
       ${pageInfo(state.activePage)?.assessment ? `<p class="fsi-muted">${escapeHTML(pageInfo(state.activePage).assessment.message)}</p>` : ""}
       <div class="fsi-regions" aria-label="当前页面全部谱行">${regionRows || '<p class="fsi-muted" style="padding:9px">此页未找到可用的双手谱行。请明确排除封面，或手动框选清晰双谱表。</p>'}</div>
-      ${state.selecting ? '<div class="fsi-selector"><p>请切换“手动框选”，拖出完整的一行双手谱。添加/替换都必须包含谱号、上下加线及全部小节。</p><div data-crop-selector></div><div class="fsi-actions"><button type="button" data-action="add-crop">添加为新谱行</button><button type="button" data-action="replace-crop" ' + (!current ? "disabled" : "") + ">替换当前谱行范围</button></div></div>" : `<div class="fsi-original${state.stage === "review" && current?.notes ? " can-locate" : ""}" data-original-frame>${originalURL ? `<img src="${escapeHTML(originalURL)}" alt="${state.stage === "review" && current ? `${scopeLabel(current)}原始钢琴谱裁切；选中音符后可点击校准位置` : `PDF 第 ${state.activePage} 页原始谱面`}" data-original-image>` : '<p class="fsi-muted" style="padding:20px">正在准备原谱预览…</p>'}<span class="fsi-position" data-note-position hidden></span></div>`}
+      ${state.selecting ? '<div class="fsi-selector"><p>请切换“手动框选”，拖出完整的一行双手谱。添加/替换都必须包含谱号、上下加线及全部小节。</p><div data-crop-selector></div><div class="fsi-actions"><button type="button" data-action="add-crop">添加为新谱行</button><button type="button" data-action="replace-crop" ' + (!current ? "disabled" : "") + ">替换当前谱行范围</button></div></div>" : `<div class="fsi-original${state.stage === "review" && current?.notes ? " can-locate" : ""}" data-original-frame><div class="fsi-source-canvas">${originalURL ? `<img src="${escapeHTML(originalURL)}" alt="${state.stage === "review" && current ? `${scopeLabel(current)}原始钢琴谱裁切；选中音符后可点击校准位置` : `PDF 第 ${state.activePage} 页原始谱面`}" data-original-image>${sourceMarkers(current)}` : '<p class="fsi-muted" style="padding:20px">正在准备原谱预览…</p>'}<span class="fsi-position" data-note-position hidden></span></div></div>`}
       ${
         state.stage === "review" && current?.notes
-          ? `<p class="fsi-muted">${current.positionlessSource ? "此结果未提供逐音原图坐标，审核后可使用数字乐谱，原图仅供对照。" : "选中某音符后在原图音头上点击，校准跟谱位置；新增音符必须定位。"}拍点以此行第 0 拍为起点。</p><div class="fsi-actions"><label>本行总拍数（含休止） <input type="number" min="0.0009765625" step="0.000001" data-region-duration value="${escapeHTML(current.durationBeats ?? "")}" aria-label="当前谱行总拍数" style="width:100px"></label><button type="button" data-action="add-note">新增音符</button><button type="button" data-action="preview">更新转写谱面预览</button><button type="button" data-action="retry-region" ${isRunning() ? "disabled" : ""}>重新读取此行原图</button><button type="button" data-action="retry-enlarged" ${isRunning() || current.reviewed ? "disabled" : ""}>放大／换模型重识别此行</button></div>${notesTable}${reviewAdvanced}${omrReviewMarkup(current)}<div class="fsi-mini-notation" data-notation-preview><p class="fsi-muted">点击“更新转写谱面预览”，与上方原始谱面对照。</p></div><label><input type="checkbox" data-region-coverage ${current.coverageComplete ? "checked" : ""}> 已确认本行的全部小节、左右手及末尾休止均已转写</label>${current.warnings?.length ? `<div class="fsi-warning">${current.warnings.map(escapeHTML).join("<br>")}</div>` : ""}${
+          ? `<p class="fsi-muted">${current.positionlessSource ? "此结果未提供逐音原图坐标，可选中音符后点击原图补充定位。" : "拖动原图上的编号圆点，校准跟谱位置；也可在下表选中音符后点击音头定位。"}拍点以此行第 0 拍为起点。</p><div class="fsi-actions"><button type="button" data-action="undo-move" ${!moveHistory.length || state.busy || state.importing ? "disabled" : ""}>撤销上次拖拽／定位</button></div>${noteRoll(current)}<details class="fsi-note-details"><summary>音符明细与精确修改（${current.notes.length} 音符）</summary><div class="fsi-actions"><label>本行总拍数（含休止） <input type="number" min="0.0009765625" step="0.000001" data-region-duration value="${escapeHTML(current.durationBeats ?? "")}" aria-label="当前谱行总拍数" style="width:100px"></label><button type="button" data-action="add-note">新增音符</button><button type="button" data-action="preview">更新转写谱面预览</button><button type="button" data-action="retry-region" ${isRunning() ? "disabled" : ""}>重新读取此行原图</button><button type="button" data-action="retry-enlarged" ${isRunning() || current.reviewed ? "disabled" : ""}>放大／换模型重识别此行</button></div>${notesTable}</details>${reviewAdvanced}${omrReviewMarkup(current)}<div class="fsi-mini-notation" data-notation-preview><p class="fsi-muted">点击“更新转写谱面预览”，与上方原始谱面对照。</p></div><label><input type="checkbox" data-region-coverage ${current.coverageComplete ? "checked" : ""}> 已确认本行的全部小节、左右手及末尾休止均已转写</label>${current.warnings?.length ? `<div class="fsi-warning">${current.warnings.map(escapeHTML).join("<br>")}</div>` : ""}${
               currentIssues.length
                 ? `<ul class="fsi-checklist">${currentIssues
                     .slice(0, 8)
                     .map((issue) => `<li>${escapeHTML(issue.message)}</li>`)
                     .join("")}</ul>`
                 : ""
-            }<div class="fsi-actions"><button type="button" class="fsi-primary" data-action="confirm-region" ${isRunning() || currentIssues.length ? "disabled" : ""}>${current.reviewed ? "此行已审核；修改后需重新确认" : "确认此行已逐音校对"}</button><button type="button" data-action="next-unreviewed">下一个待校对谱行</button></div>`
+            }<div class="fsi-actions"><button type="button" class="fsi-primary" data-action="confirm-region" ${isRunning() || currentIssues.length ? "disabled" : ""}>${current.reviewed ? "此行已审核；修改后需重新确认" : "仅审核当前行（可选）"}</button><button type="button" data-action="next-unreviewed">下一个待校对谱行</button></div>`
           : current?.status === "failed"
             ? `<div class="fsi-error">${escapeHTML(current.error || "此行识别失败，完整导入已被阻止。")}</div><button type="button" data-action="retry-region" ${isRunning() ? "disabled" : ""}>重试此行</button><button type="button" data-action="retry-enlarged" ${isRunning() ? "disabled" : ""}>放大原图后重试此行</button>`
             : ""
@@ -385,10 +417,10 @@ export function mountFullScoreImport(
           : ""
       }
       </main></div>
-      <footer class="fsi-footer"><div><strong>${summary.reviewedCount} / ${summary.selectedCount} 行完成审核 · ${summary.noteCount} 音符</strong><p>${summary.musicExcluded ? "已排除含音乐的页面或谱行，导入名称会明确标注“所选谱段”。" : "仅全部选中谱行成功且逐行审核后，才能导入完整全谱。"}</p>${!summary.canImport && !state.scanning ? `<p class="fsi-muted">${escapeHTML(summary.issues[0]?.message || "")}</p>` : ""}</div><label><input type="checkbox" data-scope-reviewed ${state.scopeReviewed ? "checked" : ""}> 我已确认全部页和谱行的处理范围，排除项均已检查</label><button type="button" class="fsi-primary" data-action="import" ${!summary.canImport || state.importing || isRunning() || !state.scopeReviewed ? "disabled" : ""}>${state.importing ? "正在保存…" : summary.musicExcluded ? "审核后导入所选片段" : "审核后导入完整全谱"}</button>${state.job && state.job.regions.every((r) => r.result) ? `<button type="button" data-action="import-draft" ${state.importing || isRunning() || !state.scopeReviewed ? "disabled" : ""}>导入AI草稿（待校对）</button>` : ""}</footer>`;
+      <footer class="fsi-footer"><div><strong>${summary.reviewedCount} / ${summary.selectedCount} 行完成审核 · ${summary.noteCount} 音符</strong><p>${summary.musicExcluded ? "已排除含音乐的页面或谱行，导入名称会明确标注“所选谱段”。" : "可一键审核全部，也可单独审核当前行；修改过的谱行需要重新审核。"}</p>${!summary.canImport && !state.scanning ? `<p class="fsi-muted">${escapeHTML(summary.issues[0]?.message || "")}</p>` : ""}</div><label><input type="checkbox" data-scope-reviewed ${state.scopeReviewed ? "checked" : ""}> 我已确认全部页和谱行的处理范围，排除项均已检查</label><button type="button" class="fsi-primary" data-action="import" ${!summary.canImport || state.importing || isRunning() || !state.scopeReviewed ? "disabled" : ""}>${state.importing ? "正在保存…" : summary.musicExcluded ? "保存所选片段到曲库" : "保存到曲库"}</button>${state.job && state.job.regions.every((r) => r.result) ? `<button type="button" data-action="import-draft" ${state.importing || isRunning() || !state.scopeReviewed ? "disabled" : ""}>导入AI草稿（待校对）</button>` : ""}</footer>`;
     if (state.busy || state.importing)
       for (const input of root.querySelectorAll(
-        "[data-note-field],[data-region-duration],[data-region-coverage],[data-rest-field],[data-measure-durations],[data-continuity],[data-tie-direction],[data-internal-tie]",
+        "[data-note-field],[data-region-duration],[data-region-coverage],[data-rest-field],[data-measure-durations],[data-continuity],[data-tie-direction],[data-internal-tie],[data-head-reviewed],[data-tie-reviewed],[data-scope-reviewed],[data-source-note],[data-roll-note]",
       ))
         input.disabled = true;
     if (state.job)
@@ -398,6 +430,17 @@ export function mountFullScoreImport(
         input.disabled = true;
     if (advancedOpen && root.querySelector(".fsi-advanced"))
       root.querySelector(".fsi-advanced").open = true;
+    if (jobSettingsOpen && root.querySelector(".fsi-job-settings"))
+      root.querySelector(".fsi-job-settings").open = true;
+    if (noteDetailsOpen && root.querySelector(".fsi-note-details"))
+      root.querySelector(".fsi-note-details").open = true;
+    for (const { selector, top, left } of scrollPositions) {
+      const element = root.querySelector(selector);
+      if (element) {
+        element.scrollTop = top;
+        element.scrollLeft = left;
+      }
+    }
     if (focus) {
       const input =
         focus.noteId && focus.field
@@ -608,6 +651,92 @@ export function mountFullScoreImport(
     return assets.get(region.id);
   }
 
+  function sourceMarkers(region) {
+    if (state.stage !== "review" || !region?.notes) return "";
+    return region.notes
+      .map((note, index) => {
+        if (!finite(note.x) || !finite(note.y)) return "";
+        return `<button type="button" class="fsi-source-note${note.id === state.selectedNoteId ? " is-selected" : ""}" data-source-note="${escapeHTML(note.id)}" style="left:${((note.x - region.rect.x) / region.rect.width) * 100}%;top:${((note.y - region.rect.y) / region.rect.height) * 100}%" aria-label="音符 ${index + 1} 原图位置，拖拽或方向键调整" title="${index + 1} · ${escapeHTML(midiName(note.midi))} · 拖拽校准原图位置">${index + 1}</button>`;
+      })
+      .join("");
+  }
+
+  function noteRoll(region) {
+    if (
+      !region.notes.length ||
+      !finite(region.durationBeats) ||
+      region.durationBeats <= 0 ||
+      region.notes.some(
+        (n) => !finite(n.midi) || !finite(n.beat) || !finite(n.duration),
+      )
+    )
+      return "";
+    const range = rollRange(region),
+      rows = range.max - range.min + 1;
+    const width = Math.max(560, Math.min(3600, region.durationBeats * 52));
+    const ticks = Math.min(80, Math.ceil(region.durationBeats));
+    return `<div class="fsi-roll-heading"><strong>拖拽调整音高与拍点</strong><span class="fsi-muted">绿：右手 · 蓝：左手</span></div><p class="fsi-muted">上下每格一个半音，左右吸附到 1/4 拍（按住 Alt 精调到 1/16 拍）。方向键也可调整，Shift + 左右移动 1 拍。原图定位单独保留。</p><div class="fsi-roll-scroll"><div class="fsi-roll" data-note-roll style="width:${width}px;height:${rows * 20}px;--roll-beats:${region.durationBeats}">${Array.from({ length: ticks }, (_, i) => `<span class="fsi-roll-beat" style="left:${(i / region.durationBeats) * 100}%">${i} 拍</span>`).join("")}${region.notes.map((note, index) => `<button type="button" class="fsi-roll-note${note.hand === "left" ? " is-left" : ""}${note.id === state.selectedNoteId ? " is-selected" : ""}" data-roll-note="${escapeHTML(note.id)}" style="left:${(note.beat / region.durationBeats) * 100}%;top:${(range.max - note.midi) * 20}px;width:${(note.duration / region.durationBeats) * 100}%" aria-label="音符 ${index + 1} ${escapeHTML(midiName(note.midi))}，第 ${note.beat} 拍，拖拽或方向键调整" title="${index + 1} · ${escapeHTML(midiName(note.midi))} · ${note.beat} 拍">${index + 1} ${escapeHTML(midiName(note.midi))}</button>`).join("")}</div></div>`;
+  }
+
+  function selectMapNote(noteId) {
+    state.selectedNoteId = noteId;
+    state.selectedHeadIndex = null;
+    for (const marker of root.querySelectorAll(
+      "[data-source-note],[data-roll-note]",
+    ))
+      marker.classList.toggle(
+        "is-selected",
+        (marker.dataset.sourceNote || marker.dataset.rollNote) === noteId,
+      );
+    for (const row of root.querySelectorAll(".fsi-review-table tr"))
+      row.classList.toggle(
+        "is-selected",
+        row.querySelector("[data-note-id]")?.dataset.noteId === noteId,
+      );
+    updatePositionMarker();
+  }
+
+  function commitMove(region, note, values) {
+    const before = Object.fromEntries(
+      Object.keys(values).map((key) => [key, note[key]]),
+    );
+    if (Object.keys(values).every((key) => values[key] === note[key]))
+      return false;
+    moveHistory.push({
+      regionId: region.id,
+      noteId: note.id,
+      before,
+      after: { ...values },
+    });
+    if (moveHistory.length > 100) moveHistory.shift();
+    Object.assign(note, values);
+    edited(region);
+    state.message = "已调整音符；可撤销，审核全部后保存到曲库。";
+    render();
+    return true;
+  }
+
+  function undoMove() {
+    const move = moveHistory.at(-1);
+    if (!move) return;
+    const region = draft.regions.find((r) => r.id === move.regionId);
+    const note = region?.notes?.find((n) => n.id === move.noteId);
+    if (
+      !note ||
+      !Object.keys(move.after).every((key) => note[key] === move.after[key])
+    )
+      throw new Error("此音符已被后续编辑或重新识别，无法撤销旧移动。");
+    moveHistory.pop();
+    Object.assign(note, move.before);
+    edited(region);
+    state.activeRegionId = region.id;
+    state.activePage = region.page;
+    state.stage = "review";
+    state.selectedNoteId = note.id;
+    state.message = "已撤销上次移动；请审核后保存。";
+    render();
+  }
+
   function updatePositionMarker() {
     const region = activeRegion(),
       note =
@@ -621,9 +750,8 @@ export function mountFullScoreImport(
     marker.hidden =
       !note || !finite(note.x) || !finite(note.y) || state.stage !== "review";
     if (!marker.hidden) {
-      const image = root.querySelector("[data-original-image]");
-      marker.style.left = `${((note.x - region.rect.x) / region.rect.width) * (image?.clientWidth || 0)}px`;
-      marker.style.top = `${((note.y - region.rect.y) / region.rect.height) * (image?.clientHeight || 0)}px`;
+      marker.style.left = `${((note.x - region.rect.x) / region.rect.width) * 100}%`;
+      marker.style.top = `${((note.y - region.rect.y) / region.rect.height) * 100}%`;
     }
   }
 
@@ -762,7 +890,7 @@ export function mountFullScoreImport(
                 ? "任务已停止，已完成结果仍可查看。"
                 : snapshot.status === "complete"
                   ? "所有谱行已通过审核，可导入练习。"
-                  : "识别结果已到达，请逐行对照原图审核。";
+                  : "识别结果已到达，可一键审核全部，或先拖拽修正有问题的音符。";
     render();
   }
 
@@ -1076,39 +1204,54 @@ export function mountFullScoreImport(
   }
 
   async function approveAll() {
-    if (!state.scopeReviewed || !state.pianoConfirmed)
-      throw new Error("请先确认钢琴双手谱和全部页、谱行范围。");
-    const regions = selectedRegions();
-    if (!regions.length || isRunning()) return;
-    for (const region of regions) {
-      const issues = fullScoreRegionIssues(region);
-      if (issues.length) {
+    if (!state.pianoConfirmed) throw new Error("请先确认这是钢琴双手五线谱。");
+    if (isRunning() || state.importing || state.scanning) return;
+    const { summary } = prepareBulkReview(draft);
+    if (!summary.canImport) {
+      const issue = summary.issues[0];
+      const region = draft.regions.find((r) => r.id === issue?.regionId);
+      if (region) {
         state.activeRegionId = region.id;
         state.activePage = region.page;
         state.stage = "review";
-        throw new Error(`${scopeLabel(region)}：${issues[0].message}`);
       }
+      throw new Error(
+        `${region ? scopeLabel(region) + "：" : ""}${issue?.message || "没有可审核的谱行。"}`,
+      );
     }
-    const checked = fullScoreReviewSummary({
-      ...draft,
-      regions: draft.regions.map((r) => ({ ...r, reviewed: true })),
-    });
-    if (checked.issues.length) throw new Error(checked.issues[0].message);
     const intent = ++operationVersion;
     operationCancelled = false;
+    // The action itself acknowledges scope and per-row review flags.
+    state.scopeReviewed = true;
+    for (const candidate of summary.selected) {
+      const local = draft.regions.find((r) => r.id === candidate.id);
+      if (
+        !local.coverageComplete ||
+        local.sourceHeadAudit?.reviewed === false ||
+        local.tieAudit?.reviewed === false
+      )
+        edited(local);
+      Object.assign(local, {
+        coverageComplete: true,
+        ...(candidate.sourceHeadAudit
+          ? { sourceHeadAudit: candidate.sourceHeadAudit }
+          : {}),
+        ...(candidate.tieAudit ? { tieAudit: candidate.tieAudit } : {}),
+      });
+    }
     state.busy = true;
     render();
     try {
-      for (const region of regions) {
+      for (const candidate of summary.selected) {
         assertAlive(intent);
-        if (!region.reviewed || region.dirty)
-          await confirmRegion(
-            draft.regions.find((r) => r.id === region.id),
-            true,
-          );
+        const region = draft.regions.find((r) => r.id === candidate.id);
+        if (!region.reviewed || region.dirty) await confirmRegion(region, true);
       }
       assertAlive(intent);
-      await importReviewed();
+      applySnapshot(
+        await requireApi("confirmJob")(state.job.id, { scopeConfirmed: true }),
+      );
+      state.message = `已审核全部 ${summary.selectedCount} 行。可继续修正音符，或点击“保存到曲库”。`;
     } finally {
       state.busy = false;
       if (!disposed) render();
@@ -1475,6 +1618,25 @@ export function mountFullScoreImport(
   }
 
   root.addEventListener("click", (event) => {
+    const image = event.target.closest("[data-original-image]");
+    if (image && state.stage === "review" && !state.busy && !state.importing) {
+      const region = activeRegion();
+      const note = region?.notes?.find(
+        (candidate) => candidate.id === state.selectedNoteId,
+      );
+      const point =
+        region &&
+        sourcePoint(
+          region.rect,
+          image.getBoundingClientRect(),
+          event.clientX,
+          event.clientY,
+        );
+      if (note && point) commitMove(region, note, point);
+    }
+    const mapNote = event.target.closest("[data-source-note],[data-roll-note]");
+    if (mapNote)
+      selectMapNote(mapNote.dataset.sourceNote || mapNote.dataset.rollNote);
     const action = event.target.closest("[data-action]");
     if (!action || action.disabled) return;
     if (
@@ -1487,6 +1649,7 @@ export function mountFullScoreImport(
         "approve-all",
         "retry-failed",
         "import-draft",
+        "undo-move",
         "add-note",
         "delete-note",
         "add-rest",
@@ -1738,6 +1901,9 @@ export function mountFullScoreImport(
             );
           break;
         }
+        case "undo-move":
+          undoMove();
+          break;
         case "preview":
           await preview();
           break;
@@ -1860,7 +2026,7 @@ export function mountFullScoreImport(
         state.error = "跨行延音须为含 tieIn、tieOut 两个数组的 JSON。";
       }
     }
-    if (!input.dataset.noteField) render();
+    render();
   });
 
   root.addEventListener("input", (event) => {
@@ -1936,36 +2102,171 @@ export function mountFullScoreImport(
   });
 
   root.addEventListener("pointerdown", (event) => {
-    const image = event.target.closest("[data-original-image]"),
-      region = activeRegion();
+    const marker = event.target.closest("[data-source-note],[data-roll-note]");
+    const image = root.querySelector("[data-original-image]");
+    const region = activeRegion();
     if (
-      !image ||
+      event.button !== 0 ||
       state.stage !== "review" ||
       !region?.notes ||
-      event.button !== 0 ||
       state.busy ||
       state.importing
     )
       return;
-    const note = region.notes.find(
-      (candidate) => candidate.id === state.selectedNoteId,
-    );
-    if (!note) {
-      setMessage("请先在下方表格选中一个音符，再点击它在原图上的音头位置。");
+    if (!marker) return;
+    const noteId =
+      marker?.dataset.sourceNote ||
+      marker?.dataset.rollNote ||
+      state.selectedNoteId;
+    const note = region.notes.find((n) => n.id === noteId);
+    if (!note) return;
+    selectMapNote(note.id);
+    event.preventDefault();
+    const mode = marker.hasAttribute("data-roll-note") ? "roll" : "source";
+    const bounds = (
+      mode === "roll" ? root.querySelector("[data-note-roll]") : image
+    )?.getBoundingClientRect();
+    if (!bounds?.width || !bounds.height) return;
+    noteDrag = {
+      pointerId: event.pointerId,
+      region,
+      note,
+      marker,
+      mode,
+      bounds,
+      range: rollRange(region),
+      startX: event.clientX,
+      startY: event.clientY,
+      values: null,
+    };
+    root.setPointerCapture?.(event.pointerId);
+    marker.focus({ preventScroll: true });
+  });
+
+  root.addEventListener("pointermove", (event) => {
+    const drag = noteDrag;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    event.preventDefault();
+    const dx = event.clientX - drag.startX,
+      dy = event.clientY - drag.startY;
+    if (Math.hypot(dx, dy) < 3 && !drag.values) return;
+    drag.values =
+      drag.mode === "source"
+        ? {
+            x: Math.max(
+              drag.region.rect.x,
+              Math.min(
+                drag.region.rect.x + drag.region.rect.width,
+                drag.note.x + (dx / drag.bounds.width) * drag.region.rect.width,
+              ),
+            ),
+            y: Math.max(
+              drag.region.rect.y,
+              Math.min(
+                drag.region.rect.y + drag.region.rect.height,
+                drag.note.y +
+                  (dy / drag.bounds.height) * drag.region.rect.height,
+              ),
+            ),
+          }
+        : rollMove(
+            drag.note,
+            drag.region,
+            drag.range,
+            drag.bounds,
+            dx,
+            dy,
+            event.altKey ? 1 / 16 : 1 / 4,
+          );
+    if (!drag.values) return;
+    if (drag.mode === "source") {
+      drag.marker.style.left = `${((drag.values.x - drag.region.rect.x) / drag.region.rect.width) * 100}%`;
+      drag.marker.style.top = `${((drag.values.y - drag.region.rect.y) / drag.region.rect.height) * 100}%`;
+    } else {
+      drag.marker.style.left = `${(drag.values.beat / drag.region.durationBeats) * 100}%`;
+      drag.marker.style.top = `${(drag.range.max - drag.values.midi) * 20}px`;
+      drag.marker.textContent = `${midiName(drag.values.midi)} · ${drag.values.beat} 拍`;
+    }
+  });
+
+  function finishNoteDrag(event) {
+    const drag = noteDrag;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    noteDrag = null;
+    if (root.hasPointerCapture?.(event.pointerId))
+      root.releasePointerCapture(event.pointerId);
+    if (
+      event.type === "pointerup" &&
+      drag.values &&
+      !state.busy &&
+      !state.importing &&
+      drag.region === activeRegion()
+    )
+      commitMove(drag.region, drag.note, drag.values);
+    else render();
+  }
+  root.addEventListener("pointerup", finishNoteDrag);
+  root.addEventListener("pointercancel", finishNoteDrag);
+  root.addEventListener("lostpointercapture", finishNoteDrag);
+  root.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && noteDrag) {
+      event.stopPropagation();
+      finishNoteDrag({
+        ...event,
+        pointerId: noteDrag.pointerId,
+        type: "pointercancel",
+      });
       return;
     }
-    const bounds = image.getBoundingClientRect();
-    if (!bounds.width || !bounds.height) return;
-    note.x =
-      region.rect.x +
-      Math.max(0, Math.min(1, (event.clientX - bounds.left) / bounds.width)) *
-        region.rect.width;
-    note.y =
-      region.rect.y +
-      Math.max(0, Math.min(1, (event.clientY - bounds.top) / bounds.height)) *
-        region.rect.height;
-    edited(region);
-    render();
+    const marker = event.target.closest("[data-source-note],[data-roll-note]");
+    if (
+      !marker ||
+      !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(
+        event.key,
+      ) ||
+      state.busy ||
+      state.importing
+    )
+      return;
+    event.preventDefault();
+    const region = activeRegion(),
+      id = marker.dataset.sourceNote || marker.dataset.rollNote;
+    const note = region?.notes.find((n) => n.id === id);
+    if (!note) return;
+    selectMapNote(id);
+    const dx =
+      event.key === "ArrowLeft" ? -1 : event.key === "ArrowRight" ? 1 : 0;
+    const dy = event.key === "ArrowUp" ? -1 : event.key === "ArrowDown" ? 1 : 0;
+    const step = event.shiftKey ? 10 : 1;
+    const values = marker.hasAttribute("data-source-note")
+      ? {
+          x: Math.max(
+            region.rect.x,
+            Math.min(region.rect.x + region.rect.width, note.x + dx * step),
+          ),
+          y: Math.max(
+            region.rect.y,
+            Math.min(region.rect.y + region.rect.height, note.y + dy * step),
+          ),
+        }
+      : {
+          beat: Math.max(
+            0,
+            Math.min(
+              Math.max(0, region.durationBeats - note.duration),
+              note.beat +
+                dx * (event.shiftKey ? 1 : event.altKey ? 1 / 16 : 1 / 4),
+            ),
+          ),
+          midi: Math.max(21, Math.min(108, note.midi - dy)),
+        };
+    commitMove(region, note, values);
+    const key = marker.hasAttribute("data-source-note")
+      ? "sourceNote"
+      : "rollNote";
+    [...root.querySelectorAll("[data-source-note],[data-roll-note]")]
+      .find((el) => el.dataset[key] === id)
+      ?.focus({ preventScroll: true });
   });
 
   function restoreScope(saved) {
