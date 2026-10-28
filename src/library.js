@@ -214,6 +214,10 @@ export function createUnifiedLibrary({
       assets,
       notation: {
         ...record.sourceNotation,
+        pages: record.sourceNotation.pages?.map((p) => ({
+          ...p,
+          imageUrl: links.get(p.assetId),
+        })),
         systems: record.sourceNotation.systems.map((s) => ({
           ...s,
           imageUrl: links.get(s.assetId || s.id),
@@ -278,7 +282,10 @@ export function createUnifiedLibrary({
         const supplied = Array.isArray(sourceRecord.assets)
           ? sourceRecord.assets
           : [];
-        for (const s of sourceNotation.systems) {
+        for (const s of [
+          ...sourceNotation.systems,
+          ...(sourceNotation.pages || []),
+        ]) {
           const sourceAsset =
             supplied.find((asset) => asset.id === (s.assetId || s.id)) ||
             supplied.find(

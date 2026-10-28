@@ -97,6 +97,10 @@ export function normalizeLibraryRecord(
       if (!ids.has(String(s.assetId || s.id)))
         throw fail("曲库缺少原谱图片，未保存不完整记录。");
     for (const s of sourceNotation.systems) s.imageUrl = "";
+    for (const p of sourceNotation.pages || []) {
+      if (!ids.has(p.assetId)) throw fail("原谱整页图片缺失。");
+      p.imageUrl = "";
+    }
     document.sourceNotation = structuredClone(sourceNotation);
   } else if (assets.length) throw fail("原谱图片缺少定位结构。");
   const date = (v: unknown) =>

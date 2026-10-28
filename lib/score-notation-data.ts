@@ -1,4 +1,4 @@
-import {writtenBeats,NOTE_VALUES} from "./notation-rhythm.mjs";
+import { writtenBeats, NOTE_VALUES } from "./notation-rhythm.mjs";
 import type {
   WrittenPitch,
   WrittenRhythm,
@@ -61,22 +61,59 @@ export function validatePositions(value: unknown): SourcePosition[] {
     return { page: p.page, system: p.system, x: p.x, y: p.y };
   });
 }
-export function validateWrittenRhythm(value: unknown, duration: number): WrittenRhythm {
-  const r=value as WrittenRhythm;
-  if(!r || !NOTE_VALUES.some(([type])=>type===r.type) || !Number.isInteger(r.dots) || r.dots<0 || r.dots>3)
+export function validateWrittenRhythm(
+  value: unknown,
+  duration: number,
+): WrittenRhythm {
+  const r = value as WrittenRhythm;
+  if (
+    !r ||
+    !NOTE_VALUES.some(([type]) => type === r.type) ||
+    !Number.isInteger(r.dots) ||
+    r.dots < 0 ||
+    r.dots > 3
+  )
     throw new Error("书写时值的音符类型或附点无效。");
-  if(r.tuplets!==undefined && (!Array.isArray(r.tuplets) || r.tuplets.length>4 || r.tuplets.some(t=>
-    !t || !Number.isInteger(t.actual) || !Number.isInteger(t.normal) || t.actual<1 || t.normal<1 || t.actual>1024 || t.normal>1024 ||
-    (t.group!==undefined && (typeof t.group!=="string" || !t.group || t.group.length>80)))))
+  if (
+    r.tuplets !== undefined &&
+    (!Array.isArray(r.tuplets) ||
+      r.tuplets.length > 4 ||
+      r.tuplets.some(
+        (t) =>
+          !t ||
+          !Number.isInteger(t.actual) ||
+          !Number.isInteger(t.normal) ||
+          t.actual < 1 ||
+          t.normal < 1 ||
+          t.actual > 1024 ||
+          t.normal > 1024 ||
+          (t.group !== undefined &&
+            (typeof t.group !== "string" || !t.group || t.group.length > 80)),
+      ))
+  )
     throw new Error("连音比例或分组无效。");
-  if(Math.abs(writtenBeats(r)-duration)>1e-5)throw new Error("书写时值与音符或休止符拍数不一致。");
-  return {type:r.type,dots:r.dots,...(r.tuplets?.length?{tuplets:r.tuplets.map(t=>({actual:t.actual,normal:t.normal,...(t.group?{group:t.group}:{})}))}:{})};
+  if (Math.abs(writtenBeats(r) - duration) > 1e-5)
+    throw new Error("书写时值与音符或休止符拍数不一致。");
+  return {
+    type: r.type,
+    dots: r.dots,
+    ...(r.tuplets?.length
+      ? {
+          tuplets: r.tuplets.map((t) => ({
+            actual: t.actual,
+            normal: t.normal,
+            ...(t.group ? { group: t.group } : {}),
+          })),
+        }
+      : {}),
+  };
 }
 export function writtenNoteFields(
   note: Record<string, unknown>,
 ): Record<string, unknown> {
   const fields: Record<string, unknown> = {};
-  if(note.rhythm!==undefined)fields.rhythm=validateWrittenRhythm(note.rhythm,note.duration as number);
+  if (note.rhythm !== undefined)
+    fields.rhythm = validateWrittenRhythm(note.rhythm, note.duration as number);
   if (note.pitch !== undefined)
     fields.pitch = validateWrittenPitch(note.pitch, note.midi as number);
   if (note.staff !== undefined) {
@@ -140,7 +177,9 @@ export function validateRests(value: unknown, duration: number): ScoreRest[] {
       voice: r.voice,
       hand: r.hand,
       provenance: r.provenance,
-      ...(r.rhythm!==undefined?{rhythm:validateWrittenRhythm(r.rhythm,r.duration)}:{}),
+      ...(r.rhythm !== undefined
+        ? { rhythm: validateWrittenRhythm(r.rhythm, r.duration) }
+        : {}),
       ...(r.sourcePositions
         ? { sourcePositions: validatePositions(r.sourcePositions) }
         : {}),
@@ -198,6 +237,8 @@ export function validateSourceNotation(value: unknown): SourceNotation {
       "lastMeasure",
       "startBeat",
       "endBeat",
+      "pageWidth",
+      "pageHeight",
     ])
       if (s[key] !== undefined) {
         if (!Number.isFinite(s[key]) || s[key] < 0)
@@ -217,6 +258,25 @@ export function validateSourceNotation(value: unknown): SourceNotation {
         y: s.rect.y,
         width: s.rect.width,
         height: s.rect.height,
+      };
+    }
+    if (s.staffLines !== undefined) {
+      if (
+        !s.staffLines ||
+        !["right", "left"].every(
+          (hand) =>
+            Array.isArray(s.staffLines[hand]) &&
+            s.staffLines[hand].length === 5 &&
+            s.staffLines[hand].every(
+              (y, i, all) =>
+                Number.isFinite(y) && y >= 0 && (i === 0 || y > all[i - 1]),
+            ),
+        )
+      )
+        throw new Error("原谱五线位置无效。");
+      out.staffLines = {
+        right: [...s.staffLines.right],
+        left: [...s.staffLines.left],
       };
     }
     return out;
@@ -244,13 +304,62 @@ export function validateSourceNotation(value: unknown): SourceNotation {
     version: 1,
     coordinateSpace:
       typeof raw.coordinateSpace === "string" ? raw.coordinateSpace : "page",
+    ...(raw.pages !== undefined
+      ? {
+          pages: (() => {
+            if (!Array.isArray(raw.pages) || raw.pages.length > 1000)
+              throw new Error("原谱页面清单无效。");
+            return raw.pages.map((p) => {
+              if (
+                !Number.isInteger(p.page) ||
+                p.page < 1 ||
+                typeof p.assetId !== "string" ||
+                !/^[A-Za-z0-9_-]{1,100}$/.test(p.assetId) ||
+                ![p.width, p.height].every((n) => Number.isFinite(n) && n > 0)
+              )
+                throw new Error("原谱页面范围无效。");
+              return {
+                page: p.page,
+                assetId: p.assetId,
+                width: p.width,
+                height: p.height,
+                ...(typeof p.imageUrl === "string"
+                  ? { imageUrl: p.imageUrl.slice(0, 4000) }
+                  : {}),
+              };
+            });
+          })(),
+        }
+      : {}),
     scoreId: typeof raw.scoreId === "string" ? raw.scoreId : "",
     systems,
     notes,
-    ...(raw.rests!==undefined?{rests:(()=>{
-      if(!Array.isArray(raw.rests)||raw.rests.length>20000)throw Error('原谱休止位置清单无效。');
-      return raw.rests.map(r=>{if(!r||typeof r.restId!=='string'||!r.restId||r.restId.length>100)throw Error('原谱休止引用无效。');return {restId:r.restId,...validatePositions([r])[0],...Object.fromEntries(['beat','duration','voice','staff'].filter(k=>r[k]!==undefined).map(k=>[k,r[k]]))};});
-    })()}:{}),
+    ...(raw.rests !== undefined
+      ? {
+          rests: (() => {
+            if (!Array.isArray(raw.rests) || raw.rests.length > 20000)
+              throw Error("原谱休止位置清单无效。");
+            return raw.rests.map((r) => {
+              if (
+                !r ||
+                typeof r.restId !== "string" ||
+                !r.restId ||
+                r.restId.length > 100
+              )
+                throw Error("原谱休止引用无效。");
+              return {
+                restId: r.restId,
+                ...validatePositions([r])[0],
+                ...Object.fromEntries(
+                  ["beat", "duration", "voice", "staff"]
+                    .filter((k) => r[k] !== undefined)
+                    .map((k) => [k, r[k]]),
+                ),
+              };
+            });
+          })(),
+        }
+      : {}),
     ...(Array.isArray(raw.measureMap)
       ? { measureMap: structuredClone(raw.measureMap) }
       : {}),

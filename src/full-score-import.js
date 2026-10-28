@@ -1,3 +1,5 @@
+import "./score-workbench.css";
+import { mountRecognitionPageEditor } from "./recognition-page-editor.js";
 import {
   writtenEvidenceEditor,
   applyWrittenEvidenceInput,
@@ -194,6 +196,40 @@ export function mountFullScoreImport(
     preparedPromise,
     pdfQueue = Promise.resolve();
   let noteDrag = null;
+  let pageWorkbench, pageWorkbenchHost, restoreParentInert;
+  function closePageWorkbench() {
+    pageWorkbench?.destroy();
+    pageWorkbench = null;
+    pageWorkbenchHost?.remove();
+    pageWorkbenchHost = null;
+    restoreParentInert?.();
+    restoreParentInert = null;
+    if (!disposed) render();
+  }
+  async function openPageWorkbench() {
+    if (isRunning() || state.importing || disposed) return;
+    const regions = selectedRegions();
+    for (const region of regions) await ensureRegionAsset(region);
+    if (disposed) return;
+    const modal = root.closest(".modal");
+    const prior = modal?.inert;
+    if (modal) {
+      modal.inert = true;
+      restoreParentInert = () => {
+        modal.inert = prior;
+      };
+    }
+    pageWorkbenchHost = document.createElement("div");
+    document.body.append(pageWorkbenchHost);
+    pageWorkbench = mountRecognitionPageEditor(pageWorkbenchHost, {
+      draft,
+      regions,
+      assets,
+      thumbnails,
+      initialPage: state.activePage,
+      onClose: closePageWorkbench,
+    });
+  }
   const moveHistory = [];
   let operationController = new AbortController();
   const selectedRegions = () =>
@@ -378,10 +414,10 @@ export function mountFullScoreImport(
       <details class="fsi-job-settings" ${!state.job || state.job.status === "running" || !state.pianoConfirmed ? "open" : ""}><summary>识别设置与任务控制</summary><div class="fsi-flags"><label><input type="checkbox" data-piano-confirmed ${state.pianoConfirmed ? "checked" : ""} ${state.scanning || isRunning() ? "disabled" : ""}> 我已对照谱头/来源，确认这是钢琴双手五线谱</label></div>
       <div class="fsi-actions"><label>识谱服务商 <select data-recognition-engine ${state.job || isRunning() || state.scanning ? "disabled" : ""}><option value="pi" ${state.engine === "pi" ? "selected" : ""}>Pi Agent / ChatGPT</option><option value="deepseek" ${state.engine === "deepseek" ? "selected" : ""}>DeepSeek（实验 / 第二意见）· API 计费</option></select></label><strong data-recognition-model>${state.engine === "deepseek" ? "DeepSeek Flash" : "GPT-6.1 Sol"} · ${state.job?.recognition?.reasoningEffort === "low" ? "low" : "high"}</strong><label><input type="checkbox" data-auto-continue ${state.autoContinue ? "checked" : ""} ${state.scanning || isRunning() ? "disabled" : ""}> 自动继续全部谱行</label><label><input type="checkbox" data-risk-review ${state.riskReview ? "checked" : ""} ${state.job || isRunning() ? "disabled" : ""}> 复读高风险谱行（实验，可能增加一次调用）</label><button type="button" class="fsi-primary" data-action="start" ${state.scanning || state.busy || state.job?.status === "running" || state.importing ? "disabled" : ""}>${state.job ? "继续识别剩余谱行" : "一键识别全部选中谱行"}</button><button type="button" data-action="cancel" ${!state.scanning && !isRunning() ? "disabled" : ""}>停止任务</button>${state.job ? '<button type="button" data-action="reset" ' + (isRunning() ? "disabled" : "") + ">重新选择范围</button>" : ""}</div>
       <p class="fsi-muted">${selectedRegions().length} 个谱行全新识别基线为 ${state.engine === "deepseek" ? "DeepSeek Flash" : "GPT-6.1 Sol"} ${state.job?.recognition?.reasoningEffort === "low" ? "low" : "high"} ${state.job?.estimate?.modelCalls ?? state.job?.estimate?.piCalls ?? selectedRegions().length} 次（每行仅首次识别）；重试另计，最多 100 行并行，可随时停止。相同原图复用已校对结果，中断保留已完成转写。${state.job?.calls ? `${state.job?.reuse?.hits ? ` 已复用 ${state.job.reuse.hits} 行，节省 ${state.job.reuse.savedCalls} 次模型调用。` : ""} ${state.job.reusedExactPdf ? "该任务历史" : "本任务"}已发起 ${state.engine === "deepseek" ? "DeepSeek" : "Pi"} 识别 ${state.job.calls.recognition || 0} 次。` : ""}</p>
-      </details>${state.job ? `<div class="fsi-batch-bar"><div class="fsi-actions"><button type="button" class="fsi-primary" data-action="approve-all" ${isRunning() || state.importing || state.scanning || !state.pianoConfirmed || !selectedRegions().length || selectedRegions().some((r) => r.status !== "complete") ? "disabled" : ""}>一键审核全部</button><strong>${summary.reviewedCount} / ${summary.selectedCount} 行已审核</strong><details class="fsi-retry-options"><summary>重试选项（${failedCount} 行失败）</summary><div class="fsi-actions"><label>重识别模型 <select data-retry-engine ${isRunning() || state.importing ? "disabled" : ""}><option value="current" ${state.retryEngine === "current" ? "selected" : ""}>保持当前模型</option><option value="pi" ${state.retryEngine === "pi" ? "selected" : ""}>GPT-6.1 Sol · high</option><option value="deepseek" ${state.retryEngine === "deepseek" ? "selected" : ""}>DeepSeek Flash（实验）</option></select></label><label><input type="checkbox" data-retry-enlarge ${state.retryEnlarge ? "checked" : ""} ${isRunning() || state.importing ? "disabled" : ""}> 放大原图识别（最多 2 倍）</label><button type="button" data-action="retry-failed" ${isRunning() || state.importing || !failedCount ? "disabled" : ""}>一键重新识别失败谱行（${failedCount}）</button></div><p class="fsi-muted">重识别保留成功结果；额外模型调用另计。放大不会增加原图细节。</p></details></div><p class="fsi-muted">一键审核会确认全部所选谱行、覆盖范围及识别疑点，无需逐行勾选；审核后仍可编辑，再点击“保存到曲库”。结构错误会定位到对应谱行。</p></div>` : ""}
+      </details>${state.job ? `<div class="fsi-batch-bar"><div class="fsi-actions"><button type="button" class="fsi-primary" data-action="page-workbench" ${isRunning() || state.importing || state.scanning || !selectedRegions().some((r) => r.notes?.length) ? "disabled" : ""}>整页左右对照修改</button><button type="button" class="fsi-primary" data-action="approve-all" ${isRunning() || state.importing || state.scanning || !state.pianoConfirmed || !selectedRegions().length || selectedRegions().some((r) => r.status !== "complete") ? "disabled" : ""}>一键审核全部</button><strong>${summary.reviewedCount} / ${summary.selectedCount} 行已审核</strong><details class="fsi-retry-options"><summary>重试选项（${failedCount} 行失败）</summary><div class="fsi-actions"><label>重识别模型 <select data-retry-engine ${isRunning() || state.importing ? "disabled" : ""}><option value="current" ${state.retryEngine === "current" ? "selected" : ""}>保持当前模型</option><option value="pi" ${state.retryEngine === "pi" ? "selected" : ""}>GPT-6.1 Sol · high</option><option value="deepseek" ${state.retryEngine === "deepseek" ? "selected" : ""}>DeepSeek Flash（实验）</option></select></label><label><input type="checkbox" data-retry-enlarge ${state.retryEnlarge ? "checked" : ""} ${isRunning() || state.importing ? "disabled" : ""}> 放大原图识别（最多 2 倍）</label><button type="button" data-action="retry-failed" ${isRunning() || state.importing || !failedCount ? "disabled" : ""}>一键重新识别失败谱行（${failedCount}）</button></div><p class="fsi-muted">重识别保留成功结果；额外模型调用另计。放大不会增加原图细节。</p></details></div><p class="fsi-muted">一键审核会确认全部所选谱行、覆盖范围及识别疑点，无需逐行勾选；审核后仍可编辑，再点击“保存到曲库”。结构错误会定位到对应谱行。</p></div>` : ""}
       <div class="fsi-status" role="status" aria-live="polite"><strong>${escapeHTML(state.message)}</strong><p>已检查 ${state.scannedPages} / ${draft.totalPages || "…"} 页 · ${processed} / ${total} 行已处理 · ${completed} 行已审核${state.busy && state.uploaded ? ` · 已上传 ${state.uploaded} 行` : ""}</p><progress max="${state.scanning ? draft.totalPages || 1 : total || 1}" value="${state.scanning ? state.scannedPages : processed}"></progress></div>
       ${state.error ? `<div class="fsi-error" role="alert">${escapeHTML(state.error)}</div>` : ""}
-      <div class="fsi-workspace"><aside class="fsi-pages" aria-label="PDF 所有页面">${pageCards || '<p class="fsi-muted">正在读取页面…</p>'}</aside><section class="fsi-view" aria-label="当前谱行校对"><div class="fsi-actions"><h3>第 ${state.activePage} 页${current ? ` · 第 ${current.system} 行` : ""}</h3><button type="button" data-action="scope" ${state.scanning || state.busy ? "disabled" : ""}>页面与范围</button><button type="button" data-action="review" ${!current?.notes ? "disabled" : ""}>逐音校对</button>${!scopeLocked() ? '<button type="button" data-action="select-crop">手动调整/补充谱行</button>' : ""}</div>
+      <div class="fsi-workspace"><aside class="fsi-pages" aria-label="PDF 所有页面">${pageCards || '<p class="fsi-muted">正在读取页面…</p>'}</aside><section class="fsi-view" aria-label="当前谱行校对"><div class="fsi-actions"><h3>第 ${state.activePage} 页${current ? ` · 第 ${current.system} 行` : ""}</h3><button type="button" data-action="scope" ${state.scanning || state.busy ? "disabled" : ""}>页面与范围</button><button type="button" data-action="review" ${!current?.notes ? "disabled" : ""}>整页对照修改</button>${!scopeLocked() ? '<button type="button" data-action="select-crop">手动调整/补充谱行</button>' : ""}</div>
       ${pageInfo(state.activePage)?.assessment ? `<p class="fsi-muted">${escapeHTML(pageInfo(state.activePage).assessment.message)}</p>` : ""}
       <div class="fsi-regions" aria-label="当前页面全部谱行">${regionRows || '<p class="fsi-muted" style="padding:9px">此页未找到可用的双手谱行。请明确排除封面，或手动框选清晰双谱表。</p>'}</div>
       ${state.selecting ? '<div class="fsi-selector"><p>请切换“手动框选”，拖出完整的一行双手谱。添加/替换都必须包含谱号、上下加线及全部小节。</p><div data-crop-selector></div><div class="fsi-actions"><button type="button" data-action="add-crop">添加为新谱行</button><button type="button" data-action="replace-crop" ' + (!current ? "disabled" : "") + ">替换当前谱行范围</button></div></div>" : `<div class="fsi-original${state.stage === "review" && current?.notes ? " can-locate" : ""}" data-original-frame><div class="fsi-source-canvas">${originalURL ? `<img src="${escapeHTML(originalURL)}" alt="${state.stage === "review" && current ? `${scopeLabel(current)}原始钢琴谱裁切；选中音符后可点击校准位置` : `PDF 第 ${state.activePage} 页原始谱面`}" data-original-image>${sourceMarkers(current)}` : '<p class="fsi-muted" style="padding:20px">正在准备原谱预览…</p>'}<span class="fsi-position" data-note-position hidden></span></div></div>`}
@@ -1274,6 +1310,28 @@ export function mountFullScoreImport(
     }
   }
 
+  function retainOriginalPages(notation, selectedAssets) {
+    notation.pages = draft.pages
+      .filter((p) => p.decision === "include" && thumbnails.has(p.page))
+      .map((p) => {
+        const id = `original-page-${p.page}`,
+          image = thumbnails.get(p.page);
+        selectedAssets.push({
+          id,
+          page: p.page,
+          blob: image.blob,
+          mimeType: image.blob.type,
+        });
+        return {
+          page: p.page,
+          assetId: id,
+          width: p.width,
+          height: p.height,
+          imageUrl: image.url,
+        };
+      });
+  }
+
   async function importUnreviewed() {
     if (!state.scopeReviewed || !state.pianoConfirmed)
       throw new Error("请先确认钢琴谱身份和全部页、谱行范围。");
@@ -1314,8 +1372,10 @@ export function mountFullScoreImport(
           ...system,
           assetId: system.id,
           imageUrl: assets.get(system.id).url,
+          staffLines: draft.regions.find((r) => r.id === system.id)?.staffLines,
         })),
       };
+      retainOriginalPages(sourceNotation, selectedAssets);
       await onImport({
         score,
         sourceNotation,
@@ -1398,6 +1458,9 @@ export function mountFullScoreImport(
             ...system,
             assetId: region?.id || system.assetId || system.id,
             imageUrl: region ? assets.get(region.id).url : system.imageUrl,
+            staffLines: region?.staffLines || system.staffLines,
+            pageWidth: region?.pageWidth || system.pageWidth,
+            pageHeight: region?.pageHeight || system.pageHeight,
           };
         }),
       };
@@ -1407,6 +1470,7 @@ export function mountFullScoreImport(
           ...summary.selected.flatMap((region) => region.warnings || []),
         ]),
       ];
+      retainOriginalPages(sourceNotation, selectedAssets);
       await onImport({
         score,
         sourceNotation,
@@ -1717,9 +1781,7 @@ export function mountFullScoreImport(
           render();
           break;
         case "review":
-          state.stage = "review";
-          state.selecting = false;
-          render();
+          await openPageWorkbench();
           break;
         case "select-crop":
           state.selecting = true;
@@ -1737,6 +1799,9 @@ export function mountFullScoreImport(
           break;
         case "cancel":
           await cancel();
+          break;
+        case "page-workbench":
+          await openPageWorkbench();
           break;
         case "approve-all":
           await approveAll();
@@ -2493,6 +2558,7 @@ export function mountFullScoreImport(
   function destroy() {
     if (disposed) return;
     disposed = true;
+    closePageWorkbench();
     scanCancelled = true;
     operationCancelled = true;
     operationController.abort();

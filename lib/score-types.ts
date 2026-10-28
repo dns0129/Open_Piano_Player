@@ -14,7 +14,17 @@ export interface SourcePosition {
   y: number;
 }
 export interface WrittenRhythm {
-  type: "breve" | "whole" | "half" | "quarter" | "eighth" | "16th" | "32nd" | "64th" | "128th" | "256th";
+  type:
+    | "breve"
+    | "whole"
+    | "half"
+    | "quarter"
+    | "eighth"
+    | "16th"
+    | "32nd"
+    | "64th"
+    | "128th"
+    | "256th";
   dots: number;
   tuplets?: Array<{ actual: number; normal: number; group?: string }>;
 }
@@ -69,7 +79,14 @@ export interface SourceNotation {
   scoreId: string;
   systems: Array<Record<string, unknown> & { id: string; imageUrl?: string }>;
   notes: Array<Record<string, unknown> & { noteId: string }>;
-  rests?: Array<Record<string, unknown> & {restId:string}>;
+  pages?: Array<{
+    page: number;
+    assetId: string;
+    width: number;
+    height: number;
+    imageUrl?: string;
+  }>;
+  rests?: Array<Record<string, unknown> & { restId: string }>;
   measureMap?: Measure[];
 }
 export interface PracticeScore {
@@ -82,10 +99,10 @@ export interface PracticeScore {
   recognitionEvidence?: Record<string, any>;
   tempoEvidence?: {
     version: 1;
-    sourceStatus: 'read' | 'not-marked' | 'unreadable' | 'unknown';
+    sourceStatus: "read" | "not-marked" | "unreadable" | "unknown";
     sourceBpm: number | null;
     rawBpm: number | null;
-    playbackSource: 'source-reading' | 'user-practice' | 'default-practice';
+    playbackSource: "source-reading" | "user-practice" | "default-practice";
   };
   timeSignature: Meter;
   keySignature: number;
@@ -107,8 +124,10 @@ export interface PracticeScore {
   lineage?: Lineage;
   notationInference?: string[];
 }
-export interface ScoreDocument
-  extends Omit<PracticeScore, "version" | "notes" | "rests"> {
+export interface ScoreDocument extends Omit<
+  PracticeScore,
+  "version" | "notes" | "rests"
+> {
   schema: "qinban.score";
   version: 2;
   notes: WrittenNote[];

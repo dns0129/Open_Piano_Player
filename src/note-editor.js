@@ -1,3 +1,5 @@
+import { editedSourceRecord } from "../lib/score-workbench.mjs";
+import { mountPageNoteEditor } from "./page-note-editor.js";
 import {
   NOTE_VALUES,
   writtenBeats,
@@ -114,12 +116,12 @@ function effectsPanel(note, score) {
   <div class="note-effects-grid"><label>倚音音高（MIDI，按演奏顺序）<input data-grace-pitches aria-label="倚音音高顺序" placeholder="例如 62 64" value="${esc(note.grace?.notes.map((n) => n.midi).join(" ") || "")}"></label><label>借时位置<select data-grace-placement aria-label="倚音借时位置"><option value="before" ${note.grace?.placement !== "on" ? "selected" : ""}>主音拍前</option><option value="on" ${note.grace?.placement === "on" ? "selected" : ""}>占用主音开头</option></select></label><label>倚音总借时（拍）<input data-grace-steal aria-label="倚音总借时拍数" type="number" min="0.0009765625" max="16" step="any" value="${note.grace?.stealBeats ?? 0.125}"></label><label><input data-grace-slash type="checkbox" ${note.grace?.slash !== false ? "checked" : ""}> 短倚音斜线</label><button data-apply-grace>应用倚音（留空清除）</button><label>延长记号额外停留（拍，0 清除）<input data-fermata aria-label="延长记号额外拍数" type="number" min="0" max="64" step="any" value="${note.fermata?.holdBeats ?? 0}"></label></div><p class="form-note">倚音依附此主音，不改变纸面时值。拍前空间不足时占用主音开头；实际借时最多占其一半。延长记号会让双手一起停留；延长拍数是可编辑的演奏设置。</p>
   <p class="form-note">${note.ornament ? `辅助音：${esc(midiName(ornamentNeighbor(note, score.keySignature)))}。` : ""}延音线只连接相接的同手、同声部同音，只起音一次；调整音高、时值或冲突效果会解除无效连接。力度只作用于所选音；琶音作用于此时此手的整个和弦。试听最多 8 拍。</p></section>`;
 }
-export function mountNoteEditor(
+function mountDetailedNoteEditor(
   root,
   raw,
-  { onSave, onPreview, initialBeat = 0 } = {},
+  { onSave, onPreview, initialBeat = 0, editor: sharedEditor } = {},
 ) {
-  const editor = createNoteEditor(raw);
+  const editor = sharedEditor || createNoteEditor(raw);
   let measure = scoreMeasureIndex(editor.score, initialBeat),
     selected = null,
     renderer,
@@ -515,4 +517,29 @@ export function mountNoteEditor(
   }
   render();
   return () => renderer?.destroy();
+}
+
+export function mountNoteEditor(root, raw, options = {}) {
+  if (!options.pageComparison || raw.instrument === "guitar")
+    return mountDetailedNoteEditor(root, raw, options);
+  return mountPageNoteEditor(root, raw, {
+    ...options,
+    onDetails: (host, editor, back) => {
+      const goBack = document.createElement("button");
+      goBack.textContent = "返回整页对照";
+      goBack.onclick = back;
+      host.append(goBack);
+      const detail = document.createElement("div");
+      host.append(detail);
+      return mountDetailedNoteEditor(detail, raw, {
+        ...options,
+        editor,
+        onSave: (score) =>
+          options.onSave?.(
+            score,
+            editedSourceRecord(score, options.sourceRecord),
+          ),
+      });
+    },
+  });
 }

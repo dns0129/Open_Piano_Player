@@ -1,3 +1,4 @@
+import "./score-workbench.css";
 import { createAccountClient, createHostedLibrary } from "./accounts/client.js";
 import { createAudioWorkspace } from "./audio-workspace.js";
 import { createSearchWorkspace } from "./search-workspace.js";
@@ -790,18 +791,35 @@ async function openNoteEditor() {
     '<div id="note-editor-host"></div>',
     "音符、和弦与调式共同驱动谱面和播放。",
   );
-  $(".modal").classList.add("note-editor-modal");
+  $(".modal").classList.add(
+    state.score.instrument === "guitar"
+      ? "note-editor-modal"
+      : "score-workbench-modal",
+  );
   const epoch = modalEpoch();
-  const { mountNoteEditor } = await import("./note-editor.js");
+  const [{ mountNoteEditor }, sourceRecord] = await Promise.all([
+    import("./note-editor.js"),
+    state.sourceRecord
+      ? Promise.resolve(state.sourceRecord)
+      : loadAvailablePracticeSource(state.score).catch((error) => {
+          toast("原谱读取失败：" + error.message, true);
+          return null;
+        }),
+  ]);
   if (epoch !== modalEpoch()) return;
   const disposeEditor = mountNoteEditor($("#note-editor-host"), state.score, {
     initialBeat: state.beat,
+    pageComparison: true,
+    sourceRecord,
+    onClose: closeModal,
     onPreview: (_midi, _duration, score, id) => player.previewNotes(score, id),
-    onSave: async (score) => {
-      await remember(score, undefined, undefined, {
+    onSave: async (score, updatedSource) => {
+      await remember(score, updatedSource, undefined, {
         expectedRevision: score.id === originalId ? baseRevision : 0,
       });
-      setScore(score);
+      const savedSource = await scoreLibrary.readSource(score);
+      closeModal();
+      setScore(score, [], savedSource);
       toast("修改已保存到曲库，五线谱、简谱与播放已更新。");
     },
   });

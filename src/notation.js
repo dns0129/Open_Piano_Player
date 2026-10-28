@@ -588,6 +588,8 @@ export function renderNotation(container, score, options = {}) {
     const context = renderer.getContext();
     context.setFillStyle("#283b34");
     context.setStrokeStyle("#46534b");
+    system.editBars = [];
+    system.editNotes = [];
     const allRight = [],
       allLeft = [],
       rendered = [];
@@ -646,6 +648,48 @@ export function renderNotation(container, score, options = {}) {
         .joinVoices([right.voice])
         .joinVoices([left.voice])
         .formatToStave([right.voice, left.voice], top);
+      const gridLeft = noteStartX + 14,
+        gridRight = info.endX - 18;
+      if (options.editGrid) {
+        for (const item of [...right.objects, ...left.objects])
+          item.note
+            .getTickContext()
+            .setX(
+              14 +
+                ((item.beat - info.start) / info.length) *
+                  Math.max(24, gridRight - gridLeft),
+            );
+      }
+      const gridSample = right.objects[0] || left.objects[0];
+      const gridOffset =
+        options.editGrid && gridSample
+          ? gridSample.note.getAbsoluteX() -
+            (gridLeft +
+              ((gridSample.beat - info.start) / info.length) *
+                Math.max(24, gridRight - gridLeft))
+          : 0;
+      system.editBars.push({
+        index: info.index,
+        start: info.start,
+        end: info.end,
+        left: gridLeft + gridOffset + 5,
+        right: gridRight + gridOffset + 5,
+        keySignature: key,
+        staffs: [
+          {
+            hand: "right",
+            bottomY: top.getYForLine(4),
+            bottomStep: 30,
+            spacing: top.getSpacingBetweenLines(),
+          },
+          {
+            hand: "left",
+            bottomY: bottom.getYForLine(4),
+            bottomStep: 18,
+            spacing: bottom.getSpacingBetweenLines(),
+          },
+        ],
+      });
       for (const v of [right, left]) {
         v.voice.draw(context, v.stave);
         v.beams.forEach((b) => b.setContext(context).draw());
@@ -681,6 +725,7 @@ export function renderNotation(container, score, options = {}) {
     drawStaffTies(allRight, context, system);
     drawStaffTies(allLeft, context, system);
     const svg = system.host.querySelector("svg");
+    system.svg = svg;
     svg.setAttribute("viewBox", `0 0 ${system.width} ${height}`);
     svg.removeAttribute("width");
     svg.removeAttribute("height");
@@ -700,6 +745,17 @@ export function renderNotation(container, score, options = {}) {
         x = item.note.getAbsoluteX(),
         y = Math.min(...ys) - 17;
       const attacks = item.pitches.filter((n) => closeTo(n.beat, item.beat));
+      item.pitches.forEach((n, index) => {
+        if (closeTo(n.beat, item.beat))
+          system.editNotes.push({
+            noteId: n.id,
+            beat: n.beat,
+            x,
+            y: ys[index],
+            hand: item.hand,
+            barIndex: item.info.index,
+          });
+      });
       const marks = svgElement("g", {
         class: "notation-effects",
         "pointer-events": "none",
@@ -784,6 +840,14 @@ export function renderNotation(container, score, options = {}) {
       class: "notation-cursor",
     });
     svg.append(system.cursor);
+    if (options.editGrid)
+      options.onEditLayout?.({
+        svg,
+        width: system.width,
+        height,
+        bars: system.editBars,
+        notes: system.editNotes,
+      });
   }
   function drawNumberedTies(events, svg, system) {
     const arc = (x1, y1, x2, y2) =>
@@ -1419,6 +1483,17 @@ export function renderNotation(container, score, options = {}) {
   };
   window.addEventListener("beforeprint", beforePrint);
   return {
+    getEditLayout() {
+      return systems
+        .filter((system) => system.svg && system.editBars)
+        .map((system) => ({
+          svg: system.svg,
+          width: system.width,
+          height: system.dimensions.height,
+          bars: system.editBars,
+          notes: system.editNotes,
+        }));
+    },
     setBeat(beat) {
       if (destroyed) return;
       beatNow = Math.max(0, Math.min(score.durationBeats, Number(beat) || 0));

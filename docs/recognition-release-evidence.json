@@ -1,9 +1,9 @@
 {
   "schema": "recognition-release-evidence/v1",
   "release": "recognition-p2-v1-20261028",
-  "recordedAt": "2026-10-28T10:16:28.622Z",
+  "recordedAt": "2026-10-28T14:45:24.242Z",
   "implementation": {
-    "digest": "d3e808c1b2e4a3d105bdc181438d63811bd37af6cfdbc6dabad90fc08327bb77",
+    "digest": "6259c289ec4f99e1bd2050290a80f40dd786646a8b8d67bb757e8e5bf87ea37a",
     "files": [
       {
         "path": "lib/accounts/recognition-budget.mjs",
@@ -47,7 +47,7 @@
       },
       {
         "path": "lib/full-score-review.mjs",
-        "sha256": "df79b47a25244058832f2890d12dd54ad126d8d2ca3859f6114bb2500bb3a401"
+        "sha256": "5819b1139063e572e48bfdb0fccebdbe1d36350a3c5738a99545a5e52d9cedd5"
       },
       {
         "path": "lib/importers.mjs",
@@ -75,7 +75,7 @@
       },
       {
         "path": "lib/recognition-edit.mjs",
-        "sha256": "774b79d2b9f40a5d39dfb24833482511f1efeda3111d3f3c1e5961288243650c"
+        "sha256": "b891be4756b886950382061c3bebfb90d520a7ca2b8ed19307b4171af59c3a3a"
       },
       {
         "path": "lib/recognition-gate.mjs",
@@ -155,7 +155,7 @@
       },
       {
         "path": "lib/score-notation-data.ts",
-        "sha256": "753715bd8db9b4d31a2446dae03143f2214e9bd261ba03daaf1119f5879935d2"
+        "sha256": "9b808ce2e55f4098b7dac3abb83f59c89f420e66e013ec1e5a30c18ba134daff"
       },
       {
         "path": "lib/score-region.mjs",
@@ -163,7 +163,7 @@
       },
       {
         "path": "lib/score-types.ts",
-        "sha256": "7585e0a29b2cd496429cce92e35afe9b0f82f5a98ef0cad83cca63f828a23d4c"
+        "sha256": "69375f279d78fc6121deda2819fdee5f6163235be75ca648bb91b747ed117d0b"
       },
       {
         "path": "lib/score-validation.mjs",
@@ -243,7 +243,7 @@
       },
       {
         "path": "src/full-score-import.js",
-        "sha256": "c584dc6e91f7e2fd1be0bb8b923c4fba5514300b46affbbd68a1371dd3f9cc96"
+        "sha256": "e49fba37ac026066e9c2fd9b8128636ac8995f1aa5bb807ede94e14c5bf1596e"
       },
       {
         "path": "src/import-flows.js",
@@ -311,7 +311,7 @@
   "evaluation": {
     "mode": "offline-frozen-responses",
     "providerCalls": 0,
-    "sourceEvaluationSha256": "6f468d9f89feca8baac9477c36a7afda45f29ed11ff405a59818f7bb4d860ad6",
+    "sourceEvaluationSha256": "1e1e551ffdcade203f3f743e4cd6b01239ff84cbc6dc72f274a87d15c0beda28",
     "suiteSha256": "43a326cb85d9f04afd7dac9a91e30ee6516bc90df6f389d3a05a8308b5b52b8c",
     "sourceFiles": 158,
     "baselinePromptDigest": "5e44d82e7876c4439e347d878f794883a83bbbb97d9d784f700ee8be1a6034b1",
