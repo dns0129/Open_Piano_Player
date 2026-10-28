@@ -56,11 +56,21 @@ npm test
 
 `score.tempo` 为 null（兼容旧响应的 0）时，`score.tempoStatus` 可为 unknown、unreadable 或 not-marked；不得把三者混为“原谱没标速度”。未知或不可辨的原谱速度阻塞正式完成，但允许保存草稿、音符和证据。草稿使用 90 四分音符 BPM 的练习值，`score.qinban.json` 的 `tempoEvidence` 保存原始状态；MusicXML 的默认标速注明练习用途。首个 `notation.tempoMarks` 可为 `{beat:0,unit:"quarter",dots:0,bpm:null}`，或省略以使用练习值。确认原谱确实没有标速时使用 not-marked；这不是数值速度已识别的声明。原始 `transcription.json` 不改写未知值。
 
+### v1.2 显式休止与谱表证据
+
+`notation.rests[]` 保存 `{id,beat,duration,hand,voice,source,checked}`，source 与音符相同，包含页、系统行、小节和原谱谱表。`notation.voices[]` 保存 `{hand,voice,from,to}`，明确独立声部的活动区间；区间内未解释的时间进入阻塞清单，不自动补成已确认休止。只有真实读取的休止才能放入该列表。
+
+`notation.clefs[]` 保存 `{beat,staff,sign,line,octaveChange}`，包括两个谱表的初始谱号和变化。`score.notes[].staff` 是新谱分配谱表，`notation.notes[].source.staff` 是原谱位置，hand 是演奏手别；三者不能由 MIDI 高低相互替代。当前 Skill 重排使用标准双谱表并展开八度记号，原始谱号变化仍保存在转录；App 的 MusicXML 还保留源谱起始及小节边界谱号，小节中途的变化保存在原谱证据并提示编辑器调整。
+
+同拍同谱表、同字母和八度的显式临时记号按一组检查，出现矛盾直接报告；跨声部共享状态，跨谱表和八度分别维护。原图复核证据的哈希也绑定休止、谱号和声部范围，修改后需要重新核对相关小节。
+
+App 的 `lib/recognition-transcription.mjs` 可把具有 compact-v5 书写证据的任务转换为本 Skill 数据；没有纸面音名的旧 MIDI 不做反推。转换后的 checked/reviewed 默认 false，并保留缺失符号或调式问题。必须真实核对原图后再记录复核，不把导入动作当成完成。
+
 ### 时间轴、来源与音高
 
 - 所有 `beat`、`duration` 以四分音符为 1；三连八分音符为 1/3，不能因 6/8 拍把单位改为附点四分。
-- 显式 `measureMap` 覆盖从 0 到 `durationBeats`，小节连续、含弱起、末尾休止和变拍。notes 只放发声主音，休止由时间轴间隙表达；保留每声部的休止信息在原谱核对记录中。
-- 谱表与声部不同：`source.staff` 是原图谱表1/2；`hand` 是新谱分配的左右手。交叉谱表需人工核对 hand 与 voice，不能按 MIDI 高低自动断手。
+- 显式 `measureMap` 覆盖从 0 到 `durationBeats`，小节连续、含弱起、末尾休止和变拍。notes 只放发声主音，原谱休止保存在 `notation.rests`；声部活动范围内的空白仍是未解释缺口，不能自动确认成休止。旧文件允许草稿兼容，不能据其省略字段宣称新协议完整覆盖。
+- 谱表与声部不同：`source.staff` 是原图谱表1/2；`hand` 是演奏手别，`score.notes[].staff` 是新谱分配谱表。交叉谱表需人工核对 hand、voice 与输出 staff，不能按 MIDI 高低自动断手。
 - `keySignature` / `keys[].fifths` 为五度圈 -7..7，负值为降号；mode 为 major/minor。其他调式先适配，不伪装成大调。
 - 每个音符的稳定 ID（字母/下划线开头，其后字母数字、点、下划线、连字符，最多71字符）对应一条 `notation.notes`；重复 ID 直接报错。
 - `pitch` 是新谱实际书写音高，`MIDI = (octave+1)*12 + CDEFGAB 对应的[0,2,4,5,7,9,11] + alter`。alter 取 -2..2；`printedAccidental` 无显式符号须写 null，♮为0，不能漏写该字段。

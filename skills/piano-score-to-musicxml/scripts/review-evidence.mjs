@@ -17,6 +17,7 @@ export function reviewBasis(raw, measure) {
   return hash({measure,pages,measureMap:raw.score?.measureMap,timeSignature:raw.score?.timeSignature,keySignature:raw.score?.keySignature,mode:raw.score?.mode,
     notes,keys:notation.keys,tempo:raw.score?.tempo,tempoMarks:notation.tempoMarks,
     graces:(notation.graces||[]).filter(g=>ids.has(g.beforeNote)).map(({checked,...g})=>g),
+    rests:(notation.rests||[]).filter(r=>r.source?.measure===measure).map(({checked,...r})=>r),clefs:notation.clefs,voices:notation.voices,
     spanners:(notation.spanners||[]).filter(s=>ids.has(s.start)||ids.has(s.end)),unhandled:notation.unhandled});
 }
 

@@ -63,7 +63,7 @@ export async function inspectFiveSources({sourceDirectory=resolve('.local/batch-
    // A prior practice BPM must not override the newly read first system's tempo.
    const {composer,timeSignature,keySignature,source}=old.metadata||{};
    const manifest={title:definition.title+' · GPT‑6.1 high 升降号增强版',composer,timeSignature,keySignature,source,
-    totalPages:definition.pages,engine:'pi',verify:false,needsUserScopeConfirmation:true,regions,
+    totalPages:definition.pages,engine:'pi',verify:false,recognitionPlan:{review:'off',maxCalls:2,recover:true},needsUserScopeConfirmation:true,regions,
     originalPdf:{name:definition.title+'.pdf',mimeType:'application/pdf',buffer:pdf}};
    plans.push({definition,manifest});
    const sourceContextSha256=sha(JSON.stringify({composer,timeSignature,keySignature,regions:regions.map(({image,...r})=>r)}));

@@ -135,3 +135,13 @@ test('standalone file build verifies real page hashes, reengraves SVG, and rejec
     await assert.rejects(build(input,mf,path.join(dir,'again')),/原图第 1 页已变化/);
   } finally {await fs.rm(dir,{recursive:true,force:true});}
 });
+
+test('explicit source rests and independent voices survive cross-staff engraving; gaps cannot become confirmed rests',()=>{
+ const raw={schema:'piano-score-transcription/v1',pages:[{page:1,sha256:'synthetic',status:'score',reviewed:true,systems:[{id:'s',staves:2,measureStart:1,measureEnd:1,complete:true,reviewed:true}]}],
+ score:{version:1,title:'self-composed evidence fixture',tempo:90,keySignature:0,mode:'major',timeSignature:[4,4],durationBeats:4,measureMap:[{beat:0,duration:4,timeSignature:[4,4]}],notes:[{id:'R',midi:60,beat:0,duration:1,hand:'right',voice:'1',staff:2},{id:'L',midi:48,beat:0,duration:4,hand:'left',voice:'2',staff:1}]},
+ notation:{notes:{R:{pitch:{step:'C',alter:0,octave:4},printedAccidental:0,source:{page:1,system:'s',measure:1,staff:2},checked:true},L:{pitch:{step:'C',alter:0,octave:3},printedAccidental:0,source:{page:1,system:'s',measure:1,staff:1},checked:true}},keys:[{measure:1,fifths:0,mode:'major'}],rests:[{id:'rest-R',beat:1,duration:3,hand:'right',voice:'1',source:{page:1,system:'s',measure:1,staff:2},checked:true}],voices:[{hand:'right',voice:'1',from:0,to:4},{hand:'left',voice:'2',from:0,to:4}],clefs:[{beat:0,staff:1,sign:'G',line:2,octaveChange:0},{beat:0,staff:2,sign:'G',line:2,octaveChange:0}],unhandled:[]},issues:[],review:{status:'checked',humanConfirmed:false}};
+ stamp(raw);const checked=validateTranscription(raw,manifestFor(raw));assert.equal(checked.score.rests.length,1);
+ const parsed=new XMLParser({ignoreAttributes:false}).parse(musicXML(checked)),all=parsed['score-partwise'].part.measure.note;
+ assert.equal(all.find(n=>n['@_id']==='note-R-m1').staff,2);assert.ok(all.some(n=>n.rest!==undefined&&n.staff===2));
+ raw.notation.rests=[];const draft=validateTranscription(raw,manifestFor(raw),{draft:true});assert.ok(draft.blockers.some(s=>s.includes('空缺')||s.includes('缺少原谱')));assert.throws(()=>validateTranscription(raw,manifestFor(raw)));
+});

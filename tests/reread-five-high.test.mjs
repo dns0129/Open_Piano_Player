@@ -45,6 +45,7 @@ test('the five-score preflight covers all 30 original pages and excludes prior a
  assert.equal(preflight.entries.reduce((sum,s)=>sum+s.pages,0),30);assert.equal(fingerprint.length,64);
  const sent=JSON.stringify(plans);assert.ok(!sent.includes('PRIVATE-OLD-NOTE-ANSWER'));assert.ok(!sent.includes('PRIVATE-OLD-TOKEN'));
  assert.ok(plans.every(p=>p.manifest.verify===false&&p.manifest.engine==='pi'));
+ assert.ok(plans.every(p=>p.manifest.recognitionPlan.review==='off'&&p.manifest.recognitionPlan.maxCalls===2));
  assert.ok(plans.every(p=>p.manifest.tempo===undefined),'prior practice BPM must not replace the fresh reading');
 });
 test('missing previously failed source rows or any page prevent starting the complete batch',async t=>{

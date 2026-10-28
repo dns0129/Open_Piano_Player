@@ -1,3 +1,4 @@
+import {withWrittenFixture} from './helpers/written-recognition-fixture.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp,rm} from 'node:fs/promises';
@@ -8,7 +9,7 @@ import {generateScoreRegion} from '../lib/ai.mjs';
 const settings={deepseekApiKey:'private-test-key',deepseekModel:'deepseek-flash'};
 const image={mimeType:'image/png',data:'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl6P7sAAAAASUVORK5CYII='};
 const compact={complete:true,meter:[4,4],key:0,bpm:90,bars:[4],notes:[[60,0,4,1,.3,.3,.7],[48,0,4,-1,.3,.7,.5]],rests:[],in:[],out:[],ties:[],graces:[],warnings:[]};
-const response=args=>new Response(JSON.stringify({model:'deepseek-flash',choices:[{finish_reason:'tool_calls',message:{tool_calls:[{function:{name:'submit_score_region',arguments:JSON.stringify(args)}}]}}],usage:{prompt_tokens:10,completion_tokens:20,total_tokens:30}}));
+const response=args=>new Response(JSON.stringify({model:'deepseek-flash',choices:[{finish_reason:'tool_calls',message:{tool_calls:[{function:{name:'submit_score_region',arguments:JSON.stringify(withWrittenFixture(args))}}]}}],usage:{prompt_tokens:10,completion_tokens:20,total_tokens:30}}));
 const request={systemPrompt:'rules',text:'read source',images:[image],tools:[{name:'submit_score_region',parameters:{type:'object'}}]};
 test('DeepSeek sends original pixels with fixed high effort, counts usage, and does not leak credentials',async()=>{
   const trace=[];let calls=0;

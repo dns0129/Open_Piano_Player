@@ -9,6 +9,7 @@ import { validateScore, scoreMeasureIndex } from './core/score.mjs';
 import { exportMusicXML, exportMidi } from './core/exporters.mjs';
 import { performanceNotes } from './core/note-effects.mjs';
 import {reviewEvidenceBlockers} from './review-evidence.mjs';
+import {auditWrittenNotation} from './written-evidence.mjs';
 import {recognitionTempo,validateTempoEvidence} from './recognition-tempo.mjs';
 
 const { parseMidi, writeMidi } = MidiFilePackage;
@@ -46,16 +47,17 @@ export function validateTranscription(raw, manifest, { draft=false }={}) {
   for(const note of raw.score?.notes||[]) {
     assert(/^[A-Za-z_][A-Za-z0-9_.-]{0,70}$/.test(note.id||'')&&!ids.has(note.id),`音符 ID 无效或重复：${note.id}`);
     ids.add(note.id);
-    knownKeys(note,['id','midi','beat','duration','hand','voice','velocity','dynamic','accent','articulation','ornament','ornamentInterval','arpeggio','tieTo'],'score.notes');
+    knownKeys(note,['id','midi','beat','duration','hand','voice','velocity','staff','dynamic','accent','articulation','ornament','ornamentInterval','arpeggio','tieTo'],'score.notes');
   }
   const tempoState=raw.score?.tempoEvidence?{tempo:raw.score.tempo,tempoEvidence:validateTempoEvidence(raw.score.tempoEvidence),warnings:[]}:recognitionTempo(raw.score?.tempo??null,raw.score?.tempoStatus);
   warnings.push(...tempoState.warnings);
   if(tempoState.tempoEvidence.sourceStatus==='unknown'||tempoState.tempoEvidence.sourceStatus==='unreadable')blockers.push('原谱速度待确认；草稿可使用单独标注的练习速度，音符转录已保留');
   const score=validateScore({...raw.score,tempo:tempoState.tempo,source:{...raw.score?.source,kind:'image-ai',reviewRequired:true}});
   score.tempoEvidence=tempoState.tempoEvidence;
+  for(const n of score.notes){const original=raw.score.notes.find(x=>x.id===n.id);if(original.staff!==undefined){assert([1,2].includes(original.staff),'输出谱表须为1或2');n.staff=original.staff;}}
   assert(score.measureMap?.length,'必须显式提交 measureMap，包括弱起和最后休止，不能凭末音猜页尾');
   const notation=raw.notation||{};
-  knownKeys(notation,['notes','graces','spanners','keys','tempoMarks','unhandled'],'notation');
+  knownKeys(notation,['notes','graces','spanners','keys','tempoMarks','rests','clefs','voices','unhandled'],'notation');
   const noteMeta=notation.notes||{}, byId=new Map(score.notes.map(n=>[n.id,n]));
   assert(Object.keys(noteMeta).length===score.notes.length,'每个数字音符必须恰有一条 notation.notes 原谱证据');
   const pageIds=new Set();
@@ -109,7 +111,6 @@ export function validateTranscription(raw, manifest, { draft=false }={}) {
     if(!meta.checked)blockers.push(`${label} 未按原图复核`);
   };
   const incoming=new Map(score.notes.filter(n=>n.tieTo).map(n=>[n.tieTo,n.id]));
-  const state=new Map();
   for(const n of score.notes) {
     const meta=noteMeta[n.id];
     knownKeys(meta,['pitch','printedAccidental','source','checked','sourceWrittenPitch','octaveShift','rhythm','fermata'],`notation.notes.${n.id}`);
@@ -121,11 +122,6 @@ export function validateTranscription(raw, manifest, { draft=false }={}) {
     else assert(!meta.octaveShift,`${n.id} 缺少八度移位之前的原谱写法`);
     const written=meta.sourceWrittenPitch||meta.pitch;
     assert(meta.printedAccidental===null || Number.isInteger(meta.printedAccidental)&&Math.abs(meta.printedAccidental)<=2,`${n.id} 必须显式记录 printedAccidental（无符号为 null）`);
-    const k=`${measure}:${meta.source.staff}:${written.step}:${written.octave}`;
-    const inherited=state.has(k)?state.get(k):keyAlter(written.step,keyAt(measure).fifths);
-    if(meta.printedAccidental!==null)state.set(k,meta.printedAccidental);
-    const expected=meta.printedAccidental===null?inherited:meta.printedAccidental;
-    if(!incoming.has(n.id)||meta.printedAccidental!==null)assert(written.alter===expected,`${n.id} 临时记号沿用/还原/调号规则冲突`);
     if(incoming.has(n.id))assert(pitch(noteMeta[incoming.get(n.id)].pitch)===n.midi,'延音后续实际音高不一致');
     if(n.ornament)assert([1,2].includes(n.ornamentInterval),`${n.id} 装饰音须从原谱确定辅助音间隔，不能按旋律猜测`);
     if(meta.rhythm) {
@@ -147,6 +143,17 @@ export function validateTranscription(raw, manifest, { draft=false }={}) {
     assert(g.source.measure===noteMeta[g.beforeNote].source.measure,'倚音和锚点必须属于同一小节');
   }
   for(const s of notation.spanners||[])assert(s.type==='slur'&&byId.has(s.start)&&byId.has(s.end)&&byId.get(s.start).beat<=byId.get(s.end).beat&&Number.isInteger(s.number)&&s.number>=1&&s.number<=6,'仅支持有效的 slur 连奏弧；其他跨音符符号放入 unhandled');
+  if(notation.clefs?.length)warnings.push('原谱谱号与变化已保存；当前 Skill 重排使用标准双谱表并展开八度记号。');
+  const rests=notation.rests||[];
+  const restIds=new Set();
+  for(const r of rests){assert(typeof r.id==='string'&&!restIds.has(r.id),'休止 ID 无效或重复');restIds.add(r.id);checkSource(r,r.id);assert(Number.isFinite(r.beat)&&Number.isFinite(r.duration)&&r.beat>=0&&r.duration>0&&r.beat+r.duration<=score.durationBeats+EPS&&['right','left'].includes(r.hand)&&typeof r.voice==='string','休止时间、手别或声部无效');}
+  score.rests=rests.map(r=>({...r,staff:r.source.staff,provenance:'source'}));
+  const evidence={version:1,notes:score.notes.map(n=>{const m=noteMeta[n.id],p=m.sourceWrittenPitch||m.pitch;return {noteId:n.id,staff:m.source.staff,step:p.step,octave:p.octave,alter:p.alter,printed:m.printedAccidental,shift:m.octaveShift||0};}),
+    rests:rests.map(r=>({restId:r.id,staff:r.source.staff})),clefs:notation.clefs?notation.clefs.map(c=>({...c,octaveChange:0})):[{beat:0,staff:1,sign:'G',line:2,octaveChange:0},{beat:0,staff:2,sign:'F',line:4,octaveChange:0}],keys:keys.flatMap(k=>[1,2].map(staff=>({beat:score.measureMap[k.measure-1].beat,staff,fifths:k.fifths}))),voices:notation.voices||[]};
+  const audit=auditWrittenNotation({...score,recognitionEvidence:evidence},score.measureMap.map(m=>m.duration),score.notes.filter(n=>n.tieTo).map(n=>({fromNoteId:n.id,toNoteId:n.tieTo})));
+  assert(!audit.issues.length,audit.issues.map(i=>i.noteId+': '+i.message).join('；'));
+  for(const v of notation.voices||[]){let cursor=v.from;for(const n of [...score.notes,...rests].filter(n=>n.hand===v.hand&&n.voice===v.voice&&n.beat<v.to).sort((a,b)=>a.beat-b.beat)){if(n.beat>cursor+EPS)blockers.push(v.voice+'声部存在未解释空缺');cursor=Math.max(cursor,n.beat+n.duration);}if(cursor<v.to-EPS)blockers.push(v.voice+'声部末尾缺少原谱音符或休止');}
+  score.recognitionEvidence=evidence;
   for(const issue of raw.issues||[]) {
     assert(typeof issue.message==='string'&&issue.message.trim(),'未解决项目须提供 message');
     (issue.severity==='warning'?warnings:blockers).push(issue.message);

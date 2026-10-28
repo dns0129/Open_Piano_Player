@@ -69,6 +69,7 @@ export interface SourceNotation {
   scoreId: string;
   systems: Array<Record<string, unknown> & { id: string; imageUrl?: string }>;
   notes: Array<Record<string, unknown> & { noteId: string }>;
+  rests?: Array<Record<string, unknown> & {restId:string}>;
   measureMap?: Measure[];
 }
 export interface PracticeScore {
@@ -78,6 +79,7 @@ export interface PracticeScore {
   title: string;
   composer: string;
   tempo: number;
+  recognitionEvidence?: Record<string, any>;
   tempoEvidence?: {
     version: 1;
     sourceStatus: 'read' | 'not-marked' | 'unreadable' | 'unknown';

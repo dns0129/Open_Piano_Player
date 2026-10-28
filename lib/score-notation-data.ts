@@ -247,6 +247,10 @@ export function validateSourceNotation(value: unknown): SourceNotation {
     scoreId: typeof raw.scoreId === "string" ? raw.scoreId : "",
     systems,
     notes,
+    ...(raw.rests!==undefined?{rests:(()=>{
+      if(!Array.isArray(raw.rests)||raw.rests.length>20000)throw Error('原谱休止位置清单无效。');
+      return raw.rests.map(r=>{if(!r||typeof r.restId!=='string'||!r.restId||r.restId.length>100)throw Error('原谱休止引用无效。');return {restId:r.restId,...validatePositions([r])[0],...Object.fromEntries(['beat','duration','voice','staff'].filter(k=>r[k]!==undefined).map(k=>[k,r[k]]))};});
+    })()}:{}),
     ...(Array.isArray(raw.measureMap)
       ? { measureMap: structuredClone(raw.measureMap) }
       : {}),

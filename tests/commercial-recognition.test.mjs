@@ -1,3 +1,4 @@
+import {withWrittenFixture} from './helpers/written-recognition-fixture.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp,rm} from 'node:fs/promises';
@@ -12,7 +13,7 @@ import {sha} from '../lib/accounts/common.mjs';
 import {BILLING_VERSION} from '../lib/accounts/subscription-catalog.mjs';
 import {createRecognitionBudget,utcPeriod} from '../lib/accounts/recognition-budget.mjs';
 
-const key=()=>randomUUID(),raw=()=>({complete:true,meter:[4,4],key:0,bpm:0,bars:[4],notes:[[60,0,4,1],[48,0,4,-1]],rests:[],in:[],out:[],ties:[],graces:[],warnings:[]});
+const key=()=>randomUUID(),raw=()=>withWrittenFixture({complete:true,meter:[4,4],key:0,bpm:0,bars:[4],notes:[[60,0,4,1],[48,0,4,-1]],rests:[],in:[],out:[],ties:[],graces:[],warnings:[]});
 function provider(read){const calls=[];return {calls,ready:true,model:'fixture-vision',async quote(){return {reserved:1000,rates:{inputRate:1,outputRate:1},inputBound:100,maxOutputTokens:900}},async read(request,quote,options){calls.push(request);if(read)return read(request,quote,options);return {status:'completed',text:JSON.stringify(raw()),usage:{input:10,output:20,totalTokens:30},model:'fixture-vision'}}}}
 async function fixture(t,p=provider()){
  const directory=await mkdtemp(join(tmpdir(),'qinban-commercial-')),mail=[],r=await createHostedRuntime({directory,recognitionProvider:p,mailer:async m=>mail.push(m)});t.after(async()=>{await r.close();await rm(directory,{recursive:true,force:true})});
@@ -55,7 +56,7 @@ test('hosted task lifecycle retains originals, quota and a playable private draf
 test('queued cancellation refunds task slot and failed rows alone are retried',async t=>{
  let n=0;const p=provider(async()=>({status:'completed',text:JSON.stringify(++n===1?{complete:false}:raw()),usage:{input:10,output:20},model:'fixture-vision'})),f=await fixture(t,p),owner=f.A.session.userId;
  const q=await f.recognition.create(owner,f.input(f.G),key());await f.recognition.cancel(owner,q.jobId,key());assert.equal((await f.recognition.budget.quota(owner)).remaining,30);assert.equal(p.calls.length,0);
- const input={...f.input(f.G),pointQuote:{version:BILLING_VERSION,points:10},regions:[{page:1,rect:{x:0,y:0,width:1,height:.5}},{page:1,rect:{x:0,y:.5,width:1,height:.5}}]},j=await f.recognition.create(owner,input,key());await f.recognition.start();const partial=await until(async()=>{const r=await f.recognition.get(owner,j.jobId);return r.state==='partial'&&r});assert.equal(partial.progress.complete,1);assert.equal(partial.canSave,false);await assert.rejects(f.recognition.save(owner,j.jobId,key()),e=>e.code==='RECOGNITION_NOT_READY');
+ const input={...f.input(f.G),recognitionPlan:{recover:false},pointQuote:{version:BILLING_VERSION,points:10},regions:[{page:1,rect:{x:0,y:0,width:1,height:.5}},{page:1,rect:{x:0,y:.5,width:1,height:.5}}]},j=await f.recognition.create(owner,input,key());await f.recognition.start();const partial=await until(async()=>{const r=await f.recognition.get(owner,j.jobId);return r.state==='partial'&&r});assert.equal(partial.progress.complete,1);assert.equal(partial.canSave,false);await assert.rejects(f.recognition.save(owner,j.jobId,key()),e=>e.code==='RECOGNITION_NOT_READY');
  const retry=await f.recognition.retry(owner,j.jobId,key(),{pointQuote:{version:BILLING_VERSION,points:5}});await until(async()=>(await f.recognition.get(owner,retry.jobId)).state==='needs_review');assert.equal(p.calls.length,3,'second job reads only failed row, not the previous success');assert.equal((await f.recognition.budget.quota(owner)).remaining,20);
 });
 test('concurrent owners cannot oversubscribe global reservations',async t=>{

@@ -53,9 +53,9 @@ function pitchXML(midi, useFlats) {
 function assignLayer(notes) {
   const grouped = new Map();
   for (const note of notes) {
-    const key = `${note.start}:${note.ticks}`;
+    const key = `${note.start}:${note.ticks}:${note.rest?1:0}`;
     if (grouped.has(key)) grouped.get(key).notes.push(note);
-    else grouped.set(key, { start: note.start, ticks: note.ticks, notes: [note] });
+    else grouped.set(key, { start: note.start, ticks: note.ticks, notes: note.rest?[]:[note], rest:note.rest, source:note });
   }
   const groups = [...grouped.values()].sort((a, b) => a.start - b.start || b.ticks - a.ticks);
   const voices = [];
@@ -92,8 +92,8 @@ export function exportMusicXML(score) {
   const measureCount = score.measureMap?.length || Math.max(1, Math.ceil(durationTicks / measureTicks));
   const fifths = Math.round(limit(score.keySignature || 0, -7, 7));
   const tempo = limit(score.tempo || 88, 20, 300);
-  const hands = [assignVoices(notes.filter((note) => note.hand === 'right')),
-    assignVoices(notes.filter((note) => note.hand === 'left'))];
+  const events=[...notes,...(score.rests||[]).map(r=>({...r,rest:true,start:tick(r.beat),ticks:tick(r.duration)}))];
+  const hands=[1,2].map(staff=>assignVoices(events.filter(n=>(n.staff||(n.hand==='left'?2:1))===staff)));
   const source = [score.source?.label, score.source?.license, score.source?.url].filter(Boolean).join(' · ');
   const measures = [];
   for (let index = 0; index < measureCount; index++) {
@@ -125,6 +125,7 @@ export function exportMusicXML(score) {
           const start = Math.max(group.start, begin);
           const stop = Math.min(group.start + group.ticks, end);
           if (start > cursor) content.push(rest(start - cursor));
+          if(group.rest){content.push(rest(stop-start));cursor=stop;continue;}
           const tieStop = group.start < begin;
           const tieStart = group.start + group.ticks > end;
           group.notes.forEach((note, chordIndex) => {

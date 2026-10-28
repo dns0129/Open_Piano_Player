@@ -1,3 +1,4 @@
+import {withWrittenFixture} from './helpers/written-recognition-fixture.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp,rm} from 'node:fs/promises';
@@ -30,7 +31,7 @@ test('actual local region requests carry system grouping rules in recognition an
     const result=await generateScoreRegion({engine:'deepseek',metadata:{title:'synthetic source'},region,pass},{deepseekApiKey:'synthetic-key',deepseekModel:'deepseek-flash'},{traceOptions:{path:join(directory,'trace.jsonl')},fetchImpl:async(_url,options)=>{
       calls++;const request=JSON.parse(options.body);assertSystemRules(request.messages[0].content);
       const data=structuredClone(compact);if(pass==='verify')data.notes=data.notes.map(note=>note.slice(0,4));
-      return new Response(JSON.stringify({model:'deepseek-flash',choices:[{finish_reason:'tool_calls',message:{tool_calls:[{function:{name:'submit_score_region',arguments:JSON.stringify(data)}}]}}]}));
+      return new Response(JSON.stringify({model:'deepseek-flash',choices:[{finish_reason:'tool_calls',message:{tool_calls:[{function:{name:'submit_score_region',arguments:JSON.stringify(withWrittenFixture(data))}}]}}]}));
     }});
     assert.equal(calls,1);assert.deepEqual(result.score.notes.map(note=>note.beat),[0,0]);
   }

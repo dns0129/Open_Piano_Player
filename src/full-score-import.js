@@ -1,3 +1,11 @@
+import {
+  writtenEvidenceEditor,
+  applyWrittenEvidenceInput,
+} from "./recognition-written-editor.js";
+import {
+  refreshWrittenPitch,
+  removeWrittenEvent,
+} from "../lib/recognition-edit.mjs";
 import "./full-score-import.css";
 import {
   prepareBulkReview,
@@ -93,7 +101,7 @@ function omrReviewMarkup(region) {
   const changes = region.corrections || [],
     audit = region.sourceHeadAudit;
   const records = changes.length
-    ? `<details class="fsi-advanced"><summary>自动校正记录（${changes.length}项，仍需对照原谱）</summary><ul>${changes.map((c) => `<li>${c.measure ? `第${c.measure}小节：` : ""}${escapeHTML(c.description)}<br><small>${escapeHTML(c.before)} → ${escapeHTML(c.after)}；依据：${escapeHTML(c.evidence)}</small></li>`).join("")}</ul></details>`
+    ? `<details class="fsi-advanced"><summary>校正与人工修改记录（${changes.length}项，仍需对照原谱）</summary><ul>${changes.map((c) => `<li>${c.measure ? `第${c.measure}小节：` : ""}${escapeHTML(c.description)}<br><small>${escapeHTML(c.before)} → ${escapeHTML(c.after)}；依据：${escapeHTML(c.evidence)}</small></li>`).join("")}</ul></details>`
     : "";
   const heads = audit?.unmapped?.length
     ? `<div class="fsi-warning"><strong>初次识别有${audit.unmapped.length}个未映射源音头${audit.reviewed ? "（已核查）" : "，需核查或补音"}</strong><p>以下保留原始识别的疑点记录。点击定位后对照原谱与已校对音符；可用“新增音符”补入漏音，或确认属于误检。</p><div>${audit.unmapped.map((head, index) => `<button type="button" data-action="source-head" data-head-index="${index}">查看${head.staff === 1 ? "右" : "左"}谱表音头${index + 1}</button>`).join("")}</div><label><input type="checkbox" data-head-reviewed ${audit.reviewed ? "checked" : ""}> 已逐个检查，补入漏音或确认误检</label></div>`
@@ -103,7 +111,11 @@ function omrReviewMarkup(region) {
   const ties = region.tieAudit?.unresolved?.length
     ? `<div class="fsi-warning"><strong>初次识别有${region.tieAudit.unresolved.length}处延音疑点${region.tieAudit.reviewed ? "（已核查）" : "，音符已保留供编辑"}</strong><ul>${region.tieAudit.unresolved.map((item) => `<li>${escapeHTML(item.description)} ${item.noteIds.map((id) => `<button type="button" data-action="select-note" data-note-id="${escapeHTML(id)}">定位 ${escapeHTML(id)}</button>`).join("")}</li>`).join("")}</ul><p>以上为原始疑点记录；请在上方延音编辑区核对修正后的行内/跨行关系，普通乐句线应保留分次弹奏。</p><label><input type="checkbox" data-tie-reviewed ${region.tieAudit.reviewed ? "checked" : ""}> 已按原谱修正并核对以上延音疑点</label></div>`
     : "";
-  return records + heads + ties;
+  const disagreement =
+    region.verification?.status === "disagreement"
+      ? '<div class="fsi-warning"><strong>独立复读存在分歧</strong><p>请对照原图核对音符、休止和书写信息。完成修改后，“审核当前行”会记录本次人工裁决。</p></div>'
+      : "";
+  return records + heads + ties + disagreement;
 }
 
 /**
@@ -152,6 +164,7 @@ export function mountFullScoreImport(
     scopeReviewed: false,
     capabilities: null,
     engine: "pi",
+    riskReview: false,
     retryEngine: "current",
     retryEnlarge: true,
     pdfHash: null,
@@ -271,6 +284,8 @@ export function mountFullScoreImport(
     root.dataset.jobId = state.job?.id || "";
     const noteDetailsOpen =
       sameRegion && root.querySelector(".fsi-note-details")?.open;
+    const writtenOpen =
+      sameRegion && root.querySelector(".fsi-written-evidence")?.open;
     root.dataset.viewRegion = state.activeRegionId;
     const focus = root.contains(document.activeElement)
       ? {
@@ -361,7 +376,7 @@ export function mountFullScoreImport(
         )
         .join("")}</select></label></div>
       <details class="fsi-job-settings" ${!state.job || state.job.status === "running" || !state.pianoConfirmed ? "open" : ""}><summary>识别设置与任务控制</summary><div class="fsi-flags"><label><input type="checkbox" data-piano-confirmed ${state.pianoConfirmed ? "checked" : ""} ${state.scanning || isRunning() ? "disabled" : ""}> 我已对照谱头/来源，确认这是钢琴双手五线谱</label></div>
-      <div class="fsi-actions"><label>识谱服务商 <select data-recognition-engine ${state.job || isRunning() || state.scanning ? "disabled" : ""}><option value="pi" ${state.engine === "pi" ? "selected" : ""}>Pi Agent / ChatGPT</option><option value="deepseek" ${state.engine === "deepseek" ? "selected" : ""}>DeepSeek · 按 API 用量计费</option></select></label><strong data-recognition-model>${state.engine === "deepseek" ? "DeepSeek Flash" : "GPT-6.1 Sol"} · ${state.job?.recognition?.reasoningEffort === "low" ? "low" : "high"}</strong><label><input type="checkbox" data-auto-continue ${state.autoContinue ? "checked" : ""} ${state.scanning || isRunning() ? "disabled" : ""}> 自动继续全部谱行</label><button type="button" class="fsi-primary" data-action="start" ${state.scanning || state.busy || state.job?.status === "running" || state.importing ? "disabled" : ""}>${state.job ? "继续识别剩余谱行" : "一键识别全部选中谱行"}</button><button type="button" data-action="cancel" ${!state.scanning && !isRunning() ? "disabled" : ""}>停止任务</button>${state.job ? '<button type="button" data-action="reset" ' + (isRunning() ? "disabled" : "") + ">重新选择范围</button>" : ""}</div>
+      <div class="fsi-actions"><label>识谱服务商 <select data-recognition-engine ${state.job || isRunning() || state.scanning ? "disabled" : ""}><option value="pi" ${state.engine === "pi" ? "selected" : ""}>Pi Agent / ChatGPT</option><option value="deepseek" ${state.engine === "deepseek" ? "selected" : ""}>DeepSeek · 按 API 用量计费</option></select></label><strong data-recognition-model>${state.engine === "deepseek" ? "DeepSeek Flash" : "GPT-6.1 Sol"} · ${state.job?.recognition?.reasoningEffort === "low" ? "low" : "high"}</strong><label><input type="checkbox" data-auto-continue ${state.autoContinue ? "checked" : ""} ${state.scanning || isRunning() ? "disabled" : ""}> 自动继续全部谱行</label><label><input type="checkbox" data-risk-review ${state.riskReview ? "checked" : ""} ${state.job || isRunning() ? "disabled" : ""}> 复读高风险谱行（实验，可能增加一次调用）</label><button type="button" class="fsi-primary" data-action="start" ${state.scanning || state.busy || state.job?.status === "running" || state.importing ? "disabled" : ""}>${state.job ? "继续识别剩余谱行" : "一键识别全部选中谱行"}</button><button type="button" data-action="cancel" ${!state.scanning && !isRunning() ? "disabled" : ""}>停止任务</button>${state.job ? '<button type="button" data-action="reset" ' + (isRunning() ? "disabled" : "") + ">重新选择范围</button>" : ""}</div>
       <p class="fsi-muted">${selectedRegions().length} 个谱行全新识别基线为 ${state.engine === "deepseek" ? "DeepSeek Flash" : "GPT-6.1 Sol"} ${state.job?.recognition?.reasoningEffort === "low" ? "low" : "high"} ${state.job?.estimate?.modelCalls ?? state.job?.estimate?.piCalls ?? selectedRegions().length} 次（每行仅首次识别）；重试另计，最多 100 行并行，可随时停止。相同原图复用已校对结果，中断保留已完成转写。${state.job?.calls ? `${state.job?.reuse?.hits ? ` 已复用 ${state.job.reuse.hits} 行，节省 ${state.job.reuse.savedCalls} 次模型调用。` : ""} ${state.job.reusedExactPdf ? "该任务历史" : "本任务"}已发起 ${state.engine === "deepseek" ? "DeepSeek" : "Pi"} 识别 ${state.job.calls.recognition || 0} 次。` : ""}</p>
       </details>${state.job ? `<div class="fsi-batch-bar"><div class="fsi-actions"><button type="button" class="fsi-primary" data-action="approve-all" ${isRunning() || state.importing || state.scanning || !state.pianoConfirmed || !selectedRegions().length || selectedRegions().some((r) => r.status !== "complete") ? "disabled" : ""}>一键审核全部</button><strong>${summary.reviewedCount} / ${summary.selectedCount} 行已审核</strong><details class="fsi-retry-options"><summary>重试选项（${failedCount} 行失败）</summary><div class="fsi-actions"><label>重识别模型 <select data-retry-engine ${isRunning() || state.importing ? "disabled" : ""}><option value="current" ${state.retryEngine === "current" ? "selected" : ""}>保持当前模型</option><option value="pi" ${state.retryEngine === "pi" ? "selected" : ""}>GPT-6.1 Sol · high</option><option value="deepseek" ${state.retryEngine === "deepseek" ? "selected" : ""}>DeepSeek Flash</option></select></label><label><input type="checkbox" data-retry-enlarge ${state.retryEnlarge ? "checked" : ""} ${isRunning() || state.importing ? "disabled" : ""}> 放大原图识别（最多 2 倍）</label><button type="button" data-action="retry-failed" ${isRunning() || state.importing || !failedCount ? "disabled" : ""}>一键重新识别失败谱行（${failedCount}）</button></div><p class="fsi-muted">重识别保留成功结果；额外模型调用另计。放大不会增加原图细节。</p></details></div><p class="fsi-muted">一键审核会确认全部所选谱行、覆盖范围及识别疑点，无需逐行勾选；审核后仍可编辑，再点击“保存到曲库”。结构错误会定位到对应谱行。</p></div>` : ""}
       <div class="fsi-status" role="status" aria-live="polite"><strong>${escapeHTML(state.message)}</strong><p>已检查 ${state.scannedPages} / ${draft.totalPages || "…"} 页 · ${processed} / ${total} 行已处理 · ${completed} 行已审核${state.busy && state.uploaded ? ` · 已上传 ${state.uploaded} 行` : ""}</p><progress max="${state.scanning ? draft.totalPages || 1 : total || 1}" value="${state.scanning ? state.scannedPages : processed}"></progress></div>
@@ -372,7 +387,7 @@ export function mountFullScoreImport(
       ${state.selecting ? '<div class="fsi-selector"><p>请切换“手动框选”，拖出完整的一行双手谱。添加/替换都必须包含谱号、上下加线及全部小节。</p><div data-crop-selector></div><div class="fsi-actions"><button type="button" data-action="add-crop">添加为新谱行</button><button type="button" data-action="replace-crop" ' + (!current ? "disabled" : "") + ">替换当前谱行范围</button></div></div>" : `<div class="fsi-original${state.stage === "review" && current?.notes ? " can-locate" : ""}" data-original-frame><div class="fsi-source-canvas">${originalURL ? `<img src="${escapeHTML(originalURL)}" alt="${state.stage === "review" && current ? `${scopeLabel(current)}原始钢琴谱裁切；选中音符后可点击校准位置` : `PDF 第 ${state.activePage} 页原始谱面`}" data-original-image>${sourceMarkers(current)}` : '<p class="fsi-muted" style="padding:20px">正在准备原谱预览…</p>'}<span class="fsi-position" data-note-position hidden></span></div></div>`}
       ${
         state.stage === "review" && current?.notes
-          ? `<p class="fsi-muted">${current.positionlessSource ? "此结果未提供逐音原图坐标，可选中音符后点击原图补充定位。" : "拖动原图上的编号圆点，校准跟谱位置；也可在下表选中音符后点击音头定位。"}拍点以此行第 0 拍为起点。</p><div class="fsi-actions"><button type="button" data-action="undo-move" ${!moveHistory.length || state.busy || state.importing ? "disabled" : ""}>撤销上次拖拽／定位</button></div>${noteRoll(current)}<details class="fsi-note-details"><summary>音符明细与精确修改（${current.notes.length} 音符）</summary><div class="fsi-actions"><label>本行总拍数（含休止） <input type="number" min="0.0009765625" step="0.000001" data-region-duration value="${escapeHTML(current.durationBeats ?? "")}" aria-label="当前谱行总拍数" style="width:100px"></label><button type="button" data-action="add-note">新增音符</button><button type="button" data-action="preview">更新转写谱面预览</button><button type="button" data-action="retry-region" ${isRunning() ? "disabled" : ""}>重新读取此行原图</button><button type="button" data-action="retry-enlarged" ${isRunning() || current.reviewed ? "disabled" : ""}>放大／换模型重识别此行</button></div>${notesTable}</details>${reviewAdvanced}${omrReviewMarkup(current)}<div class="fsi-mini-notation" data-notation-preview><p class="fsi-muted">点击“更新转写谱面预览”，与上方原始谱面对照。</p></div><label><input type="checkbox" data-region-coverage ${current.coverageComplete ? "checked" : ""}> 已确认本行的全部小节、左右手及末尾休止均已转写</label>${current.warnings?.length ? `<div class="fsi-warning">${current.warnings.map(escapeHTML).join("<br>")}</div>` : ""}${
+          ? `<p class="fsi-muted">${current.positionlessSource ? "此结果未提供逐音原图坐标，可选中音符后点击原图补充定位。" : "拖动原图上的编号圆点，校准跟谱位置；也可在下表选中音符后点击音头定位。"}拍点以此行第 0 拍为起点。</p><div class="fsi-actions"><button type="button" data-action="undo-move" ${!moveHistory.length || state.busy || state.importing ? "disabled" : ""}>撤销上次拖拽／定位</button></div>${noteRoll(current)}<details class="fsi-note-details"><summary>音符明细与精确修改（${current.notes.length} 音符）</summary><div class="fsi-actions"><label>本行总拍数（含休止） <input type="number" min="0.0009765625" step="0.000001" data-region-duration value="${escapeHTML(current.durationBeats ?? "")}" aria-label="当前谱行总拍数" style="width:100px"></label><button type="button" data-action="add-note">新增音符</button><button type="button" data-action="preview">更新转写谱面预览</button><button type="button" data-action="retry-region" ${isRunning() ? "disabled" : ""}>重新读取此行原图</button><button type="button" data-action="retry-enlarged" ${isRunning() || current.reviewed ? "disabled" : ""}>放大／换模型重识别此行</button></div>${notesTable}${writtenEvidenceEditor(current)}</details>${reviewAdvanced}${omrReviewMarkup(current)}<div class="fsi-mini-notation" data-notation-preview><p class="fsi-muted">点击“更新转写谱面预览”，与上方原始谱面对照。</p></div><label><input type="checkbox" data-region-coverage ${current.coverageComplete ? "checked" : ""}> 已确认本行的全部小节、左右手及末尾休止均已转写</label>${current.warnings?.length ? `<div class="fsi-warning">${current.warnings.map(escapeHTML).join("<br>")}</div>` : ""}${
               currentIssues.length
                 ? `<ul class="fsi-checklist">${currentIssues
                     .slice(0, 8)
@@ -399,7 +414,7 @@ export function mountFullScoreImport(
       <footer class="fsi-footer"><div><strong>${summary.reviewedCount} / ${summary.selectedCount} 行完成审核 · ${summary.noteCount} 音符</strong><p>${summary.musicExcluded ? "已排除含音乐的页面或谱行，导入名称会明确标注“所选谱段”。" : "可一键审核全部，也可单独审核当前行；修改过的谱行需要重新审核。"}</p>${!summary.canImport && !state.scanning ? `<p class="fsi-muted">${escapeHTML(summary.issues[0]?.message || "")}</p>` : ""}</div><label><input type="checkbox" data-scope-reviewed ${state.scopeReviewed ? "checked" : ""}> 我已确认全部页和谱行的处理范围，排除项均已检查</label><button type="button" class="fsi-primary" data-action="import" ${!summary.canImport || state.importing || isRunning() || !state.scopeReviewed ? "disabled" : ""}>${state.importing ? "正在保存…" : summary.musicExcluded ? "保存所选片段到曲库" : "保存到曲库"}</button>${state.job && state.job.regions.every((r) => r.result) ? `<button type="button" data-action="import-draft" ${state.importing || isRunning() || !state.scopeReviewed ? "disabled" : ""}>导入AI草稿（待校对）</button>` : ""}</footer>`;
     if (state.busy || state.importing)
       for (const input of root.querySelectorAll(
-        "[data-note-field],[data-region-duration],[data-region-coverage],[data-rest-field],[data-measure-durations],[data-continuity],[data-tie-direction],[data-internal-tie],[data-head-reviewed],[data-tie-reviewed],[data-scope-reviewed],[data-source-note],[data-roll-note]",
+        "[data-note-field],[data-written-kind],[data-region-duration],[data-region-coverage],[data-rest-field],[data-measure-durations],[data-continuity],[data-tie-direction],[data-internal-tie],[data-head-reviewed],[data-tie-reviewed],[data-scope-reviewed],[data-source-note],[data-roll-note]",
       ))
         input.disabled = true;
     if (state.job)
@@ -413,6 +428,8 @@ export function mountFullScoreImport(
       root.querySelector(".fsi-job-settings").open = true;
     if (noteDetailsOpen && root.querySelector(".fsi-note-details"))
       root.querySelector(".fsi-note-details").open = true;
+    if (writtenOpen && root.querySelector(".fsi-written-evidence"))
+      root.querySelector(".fsi-written-evidence").open = true;
     for (const { selector, top, left } of scrollPositions) {
       const element = root.querySelector(selector);
       if (element) {
@@ -632,12 +649,23 @@ export function mountFullScoreImport(
 
   function sourceMarkers(region) {
     if (state.stage !== "review" || !region?.notes) return "";
-    return region.notes
+    const notes = region.notes
       .map((note, index) => {
         if (!finite(note.x) || !finite(note.y)) return "";
         return `<button type="button" class="fsi-source-note${note.id === state.selectedNoteId ? " is-selected" : ""}" data-source-note="${escapeHTML(note.id)}" style="left:${((note.x - region.rect.x) / region.rect.width) * 100}%;top:${((note.y - region.rect.y) / region.rect.height) * 100}%" aria-label="音符 ${index + 1} 原图位置，拖拽或方向键调整" title="${index + 1} · ${escapeHTML(midiName(note.midi))} · 拖拽校准原图位置">${index + 1}</button>`;
       })
       .join("");
+    const rests = (region.rests || [])
+      .flatMap((rest, index) =>
+        (rest.sourcePositions || [])
+          .filter((p) => finite(p.x) && finite(p.y))
+          .map(
+            (p) =>
+              `<span class="fsi-source-note" data-source-rest="${escapeHTML(rest.id)}" style="pointer-events:none;background:#8a4b08;left:${((p.x - region.rect.x) / region.rect.width) * 100}%;top:${((p.y - region.rect.y) / region.rect.height) * 100}%" title="原谱休止 ${index + 1}，声部 ${escapeHTML(rest.voice)}，第 ${rest.beat} 拍" aria-label="原谱休止 ${index + 1}">休${index + 1}</span>`,
+          ),
+      )
+      .join("");
+    return notes + rests;
   }
 
   function noteRoll(region) {
@@ -689,6 +717,7 @@ export function mountFullScoreImport(
     });
     if (moveHistory.length > 100) moveHistory.shift();
     Object.assign(note, values);
+    refreshWrittenPitch(region, note.id);
     edited(region);
     state.message = "已调整音符；可撤销，审核全部后保存到曲库。";
     render();
@@ -804,6 +833,7 @@ export function mountFullScoreImport(
     if (!snapshot?.id) return;
     state.job = { ...state.job, ...snapshot };
     state.engine = snapshot.engine === "deepseek" ? "deepseek" : "pi";
+    state.riskReview = snapshot.metadata?.recognitionPlan?.review === "risk";
     state.progress = snapshot.progress || state.progress;
     for (const remote of snapshot.regions || []) {
       const index = draft.regions.findIndex(
@@ -938,6 +968,7 @@ export function mountFullScoreImport(
       const regions = selectedRegions();
       if (
         !state.job &&
+        !state.riskReview &&
         state.pdfHash &&
         typeof api.findReviewedJob === "function"
       ) {
@@ -991,6 +1022,11 @@ export function mountFullScoreImport(
               .map((page) => ({ page: page.page, reason: page.excludeReason })),
             needsUserScopeConfirmation: true,
             engineChoice: state.engine,
+            recognitionPlan: {
+              review: state.riskReview ? "risk" : "off",
+              maxCalls: 2,
+              recover: true,
+            },
             tempo: draft.tempo,
             timeSignature: draft.timeSignature,
             keySignature: draft.keySignature,
@@ -1129,6 +1165,7 @@ export function mountFullScoreImport(
       title: `${draft.title} · ${scopeLabel(region)}`,
       durationBeats: region.durationBeats,
       notes: region.notes,
+      ...(region.score?.recognitionEvidence ? { rests: region.rests } : {}),
     };
     const score = region.notes.length
       ? validateScore(rawScore)
@@ -1761,6 +1798,7 @@ export function mountFullScoreImport(
         }
         case "delete-note": {
           const region = activeRegion();
+          removeWrittenEvent(region, "note", action.dataset.noteId);
           region.notes = region.notes.filter(
             (note) => note.id !== action.dataset.noteId,
           );
@@ -1783,6 +1821,11 @@ export function mountFullScoreImport(
         }
         case "delete-rest": {
           const region = activeRegion();
+          removeWrittenEvent(
+            region,
+            "rest",
+            region.rests[Number(action.dataset.restIndex)]?.id,
+          );
           region.rests.splice(Number(action.dataset.restIndex), 1);
           edited(region);
           render();
@@ -1933,6 +1976,8 @@ export function mountFullScoreImport(
       state.scopeReviewed = input.checked;
     else if (input.hasAttribute("data-recognition-engine") && !state.job)
       state.engine = input.value === "deepseek" ? "deepseek" : "pi";
+    else if (input.hasAttribute("data-risk-review") && !state.job)
+      state.riskReview = input.checked;
     else if (input.hasAttribute("data-auto-continue"))
       state.autoContinue = input.checked;
     else if (input.dataset.pageDecision) {
@@ -2059,6 +2104,14 @@ export function mountFullScoreImport(
       }
       return;
     }
+    if (input.dataset.writtenKind) {
+      const region = activeRegion();
+      if (region && applyWrittenEvidenceInput(input, region)) {
+        edited(region);
+        updateReviewControls();
+      }
+      return;
+    }
     if (!input.dataset.noteField) return;
     const region = activeRegion(),
       note = region?.notes?.find(
@@ -2070,6 +2123,8 @@ export function mountFullScoreImport(
     )
       ? input.value
       : numberValue(input.value);
+    if (input.dataset.noteField === "midi")
+      refreshWrittenPitch(region, note.id);
     edited(region);
     const name = input.parentElement.querySelector(".fsi-note-name");
     if (name)

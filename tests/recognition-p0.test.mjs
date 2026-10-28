@@ -1,3 +1,4 @@
+import {withWrittenFixture} from './helpers/written-recognition-fixture.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp,readFile,rm} from 'node:fs/promises';
@@ -14,7 +15,7 @@ import {readScoreDocument,toPracticeScore} from '../lib/score-document.ts';
 const image={mimeType:'image/png',data:'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl6P7sAAAAASUVORK5CYII='};
 const region={id:'row',page:1,system:1,measureCount:1,rect:{x:0,y:0,width:100,height:100},image};
 const request={engine:'pi',metadata:{title:'Synthetic protocol fixture'},region};
-const raw=()=>({complete:true,meter:[4,4],key:0,bpm:90,bars:[4],notes:[[60,0,4,1,.3,.25,.75],[48,0,4,-1,.3,.75,.55]],rests:[],in:[],out:[],ties:[],graces:[],warnings:[]});
+const raw=()=>withWrittenFixture({complete:true,meter:[4,4],key:0,bpm:90,bars:[4],notes:[[60,0,4,1,.3,.25,.75],[48,0,4,-1,.3,.75,.55]],rests:[],in:[],out:[],ties:[],graces:[],warnings:[]});
 const digital=r=>({...r,notes:r.notes.map(n=>n.slice(0,4))});
 
 function fakeModels(responses,{json=false}={}) {
