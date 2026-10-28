@@ -1,0 +1,22 @@
+# Generated score data: one value per line would turn 26 lines into ~18k.
+lib/scores/
+
+# Recognition release gate: lib/recognition-governance.mjs fingerprints these
+# files byte for byte (and prompt files by their text), so reformatting them
+# invalidates docs/recognition-release-evidence.json. Format them together with
+# the next re-attested recognition release, then remove these lines.
+lib/**/recognition-*
+lib/full-score-*
+lib/score-region.mjs
+lib/score-validation.mjs
+lib/score-notation-data.ts
+lib/score-types.ts
+lib/score-image-layout.mjs
+lib/ai.mjs
+lib/digital-recognition.mjs
+lib/deepseek-vision.mjs
+lib/exporters.mjs
+lib/importers.mjs
+lib/node-runtime.mjs
+lib/omr-review.mjs
+lib/source-assessment.mjs
