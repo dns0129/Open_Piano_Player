@@ -11,7 +11,12 @@ test("unified HTTP library is shared across browser sessions, preserves Unicode 
   const directory = await mkdtemp(join(tmpdir(), "qinban-library-http-"));
   t.after(() => rm(directory, { recursive: true, force: true }));
   const server = createAppServer({
-    libraryStore: createLibraryStore({ directory, legacyLibrary: {list:async()=>({scores:[],warnings:['旧记录未能读取。']})} }),
+    libraryStore: createLibraryStore({
+      directory,
+      legacyLibrary: {
+        list: async () => ({ scores: [], warnings: ["旧记录未能读取。"] }),
+      },
+    }),
     fullScoreJobs: { close: async () => {} },
     neteaseProvider: { close() {} },
     statusReader: async () => ({ available: false }),
@@ -71,7 +76,7 @@ test("unified HTTP library is shared across browser sessions, preserves Unicode 
     await fetch(base + "/api/library", { headers: { cookie: b.cookie } })
   ).json();
   assert.equal(list.records[0].score.title, score.title);
-  assert.deepEqual(list.warnings,['旧记录未能读取。']);
+  assert.deepEqual(list.warnings, ["旧记录未能读取。"]);
   assert.equal("assets" in list.records[0], false);
   const route = "/api/library/records/" + encodeURIComponent(score.id),
     read = await (
