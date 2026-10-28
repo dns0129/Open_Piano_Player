@@ -6,7 +6,11 @@ import { tmpdir } from "node:os";
 import { indexedDB } from "fake-indexeddb";
 import { createBrowserLibrary } from "../src/library-indexeddb.js";
 import { createLibraryStore } from "../lib/library-store.mjs";
-import { createUnifiedLibrary, createLibraryClient, createDiskLibrary } from "../src/library.js";
+import {
+  createUnifiedLibrary,
+  createLibraryClient,
+  createDiskLibrary,
+} from "../src/library.js";
 const input = () => ({
   score: {
     version: 1,
@@ -274,9 +278,17 @@ test("disk client restores a full backup in separately verified requests", async
     { restoreBatchChars: 1 },
   );
   const backup = await source.backup();
-  assert.deepEqual((await disk.restore(backup)).restored.sort(), ["one", "three", "two"]);
+  assert.deepEqual((await disk.restore(backup)).restored.sort(), [
+    "one",
+    "three",
+    "two",
+  ]);
   assert.deepEqual(requests, Array(3).fill("/api/library/restore"));
-  assert.deepEqual((await disk.restore(backup)).conflicts.sort(), ["one", "three", "two"]);
+  assert.deepEqual((await disk.restore(backup)).conflicts.sort(), [
+    "one",
+    "three",
+    "two",
+  ]);
   const corrupt = structuredClone(backup);
   corrupt.records[0].revision++;
   requests.length = 0;
