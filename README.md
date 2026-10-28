@@ -2,14 +2,16 @@
 
 钢琴乐谱与练习 App。本机版保留原有图片/PDF 识谱、找谱、乐谱导入、编辑、播放与导出；独立商业账号版负责私有曲库、托管识谱、任务数与成本控制、手机上传和运营。
 
-## 两个独立入口
+## 一个入口，选择版本
 
-| 版本 | 启动 | 默认地址 | 功能边界 |
+macOS 只保留 **启动琴伴.command**。双击后在终端菜单输入数字并回车：**1 本地完整版**、**2 商业账号版**、**3 关闭所有琴伴服务**、**0 退出菜单**。选好版本后会自动准备依赖、构建并打开浏览器；菜单继续保留，可以开启另一个版本。两个版本可以同时运行，退出菜单或关闭菜单窗口后服务继续运行；需要停止时重新打开启动器并选 3。
+
+| 版本 | 菜单选择 | 默认地址 | 功能边界 |
 | --- | --- | --- | --- |
-| 本地开发者模式 | `启动琴伴.command` / `npm start` | `http://127.0.0.1:8792` | 原有图片/PDF 识谱、识谱任务与设置、找谱、导入、编辑、播放和本机曲库 |
-| 商业账号版 | `启动商业版.command` / `npm run commercial:start` | `http://127.0.0.1:8793/` | 登录、私有曲库、原谱上传、后台识谱、每人每月任务数、全站成本上限、反馈与运营 |
+| 本地完整版（原开发者模式） | 1 | `http://127.0.0.1:8792` | 原有图片/PDF 识谱、识谱任务与设置、找谱、导入、编辑、播放和本机曲库 |
+| 商业账号版（含原账号版） | 2 | `http://127.0.0.1:8793/` | 登录、私有曲库、原谱上传、后台识谱、每人每月任务数、全站成本上限、反馈与运营 |
 
-商业版先运行 `npm run commercial:operator -- 运营邮箱`，再启动；终端首次启动前执行 `npm run commercial:build`。本机预览的验证码写入独立私有开发邮箱。模型凭据与单价未配置时，识谱默认关闭，账号、上传和练习仍可使用。正式 PostgreSQL、SMTP、HTTPS 和付费模型接入尚未配置；[商业版实现、运行与预算规则](docs/commercial-app-implementation.md) 及 [本轮验收](docs/commercial-app-validation-20261021.md) 记录实际边界。
+商业版需要建立运营资格时，先在服务停止状态运行 `npm run commercial:operator -- 运营邮箱`，再通过统一菜单启动；已有账号不需要重新创建。本机预览的验证码写入独立私有开发邮箱。模型凭据与单价未配置时，识谱默认关闭，账号、上传和练习仍可使用。正式 PostgreSQL、SMTP、HTTPS 和付费模型接入尚未配置；[商业版实现、运行与预算规则](docs/commercial-app-implementation.md) 及 [本轮验收](docs/commercial-app-validation-20261021.md) 记录实际边界。
 
 本机原有识谱入口为右上角 **导入乐谱 → 上传本地乐谱**，支持图片/PDF；**识谱任务** 可继续历史校对，**AI 与设置** 查看原有模型连接。商业版新增不会替换这些本机功能，原谱与任务继续保存在原来的私有目录。
 
@@ -19,15 +21,15 @@
 
 运行 `npm run typecheck` 或 `npm run check` 验证（含类型检查、`npm run lint`、src/ 格式检查、测试与曲库校验）；修改 src/ 后运行 `npm run format` 统一格式。[架构、v1 迁移规则、备份和接口说明](docs/architecture.md)。新核心直接运行需 Node.js >=22.19，启动器会检查版本。
 
-邀请制账号、修订、回收站、完整备份和选择迁移见 [账号与私有曲库说明](docs/account-private-library-implementation.md)、[设计](docs/account-private-library-design.md) 与 [v1 接口契约](docs/contracts/account-private-library-v1.openapi.json)。`启动账号版.command` 和 `accounts:*` 命令继续兼容，商业版仍使用 `.local/accounts-v1/`；不会另建一个空目录替换已有账号数据。
+邀请制账号、修订、回收站、完整备份和选择迁移见 [账号与私有曲库说明](docs/account-private-library-implementation.md)、[设计](docs/account-private-library-design.md) 与 [v1 接口契约](docs/contracts/account-private-library-v1.openapi.json)。原账号版已并入统一菜单的商业账号版，维护用的 `accounts:*` 命令保留，商业版仍使用 `.local/accounts-v1/`。本地版继续使用原有 `.local/` 曲库和识谱任务，浏览器地址也保持原样。
 
 [24 张手机照片识谱报告](docs/phone-score-accuracy-20261021.md) 分开记录整照压力测试、完整谱行补测及独立视觉参考的局部一致率；未标注部分的真实准确率仍未知。测试规范见 [原生图片测试清单](docs/contracts/image-recognition-benchmark.schema.json)。
 
 ## 启动
 
-macOS 双击 **启动琴伴.command**，构建并打开 `http://127.0.0.1:8792`。需要 Node.js >=22.19，启动器会自动查找本机的新版本 Node。
+macOS 双击 **启动琴伴.command** 选择版本。需要 Node.js >=22.19，启动器会自动查找本机的新版本 Node。终端可用 `npm run launch` 打开同一菜单，也可用 `npm run launch -- --version local`、`npm run launch -- --version commercial` 直接开启版本，`npm run launch -- --stop` 关闭两个版本。
 
-更新源码后，如果旧服务仍在运行，请在旧启动终端按 Control+C，再双击启动器；只刷新网页不会更新 Node 服务内存中的逻辑。关闭启动终端或按 Control+C 可停止本机服务。
+更新源码后，先在统一菜单选 **3** 关闭旧服务，再选择版本重新启动；只刷新网页不会更新 Node 服务内存中的逻辑。重复选择已运行的版本只打开网页，不重复构建或另开服务。服务日志位于 `.local/launcher/local.log` 和 `.local/launcher/commercial.log`。关闭功能核对进程所属项目目录，仅发送正常退出信号；任务尚未结束时会提示稍后重试。
 
 ```sh
 npm install

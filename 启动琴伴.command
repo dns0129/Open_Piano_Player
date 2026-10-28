@@ -14,11 +14,4 @@ if [ -z "$QINBAN_NODE" ]; then
   exit 1
 fi
 export PATH="$(dirname "$QINBAN_NODE"):$PATH"
-if [ ! -d node_modules ] || ! "$QINBAN_NODE" -e 'require.resolve("@spotify/basic-pitch");require.resolve("@tensorflow/tfjs-backend-wasm")' >/dev/null 2>&1; then
-  echo "正在安装或补齐琴伴依赖…"
-  npm install --ignore-scripts --registry=https://registry.npmjs.org --cache=.local/npm-cache
-fi
-echo "正在准备琴伴钢琴练习室…"
-"$QINBAN_NODE" scripts/prepare-assets.mjs
-"$QINBAN_NODE" node_modules/vite/bin/vite.js build
-exec "$QINBAN_NODE" scripts/launch.mjs
+exec "$QINBAN_NODE" scripts/launch.mjs "$@"
