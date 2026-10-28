@@ -6,17 +6,30 @@
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
-    <meta name="theme-color" content="#f7f5ee" />
+    <meta name="theme-color" content="#f3eee1" />
     <meta
       name="description"
       content="琴伴是一个钢琴练谱工具：照片、PDF 识谱后导出 MIDI，MusicXML 直接转 MIDI，练琴时谱面跟着声音走。"
     />
     <title>琴伴 · 钢琴谱识谱、转 MIDI、跟谱播放</title>
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
-    <link rel="preload" href="assets/shots/practice-staff.webp" as="image" />
+    <link rel="preload" href="assets/img/ink-elise.webp" as="image" />
     <link rel="stylesheet" href="assets/site.css" />
   </head>
   <body>
+    <svg class="defs" aria-hidden="true">
+      <filter id="pencil">
+        <feTurbulence
+          type="fractalNoise"
+          baseFrequency="0.9"
+          numOctaves="2"
+          seed="4"
+          result="grain"
+        />
+        <feDisplacementMap in="SourceGraphic" in2="grain" scale="2.4" />
+      </filter>
+    </svg>
+
     <header class="top">
       <a class="brand" href="#">
         <img src="assets/favicon.svg" alt="" width="30" height="30" />
@@ -62,33 +75,45 @@
             识谱目前要在电脑上运行本机版。
           </p>
         </div>
-        <figure class="window">
-          <div class="window-bar" aria-hidden="true">
-            <i></i><i></i><i></i
-            ><span>dns0129.github.io/Open_Piano_Player</span>
-          </div>
+
+        <figure class="engraving" id="engraving" data-notes="engraving">
+          <img
+            src="assets/img/ink-elise.webp"
+            width="1500"
+            height="793"
+            alt="贝多芬《致爱丽丝》原谱开头两行（Mutopia 公有领域排版）"
+          />
+          <figcaption>
+            <button class="listen" id="listen" type="button">▶ 听第一行</button>
+            <span>《致爱丽丝》原谱开头。点一下，铅笔线会跟着声音走。</span>
+          </figcaption>
+        </figure>
+
+        <figure class="photo hero-shot" data-notes="hero">
           <img
             src="assets/shots/practice-staff.webp"
             width="1600"
             height="1000"
             alt="琴伴网页版练习室：《致爱丽丝》播放到第 10 小节，当前小节和对应琴键高亮"
           />
-          <figcaption>
-            网页版练习室，《致爱丽丝》播到第 10
-            小节。当前小节、正在发声的音和琴键会一起亮起。
-          </figcaption>
         </figure>
       </section>
 
+      <div class="strip strip-bach" aria-hidden="true"><i></i></div>
+
       <section class="block" id="scan">
-        <div class="block-head">
-          <h2>照片、PDF → 数字谱 → MIDI</h2>
-          <p>识谱分三步，每一步都能停下来检查。下面的截图都来自琴伴本身。</p>
-        </div>
+        <header class="movement">
+          <span class="mv-no">I</span>
+          <div>
+            <p class="mv-tempo"><i>Adagio</i><span>慢一点，一行一行对</span></p>
+            <h2>照片、PDF → 数字谱 → MIDI</h2>
+            <p>识谱分三步，每一步都能停下来检查。下面的截图都来自琴伴本身。</p>
+          </div>
+        </header>
 
         <ol class="steps">
           <li>
-            <figure>
+            <figure class="photo" data-notes="rows">
               <img
                 src="assets/shots/scan-rows.webp"
                 width="1400"
@@ -106,7 +131,7 @@
             </div>
           </li>
           <li>
-            <figure>
+            <figure class="photo" data-notes="original">
               <img
                 src="assets/shots/scan-original.webp"
                 width="1400"
@@ -123,7 +148,7 @@
             </div>
           </li>
           <li>
-            <figure class="narrow">
+            <figure class="photo narrow" data-notes="export">
               <img
                 src="assets/shots/export-dialog.webp"
                 width="900"
@@ -165,14 +190,18 @@
       </section>
 
       <section class="block" id="xml">
-        <div class="block-head">
-          <h2>MusicXML 直接转 MIDI</h2>
-          <p>
-            把 .musicxml 或 .xml
-            文件拖到下面的框里。转换在你的浏览器里完成，文件不会上传。钢琴谱的上下两行分成两条轨，速度和拍号一起写进
-            MIDI。
-          </p>
-        </div>
+        <header class="movement">
+          <span class="mv-no">II</span>
+          <div>
+            <p class="mv-tempo"><i>Presto</i><span>拖进来，马上转好</span></p>
+            <h2>MusicXML 直接转 MIDI</h2>
+            <p>
+              把 .musicxml 或 .xml
+              文件拖到下面的框里。转换在你的浏览器里完成，文件不会上传。钢琴谱的上下两行分成两条轨，速度和拍号一起写进
+              MIDI。
+            </p>
+          </div>
+        </header>
 
         <div class="converter" id="converter">
           <div class="conv-grid">
@@ -225,16 +254,22 @@
         </p>
       </section>
 
-      <section class="block" id="follow">
-        <div class="block-head">
-          <h2>跟着谱面播放</h2>
-          <p>
-            播到哪个音，哪个音就亮；一行播完，自动翻到下一行。点谱上任意一个音，从那里开始。速度在
-            20 到 300 BPM 之间调，播放中改速度不会跳回开头。
-          </p>
-        </div>
+      <div class="strip strip-chopin" aria-hidden="true"><i></i></div>
 
-        <div class="live">
+      <section class="block" id="follow">
+        <header class="movement">
+          <span class="mv-no">III</span>
+          <div>
+            <p class="mv-tempo"><i>A tempo</i><span>跟着速度走</span></p>
+            <h2>跟着谱面播放</h2>
+            <p>
+              播到哪个音，哪个音就亮；一行播完，自动翻到下一行。点谱上任意一个音，从那里开始。速度在
+              20 到 300 BPM 之间调，播放中改速度不会跳回开头。
+            </p>
+          </div>
+        </header>
+
+        <div class="live" data-notes="live">
           <div class="live-bar">
             <button class="btn btn-solid btn-sm" id="follow-play" type="button">
               播放
@@ -259,7 +294,7 @@
         </div>
 
         <div class="pair">
-          <figure>
+          <figure class="photo" data-notes="jianpu">
             <img
               src="assets/shots/practice-jianpu.webp"
               width="1400"
@@ -271,7 +306,7 @@
               简谱视图。左右手各一行，和五线谱用的是同一份音符，切换不打断播放。
             </figcaption>
           </figure>
-          <figure class="phone">
+          <figure class="phone" data-notes="phone">
             <img
               src="assets/shots/practice-phone.webp"
               width="540"
@@ -285,6 +320,7 @@
       </section>
 
       <section class="outro">
+        <p class="fine-mark" aria-hidden="true"><i>Fine</i></p>
         <h2>试试网页版</h2>
         <p>
           不用安装。打开后在「我的曲库 →
@@ -303,9 +339,9 @@
 
     <footer class="foot">
       <p>
-        截图来自琴伴网页版和本机版。曲目：《致爱丽丝》、巴赫 BWV 846、肖邦 Op.28
-        No.7 的 Mutopia 排版为公有领域；《野蜂飞舞》为 Kevin W. K. Yeung
-        钢琴编配，CC BY-SA 3.0（IMSLP）。
+        截图来自琴伴网页版和本机版。谱例：《致爱丽丝》、巴赫《二部创意曲》第 8
+        首、肖邦 Op.28 No.7、BWV 846 的 Mutopia 排版为公有领域；《野蜂飞舞》为
+        Kevin W. K. Yeung 钢琴编配，CC BY-SA 3.0（IMSLP）。
       </p>
       <p>
         钢琴音色 Salamander Grand Piano（Alexander Holm，CC BY 3.0）；五线谱用
@@ -314,6 +350,7 @@
     </footer>
 
     <script src="assets/vendor/vexflow-core.js"></script>
+    <script src="assets/scores.js"></script>
     <script src="assets/site.js"></script>
   </body>
 </html>

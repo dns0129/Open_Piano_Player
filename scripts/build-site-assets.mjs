@@ -1,7 +1,7 @@
-// Builds the promo site's assets (site/assets/) from files already in this repo: the MusicXML samples
-// for the in-page converter, a page thumbnail for one of them, VexFlow + Bravura for the live score,
-// and the Salamander piano samples. The app screenshots in site/assets/shots/ come from
-// scripts/capture-site-shots.mjs instead.
+// Builds the promo site's assets (site/assets/) from files already in this repo: engraved score fragments
+// cut from the library's Mutopia PDFs (green ink on transparent paper), the notes behind the hero fragment,
+// the MusicXML samples for the in-page converter, VexFlow + Bravura for the live score and the Salamander
+// piano samples. The app screenshots in site/assets/shots/ come from scripts/capture-site-shots.mjs.
 // Run: npm run site:assets
 import {
   copyFileSync,
@@ -18,7 +18,6 @@ const root = fileURLToPath(new URL("../", import.meta.url));
 const out = `${root}site/assets/`;
 for (const old of [
   "cases.js",
-  "scores.js",
   "img/elise-page.webp",
   "img/elise-ink.webp",
   "img/chopin-page.webp",
@@ -30,6 +29,154 @@ for (const old of [
 mkdirSync(`${out}img`, { recursive: true });
 mkdirSync(`${out}samples`, { recursive: true });
 mkdirSync(`${out}vendor`, { recursive: true });
+
+/* ---------- Engraved fragments ---------- */
+const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+async function renderPage(file, pageNo, width) {
+  const pdf = await pdfjs.getDocument({
+    data: new Uint8Array(readFileSync(root + file)),
+    isEvalSupported: false,
+    standardFontDataUrl: `${root}node_modules/pdfjs-dist/standard_fonts/`,
+  }).promise;
+  const page = await pdf.getPage(pageNo);
+  const viewport = page.getViewport({
+    scale: width / page.getViewport({ scale: 1 }).width,
+  });
+  const canvas = createCanvas(
+    Math.round(viewport.width),
+    Math.round(viewport.height),
+  );
+  const g = canvas.getContext("2d");
+  g.fillStyle = "#fff";
+  g.fillRect(0, 0, canvas.width, canvas.height);
+  await page.render({ canvasContext: g, viewport }).promise;
+  return canvas;
+}
+// Piano systems from staff-line rows, as [top, bottom] fractions of the page with room for ledger lines.
+// Lines closer than ~2.5 staff spaces belong to one staff (a note may hide a line); staves pair up
+// into grand-staff systems.
+function findSystems(page) {
+  const { data, width, height } = page
+    .getContext("2d")
+    .getImageData(0, 0, page.width, page.height);
+  const lines = [];
+  for (let y = 0; y < height; y++) {
+    let dark = 0;
+    for (let x = 0; x < width; x++) if (data[(y * width + x) * 4] < 140) dark++;
+    if (dark < width * 0.4) continue;
+    if (lines.length && y - lines[lines.length - 1].end <= 2)
+      lines[lines.length - 1].end = y;
+    else lines.push({ start: y, end: y });
+  }
+  const gaps = lines.slice(1).map((l, i) => l.start - lines[i].end);
+  const small = gaps.filter((g) => g < height / 50).sort((a, b) => a - b);
+  const space = small[Math.floor(small.length / 2)];
+  const staves = [[lines[0].start, lines[0].end]];
+  lines.slice(1).forEach((l, i) => {
+    if (gaps[i] > 2.5 * space) staves.push([l.start, l.end]);
+    else staves[staves.length - 1][1] = l.end;
+  });
+  const systems = [];
+  for (let i = 0; i + 1 < staves.length; i += 2)
+    systems.push([staves[i][0], staves[i + 1][1]]);
+  return systems.map(([top, bottom]) => [
+    (top - 4.5 * space) / height,
+    (bottom + 4.5 * space) / height,
+  ]);
+}
+// Cut [top, bottom] (page fractions) and keep only the ink, coloured like printed green ink.
+function inkCut(page, name, [top, bottom], width, [r, g, b] = [36, 66, 52]) {
+  const sy = Math.max(0, Math.round(top * page.height));
+  const sh = Math.min(page.height, Math.round(bottom * page.height)) - sy;
+  const canvas = createCanvas(width, Math.round((sh * width) / page.width));
+  const ctx = canvas.getContext("2d");
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(page, 0, sy, page.width, sh, 0, 0, canvas.width, canvas.height);
+  const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  for (let i = 0; i < img.data.length; i += 4) {
+    const lum =
+      0.299 * img.data[i] + 0.587 * img.data[i + 1] + 0.114 * img.data[i + 2];
+    img.data[i] = r;
+    img.data[i + 1] = g;
+    img.data[i + 2] = b;
+    img.data[i + 3] = 255 - lum;
+  }
+  ctx.putImageData(img, 0, 0);
+  writeFileSync(`${out}img/${name}.webp`, canvas.toBuffer("image/webp", 86));
+  return { top: sy / page.height, bottom: (sy + sh) / page.height };
+}
+
+// Hero: 《致爱丽丝》 title and first two systems. The first system holds the pickup and bars 1–5.
+const elise = await renderPage(
+  "public/intermediate-sources/intermediate-beethoven-woo59/original.pdf",
+  1,
+  2800,
+);
+const eliseSystems = findSystems(elise);
+const eliseCut = inkCut(
+  elise,
+  "ink-elise",
+  [0.02, eliseSystems[1][1] + 0.015],
+  1500,
+);
+// Section dividers: one system each from Bach's Invention No.8 and Chopin's Prelude Op.28 No.7.
+const bach = await renderPage(
+  "public/intermediate-sources/intermediate-bach-bwv779/original.pdf",
+  1,
+  3000,
+);
+inkCut(bach, "ink-bach", findSystems(bach)[1], 2400);
+const chopin = await renderPage(
+  "public/intermediate-sources/intermediate-chopin-op28-07/original.pdf",
+  1,
+  3000,
+);
+inkCut(chopin, "ink-chopin", findSystems(chopin)[1], 2400);
+
+// Notes of the pickup + bars 1–5 of the hero fragment, and where that system sits inside the cut.
+// at: [beat, x] anchors for the pencil playhead, measured on the 1500 px cut — the pickup's first note,
+// then the first note of each bar (about 16 px after the barlines at 355, 566, 775, 1000, 1216 px)
+// and the closing barline at 1427 px.
+const eliseScore = JSON.parse(
+  readFileSync(
+    `${root}score-repo/scores/intermediate-beethoven-woo59.json`,
+    "utf8",
+  ),
+);
+const span = eliseCut.bottom - eliseCut.top;
+const hero = {
+  bpm: 72,
+  beats: 8,
+  system: {
+    top: Math.round(((eliseSystems[0][0] - eliseCut.top) / span) * 1000) / 1000,
+    bottom:
+      Math.round(((eliseSystems[0][1] - eliseCut.top) / span) * 1000) / 1000,
+    at: [
+      [0, 288],
+      [0.5, 372],
+      [2, 582],
+      [3.5, 791],
+      [5, 1016],
+      [6.5, 1232],
+      [8, 1427],
+    ].map(([beat, px]) => [beat, Math.round((px / 1500) * 1000) / 1000]),
+  },
+  notes: (eliseScore.score || eliseScore).notes
+    .filter((n) => n.beat < 8)
+    .map((n) => [
+      n.beat,
+      n.duration,
+      n.midi,
+      n.hand === "left" ? 1 : 0,
+      Math.round((n.velocity ?? 0.6) * 100) / 100,
+    ]),
+};
+writeFileSync(
+  `${out}scores.js`,
+  `// Generated by scripts/build-site-assets.mjs from score-repo/. Do not edit by hand.\n` +
+    `// The opening of 《致爱丽丝》 shown in the hero; notes: [beat, duration, MIDI, hand (0 right, 1 left), velocity]\n` +
+    `window.QINBAN_HERO = ${JSON.stringify(hero)};\n`,
+);
 
 /* ---------- MusicXML samples ---------- */
 // The App's own MusicXML export of the 7-page Bumblebee transcription, unchanged…
