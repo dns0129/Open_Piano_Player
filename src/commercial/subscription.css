@@ -1,0 +1,97 @@
+.subscription-intro {
+  max-width: 760px;
+}
+.subscription-plans {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin: 26px 0;
+}
+.subscription-plan {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+}
+.subscription-plan.recommended {
+  border: 2px solid var(--accent, #24543f);
+}
+.subscription-price {
+  font-size: 38px;
+  line-height: 1.25;
+  font-weight: 700;
+  margin: 0;
+}
+.subscription-price small {
+  font-size: 14px;
+  font-weight: 400;
+}
+.subscription-plan button,
+.subscription-plan a {
+  margin-top: auto;
+  text-align: center;
+}
+.subscription-balance {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 24px 0;
+}
+.subscription-balance strong {
+  display: block;
+  font-size: 30px;
+}
+.subscription-checkout {
+  scroll-margin-top: 20px;
+}
+.subscription-providers {
+  border: 0;
+  padding: 0;
+  margin: 16px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.subscription-providers label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.subscription-providers input {
+  width: auto;
+}
+.subscription-qr {
+  display: block;
+  width: 240px;
+  max-width: 100%;
+  height: auto;
+  background: white;
+  padding: 10px;
+  margin: 16px auto;
+}
+.subscription-payment {
+  text-align: center;
+}
+.subscription-payment code {
+  display: block;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+}
+.subscription-rules {
+  line-height: 1.8;
+}
+@media (max-width: 760px) {
+  .subscription-plans,
+  .subscription-balance {
+    grid-template-columns: 1fr;
+  }
+  .subscription-price {
+    font-size: 32px;
+  }
+  .subscription-balance {
+    grid-template-columns: 1fr 1fr;
+  }
+  .subscription-balance > :last-child {
+    grid-column: 1 / -1;
+  }
+}

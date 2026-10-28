@@ -24,6 +24,8 @@ const state = {
   title: "",
   tempo: 88,
   confirmed: false,
+  pointConfirmed: false,
+  retryConfirmed: false,
   createKey: crypto.randomUUID(),
   jobs: [],
   job: null,
@@ -47,6 +49,8 @@ const page = createPage(() => {
       quota: null,
       title: "",
       confirmed: false,
+      pointConfirmed: false,
+      retryConfirmed: false,
       comparison: new Map(),
     });
     clearTimeout(poll);
@@ -120,6 +124,12 @@ function schedule() {
 function changed() {
   state.createKey = crypto.randomUUID();
 }
+const pointsMode = () => state.quota?.unit === "point";
+const pointsFor = (count) => count * (state.quota?.pointsPerRegion || 5);
+const pointQuote = (count) => ({
+  version: state.info?.billingVersion,
+  points: pointsFor(count),
+});
 function inputPanel() {
   return `<section class="commerce-card"><span class="commerce-step"><b>1</b>选择原谱</span><h2>拍照上传，或使用已保存的资料。</h2><p>每组最多 6 张 JPEG / PNG / WebP，单张不超过 20 MiB；PDF 最多 6 页、50 MiB。原文件会私有保存，上传不会开始识谱。</p><div class="commerce-actions"><label class="commerce-button" for="camera-file">拍摄一页<input id="camera-file" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" hidden ${state.busy ? "disabled" : ""}></label><label class="commerce-button" for="source-file">从相册或文件选择<input id="source-file" type="file" accept="image/jpeg,image/png,image/webp,application/pdf,.pdf" multiple hidden ${state.busy ? "disabled" : ""}></label></div><p class="commerce-muted">iPhone 如选择到 HEIC，请改用相机拍摄或 JPEG 版本。拍摄时尽量平整、光线均匀，保留完整左右手谱表。</p>${state.files.length ? `<h3>核对页序</h3><div class="commerce-files">${state.files.map((x, i) => `<article class="commerce-file">${x.url ? `<img src="${x.url}" alt="第 ${i + 1} 页预览">` : ""}<strong>第 ${i + 1} 页</strong><p>${esc(x.file.name)} · ${(x.file.size / 1048576).toFixed(1)} MiB</p><div class="commerce-actions"><button data-move="${i}" data-direction="-1" ${i === 0 ? "disabled" : ""} aria-label="第 ${i + 1} 页上移">↑</button><button data-move="${i}" data-direction="1" ${i === state.files.length - 1 ? "disabled" : ""} aria-label="第 ${i + 1} 页下移">↓</button><button data-remove="${i}" aria-label="移除第 ${i + 1} 页">移除</button></div></article>`).join("")}</div><button class="primary" data-upload ${state.busy ? "disabled" : ""}>按此页序保存原谱</button>` : ""}${
     state.groups.length
@@ -137,7 +147,7 @@ function selectionPanel() {
   if (!state.sourceId) return "";
   if (!state.pages.length)
     return '<section class="commerce-card"><p>原谱暂未读出，请重新读取。</p><button data-reload-source>重新读取原谱</button></section>';
-  return `<section class="commerce-card"><span class="commerce-step"><b>2</b>确认完整谱行</span><h2>每次框住一整条左右手谱表。</h2><p>用下方滑块调整选区上、下边缘，检查音符和升降号没有被截断，再加入识别清单。相邻谱行可保留少量上下文。</p><div class="commerce-page-tabs" aria-label="原谱页码">${state.pages.map((p) => `<button data-page="${p.ordinal}" class="${state.page === p.ordinal ? "primary" : ""}" aria-pressed="${state.page === p.ordinal}">第 ${p.ordinal} 页</button>`).join("")}</div>${state.pageUrl ? `<div class="commerce-source-canvas"><div class="commerce-source-sheet"><img src="${state.pageUrl}" alt="第 ${state.page} 页原谱"><div class="commerce-selection" style="top:${state.top}%;height:${state.bottom - state.top}%"></div></div></div><div class="commerce-range-pair"><label for="crop-top">上边缘 <output id="top-value">${state.top.toFixed(1)}%</output><input id="crop-top" type="range" min="0" max="98" step=".1" value="${state.top}"></label><label for="crop-bottom">下边缘 <output id="bottom-value">${state.bottom.toFixed(1)}%</output><input id="crop-bottom" type="range" min="2" max="100" step=".1" value="${state.bottom}"></label></div><button data-add-region>加入这条完整谱行</button>` : '<p role="status">原图未就绪，请重新读取。</p><button data-reload-source>重新读取原谱</button>'}<ol class="commerce-region-list">${state.regions.map((r, i) => `<li><span>第 ${r.page} 页 · 选区 ${i + 1} <small class="commerce-muted">${(r.rect.y * 100).toFixed(1)}%–${((r.rect.y + r.rect.height) * 100).toFixed(1)}%</small></span><button data-remove-region="${i}">移除选区</button></li>`).join("")}</ol><p class="commerce-muted">已选择 ${state.regions.length}/30 条谱行。任务只识别这些选区，不补齐未上传或未选择的内容。</p><form data-create><label for="recognition-title">曲名<input id="recognition-title" name="title" value="${esc(state.title)}" maxlength="100" required placeholder="给这份原谱起一个名字"></label><label for="fallback-tempo">原谱速度未知时使用的练习速度（BPM）<input id="fallback-tempo" type="number" min="20" max="240" value="${state.tempo}" required></label><label><input id="scope-confirmed" type="checkbox" ${state.confirmed ? "checked" : ""} required>我已检查每个选区，包含需要识别的完整左右手谱行。</label><p class="commerce-muted">所选裁图将交由云端识谱服务处理。开始后占用 1 个任务名额，不按页或谱行扣次；主动重试未完成行会建立新任务。</p><button class="primary" type="submit" ${state.busy || !state.regions.length || !state.info?.recognitionAvailable || !state.quota?.remaining ? "disabled" : ""}>开始托管识谱 · 1 个任务</button></form></section>`;
+  return `<section class="commerce-card"><span class="commerce-step"><b>2</b>确认完整谱行</span><h2>每次框住一整条左右手谱表。</h2><p>用下方滑块调整选区上、下边缘，检查音符和升降号没有被截断，再加入识别清单。相邻谱行可保留少量上下文。</p><div class="commerce-page-tabs" aria-label="原谱页码">${state.pages.map((p) => `<button data-page="${p.ordinal}" class="${state.page === p.ordinal ? "primary" : ""}" aria-pressed="${state.page === p.ordinal}">第 ${p.ordinal} 页</button>`).join("")}</div>${state.pageUrl ? `<div class="commerce-source-canvas"><div class="commerce-source-sheet"><img src="${state.pageUrl}" alt="第 ${state.page} 页原谱"><div class="commerce-selection" style="top:${state.top}%;height:${state.bottom - state.top}%"></div></div></div><div class="commerce-range-pair"><label for="crop-top">上边缘 <output id="top-value">${state.top.toFixed(1)}%</output><input id="crop-top" type="range" min="0" max="98" step=".1" value="${state.top}"></label><label for="crop-bottom">下边缘 <output id="bottom-value">${state.bottom.toFixed(1)}%</output><input id="crop-bottom" type="range" min="2" max="100" step=".1" value="${state.bottom}"></label></div><button data-add-region>加入这条完整谱行</button>` : '<p role="status">原图未就绪，请重新读取。</p><button data-reload-source>重新读取原谱</button>'}<ol class="commerce-region-list">${state.regions.map((r, i) => `<li><span>第 ${r.page} 页 · 选区 ${i + 1} <small class="commerce-muted">${(r.rect.y * 100).toFixed(1)}%–${((r.rect.y + r.rect.height) * 100).toFixed(1)}%</small></span><button data-remove-region="${i}">移除选区</button></li>`).join("")}</ol><p class="commerce-muted">已选择 ${state.regions.length}/30 条谱行。任务只识别这些选区，不补齐未上传或未选择的内容。</p><form data-create><label for="recognition-title">曲名<input id="recognition-title" name="title" value="${esc(state.title)}" maxlength="100" required placeholder="给这份原谱起一个名字"></label><label for="fallback-tempo">原谱速度未知时使用的练习速度（BPM）<input id="fallback-tempo" type="number" min="20" max="240" value="${state.tempo}" required></label><label><input id="scope-confirmed" type="checkbox" ${state.confirmed ? "checked" : ""} required>我已检查每个选区，包含需要识别的完整左右手谱行。</label><p class="commerce-muted">所选裁图将交由云端识谱服务处理。${pointsMode() ? `本次 ${state.regions.length} 行，共冻结 ${pointsFor(state.regions.length)} 积分；成功行结算，失败行退回，系统内部补救不额外扣分。` : "开始后占用 1 个任务名额；主动重试未完成行会建立新任务。"}</p>${pointsMode() ? `<label><input id="point-confirmed" type="checkbox" ${state.pointConfirmed ? "checked" : ""} required>确认消耗最多 ${pointsFor(state.regions.length)} 积分</label>${state.quota.remaining < pointsFor(state.regions.length) ? '<p class="commerce-notice">积分不足。<a href="/subscription.html">选择订阅或补充积分</a></p>' : ""}` : ""}<button class="primary" type="submit" ${state.busy || !state.regions.length || !state.info?.recognitionAvailable || !state.quota?.remaining || (pointsMode() && (!state.pointConfirmed || state.quota.remaining < pointsFor(state.regions.length))) ? "disabled" : ""}>开始托管识谱 · ${pointsMode() ? pointsFor(state.regions.length) + " 积分" : "1 个任务"}</button></form></section>`;
 }
 function taskPanel() {
   const j = state.job;
@@ -154,7 +164,7 @@ function taskPanel() {
     )
     .join(
       "",
-    )}${j.issues.map((i) => `<p class="commerce-inline-error">${esc(i.message)}</p>`).join("")}<p class="commerce-muted">结构通过与试听顺畅均不能证明逐音准确。保存后请使用原图参考与编辑器核对，再用于正式练习。</p><div class="commerce-actions">${active(j) ? '<button class="danger" data-cancel-job>停止后续识别</button>' : ""}${!active(j) && j.progress.complete < j.progress.total ? `<button data-retry-job ${state.quota?.remaining && state.info?.recognitionAvailable ? "" : "disabled"}>仅重试未完成行 · 新任务</button>` : ""}${j.savedEntryId ? `<a class="commerce-button primary" href="/practice.html?entry=${j.savedEntryId}">打开草稿并练习</a>` : `<button class="primary" data-save-job ${j.canSave ? "" : "disabled"}>保存为可练习草稿</button>`}<a class="commerce-button" href="/?feedbackJob=${j.jobId}#support">反馈此任务问题</a></div></section>`;
+    )}${j.issues.map((i) => `<p class="commerce-inline-error">${esc(i.message)}</p>`).join("")}<p class="commerce-muted">结构通过与试听顺畅均不能证明逐音准确。保存后请使用原图参考与编辑器核对，再用于正式练习。</p>${j.billing ? `<p class="commerce-notice">${j.billing.state === "held" ? `已冻结 ${j.billing.reserved} 积分` : `已消耗 ${j.billing.charged} 积分，释放 ${j.billing.reserved - j.billing.charged} 积分${j.billing.refunded ? `，另获补偿 ${j.billing.refunded} 积分` : ""}`}</p>` : ""}${pointsMode() && !active(j) && j.progress.complete < j.progress.total ? `<label><input id="retry-point-confirmed" type="checkbox" ${state.retryConfirmed ? "checked" : ""}>确认仅重试未完成的 ${j.progress.total - j.progress.complete} 行，最多 ${pointsFor(j.progress.total - j.progress.complete)} 积分</label>` : ""}<div class="commerce-actions">${active(j) ? '<button class="danger" data-cancel-job>停止后续识别</button>' : ""}${!active(j) && j.progress.complete < j.progress.total ? `<button data-retry-job ${state.quota?.remaining && state.info?.recognitionAvailable && (!pointsMode() || (state.retryConfirmed && state.quota.remaining >= pointsFor(j.progress.total - j.progress.complete))) ? "" : "disabled"}>仅重试未完成行 · ${pointsMode() ? pointsFor(j.progress.total - j.progress.complete) + " 积分" : "新任务"}</button>` : ""}${j.savedEntryId ? `<a class="commerce-button primary" href="/practice.html?entry=${j.savedEntryId}">打开草稿并练习</a>` : `<button class="primary" data-save-job ${j.canSave ? "" : "disabled"}>保存为可练习草稿</button>`}<a class="commerce-button" href="/?feedbackJob=${j.jobId}#support">反馈此任务问题</a></div></section>`;
 }
 function history() {
   if (!state.jobs.length) return "";
@@ -167,7 +177,7 @@ function render() {
     ...state,
     body: !client.session
       ? loginPrompt(client.sessionExpired)
-      : `<section class="commerce-summary"><div><div class="commerce-eyebrow">UPLOAD & RECOGNIZE</div><h1>从自己的原谱开始。</h1><p>原图保留，任务可追踪，完成后先核对再练习。</p></div>${state.quota ? `<aside class="commerce-quota"><strong>${state.quota.remaining}</strong> 个本月可用任务<small>已用 ${state.quota.used} / ${state.quota.limit}</small></aside>` : ""}</section>${!state.info?.recognitionAvailable ? '<p class="commerce-notice">当前识谱服务暂不可用。仍可上传保存原谱；服务恢复后再开始任务。</p>' : ""}${inputPanel()}${selectionPanel()}${taskPanel()}${history()}`,
+      : `<section class="commerce-summary"><div><div class="commerce-eyebrow">UPLOAD & RECOGNIZE</div><h1>从自己的原谱开始。</h1><p>原图保留，任务可追踪，完成后先核对再练习。</p></div>${state.quota ? `<aside class="commerce-quota"><strong>${state.quota.remaining}</strong> ${pointsMode() ? `可用积分<small>冻结 ${state.quota.held} · 每行 ${state.quota.pointsPerRegion} 积分</small><a href="/subscription.html">订阅 / 补充积分</a>` : `个本月可用任务<small>已用 ${state.quota.used} / ${state.quota.limit}</small>`}</aside>` : ""}</section>${!state.info?.recognitionAvailable ? '<p class="commerce-notice">当前识谱服务暂不可用。仍可上传保存原谱；服务恢复后再开始任务。</p>' : ""}${inputPanel()}${selectionPanel()}${taskPanel()}${history()}`,
   });
   bind();
 }
@@ -222,6 +232,7 @@ async function selectSource(gid) {
   state.regions = [];
   state.pageUrl = "";
   state.confirmed = false;
+  state.pointConfirmed = false;
   changed();
   if (!gid) return;
   state.pages = (await client.json("/source-groups/" + gid + "/pages")).pages;
@@ -235,6 +246,7 @@ async function selectSource(gid) {
 async function openJob(jid) {
   state.comparison.clear();
   state.job = await client.json("/recognition/jobs/" + jid);
+  state.retryConfirmed = false;
   historyReplace(jid);
   state.jobs = (await client.json("/recognition/jobs")).jobs;
   state.quota = await client.json("/recognition/quota");
@@ -377,6 +389,7 @@ function bind() {
       render();
       return;
     }
+    state.pointConfirmed = false;
     state.regions.push({ page: state.page, rect });
     state.regions.sort((a, b) => a.page - b.page || a.rect.y - b.rect.y);
     changed();
@@ -386,6 +399,7 @@ function bind() {
   $$("[data-remove-region]").forEach(
     (b) =>
       (b.onclick = () => {
+        state.pointConfirmed = false;
         state.regions.splice(Number(b.dataset.removeRegion), 1);
         changed();
         render();
@@ -403,13 +417,23 @@ function bind() {
     state.confirmed = e.target.checked;
     changed();
   });
+  $("#point-confirmed")?.addEventListener("change", (e) => {
+    state.pointConfirmed = e.target.checked;
+    render();
+  });
+  $("#retry-point-confirmed")?.addEventListener("change", (e) => {
+    state.retryConfirmed = e.target.checked;
+    render();
+  });
   $("[data-create]")?.addEventListener("submit", (e) => {
     e.preventDefault();
+    if (pointsMode() && !state.pointConfirmed) return;
     const input = {
       sourceGroupId: state.sourceId,
       title: state.title,
       fallbackTempo: state.tempo,
       scopeConfirmed: state.confirmed,
+      ...(pointsMode() ? { pointQuote: pointQuote(state.regions.length) } : {}),
       regions: state.regions,
     };
     run(async () => {
@@ -441,7 +465,16 @@ function bind() {
     run(async () => {
       const r = await client.json(
         "/recognition/jobs/" + state.job.jobId + "/retry",
-        { method: "POST", body: {} },
+        {
+          method: "POST",
+          body: pointsMode()
+            ? {
+                pointQuote: pointQuote(
+                  state.job.progress.total - state.job.progress.complete,
+                ),
+              }
+            : {},
+        },
       );
       await openJob(r.jobId);
       state.info = await client.json("/product");

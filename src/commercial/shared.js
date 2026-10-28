@@ -42,6 +42,7 @@ export const stateLabels = {
 };
 export const errorLabels = {
   TASK_LIMIT: "本月任务名额已用完。",
+  POINTS_INSUFFICIENT: "识谱积分不足，请前往订阅与积分选择套餐或补充包。",
   TASK_ACTIVE: "已有任务正在处理。",
   GLOBAL_BUDGET: "服务预算已达到上限，已保留成功结果。",
   USAGE_UNKNOWN: "调用结果未确认，已停止后续调用，等待运营核对。",
@@ -51,7 +52,7 @@ export const errorLabels = {
 };
 export const money = (value) => "$" + (Number(value) / 1000000).toFixed(6);
 export function navigation(active, session) {
-  return `<header class="commerce-header"><a class="commerce-brand" href="/"><img src="/favicon.svg" alt="" width="30" height="30"><span>琴伴<small>自己的谱，自己的练习</small></span></a><nav aria-label="商业版导航"><a href="/" ${active === "library" ? 'aria-current="page"' : ""}>我的曲库</a><a href="/recognition.html" ${active === "recognition" ? 'aria-current="page"' : ""}>上传识谱</a><a href="/#support">帮助与反馈</a><a href="${session ? "/account.html" : currentSignInHref()}">${session ? "账号与资料" : "登录"}</a>${session?.user.role === "operator" ? `<a href="/operations.html" ${active === "operations" ? 'aria-current="page"' : ""}>运营</a>` : ""}</nav></header>`;
+  return `<header class="commerce-header"><a class="commerce-brand" href="/"><img src="/favicon.svg" alt="" width="30" height="30"><span>琴伴<small>自己的谱，自己的练习</small></span></a><nav aria-label="商业版导航"><a href="/" ${active === "library" ? 'aria-current="page"' : ""}>我的曲库</a><a href="/recognition.html" ${active === "recognition" ? 'aria-current="page"' : ""}>上传识谱</a><a href="/subscription.html" ${active === "subscription" ? 'aria-current="page"' : ""}>订阅与积分</a><a href="/#support">帮助与反馈</a><a href="${session ? "/account.html" : currentSignInHref()}">${session ? "账号与资料" : "登录"}</a>${session?.user.role === "operator" ? `<a href="/operations.html" ${active === "operations" ? 'aria-current="page"' : ""}>运营</a>` : ""}</nav></header>`;
 }
 export function layout({
   active,
