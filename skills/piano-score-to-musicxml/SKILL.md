@@ -2,7 +2,7 @@
 name: piano-score-to-musicxml
 description: "将多页钢琴五线谱 PDF 或图片转录为可编辑数字谱，校对音高、升降号、节奏和演奏记号，重新排版并导出 MusicXML、MIDI。用于识谱、原谱与新谱核对、琴伴曲库导入；不用于凭歌曲名创作或音频转谱。"
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
   source: "dns0129/Open_Piano_Player"
 ---
 
@@ -36,6 +36,8 @@ python "$SKILL_DIR/scripts/prepare_score.py" input.pdf --out work/pages
 - 同一次行级读取中，在确定音高后填充时值、休止、多声部、三连音/连音、附点、延音目标和 BPM 音符单位，再检查力度、重音、断奏/保持音、波音/颤音、琶音、倚音、连奏弧与延长记号。这是字段推导顺序，不要求每个阶段单独调用模型。
 - 不先把五线谱扁平化为简谱来推导节奏。完整的音高/书写音名/时间轴数据才是共同源，简谱与五线谱都从该源生成。
 
+原谱速度未印、不可辨或未知时分别记录状态，不能用练习默认速度冒充原谱数字；允许先保存音符与草稿。
+
 按 [数据契约](references/data-contract.md) 写入 `transcription.json`。若要通过项目现有 Pi/API 工作流识别或导入曲库，再读 [琴伴接入](references/app-integration.md)。旧的四元组响应不包含全部演奏记号，不能把该结果直接当作全功能识谱完成。
 
 ## 3. 原图复核和增量重读
@@ -59,6 +61,8 @@ node "$SKILL_DIR/scripts/score_pipeline.mjs" \
 - `engraved-*.svg`、`index.html`：根据音符重新排版的五线谱，不嵌入原图。
 - `score.mid`、`score.qinban.json`：播放/练习数据。
 - `report.json`：页数、覆盖、小节/音符数量、未解决项、播放差异及实际 usage 的字段统计。
+
+复核标记必须为真正的布尔值。按原图完成每个小节的核对后，记录与当前内容哈希绑定的逐小节复核证据；修改音符、来源或相关延音后，失效的小节需重新核对，具体字段见数据契约。工具只能检查复核记录是否一致，不能证明复核动作真实发生。
 
 有未完成校对或暂不支持的符号时，默认拒绝“完成”导出；仅预览可加 `--draft`，交付时明确草稿。工具能校验结构与算术，不能证明看图读音正确。工具不支持的原谱符号保存在 `notation.unhandled`；适配标准 MusicXML 或交由合适编辑器完成后才能清除该阻塞项。
 

@@ -26,6 +26,24 @@ async function fixture(t,p=provider()){
  return {...r,A,B,O,G,H,p,policy,upload,input};
 }
 async function until(fn){const end=Date.now()+10000;while(Date.now()<end){const r=await fn();if(r)return r;await new Promise(r=>setTimeout(r,15))}throw Error('Timed out waiting for deterministic fixture job')}
+test('hosted P0 repair is budgeted once and keeps original tempo and failed submission evidence',async t=>{
+ let count=0;const p=provider(async request=>{const wire=raw();if(++count===1)wire.notes[0][2]=3;else assert.ok(request.repair.issues.some(i=>i.code==='RHYTHM_GAP'));
+  return {status:'completed',text:JSON.stringify(wire),usage:{input:10,output:20,totalTokens:30},model:'fixture-vision'};});
+ const f=await fixture(t,p),owner=f.A.session.userId,j=await f.recognition.create(owner,f.input(f.G),key());await f.recognition.start();
+ await until(async()=>{const x=await f.recognition.get(owner,j.jobId);assert.notEqual(x.state,'failed',JSON.stringify(x.regions));return x.state==='needs_review'&&x;});
+ assert.equal(count,2);const row=await f.db.private(owner,async tx=>(await tx.query('SELECT result FROM qinban_private.recognition_regions WHERE owner_id=$1 AND job_id=$2',[owner,j.jobId])).rows[0]);
+ assert.equal(row.result.submissionAudit.length,2);assert.equal(JSON.parse(row.result.submissionAudit[0].rawText).notes[0][2],3);
+ assert.equal(row.result.score.tempoEvidence.rawBpm,0);assert.equal(row.result.score.tempoEvidence.sourceBpm,null);
+ assert.equal((await f.operations.overview(f.O.session)).budget.dayCommitted,60);
+});
+test('hosted invalid JSON stops after one repair and retains failed evidence without breaking task reads',async t=>{
+ const p=provider(async()=>({status:'completed',text:'invalid json',usage:{input:10,output:20,totalTokens:30},model:'fixture-vision'}));
+ const f=await fixture(t,p),owner=f.A.session.userId,j=await f.recognition.create(owner,f.input(f.G),key());await f.recognition.start();
+ const done=await until(async()=>{const x=await f.recognition.get(owner,j.jobId);return x.state==='failed'&&x;});
+ assert.equal(p.calls.length,2,JSON.stringify(done.regions));assert.equal(done.canSave,false);assert.equal(done.regions[0].notes,0);
+ const row=await f.db.private(owner,async tx=>(await tx.query('SELECT result FROM qinban_private.recognition_regions WHERE owner_id=$1 AND job_id=$2',[owner,j.jobId])).rows[0]);
+ assert.equal(row.result.submissionAudit.length,2);assert.equal(row.result.submissionAudit[0].rawText,'invalid json');
+});
 test('hosted task lifecycle retains originals, quota and a playable private draft',async t=>{
  const f=await fixture(t),owner=f.A.session.userId,job=await f.recognition.create(owner,f.input(f.G),key());
  assert.equal((await f.recognition.budget.quota(owner)).used,1);await assert.rejects(f.recognition.get(f.B.session.userId,job.jobId),e=>e.status===404);await assert.rejects(f.recognition.create(owner,f.input(f.H),key()),e=>e.status===404);

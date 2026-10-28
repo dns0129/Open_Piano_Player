@@ -9,10 +9,36 @@ import { XMLParser } from 'fast-xml-parser';
 import MidiFilePackage from 'midi-file';
 import { build, validateTranscription, musicXML, midi, usageSummary } from './score_pipeline.mjs';
 import { performanceNotes } from './core/note-effects.mjs';
+import {recordMeasureReview} from './review-evidence.mjs';
 const {parseMidi}=MidiFilePackage;
 const example=JSON.parse(await fs.readFile(fileURLToPath(new URL('../assets/transcription-example.json',import.meta.url)),'utf8'));
-const clone=()=>structuredClone(example);
+const stamp=raw=>{raw.review.evidence=raw.score.measureMap.map((_,i)=>recordMeasureReview(raw,i+1,{method:'model-original-reread',reviewer:'synthetic-test-fixture',reviewedAt:'2026-10-28T00:00:00Z'}));return raw;};
+const clone=()=>stamp(structuredClone(example));
 const manifestFor=raw=>({schema:'piano-score-pages/v1',pages:raw.pages.map(p=>({page:p.page,sha256:p.sha256,file:`page-${p.page}.png`}))});
+
+test('review flags are strict booleans even in drafts; stale measure and tie evidence cannot pass',()=>{
+  for(const change of [r=>r.pages[0].reviewed='false',r=>r.pages[0].systems[0].complete='true',r=>r.pages[0].systems[0].reviewed=1,r=>r.notation.notes.bb.checked='false',r=>r.review.humanConfirmed='false']){
+    const raw=clone();change(raw);assert.throws(()=>validateTranscription(raw,manifestFor(raw),{draft:true}),/布尔/);
+  }
+  const changed=clone();changed.score.notes.find(n=>n.id==='aSharp').velocity=.2;
+  const draft=validateTranscription(changed,manifestFor(changed),{draft:true});
+  assert.ok(draft.blockers.some(s=>s.includes('第1小节')&&s.includes('失效')));
+  assert.ok(draft.blockers.some(s=>s.includes('第2小节')&&s.includes('失效')),'tie dependency invalidates the adjacent measure');
+  assert.ok(!draft.blockers.some(s=>s.includes('第3小节')&&s.includes('失效')),'independent measure retains its evidence');
+  assert.throws(()=>validateTranscription(changed,manifestFor(changed)),/失效/);
+  const removed=clone();removed.score.notes=removed.score.notes.filter(n=>n.id!=='bbCarry');delete removed.notation.notes.bbCarry;
+  assert.throws(()=>validateTranscription(removed,manifestFor(removed)),/失效/);
+  const legacy=clone();delete legacy.review.evidence;
+  assert.throws(()=>validateTranscription(legacy,manifestFor(legacy)),/复核证据/);
+  assert.ok(validateTranscription(legacy,manifestFor(legacy),{draft:true}).blockers.length);
+});
+
+test('unknown source tempo can retain a draft without presenting practice BPM as source evidence',()=>{
+  const raw=clone();raw.score.tempo=null;raw.notation.tempoMarks[0]={beat:0,unit:'quarter',dots:0,bpm:null};stamp(raw);
+  const draft=validateTranscription(raw,manifestFor(raw),{draft:true});
+  assert.equal(draft.score.tempo,90);assert.equal(draft.score.tempoEvidence.sourceBpm,null);
+  assert.match(musicXML(draft),/练习速度/);assert.throws(()=>validateTranscription(raw,manifestFor(raw)),/原谱速度待确认/);
+});
 
 test('full-page coverage, stable identity, source accidental state and pitch arithmetic',()=>{
   const raw=clone(), manifest=manifestFor(raw), checked=validateTranscription(raw,manifest);
@@ -61,7 +87,7 @@ test('written flats and enharmonic sharps survive; ties, marks, tuplets and grac
 });
 
 test('printed dotted BPM and later tempo/key map are real MIDI events',()=>{
-  const raw=clone();raw.notation.keys.push({measure:3,fifths:0,mode:'minor'});
+  const raw=clone();raw.notation.keys.push({measure:3,fifths:0,mode:'minor'});stamp(raw);
   const checked=validateTranscription(raw,manifestFor(raw)),data=parseMidi(midi(checked));
   const tempos=data.tracks.flat().filter(e=>e.type==='setTempo').map(e=>e.microsecondsPerBeat);
   assert.deepEqual(tempos,[Math.round(60000000/141),600000]);
@@ -73,7 +99,7 @@ test('printed dotted BPM and later tempo/key map are real MIDI events',()=>{
 test('source spelling controls auxiliary accidental and separate voices stay separate',()=>{
   const raw=clone();raw.score.notes[0].ornament='trill';raw.score.notes[0].ornamentInterval=2;
   raw.score.notes.push({...raw.score.notes[0],id:'bbOtherVoice',voice:'3',ornament:undefined,ornamentInterval:undefined});
-  raw.notation.notes.bbOtherVoice=structuredClone(raw.notation.notes.bb);
+  raw.notation.notes.bbOtherVoice=structuredClone(raw.notation.notes.bb);stamp(raw);
   const checked=validateTranscription(raw,manifestFor(raw)), parsed=new XMLParser({ignoreAttributes:false}).parse(musicXML(checked));
   const notes=parsed['score-partwise'].part.measure.flatMap(m=>m.note||[]), byId=new Map(notes.map(n=>[n['@_id'],n]));
   assert.equal(byId.get('note-bb-m1').notations.ornaments['accidental-mark'],undefined);
@@ -96,6 +122,7 @@ test('standalone file build verifies real page hashes, reengraves SVG, and rejec
       raw.pages[i].sha256=manifest.pages[i].sha256=createHash('sha256').update(png).digest('hex');
       await fs.writeFile(path.join(dir,manifest.pages[i].file),png);
     }
+    stamp(raw);
     const input=path.join(dir,'input.json'), mf=path.join(dir,'manifest.json'),out=path.join(dir,'out');
     await fs.writeFile(input,JSON.stringify(raw));await fs.writeFile(mf,JSON.stringify(manifest));
     const report=await build(input,mf,out);

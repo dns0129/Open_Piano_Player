@@ -606,6 +606,56 @@
   "review": {
     "status": "checked",
     "method": "synthetic-known-input",
-    "humanConfirmed": false
+    "humanConfirmed": false,
+    "evidence": [
+      {
+        "measure": 1,
+        "page": 1,
+        "system": "p1s1",
+        "sourceSha256": "synthetic-page-1",
+        "fields": [
+          "pitch",
+          "rhythm",
+          "notation",
+          "source"
+        ],
+        "method": "model-original-reread",
+        "reviewer": "synthetic-example-not-real-score",
+        "reviewedAt": "2026-10-28T00:00:00Z",
+        "basis": "e8308156ea68905b166d4413f50dcaff51ca69de7bab4081b31d0b99e50ae21b"
+      },
+      {
+        "measure": 2,
+        "page": 1,
+        "system": "p1s1",
+        "sourceSha256": "synthetic-page-1",
+        "fields": [
+          "pitch",
+          "rhythm",
+          "notation",
+          "source"
+        ],
+        "method": "model-original-reread",
+        "reviewer": "synthetic-example-not-real-score",
+        "reviewedAt": "2026-10-28T00:00:00Z",
+        "basis": "7f7e168ed5f8bff3aa1148855ef3dbcd71e540f658c1398f6fd615d5dfa730e3"
+      },
+      {
+        "measure": 3,
+        "page": 2,
+        "system": "p2s1",
+        "sourceSha256": "synthetic-page-2",
+        "fields": [
+          "pitch",
+          "rhythm",
+          "notation",
+          "source"
+        ],
+        "method": "model-original-reread",
+        "reviewer": "synthetic-example-not-real-score",
+        "reviewedAt": "2026-10-28T00:00:00Z",
+        "basis": "ee4e60f151a0929e07e0d986402406275e12a143d10ede95ffed9fdbebe95346"
+      }
+    ]
   }
 }

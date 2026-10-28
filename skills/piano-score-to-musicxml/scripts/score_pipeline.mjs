@@ -8,6 +8,8 @@ import MidiFilePackage from 'midi-file';
 import { validateScore, scoreMeasureIndex } from './core/score.mjs';
 import { exportMusicXML, exportMidi } from './core/exporters.mjs';
 import { performanceNotes } from './core/note-effects.mjs';
+import {reviewEvidenceBlockers} from './review-evidence.mjs';
+import {recognitionTempo,validateTempoEvidence} from './recognition-tempo.mjs';
 
 const { parseMidi, writeMidi } = MidiFilePackage;
 const DIVISIONS = 15360, EPS = 1e-6;
@@ -39,12 +41,18 @@ export function validateTranscription(raw, manifest, { draft=false }={}) {
   assert(manifest?.schema==='piano-score-pages/v1' && manifest.pages?.length,'必须提供 prepare_score.py 的全页 manifest');
   assert(Array.isArray(raw.pages) && raw.pages.length===manifest.pages.length,'转录页数与原始清单不一致，不能交付完整谱');
   const blockers=[], warnings=[], coverage=[], ids=new Set(), owners=new Map();
+  const reviewFlag=(value,label)=>assert(typeof value==='boolean',`${label} 必须为布尔值，不能使用字符串或数字`);
+  reviewFlag(raw.review?.humanConfirmed,'review.humanConfirmed');
   for(const note of raw.score?.notes||[]) {
     assert(/^[A-Za-z_][A-Za-z0-9_.-]{0,70}$/.test(note.id||'')&&!ids.has(note.id),`音符 ID 无效或重复：${note.id}`);
     ids.add(note.id);
     knownKeys(note,['id','midi','beat','duration','hand','voice','velocity','dynamic','accent','articulation','ornament','ornamentInterval','arpeggio','tieTo'],'score.notes');
   }
-  const score=validateScore({...raw.score,source:{...raw.score?.source,kind:'image-ai',reviewRequired:true}});
+  const tempoState=raw.score?.tempoEvidence?{tempo:raw.score.tempo,tempoEvidence:validateTempoEvidence(raw.score.tempoEvidence),warnings:[]}:recognitionTempo(raw.score?.tempo??null,raw.score?.tempoStatus);
+  warnings.push(...tempoState.warnings);
+  if(tempoState.tempoEvidence.sourceStatus==='unknown'||tempoState.tempoEvidence.sourceStatus==='unreadable')blockers.push('原谱速度待确认；草稿可使用单独标注的练习速度，音符转录已保留');
+  const score=validateScore({...raw.score,tempo:tempoState.tempo,source:{...raw.score?.source,kind:'image-ai',reviewRequired:true}});
+  score.tempoEvidence=tempoState.tempoEvidence;
   assert(score.measureMap?.length,'必须显式提交 measureMap，包括弱起和最后休止，不能凭末音猜页尾');
   const notation=raw.notation||{};
   knownKeys(notation,['notes','graces','spanners','keys','tempoMarks','unhandled'],'notation');
@@ -52,6 +60,7 @@ export function validateTranscription(raw, manifest, { draft=false }={}) {
   assert(Object.keys(noteMeta).length===score.notes.length,'每个数字音符必须恰有一条 notation.notes 原谱证据');
   const pageIds=new Set();
   for(const page of raw.pages) {
+    reviewFlag(page.reviewed,`第 ${page.page} 页 reviewed`);
     assert(Number.isInteger(page.page)&&!pageIds.has(page.page),'页编号无效或重复'); pageIds.add(page.page);
     const expected=manifest.pages.find(p=>p.page===page.page);
     assert(expected && page.sha256===expected.sha256,`第 ${page.page} 页原图哈希不一致`);
@@ -64,6 +73,7 @@ export function validateTranscription(raw, manifest, { draft=false }={}) {
     assert(page.systems?.length,`第 ${page.page} 页缺少逐行清单`);
     const sysIds=new Set();
     for(const system of page.systems) {
+      reviewFlag(system.complete,`${system.id}.complete`);reviewFlag(system.reviewed,`${system.id}.reviewed`);
       assert(typeof system.id==='string'&&!sysIds.has(system.id),'系统行 ID 重复');sysIds.add(system.id);
       assert(system.staves===2,`第 ${page.page} 页 ${system.id} 须确认为双谱表钢琴行；其他布局先适配，不当作已支持`);
       assert(Number.isInteger(system.measureStart)&&Number.isInteger(system.measureEnd)&&system.measureStart>=1&&system.measureEnd>=system.measureStart,'系统行小节范围无效');
@@ -82,7 +92,9 @@ export function validateTranscription(raw, manifest, { draft=false }={}) {
   keys.forEach((k,i)=>assert(Number.isInteger(k.measure)&&k.measure<=score.measureMap.length&&k.measure>(i?keys[i-1].measure:0)&&Number.isInteger(k.fifths)&&Math.abs(k.fifths)<=7&&['major','minor'].includes(k.mode),'调号/调式变更无效'));
   assert(keys[0].fifths===score.keySignature&&keys[0].mode===(score.mode||'major'),'首调与 score 调号/调式不一致');
   const keyAt=m=>keys.filter(k=>k.measure<=m).at(-1);
-  const tempos=notation.tempoMarks||[{beat:0,unit:'quarter',dots:0,bpm:score.tempo}];
+  const tempos=structuredClone(notation.tempoMarks||[{beat:0,unit:'quarter',dots:0,bpm:score.tempo,practice:tempoState.tempoEvidence.sourceBpm===null}]);
+  if(tempoState.tempoEvidence.sourceBpm===null&&tempos[0])tempos[0].practice=true;
+  if(tempoState.tempoEvidence.sourceBpm===null&&tempos[0]&&(tempos[0].bpm===null||tempos[0].bpm===0)){assert(tempos[0].unit==='quarter'&&(tempos[0].dots||0)===0,'未知速度的练习值使用四分音符单位');tempos[0].bpm=score.tempo;tempos[0].practice=true;}
   assert(tempos.length&&tempos[0].beat===0,'速度清单必须从第0拍开始');
   tempos.forEach((t,i)=>{
     assert(Number.isFinite(t.beat)&&t.beat>=0&&t.beat<score.durationBeats&&t.beat>(i?tempos[i-1].beat:-1)&&units[t.unit]&&Number.isInteger(t.dots)&&t.dots>=0&&t.dots<=2&&Number.isFinite(t.bpm)&&t.bpm>0,'BPM/节拍单位/变速位置无效');
@@ -93,6 +105,7 @@ export function validateTranscription(raw, manifest, { draft=false }={}) {
   const checkSource=(meta,label)=>{
     const s=meta?.source, owner=owners.get(s?.measure);
     assert(owner&&owner.page===s.page&&owner.system===s.system&&[1,2].includes(s.staff),`${label} 原页/行/小节/谱表证据无效`);
+    reviewFlag(meta.checked,`${label}.checked`);
     if(!meta.checked)blockers.push(`${label} 未按原图复核`);
   };
   const incoming=new Map(score.notes.filter(n=>n.tieTo).map(n=>[n.tieTo,n.id]));
@@ -143,6 +156,7 @@ export function validateTranscription(raw, manifest, { draft=false }={}) {
     blockers.push(issue.message);
   }
   if(raw.review?.status!=='checked')blockers.push('转录尚未完成原谱复核');
+  blockers.push(...reviewEvidenceBlockers(raw));
   if(graces.length)warnings.push('倚音保存在 MusicXML/重绘谱；MIDI 和琴伴 JSON 暂不演奏这些零时值倚音');
   if(Object.values(noteMeta).some(n=>n.fermata))warnings.push('延长记号保存在谱面；MIDI 和琴伴 JSON 不自动猜测延长时长');
   if(tempos.length>1)warnings.push('MusicXML/MIDI 包含变速；琴伴 JSON 播放器当前仅使用首个 BPM');
@@ -185,7 +199,7 @@ export function musicXML(checked) {
       const met=element('metronome',[element('beat-unit',t.unit),...Array.from({length:t.dots},()=>element('beat-unit-dot',null)),element('per-minute',t.bpm)]);
       const offset=element('offset',Math.round((t.beat-bar.beat)*DIVISIONS));offset[':@']={'@sound':'yes'};
       const sound=element('sound',null);sound[':@']={'@tempo':String(t.quarterBpm)};
-      content.splice(insert++,0,element('direction',[element('direction-type',[met]),offset,element('staff',1),sound]));
+      content.splice(insert++,0,element('direction',[element('direction-type',t.practice?[element('words','练习速度（原谱无已确认数值）'),met]:[met]),offset,element('staff',1),sound]));
     }
     for(const note of content.filter(n=>nameOf(n)==='note'&&attr(n,'id'))) {
       const id=String(attr(note,'id')).replace(/^note-/,'').replace(/-m\d+$/,'');

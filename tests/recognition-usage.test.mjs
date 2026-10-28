@@ -19,5 +19,10 @@ test('private ledger records actual requests, time and usage without source mate
     failed.observe({request:{model:'gpt-6.1-sol',reasoningEffort:'high'}});
     const failure=await failed.finish('failed');assert.equal(failure.actualRequests,1);assert.equal(failure.usageKnown,false);assert.equal(failure.usage,null);
     assert.equal((await readFile(path,'utf8')).trim().split('\n').length,2);
+    const partial=recognitionTrace({region:{id:'repair',page:1,system:1}},{path});
+    partial.observe({request:{model:'gpt-6.1-sol',reasoningEffort:'high'}});partial.observe({usage:{output:20}});
+    partial.observe({request:{model:'gpt-6.1-sol',reasoningEffort:'high'}});
+    const incomplete=await partial.finish('returned');assert.equal(incomplete.usageComplete,false);assert.equal(incomplete.reportedUsageCalls,1);
+    assert.deepEqual(incomplete.usage,{output:20});assert.equal(incomplete.reportedFields.input,0);
   }finally{await rm(dir,{recursive:true,force:true});}
 });

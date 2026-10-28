@@ -78,6 +78,13 @@ export interface PracticeScore {
   title: string;
   composer: string;
   tempo: number;
+  tempoEvidence?: {
+    version: 1;
+    sourceStatus: 'read' | 'not-marked' | 'unreadable' | 'unknown';
+    sourceBpm: number | null;
+    rawBpm: number | null;
+    playbackSource: 'source-reading' | 'user-practice' | 'default-practice';
+  };
   timeSignature: Meter;
   keySignature: number;
   mode?: "major" | "minor";

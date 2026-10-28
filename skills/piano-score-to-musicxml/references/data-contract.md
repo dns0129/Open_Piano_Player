@@ -43,7 +43,18 @@ npm test
 }
 ```
 
-上例只展示字段形状，省略的其余小节/音符必须实际补齐；不要将不完整示意直接投入生产。页与行的 `reviewed`、音符的 `checked` 只在完成对应原图复核后设 true。`humanConfirmed` 仅在用户/人工确实确认后设 true。
+上例只展示字段形状，省略的其余小节/音符必须实际补齐；不要将不完整示意直接投入生产。页与行的 `reviewed`、音符的 `checked`、系统行的 `complete` 及 `review.humanConfirmed` 均须为布尔值，字符串或数字即使在草稿模式也会失败。页与行的 `reviewed`、音符的 `checked` 只在完成对应原图复核后设 true。`humanConfirmed` 仅在用户/人工确实确认后设 true。
+
+
+### v1.1 复核证据与未知速度
+
+`review.evidence` 为逐小节记录数组，每项保存 `measure/page/system/sourceSha256/fields/method/reviewer/reviewedAt/basis`。`fields` 至少覆盖 pitch、rhythm、notation、source；`method` 为 model-original-reread 或 human-original-review。`humanConfirmed=true` 要求全部记录确有人工复核，不能把模型复核改名为人工确认。
+
+在实际看原图复核之后，可调用 `scripts/review-evidence.mjs` 的 `recordMeasureReview(raw, measure, {method, reviewer, reviewedAt})` 生成当前记录，替换该小节的旧记录。该函数只记录调用者的复核声明，不会看图，也不会自动证明准确率。不要为消除阻塞而批量补盖未做过的复核。
+
+`basis` 绑定原图、来源系统、书写事件、音高、节奏、记号及延音依赖。修改同小节音符会使该小节证据失效；延音链相关小节也需要重核。独立小节的有效证据可保留。没有证据的旧文件仍可用 `--draft` 打开，不会自动升级为已复核。
+
+`score.tempo` 为 null（兼容旧响应的 0）时，`score.tempoStatus` 可为 unknown、unreadable 或 not-marked；不得把三者混为“原谱没标速度”。未知或不可辨的原谱速度阻塞正式完成，但允许保存草稿、音符和证据。草稿使用 90 四分音符 BPM 的练习值，`score.qinban.json` 的 `tempoEvidence` 保存原始状态；MusicXML 的默认标速注明练习用途。首个 `notation.tempoMarks` 可为 `{beat:0,unit:"quarter",dots:0,bpm:null}`，或省略以使用练习值。确认原谱确实没有标速时使用 not-marked；这不是数值速度已识别的声明。原始 `transcription.json` 不改写未知值。
 
 ### 时间轴、来源与音高
 

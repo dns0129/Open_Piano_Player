@@ -6,6 +6,7 @@ import {join} from 'node:path';
 import {once} from 'node:events';
 import {createLocalLibrary} from '../lib/local-library.mjs';
 import {createAppServer} from '../server.mjs';
+import {agentReviewBasis} from '../lib/review-approval.mjs';
 
 async function fixture(t) {
   const directory=await mkdtemp(join(tmpdir(),'qinban-library-'));
@@ -85,7 +86,7 @@ test('removing a local job score survives restart without destroying recognition
 
 test('an explicitly authorized full review exposes an approved score while retaining model provenance',async t=>{
  const f=await fixture(t),store=createLocalLibrary(f);f.job.status='complete';f.job.totalPages=1;f.job.regions[0].status='model-reviewed';f.job.result.reviewStatus='model-reviewed';f.job.result.score.measureMap=[{number:1,beat:0,duration:4}];
- f.job.result.review={method:'source-image-check',model:'gpt-6.1-sol',reasoning:'high',humanConfirmed:false,checkedRegions:1,completedAt:'2026-10-19T00:00:00Z',approval:{status:'approved',actor:'Codex',method:'full-source-visual-review',authorizedByUser:true,humanConfirmed:false,approvedAt:'2026-10-19T01:00:00Z',reportSha256:'a'.repeat(64),coverage:{pages:1,systems:1,measures:1,notes:1},unresolvedNoteIssues:[]}};await f.save();
+ f.job.result.review={method:'source-image-check',model:'gpt-6.1-sol',reasoning:'high',humanConfirmed:false,checkedRegions:1,completedAt:'2026-10-19T00:00:00Z',approval:{status:'approved',actor:'Codex',method:'full-source-visual-review',authorizedByUser:true,humanConfirmed:false,approvedAt:'2026-10-19T01:00:00Z',reportSha256:'a'.repeat(64),coverage:{pages:1,systems:1,measures:1,notes:1},unresolvedNoteIssues:[]}};f.job.result.review.approval.basis=agentReviewBasis(f.job);await f.save();
  const source=await store.source(f.id);assert.equal(source.score.source.kind,'full-score-agent-approved');assert.notEqual(source.score.source.reviewRequired,true);assert.equal(source.review.humanConfirmed,false);assert.equal(source.reviewStatus,'model-reviewed');
  f.job.result.review.approval.coverage.measures=2;await f.save();assert.equal((await store.source(f.id)).score.source.reviewRequired,true);
 });
