@@ -31,6 +31,18 @@ python3 -m http.server 8817 --directory site
 
 可以只截某一部分：`node scripts/capture-site-shots.mjs desktop source phone local`。
 
+## 宣传视频
+
+`video/qinban-promo.mp4`：30 秒，1920×1080，配乐《致爱丽丝》开头。依次讲：标题 → 拍照 / PDF 逐行识谱 → 跟谱播放 → 五线谱、简谱、手机三种视图 → 九项练习、改编、导出功能 → 结尾网址。场景切换都卡在小节线上。
+
+画面是 `video/promo.html`，用 `window.seek(t)` 逐帧绘制，用的是上面的实机截图和 `img/ink-elise.webp`；曲谱和时间点在 `video/score.js`，画面和混音共用这一份。重新生成：
+
+```sh
+FFMPEG=/path/to/ffmpeg node scripts/render-promo-video.mjs
+```
+
+需本机 Chrome、带 libx264 的 ffmpeg（已在 PATH 上可省略 `FFMPEG=`）和 Node ≥ 21。钢琴声取自 `assets/audio/piano/` 的 Salamander 采样（CC BY 3.0，片尾已署名）。加 `--stills 2,9.6,14 --out 目录` 只截这几个时间点的 PNG，方便检查画面。要按实际速度无声预览，开本地预览后访问 `/video/promo.html`，`?t=12.3` 停在单帧。
+
 ## MusicXML → MIDI 的范围
 
 `assets/guide.js` 中的 `parseMusicXML` / `writeMidi`（也挂在 `window.LepuConvert`）处理 partwise MusicXML：和弦、`backup` / `forward`、连音（按 `<duration>`）、连线、速度与力度标记；每个声部的每个谱表输出一条 MIDI 轨（钢琴即右手、左手两轨），480 ticks / 四分音符。倚音不计入，反复记号按书写顺序，不展开。压缩的 MXL 请在 App 中导入。

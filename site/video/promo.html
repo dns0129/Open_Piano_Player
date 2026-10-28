@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>琴伴宣传视频</title>
+    <!-- 1920×1080 promo video, rendered frame by frame by scripts/render-promo-video.mjs.
+         Everything on screen is a pure function of time: window.seek(t) draws the frame at t seconds.
+         Open it over HTTP (python3 -m http.server 8817 --directory site → /video/promo.html) and it
+         plays itself silently in real time, for checking timing; ?t=12.3 freezes on one frame. -->
+    <style>
+      @font-face {
+        font-family: "Bravura";
+        src: url("../assets/fonts/Bravura.woff2") format("woff2");
+        font-display: block;
+      }
+      :root {
+        --paper: #f3eee1;
+        --sheet: #fcfaf3;
+        --ink: #1f2a22;
+        --ink-2: #4b574d;
+        --ink-3: #7d8378;
+        --line: #e0d9c6;
+        --green: #234f3e;
+        --green-2: #39734f;
+        --green-soft: #e4ecdf;
+        --copper: #a4735e;
+        --pencil: #b4452f;
+        --serif: "Songti SC", "STSong", "Source Han Serif SC", "Noto Serif SC", serif;
+        --font: -apple-system, "PingFang SC", "Hiragino Sans GB", sans-serif;
+        --hand: "Hannotate SC", "HanziPen SC", "Kaiti SC", "STKaiti", var(--serif);
+        --shadow: 0 2px 2px rgba(60, 50, 25, 0.08), 0 40px 70px -40px rgba(60, 50, 25, 0.6);
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: var(--font);
+      }
+      #stage {
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background:
+          radial-gradient(120% 90% at 50% 40%, transparent 55%, rgba(120, 100, 60, 0.12)),
+          repeating-linear-gradient(transparent 0 43px, rgba(35, 79, 62, 0.06) 43px 44px),
+          var(--paper);
+      }
+      .scene {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        will-change: opacity, transform;
+      }
+      .abs {
+        position: absolute;
+        will-change: transform, opacity;
+      }
+      .logo {
+        width: 120px;
+        height: 120px;
+        border-radius: 34px;
+        box-shadow: 0 18px 40px -18px rgba(35, 79, 62, 0.7);
+      }
+      .brand {
+        font-family: var(--serif);
+        font-weight: 700;
+        letter-spacing: 0.08em;
+      }
+      .kicker {
+        font: 600 26px/1 var(--font);
+        letter-spacing: 0.18em;
+        color: var(--green-2);
+      }
+      h2 {
+        font: 700 76px/1.18 var(--serif);
+        letter-spacing: 0.02em;
+        margin-top: 26px;
+      }
+      .body {
+        font: 400 32px/1.6 var(--font);
+        color: var(--ink-2);
+        margin-top: 28px;
+      }
+      .chips {
+        display: flex;
+        gap: 14px;
+        margin-top: 40px;
+        flex-wrap: wrap;
+      }
+      .chip {
+        font: 600 24px/1 var(--font);
+        padding: 14px 22px;
+        border-radius: 999px;
+        background: var(--green-soft);
+        color: var(--green);
+        border: 1.5px solid rgba(35, 79, 62, 0.18);
+      }
+      .chip.l {
+        background: #f1e4dc;
+        color: #7c4f3d;
+        border-color: rgba(164, 115, 94, 0.3);
+      }
+      .card {
+        background: var(--sheet);
+        border-radius: 14px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        border: 1px solid rgba(60, 50, 25, 0.1);
+      }
+      .card img {
+        display: block;
+        width: 100%;
+      }
+      .bar {
+        height: 40px;
+        background: #ece6d6;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 16px;
+        border-bottom: 1px solid var(--line);
+      }
+      .bar i {
+        width: 13px;
+        height: 13px;
+        border-radius: 50%;
+        background: #d3cab3;
+      }
+      .tape {
+        position: absolute;
+        width: 150px;
+        height: 42px;
+        background: rgba(235, 222, 170, 0.75);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+      }
+      .hand {
+        font-family: var(--hand);
+        color: var(--pencil);
+      }
+      .tile {
+        position: absolute;
+        width: 316px;
+        height: 178px;
+        padding: 26px 28px;
+        background: var(--sheet);
+        border-radius: 14px;
+        border: 1px solid rgba(60, 50, 25, 0.1);
+        box-shadow: 0 24px 40px -30px rgba(60, 50, 25, 0.55);
+      }
+      .tile em {
+        font: 600 20px/1 "SF Mono", Menlo, monospace;
+        font-style: normal;
+        color: var(--copper);
+      }
+      .tile b {
+        display: block;
+        font: 700 36px/1.2 var(--serif);
+        margin-top: 18px;
+      }
+      .tile span {
+        display: block;
+        font: 400 22px/1.4 var(--font);
+        color: var(--ink-3);
+        margin-top: 10px;
+      }
+      #progress {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        height: 6px;
+        background: var(--green-2);
+        opacity: 0.55;
+      }
+      svg text.mus {
+        font-family: "Bravura";
+      }
+    </style>
+  </head>
+  <body>
+    <div id="stage">
+      <!-- 1 · Title: the melody is written onto a staff as it sounds. -->
+      <section class="scene" id="s1">
+        <div class="abs" id="s1-title" style="left: 0; right: 0; top: 190px; text-align: center">
+          <img class="logo" src="../assets/favicon.svg" alt="" />
+          <div class="brand" style="font-size: 150px; line-height: 1; margin-top: 34px">琴伴</div>
+          <div style="font: 500 34px/1 var(--font); letter-spacing: 0.4em; color: var(--ink-3); margin-top: 30px">
+            钢琴练习室 · QINBAN
+          </div>
+        </div>
+        <div class="abs" id="s1-lead" style="left: 0; right: 0; top: 590px; text-align: center; font: 600 50px/1 var(--serif)">
+          拍下一页谱，马上听它、练它、改它。
+        </div>
+        <svg class="abs" id="s1-staff" width="1920" height="300" style="left: 0; top: 700px"></svg>
+      </section>
+
+      <!-- 2 · Recognition: a scan line reads the photo of the score row by row. -->
+      <section class="scene" id="s2">
+        <div class="abs" id="s2-sheet" style="left: 110px; top: 200px; width: 1040px">
+          <div class="card" style="padding: 22px; border-radius: 4px">
+            <div style="position: relative">
+              <img src="../assets/img/ink-elise.webp" style="display: block; width: 100%" alt="" />
+              <div class="abs" id="s2-row1" style="left: -8px; right: -8px; top: 25.2%; height: 30%"></div>
+              <div class="abs" id="s2-row2" style="left: -8px; right: -8px; top: 64%; height: 30%"></div>
+              <div class="abs" id="s2-beam" style="left: -30px; right: -30px; height: 140px"></div>
+            </div>
+          </div>
+          <div class="tape" style="left: -40px; top: -14px; transform: rotate(-24deg)"></div>
+          <div class="tape" style="right: -40px; top: -14px; transform: rotate(22deg)"></div>
+        </div>
+        <div class="abs" id="s2-copy" style="left: 1260px; top: 300px; width: 560px">
+          <div class="kicker">01 · 识谱</div>
+          <h2>拍下一页谱</h2>
+          <p class="body">照片或 PDF 逐行识别，<br />变成能播放、能编辑的<br />数字乐谱。</p>
+          <div class="chips">
+            <span class="chip">图片</span><span class="chip">PDF</span><span class="chip">MusicXML</span
+            ><span class="chip">MIDI</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3 · Playback: the practice room, a playhead stepping bar by bar with the music. -->
+      <section class="scene" id="s3">
+        <div class="abs" id="s3-copy" style="left: 110px; top: 300px; width: 520px">
+          <div class="kicker">02 · 跟谱播放</div>
+          <h2>听它，<br />跟着它练</h2>
+          <p class="body">逐音高亮、自动翻行，<br />20–300 BPM 自由变速。</p>
+          <div class="chips">
+            <span class="chip">右手</span><span class="chip l">左手</span><span class="chip">节拍器</span
+            ><span class="chip">小节循环</span>
+          </div>
+        </div>
+        <div class="abs card" id="s3-shot" style="left: 680px; top: 150px; width: 1160px">
+          <div class="bar"><i></i><i></i><i></i></div>
+          <div style="position: relative; width: 1600px; height: 1000px; transform: scale(0.725); transform-origin: 0 0; margin-bottom: -275px">
+            <img src="../assets/shots/practice-staff.webp" style="width: 1600px" alt="" />
+            <div class="abs" style="left: 1306px; top: 380px; width: 270px; height: 272px; background: linear-gradient(90deg, rgba(252, 251, 246, 0.55), rgba(252, 251, 246, 0.85))"></div>
+            <div class="abs" id="s3-band" style="top: 384px; height: 264px; background: rgba(57, 115, 79, 0.12); border-radius: 4px"></div>
+            <div class="abs" id="s3-head" style="top: 368px; height: 296px; width: 4px; background: var(--green-2); border-radius: 2px"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4 · Views: staff, jianpu and the phone layout share one timeline. -->
+      <section class="scene" id="s4">
+        <div class="abs card" id="s4-staff" style="left: 80px; top: 170px; width: 1000px">
+          <img src="../assets/shots/practice-staff.webp" alt="" />
+        </div>
+        <div class="abs card" id="s4-jianpu" style="left: 200px; top: 430px; width: 1000px">
+          <img src="../assets/shots/practice-jianpu.webp" alt="" />
+        </div>
+        <div class="abs card" id="s4-phone" style="left: 1010px; top: 150px; width: 300px; border-radius: 40px; border: 10px solid #1f2a22">
+          <img src="../assets/shots/practice-phone.webp" alt="" />
+        </div>
+        <div class="abs" id="s4-copy" style="left: 1390px; top: 300px; width: 470px">
+          <div class="kicker">03 · 三种视图</div>
+          <h2>五线谱<br />简谱<br />随手切换</h2>
+          <p class="body">还有钢琴卷帘。三种视图<br />共用同一条时间线，<br />电脑、iPad、手机都能练。</p>
+        </div>
+      </section>
+
+      <!-- 5 · Tools: one tile per beat, the export dialog beside them. -->
+      <section class="scene" id="s5">
+        <div class="abs" id="s5-copy" style="left: 110px; top: 96px">
+          <div class="kicker">04 · 练习 · 改编 · 导出</div>
+          <h2 style="font-size: 66px">一本谱，怎么练都行</h2>
+        </div>
+        <div id="s5-tiles"></div>
+        <div class="abs card" id="s5-export" style="left: 1236px; top: 300px; width: 600px">
+          <img src="../assets/shots/export-dialog.webp" alt="" />
+        </div>
+      </section>
+
+      <!-- 6 · End card. -->
+      <section class="scene" id="s6">
+        <div class="abs" id="s6-title" style="left: 0; right: 0; top: 230px; text-align: center">
+          <img class="logo" src="../assets/favicon.svg" alt="" />
+          <div class="brand" style="font-size: 130px; line-height: 1; margin-top: 30px">琴伴</div>
+          <div style="font: 600 46px/1 var(--serif); margin-top: 44px">拍下一页谱，马上听它、练它、改它。</div>
+        </div>
+        <div class="abs" id="s6-url" style="left: 0; right: 0; top: 700px; text-align: center">
+          <span style="display: inline-block; font: 600 34px/1 var(--font); color: var(--sheet); background: var(--green); padding: 24px 44px; border-radius: 999px">
+            网页版打开即用 · dns0129.github.io/Open_Piano_Player
+          </span>
+        </div>
+        <div class="abs hand" id="s6-fine" style="left: 1500px; top: 560px; font-size: 60px; transform: rotate(-8deg)">Fine.</div>
+        <div class="abs" id="s6-credit" style="left: 0; right: 0; bottom: 46px; text-align: center; font: 400 20px/1.6 var(--font); color: var(--ink-3)">
+          配乐：贝多芬《致爱丽丝》WoO 59 · 钢琴音色：Salamander Grand Piano, Alexander Holm（CC BY 3.0）· 界面画面为琴伴实机截图
+        </div>
+      </section>
+
+      <div id="progress"></div>
+    </div>
+
+    <script type="module">
+      import { NOTES, barAt, FINAL, DURATION, SIXTEENTH } from "./score.js";
+
+      const $ = (id) => document.getElementById(id);
+      const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+      const p = (t, a, b) => clamp((t - a) / (b - a));
+      const outCubic = (x) => 1 - (1 - x) ** 3;
+      const inOut = (x) => (x < 0.5 ? 4 * x ** 3 : 1 - (-2 * x + 2) ** 3 / 2);
+      const outBack = (x) => {
+        const c = 1.7;
+        return 1 + (c + 1) * (x - 1) ** 3 + c * (x - 1) ** 2;
+      };
+      const set = (el, { o, x = 0, y = 0, s = 1, r = 0 }) => {
+        if (o !== undefined) el.style.opacity = o;
+        el.style.transform = `translate(${x}px, ${y}px) scale(${s}) rotate(${r}deg)`;
+      };
+      // Slide-and-fade entrance at time a, lasting d seconds.
+      const enter = (el, t, a, d = 0.6, dy = 40, extra = {}) => {
+        const k = outCubic(p(t, a, a + d));
+        set(el, { o: k, y: (1 - k) * dy, ...extra });
+      };
+
+      // Scene windows, cut on bar lines; neighbours cross-fade over 0.4 s.
+      const SCENES = [
+        ["s1", 0, barAt(4)],
+        ["s2", barAt(4), barAt(8)],
+        ["s3", barAt(8), barAt(12)],
+        ["s4", barAt(12), barAt(16)],
+        ["s5", barAt(16), FINAL],
+        ["s6", FINAL, DURATION + 1],
+      ];
+      const X = 0.2;
+
+      // ---------- Scene 1: staff ----------
+      const svg = $("s1-staff");
+      const NS = "http://www.w3.org/2000/svg";
+      const SP = 24; // staff space
+      const BOTTOM = 200; // y of the E4 line inside the svg
+      const STEP = { C: 0, D: 1, E: 2, F: 3, G: 4, A: 5, B: 6 };
+      const NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+      const el = (tag, attrs, text) => {
+        const n = document.createElementNS(NS, tag);
+        for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+        if (text) n.textContent = text;
+        svg.append(n);
+        return n;
+      };
+      const lines = [];
+      for (let i = 0; i < 5; i++)
+        lines.push(el("line", { x1: 80, x2: 1840, y1: BOTTOM - i * SP, y2: BOTTOM - i * SP, stroke: "#1f2a22", "stroke-width": 2 }));
+      const clef = el("text", { class: "mus", x: 100, y: BOTTOM - SP, "font-size": SP * 4, fill: "#1f2a22" }, "");
+      const melody = NOTES.filter((n) => n.hand === "r" && n.t < barAt(4) - 0.01);
+      const heads = melody.map((n, i) => {
+        const name = NAMES[n.midi % 12];
+        const oct = Math.floor(n.midi / 12) - 1;
+        const step = 7 * oct + STEP[name[0]];
+        const y = BOTTOM - ((step - 30) * SP) / 2;
+        const x = 290 + i * 76;
+        const g = document.createElementNS(NS, "g");
+        svg.append(g);
+        const add = (tag, attrs, text) => {
+          const node = el(tag, attrs, text);
+          g.append(node);
+          return node;
+        };
+        if (step <= 28) add("line", { x1: x - 22, x2: x + 22, y1: BOTTOM + SP, y2: BOTTOM + SP, stroke: "#1f2a22", "stroke-width": 2 });
+        if (name.length > 1) add("text", { class: "mus", x: x - 44, y, "font-size": SP * 4, fill: "#234f3e" }, "");
+        const up = step < 34;
+        add("line", { x1: up ? x + 13 : x - 13, x2: up ? x + 13 : x - 13, y1: y, y2: up ? y - SP * 3.4 : y + SP * 3.4, stroke: "#234f3e", "stroke-width": 2.6 });
+        add("text", { class: "mus", x: x - 14, y, "font-size": SP * 4, fill: "#234f3e" }, "");
+        const glow = add("circle", { cx: x, cy: y, r: 30, fill: "rgba(57,115,79,0.25)" });
+        return { g, glow, t: n.t, x, y };
+      });
+
+      function scene1(t) {
+        const title = $("s1-title");
+        const k = outCubic(p(t, 0.1, 1.1));
+        set(title, { o: k, y: (1 - k) * 30, s: 0.96 + 0.04 * k });
+        enter($("s1-lead"), t, 2.6, 0.8, 24);
+        lines.forEach((l, i) => {
+          const d = inOut(p(t, 0.15 + i * 0.06, 1.1 + i * 0.06));
+          l.setAttribute("x2", 80 + 1760 * d);
+        });
+        clef.style.opacity = p(t, 0.5, 0.9);
+        for (const h of heads) {
+          const a = p(t, h.t - 0.02, h.t + 0.22);
+          h.g.style.opacity = clamp(a * 3);
+          h.g.style.transformOrigin = `${h.x}px ${h.y}px`;
+          h.g.style.transform = `scale(${0.4 + 0.6 * outBack(a)})`;
+          h.glow.style.opacity = a > 0 ? 1 - p(t, h.t, h.t + 0.7) : 0;
+        }
+      }
+
+      // ---------- Scene 2: scan ----------
+      function scene2(t) {
+        const a = barAt(4);
+        const k = outCubic(p(t, a - X, a + 0.7));
+        set($("s2-sheet"), { o: k, x: (1 - k) * -60, r: -1.6 + (1 - k) * -3 });
+        const c = $("s2-copy");
+        enter(c, t, a + 0.25, 0.7, 40);
+        // The beam travels down the score from 0.8 s to 3.0 s after the cut.
+        const b = inOut(p(t, a + 0.8, a + 3.0));
+        const beam = $("s2-beam");
+        beam.style.top = `${-12 + b * 104}%`;
+        beam.style.transform = "translateY(-50%)";
+        beam.style.opacity = p(t, a + 0.7, a + 0.9) * (1 - p(t, a + 3.0, a + 3.3));
+        beam.style.background =
+          "linear-gradient(transparent, rgba(57,115,79,0.16) 44%, rgba(57,115,79,0.9) 50%, rgba(57,115,79,0.16) 56%, transparent)";
+        [
+          ["s2-row1", 0.42],
+          ["s2-row2", 0.82],
+        ].forEach(([id, at], i) => {
+          const row = $(id);
+          const r = outCubic(p(t, a + 0.8 + 2.2 * at, a + 1.2 + 2.2 * at));
+          row.style.opacity = r;
+          row.style.border = "3px solid rgba(57,115,79,0.85)";
+          row.style.borderRadius = "8px";
+          row.style.background = `rgba(57,115,79,${0.1 * r})`;
+          row.style.transform = `scale(${1.04 - 0.04 * r})`;
+          row.innerHTML = `<span style="position:absolute;right:10px;top:-26px;font:600 22px/1 var(--font);color:#fff;background:#39734f;padding:8px 14px;border-radius:6px">第 ${i + 1} 行 ✓</span>`;
+        });
+      }
+
+      // ---------- Scene 3: playhead ----------
+      // Bars 6–9 of the screenshot, in screenshot pixels; the music plays the same figures.
+      const BARS = [
+        [316, 610],
+        [610, 855],
+        [855, 1100],
+        [1100, 1308],
+      ];
+      function scene3(t) {
+        const a = barAt(8);
+        enter($("s3-copy"), t, a + 0.1, 0.7, 40);
+        const k = outCubic(p(t, a - X, a + 0.8));
+        set($("s3-shot"), { o: k, x: (1 - k) * 80, s: 0.97 + 0.03 * k + 0.02 * p(t, a, a + 5) });
+        const n = clamp(Math.floor((t - a) / 1.25), 0, 3);
+        const f = clamp((t - barAt(8 + n)) / 1.25);
+        const [x0, x1] = BARS[n];
+        const band = $("s3-band");
+        const head = $("s3-head");
+        const on = t >= a ? 1 : 0;
+        band.style.left = `${x0}px`;
+        band.style.width = `${x1 - x0}px`;
+        band.style.opacity = on;
+        head.style.left = `${x0 + 20 + (x1 - x0 - 40) * f}px`;
+        head.style.opacity = on;
+      }
+
+      // ---------- Scene 4: views ----------
+      function scene4(t) {
+        const a = barAt(12);
+        const k1 = outCubic(p(t, a - X, a + 0.7));
+        set($("s4-staff"), { o: k1, y: (1 - k1) * 60, r: -2.4 });
+        const k2 = outCubic(p(t, a + 1.25, a + 1.95));
+        set($("s4-jianpu"), { o: k2, x: (1 - k2) * -120, y: (1 - k2) * 30, r: 1.4 });
+        const k3 = outBack(p(t, a + 2.5, a + 3.2));
+        set($("s4-phone"), { o: clamp(k3 * 2), y: (1 - k3) * 160, r: 3 });
+        enter($("s4-copy"), t, a + 0.2, 0.7, 40);
+      }
+
+      // ---------- Scene 5: tiles ----------
+      const TILES = [
+        ["20–300 BPM", "变速练习，改速不丢拍位"],
+        ["左右手分开", "单独练一只手"],
+        ["小节循环", "难点反复磨"],
+        ["半音移调", "换个调照样弹"],
+        ["节拍器", "稳住每一拍"],
+        ["和弦替换", "大三、小三、七和弦"],
+        ["演奏效果", "力度、断奏、颤音、琶音"],
+        ["大小调转换", "同主音规则改编"],
+        ["导出与打印", "MusicXML · MIDI · PDF"],
+      ];
+      const tileEls = TILES.map(([title, sub], i) => {
+        const d = document.createElement("div");
+        d.className = "tile";
+        d.style.left = `${110 + (i % 3) * 346}px`;
+        d.style.top = `${300 + Math.floor(i / 3) * 208}px`;
+        d.innerHTML = `<em>${String(i + 1).padStart(2, "0")}</em><b>${title}</b><span>${sub}</span>`;
+        $("s5-tiles").append(d);
+        return d;
+      });
+      function scene5(t) {
+        const a = barAt(16);
+        enter($("s5-copy"), t, a - 0.1, 0.6, 30);
+        const beat = 1.25 / 3;
+        tileEls.forEach((d, i) => {
+          const at = a + 0.25 + i * beat;
+          const k = outBack(p(t, at, at + 0.45));
+          set(d, { o: clamp(k * 2), y: (1 - k) * 50, s: 0.9 + 0.1 * k });
+        });
+        const e = outCubic(p(t, a + 0.5, a + 1.3));
+        set($("s5-export"), { o: e, x: (1 - e) * 80, r: 1.5 * e });
+      }
+
+      // ---------- Scene 6: end card ----------
+      function scene6(t) {
+        const a = FINAL;
+        const k = outCubic(p(t, a - 0.1, a + 0.9));
+        set($("s6-title"), { o: k, y: (1 - k) * 30, s: 0.97 + 0.03 * k });
+        enter($("s6-url"), t, a + 0.9, 0.7, 26);
+        const f = outBack(p(t, a + 1.6, a + 2.1));
+        set($("s6-fine"), { o: clamp(f * 2), s: 0.6 + 0.4 * f, r: -8 });
+        $("s6-credit").style.opacity = p(t, a + 1.4, a + 2.2);
+        // Fade to paper at the very end.
+        $("stage").style.filter = `brightness(${1 + 0.06 * p(t, DURATION - 0.6, DURATION)})`;
+      }
+
+      const DRAW = { s1: scene1, s2: scene2, s3: scene3, s4: scene4, s5: scene5, s6: scene6 };
+
+      window.seek = (t) => {
+        for (const [id, a, b] of SCENES) {
+          const node = $(id);
+          const o = p(t, a - X, a + X) * (1 - p(t, b - X, b + X));
+          node.style.opacity = id === "s1" ? 1 - p(t, b - X, b + X) : o;
+          node.style.visibility = (id === "s1" ? t < b + X : o > 0) ? "visible" : "hidden";
+          if (node.style.visibility === "visible") DRAW[id](t);
+        }
+        $("progress").style.width = `${(clamp(t / DURATION) * 1920).toFixed(1)}px`;
+      };
+      window.DURATION = DURATION;
+      window.ready = Promise.all([
+        document.fonts.load('40px "Bravura"'),
+        ...[...document.images].map((img) => img.decode().catch(() => {})),
+      ]).then(() => document.fonts.ready);
+
+      const params = new URLSearchParams(location.search);
+      if (params.has("t")) window.ready.then(() => seek(Number(params.get("t"))));
+      else if (!params.has("render"))
+        window.ready.then(() => {
+          const t0 = performance.now();
+          const loop = () => {
+            seek(((performance.now() - t0) / 1000) % (DURATION + 1));
+            requestAnimationFrame(loop);
+          };
+          loop();
+        });
+    </script>
+  </body>
+</html>
