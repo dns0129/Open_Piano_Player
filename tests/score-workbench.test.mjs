@@ -503,6 +503,84 @@ test("original-source targets honor clef changes and ottava; explicit edits reta
   assert.equal(evidence.notes[0].shift, 12);
 });
 
+test("a new line or space takes the key signature, a horizontal move keeps the written accidental, and only displayed accidentals count as printed", async () => {
+  const { applyWrittenGridPitch } = await import("../lib/recognition-edit.mjs");
+  // Treble staff with E4 on the bottom line; each staff step is 5px.
+  const staffs = [{ hand: "right", bottomY: 100, spacing: 10, bottomStep: 30 }],
+    bar = { start: 0, end: 4, left: 0, right: 400, keySignature: 1 },
+    yAt = (step, octave) =>
+      100 - (octave * 7 + "CDEFGAB".indexOf(step) - 30) * 5,
+    move = (note, step, octave, keySignature = 1, x = 0) =>
+      snapStaffTarget({
+        note,
+        bar: { ...bar, keySignature },
+        staffs,
+        notes: [note],
+        x,
+        y: yAt(step, octave),
+      }).patch,
+    fSharp = {
+      id: "f",
+      midi: 66,
+      beat: 0,
+      duration: 1,
+      hand: "right",
+      pitch: { step: "F", octave: 4, alter: 1 },
+    };
+  let patch = move(fSharp, "G", 4);
+  assert.deepEqual(
+    [patch.midi, patch.pitch.alter, patch.accidental],
+    [67, 0, undefined],
+  );
+  patch = move(fSharp, "E", 4);
+  assert.deepEqual(
+    [patch.midi, patch.pitch.step, patch.pitch.alter],
+    [64, "E", 0],
+  );
+  patch = move(
+    { ...fSharp, id: "g", midi: 67, pitch: { step: "G", octave: 4, alter: 0 } },
+    "F",
+    4,
+  );
+  assert.deepEqual([patch.midi, patch.pitch.alter], [66, 1]);
+
+  const cSharp = {
+    id: "c",
+    midi: 61,
+    beat: 0,
+    duration: 1,
+    hand: "right",
+    accidental: "sharp",
+    pitch: { step: "C", octave: 4, alter: 1 },
+  };
+  patch = move(cSharp, "C", 4, 0, 200);
+  assert.deepEqual(
+    [patch.midi, patch.beat, patch.accidental],
+    [61, 2, "sharp"],
+  );
+  patch = move(cSharp, "D", 4, 0);
+  assert.deepEqual(
+    [patch.midi, patch.pitch.alter, patch.accidental],
+    [62, 0, undefined],
+  );
+
+  const evidence = {
+    notes: [
+      { noteId: "c", staff: 1, step: "C", octave: 4, alter: 1, printed: 1 },
+    ],
+  };
+  applyWrittenGridPitch(evidence, { ...cSharp, ...patch });
+  assert.deepEqual(
+    [evidence.notes[0].step, evidence.notes[0].printed],
+    ["D", null],
+  );
+  applyWrittenGridPitch(evidence, cSharp);
+  assert.deepEqual(
+    [evidence.notes[0].step, evidence.notes[0].printed],
+    ["C", 1],
+  );
+});
+
 test("source grid preserves leading rests and has a bounded fallback when original onset coordinates are unknown", () => {
   const { score, sourceRecord } = fixture(),
     system = savedScorePages(score, sourceRecord.notation)[0].systems[0],
