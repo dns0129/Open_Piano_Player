@@ -37,6 +37,7 @@ import { renderGuitarTab, guitarFretboard } from "./guitar-notation.js";
 import "./style.css";
 import "./practice-layout.css";
 import "./guitar.css";
+import "./search-discovery.css";
 
 const startupSection =
   read("qinban-section", "piano") === "guitar" ? "guitar" : "piano";
@@ -55,7 +56,7 @@ const state = {
   cloudLoaded: false,
   cloudError: "",
   cloudBusy: false,
-  libraryTab: read(sectionKey("qinban-library-tab", startupSection), "local"),
+  libraryTab: "local",
   status: null,
   tempo: 80,
   volume: 0.65,
@@ -72,6 +73,7 @@ const state = {
   beat: 0,
   busy: false,
   abort: null,
+  searchScope: "catalogue",
   searchQuery: "",
   searchResults: [],
   searchQueryPlan: null,
@@ -120,9 +122,13 @@ function applySection(section) {
   if (changed) {
     state.rightEnabled = true;
     state.leftEnabled = true;
-    state.libraryTab = read(sectionKey("qinban-library-tab", section), "local");
+    state.libraryTab = "local";
     state.cloudLibraryDraft = "";
     state.cloudLibraryQuery = "";
+    state.discoveryLevel = "all";
+    state.discoveryOriginal = false;
+    state.discoveryLimit = 12;
+    state.searchScope = "catalogue";
   }
   try {
     localStorage.setItem("qinban-section", JSON.stringify(section));
@@ -136,7 +142,9 @@ function applySection(section) {
 }
 function switchSection(section) {
   if (section === state.section) return;
-  const view = state.view === "library" ? "library" : "practice";
+  const view = ["library", "search"].includes(state.view)
+    ? state.view
+    : "practice";
   lastSectionScores.set(state.section, state.score);
   const id =
     capabilities.mode === "hosted"
@@ -151,6 +159,7 @@ function switchSection(section) {
   setScore(score);
   state.view = view;
   render();
+  if (view === "search" && !state.cloudLoaded) void syncCloudLibrary();
 }
 const player = new PianoPlayer({
   instrument: state.instrument,
@@ -305,19 +314,19 @@ function render() {
     `<div data-section="${state.section}" class="app-shell ${state.view === "practice" ? "has-practice" : ""}">
 <header id="app-header" class="app-header"><a class="brand" href="${capabilities.mode === "hosted" ? "/" : "#"}" aria-label="琴伴首页"><span class="brand-symbol">${icon("piano")}</span><span>琴伴<small>${capabilities.mode === "hosted" ? "商业版练习室" : capabilities.mode === "local" ? "开发者模式" : "公开练习版"}</small></span></a>
 <div class="instrument-sections" role="group" aria-label="乐器分区"><button data-section="piano" aria-pressed="${state.section === "piano"}" class="${state.section === "piano" ? "selected" : ""}">${icon("piano")}钢琴</button><button data-section="guitar" aria-pressed="${state.section === "guitar"}" class="${state.section === "guitar" ? "selected" : ""}">${icon("guitar")}吉他</button></div>
-<nav class="main-nav" aria-label="主导航"><button data-nav="practice" class="nav-tab ${state.view === "practice" ? "active" : ""}">${icon("music-2")}<span>练习室</span></button><button data-nav="library" class="nav-tab ${state.view === "library" ? "active" : ""}">${icon("book-open")}<span>我的曲库</span><small>${availableScores().length}</small></button>${!capabilities.coreOnly && state.section === "piano" ? `<button data-nav="search" class="nav-tab ${state.view === "search" ? "active" : ""}">${icon("search")}<span>AI 找谱</span><small class="online-badge">联网</small></button><button data-nav="audio" class="nav-tab ${state.view === "audio" ? "active" : ""}">${icon("audio-lines")}<span>音频转谱</span></button>` : ""}</nav>
+<nav class="main-nav" aria-label="主导航"><button data-nav="practice" class="nav-tab ${state.view === "practice" ? "active" : ""}">${icon("music-2")}<span>练习室</span></button><button data-nav="library" class="nav-tab ${state.view === "library" ? "active" : ""}">${icon("book-open")}<span>我的曲库</span><small>${availableScores().length}</small></button><button data-nav="search" class="nav-tab ${state.view === "search" ? "active" : ""}">${icon("search")}<span>搜索</span></button>${!capabilities.coreOnly && state.section === "piano" ? `<button data-nav="audio" class="nav-tab ${state.view === "audio" ? "active" : ""}">${icon("audio-lines")}<span>音频转谱</span></button>` : ""}</nav>
 <div class="header-actions">${capabilities.mode === "hosted" ? '<a class="button quiet" href="/">我的曲库</a><a class="button quiet" href="/recognition.html">上传识谱</a><a class="button quiet" href="/account.html">账号</a>' : ""}${capabilities.recognition && state.section === "piano" ? '<button class="button quiet" data-fullscore-jobs>识谱任务</button>' : ""}<button class="button quiet" data-upload aria-label="导入乐谱">${icon("upload")}<span>${capabilities.mode === "hosted" ? "导入数字谱" : "导入乐谱"}</span></button>${capabilities.recognition ? `<button class="icon-button" data-settings aria-label="AI 与设置" title="AI 与设置">${icon("sliders-horizontal")}</button>` : ""}</div></header>
 <main class="view-${state.view}">${state.view === "library" ? libraryView() : state.view === "search" ? searchView() : state.view === "audio" ? audioView() : practiceView()}</main>
 <nav class="mobile-nav" aria-label="移动端主导航">${[
       ["practice", "music-2", "练习室"],
       ["library", "book-open", "曲库"],
-      ["search", "search", "找谱"],
+      ["search", "search", "搜索"],
       ["audio", "audio-lines", "转谱"],
     ]
       .filter(
         ([view]) =>
           (!capabilities.coreOnly && state.section === "piano") ||
-          ["practice", "library"].includes(view),
+          ["practice", "library", "search"].includes(view),
       )
       .map(
         ([view, symbol, label]) =>
@@ -397,8 +406,13 @@ function bindCommon() {
     (b) =>
       (b.onclick = () => {
         player.pause();
+        state.searchAbort?.abort();
         state.view = b.dataset.nav;
+        if (state.view === "library") state.libraryTab = "local";
+        if (state.view === "search") state.searchScope = "catalogue";
         render();
+        if (state.view === "search" && !state.cloudLoaded)
+          void syncCloudLibrary();
         if (state.view === "library") {
           void syncLocalLibrary().catch(() => {});
           if (state.libraryTab === "cloud") void syncCloudLibrary();
@@ -859,6 +873,7 @@ const {
   toast,
   download,
   modal,
+  openOnlineSearch: (query) => openSearch(query),
 });
 const { isAudioFile, audioView, receiveAudio, bindAudio } =
   createAudioWorkspace({
@@ -871,7 +886,11 @@ const { isAudioFile, audioView, receiveAudio, bindAudio } =
     download,
     keyName,
   });
-const { openSearch, searchView, bindSearch } = createSearchWorkspace({
+const {
+  openSearch,
+  searchView: onlineSearchView,
+  bindSearch: bindOnlineSearch,
+} = createSearchWorkspace({
   state,
   player,
   render,
@@ -891,6 +910,20 @@ const { openSearch, searchView, bindSearch } = createSearchWorkspace({
   safeLink,
   receiveFile: (...args) => importFlows.receiveFile(...args),
 });
+function searchView() {
+  return state.searchScope === "online" ? onlineSearchView() : libraryView();
+}
+function bindSearch() {
+  if (state.searchScope !== "online") return bindLibrary();
+  bindOnlineSearch();
+  $("[data-back-discovery]")?.addEventListener("click", () => {
+    state.searchAbort?.abort();
+    state.searchScope = "catalogue";
+    state.cloudLibraryDraft = state.cloudLibraryQuery = state.searchQuery;
+    render();
+    if (!state.cloudLoaded) void syncCloudLibrary();
+  });
+}
 const importFlows = createImportFlows({
   state,
   capabilities,

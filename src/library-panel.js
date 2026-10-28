@@ -3,7 +3,8 @@ import { guitarStarterScore } from "../lib/guitar.mjs";
 import { $, $$, esc, icon } from "./ui.js";
 import { assetURL } from "../lib/asset-url.mjs";
 import { tonalityLabel } from "../lib/score-arrangement.mjs";
-import { searchCloudScores } from "../lib/library-search.mjs";
+import { scoreLevelLabel } from "../lib/library-search.mjs";
+import { createSearchDiscovery } from "./search-discovery.js";
 
 export function createLibraryPanel({
   state,
@@ -17,10 +18,19 @@ export function createLibraryPanel({
   toast,
   download,
   modal,
+  openOnlineSearch,
 }) {
   const HOSTED = capabilities.mode === "hosted";
   const STATIC_SITE = capabilities.mode !== "local",
     library = [starterScore];
+  const discovery = createSearchDiscovery({
+    state,
+    capabilities,
+    render,
+    rows: cloudRows,
+    syncCloudLibrary,
+    openOnlineSearch,
+  });
   const availableScores = () =>
     client.scores.filter(
       (score) => scoreSection(score) === (state.section || "piano"),
@@ -84,7 +94,7 @@ export function createLibraryPanel({
     if (state.cloudBusy) return;
     state.cloudBusy = true;
     state.cloudError = "";
-    if (state.view === "library") render();
+    if (["library", "search"].includes(state.view)) render();
     try {
       const data = STATIC_SITE
         ? await cloudJSON(assetURL("/cloud-library/index.json"))
@@ -97,7 +107,7 @@ export function createLibraryPanel({
       state.cloudError = e.message;
     } finally {
       state.cloudBusy = false;
-      if (state.view === "library") render();
+      if (["library", "search"].includes(state.view)) render();
     }
   }
   async function cloudAction(action) {
@@ -110,25 +120,20 @@ export function createLibraryPanel({
       toast(e.message, true);
     } finally {
       state.cloudBusy = false;
-      if (state.view === "library") render();
+      if (["library", "search"].includes(state.view)) render();
     }
   }
   function libraryView() {
-    const cloud = state.libraryTab === "cloud",
-      scores = cloud
-        ? searchCloudScores(
-            state.cloudScores.filter(
-              (score) => scoreSection(score) === (state.section || "piano"),
-            ),
-            state.cloudLibraryQuery,
-          )
-        : availableScores();
-    return `<section class="content-page"><div class="page-heading"><div><span class="eyebrow">YOUR MUSIC LIBRARY</span><h1>${state.section === "guitar" ? "吉他" : "钢琴"}${cloud ? (HOSTED ? "公开曲库" : "云端曲库") : HOSTED ? "账号曲库" : "本地曲库"}</h1><p>${HOSTED ? (cloud ? "选择公开曲目，保存到自己的账号后练习。" : "乐谱私有保存到当前账号，回收站和历史可在账号页面管理。") : cloud ? "下载到本地后即可练习；本地删除不影响云端。" : "下载和导入的曲谱按乐器分区保存，可随时删除。"}</p></div>${state.section === "guitar" ? `<button class="button primary" data-guitar-example>${icon("guitar")}打开吉他示例</button><button class="button secondary" data-upload>导入吉他谱</button>` : capabilities.scoreSearch ? `<button class="button primary" data-ai>${icon("search")}按歌名找谱</button>` : `<button class="button primary" data-upload>${icon("upload")}导入数字谱</button>`}</div>
-  ${!cloud ? `<div class="library-backup-actions"><button class="button secondary" data-library-backup>备份完整曲库</button><button class="button secondary" data-library-restore>恢复曲库</button></div><button class="continue-practice" data-nav="practice"><span class="continue-icon">${icon("file-music")}</span><span><small>继续练习</small><strong>${esc(state.score.title)}</strong><span>${esc(state.score.composer || "钢琴练习曲")} · ${state.tempo} BPM</span></span><span class="continue-play">${icon("play")}</span></button>` : ""}
-  <div class="cloud-library-tabs"><button class="button ${!cloud ? "primary" : "secondary"}" data-library-tab="local">${HOSTED ? "账号曲库" : "本地曲库"}</button><button class="button ${cloud ? "primary" : "secondary"}" data-library-tab="cloud">${HOSTED ? "公开曲库" : "云端曲库"}</button>${cloud && state.section === "guitar" ? '<button class="button secondary" data-guitar-beginners>吉他入门</button>' : ""}${cloud ? `<button class="button quiet" data-cloud-refresh ${state.cloudBusy ? "disabled" : ""}>${state.cloudBusy ? "正在处理…" : "刷新云端"}</button>` : ""}</div>
-  ${cloud && state.cloudError ? `<p class="cloud-library-error" role="alert">${esc(state.cloudError)}</p>` : ""}
-  ${!cloud && client.warnings.length ? `<p class="cloud-library-error" role="alert">${client.warnings.map(esc).join(" ")}</p>` : ""}
-  ${cloud ? `<form id="cloud-library-search" class="library-filter cloud-library-search" role="search"><label class="search-input">${icon("search")}<input id="library-query" aria-label="搜索云端曲库" placeholder="${state.section === "guitar" ? "输入曲名，或点击“吉他入门”" : "输入曲名、作曲家，或“初级”"}" value="${esc(state.cloudLibraryDraft || "")}" maxlength="100"></label><button class="button primary" type="submit">搜索</button></form><p class="cloud-search-summary" id="cloud-search-summary" role="status">${!state.cloudLibraryQuery ? "输入关键词并搜索后显示曲目。" : !state.cloudLoaded && !state.cloudError ? "正在读取云端曲库…" : `找到 ${scores.length} 份乐谱`}</p>` : `<div class="library-filter search-input">${icon("search")}<input id="library-query" aria-label="搜索曲库" placeholder="搜索歌名、作曲家…"><span>${scores.length} 份乐谱</span></div>`}<div class="${cloud ? "cloud-score-list" : "library-grid"}" id="library-grid">${cloud ? cloudRows(scores) : scoreCards(scores)}</div>${!cloud && !scores.length ? '<p class="cloud-library-empty">本地暂无曲目，前往云端曲库下载，或导入自己的乐谱。</p>' : cloud && state.cloudLibraryQuery && state.cloudLoaded && !scores.length ? '<p class="cloud-library-empty" id="cloud-search-empty">没有匹配曲目，请换一个关键词。</p>' : ""}</section>`;
+    if (state.view === "search" || state.libraryTab === "cloud")
+      return discovery.view();
+    const scores = availableScores();
+    return `<section class="content-page"><div class="page-heading"><div><span class="eyebrow">YOUR MUSIC LIBRARY</span><h1>${state.section === "guitar" ? "吉他" : "钢琴"}${HOSTED ? "账号曲库" : "本地曲库"}</h1><p>${HOSTED ? "乐谱私有保存到当前账号，回收站和历史可在账号页面管理。" : "下载和导入的曲谱按乐器分区保存，可随时删除。"}</p></div><button class="button primary" data-nav="search">${icon("search")}搜索乐谱</button></div>
+      <div class="library-backup-actions"><button class="button secondary" data-library-backup>备份完整曲库</button><button class="button secondary" data-library-restore>恢复曲库</button></div>
+      <button class="continue-practice" data-nav="practice"><span class="continue-icon">${icon("file-music")}</span><span><small>继续练习</small><strong>${esc(state.score.title)}</strong><span>${esc(state.score.composer || "练习曲")} · ${state.tempo} BPM</span></span><span class="continue-play">${icon("play")}</span></button>
+      ${state.section === "guitar" ? `<div class="cloud-library-tabs"><button class="button secondary" data-guitar-example>${icon("guitar")}打开吉他示例</button><button class="button secondary" data-upload>导入吉他谱</button></div>` : ""}
+      ${client.warnings.length ? `<p class="cloud-library-error" role="alert">${client.warnings.map(esc).join(" ")}</p>` : ""}
+      <div class="library-filter search-input">${icon("search")}<input id="library-query" aria-label="搜索曲库" placeholder="搜索歌名、作曲家…"><span>${scores.length} 份乐谱</span></div><div class="library-grid" id="library-grid">${scoreCards(scores)}</div>
+      ${!scores.length ? '<p class="cloud-library-empty">这里还没有乐谱。点击「搜索乐谱」下载，或导入自己的乐谱。</p>' : ""}</section>`;
   }
   function cloudRows(scores) {
     const localIds = new Set(availableScores().map((s) => s.id));
@@ -144,8 +149,8 @@ export function createLibraryPanel({
     };
     return scores
       .map(
-        (s) =>
-          `<article class="cloud-score-row" data-card="${esc(s.id)}"><div class="cloud-score-copy"><h3>${esc(s.title)}</h3><p>${esc(s.composer)} · ${s.notes} 音符 · ${s.tempo} BPM${s.timeSignature ? " · " + esc(s.timeSignature.join("/")) : ""}</p><small>${esc(s.sourceLabel || (s.reviewApproved ? "已审核 · AI逐谱校对" : s.reviewRequired ? "待人工校对" : s.hasOriginal ? "含原谱图片" : "数字乐谱"))}${sourceLink(s.sourceUrl)}</small></div><div class="cloud-card-actions"><button class="button primary" data-cloud-download="${esc(s.id)}" ${state.cloudBusy ? "disabled" : ""}>${icon("download")}${localIds.has(s.id) ? "重新下载" : HOSTED ? "保存到账号" : "下载到本地"}</button>${capabilities.publish ? `<button class="button quiet" data-cloud-delete="${esc(s.id)}" ${state.cloudBusy ? "disabled" : ""}>删除云端</button>` : ""}</div></article>`,
+        (s, i) =>
+          `<article class="cloud-score-row" data-card="${esc(s.id)}"><span class="discovery-score-number">${String(i + 1).padStart(2, "0")}</span><div class="cloud-score-copy"><h3>${esc(s.title)}</h3><p>${esc(s.composer || "作曲者未标注")} · ${scoreLevelLabel(s)} · ${s.tempo > 0 ? s.tempo + " BPM" : "速度未标注"}${s.timeSignature ? " · " + esc(s.timeSignature.join("/")) : ""}</p><small>${esc(s.sourceLabel || (s.reviewApproved ? "已审核 · AI逐谱校对" : s.reviewRequired ? "待人工校对" : s.hasOriginal ? "含原谱图片" : "数字乐谱"))}${sourceLink(s.sourceUrl)}</small></div><div class="cloud-card-actions">${localIds.has(s.id) ? `<button class="button primary" data-cloud-open="${esc(s.id)}">${icon("play")}打开练习</button>` : ""}<button class="button ${localIds.has(s.id) ? "quiet" : "primary"}" data-cloud-download="${esc(s.id)}" ${state.cloudBusy ? "disabled" : ""}>${icon("download")}${localIds.has(s.id) ? "重新下载" : HOSTED ? "保存到账号" : "下载到本地"}</button>${capabilities.publish ? `<button class="button quiet" data-cloud-delete="${esc(s.id)}" ${state.cloudBusy ? "disabled" : ""}>删除云端</button>` : ""}</div></article>`,
       )
       .join("");
   }
@@ -182,6 +187,15 @@ export function createLibraryPanel({
       .join("");
   }
   function bindLibrary() {
+    $$("[data-cloud-open]").forEach(
+      (button) =>
+        (button.onclick = () => {
+          const score = availableScores().find(
+            (item) => item.id === button.dataset.cloudOpen,
+          );
+          if (score) setScore(score);
+        }),
+    );
     $("[data-guitar-example]")?.addEventListener("click", () =>
       setScore(guitarStarterScore),
     );
@@ -204,14 +218,8 @@ export function createLibraryPanel({
           if (state.libraryTab === "cloud") void syncCloudLibrary();
         }),
     );
-    $("[data-guitar-beginners]")?.addEventListener("click", () => {
-      state.cloudLibraryDraft = state.cloudLibraryQuery = "吉他入门";
-      render();
-      if (!state.cloudLoaded && !state.cloudBusy) void syncCloudLibrary();
-    });
-    $("[data-cloud-refresh]")?.addEventListener(
-      "click",
-      () => void syncCloudLibrary(),
+    $$("[data-cloud-refresh]").forEach(
+      (button) => (button.onclick = () => void syncCloudLibrary()),
     );
     $$("[data-cloud-download]").forEach(
       (b) =>
@@ -416,24 +424,8 @@ export function createLibraryPanel({
           }
         }),
     );
-    if (state.libraryTab === "cloud") {
-      $("#cloud-library-search").onsubmit = (event) => {
-        event.preventDefault();
-        state.cloudLibraryDraft = $("#library-query").value;
-        state.cloudLibraryQuery = state.cloudLibraryDraft.trim();
-        render();
-        if (!state.cloudLoaded && !state.cloudBusy) void syncCloudLibrary();
-      };
-      $("#library-query").oninput = (event) => {
-        state.cloudLibraryDraft = event.target.value;
-        if (!event.target.value.trim()) {
-          state.cloudLibraryQuery = "";
-          $("#library-grid").innerHTML = "";
-          $("#cloud-search-summary").textContent =
-            "输入关键词并搜索后显示曲目。";
-          $("#cloud-search-empty")?.remove();
-        }
-      };
+    if (state.view === "search" || state.libraryTab === "cloud") {
+      discovery.bind();
       return;
     }
     $("#library-query").oninput = (e) => {

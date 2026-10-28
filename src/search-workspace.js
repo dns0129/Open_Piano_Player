@@ -1,6 +1,7 @@
 import { preserveOriginalFile } from "./library.js";
 import { $, $$, esc, icon, refreshIcons } from "./ui.js";
 import { mountSourceBrowser } from "./source-browser.js";
+import { rememberSearch } from "../lib/library-search.mjs";
 import { STATIC_NOTICE } from "./capabilities.js";
 export function createSearchWorkspace({
   state,
@@ -24,16 +25,25 @@ export function createSearchWorkspace({
 }) {
   function openSearch(query = "") {
     player.pause();
+    state.searchAbort?.abort();
+    state.searchAbort = null;
+    state.searching = false;
     state.view = "search";
-    if (query) state.searchQuery = query;
+    state.searchScope = "online";
+    state.searchQuery = query;
+    if (!query) {
+      state.searchNetwork = null;
+      state.searchError = "";
+      state.searchResults = [];
+    }
     render();
     $("#song-query")?.focus();
     if (query) searchOnline();
   }
   function searchView() {
     if (!capabilities.scoreSearch)
-      return `<section class="content-page search-page"><div class="page-heading"><div><span class="eyebrow">FIND THE ORIGINAL SCORE</span><h1>联网找谱需要本机版</h1><p>${STATIC_NOTICE}</p></div></div><button class="button primary" data-upload>${icon("file-music")}导入数字乐谱</button></section>`;
-    return `<section class="content-page search-page"><div class="page-heading"><div><span class="eyebrow">FIND THE ORIGINAL SCORE</span><h1>输入歌名，找到它的乐谱。</h1><p>联网查找原曲五线谱、简谱和钢琴谱，选择版本后导入练习室。</p></div><span class="search-live-tag"><span class="status-dot"></span>实时互联网检索</span></div><form id="song-search-form" class="song-search-form"><div class="song-search-box">${icon("search")}<input id="song-query" aria-label="歌曲名称" placeholder="输入任意歌名，可加歌手，例如：晴天 周杰伦" maxlength="100" value="${esc(state.searchQuery)}" required><button class="button primary" type="submit" ${state.searching ? "disabled" : ""}>${icon(state.searching ? "loader-circle" : "search", state.searching ? "spin" : "")}${state.searching ? "正在搜索" : "搜索乐谱"}</button></div><div class="search-examples"><span>试试</span>${["野蜂飞舞", "青花瓷", "晴天 周杰伦", "致爱丽丝", "卡农"].map((q) => `<button type="button" data-example="${q}">${q}</button>`).join("")}<span class="search-scope">搜索真实谱源 · 保留原始来源</span></div></form><div id="online-results">${onlineResultsMarkup()}</div></section>`;
+      return `<section class="content-page search-page"><button class="button quiet search-back" data-back-discovery>${icon("arrow-left")}曲库搜索与榜单</button><div class="page-heading"><div><span class="eyebrow">FIND THE ORIGINAL SCORE</span><h1>联网找谱需要本机版</h1><p>${STATIC_NOTICE}</p></div></div><button class="button primary" data-upload>${icon("file-music")}导入数字乐谱</button></section>`;
+    return `<section class="content-page search-page"><button class="button quiet search-back" data-back-discovery>${icon("arrow-left")}曲库搜索与榜单</button><div class="page-heading"><div><span class="eyebrow">FIND THE ORIGINAL SCORE</span><h1>全网找谱</h1><p>联网查找原曲五线谱、简谱和钢琴谱，选择版本后导入练习室。</p></div><span class="search-live-tag"><span class="status-dot"></span>实时互联网检索</span></div><form id="song-search-form" class="song-search-form"><div class="song-search-box">${icon("search")}<input id="song-query" aria-label="歌曲名称" placeholder="输入任意歌名，可加歌手，例如：晴天 周杰伦" maxlength="100" value="${esc(state.searchQuery)}" required><button class="button primary" type="submit" ${state.searching ? "disabled" : ""}>${icon(state.searching ? "loader-circle" : "search", state.searching ? "spin" : "")}${state.searching ? "正在搜索" : "搜索乐谱"}</button></div><div class="search-examples"><span>试试</span>${["野蜂飞舞", "青花瓷", "晴天 周杰伦", "致爱丽丝", "卡农"].map((q) => `<button type="button" data-example="${q}">${q}</button>`).join("")}<span class="search-scope">搜索真实谱源 · 保留原始来源</span></div></form><div id="online-results">${onlineResultsMarkup()}</div></section>`;
   }
   function formatLabel(format) {
     return (
@@ -246,6 +256,9 @@ export function createSearchWorkspace({
     if (!capabilities.scoreSearch) return;
     const query = state.searchQuery.trim();
     if (!query) return;
+    try {
+      rememberSearch(globalThis.localStorage, state.section, query);
+    } catch {}
     state.searchAbort?.abort();
     const abort = new AbortController();
     state.searchAbort = abort;
@@ -260,11 +273,11 @@ export function createSearchWorkspace({
     state.searchProviders = [];
     state.searchSourcesCount = 0;
     state.searchLinks = [];
-    if (state.view === "search") render();
+    if (state.view === "search" && state.searchScope === "online") render();
     try {
       const data = await api(
         "/api/search?q=" + encodeURIComponent(query),
-        null,
+        undefined,
         abort.signal,
       );
       if (abort.signal.aborted) return;
@@ -289,7 +302,7 @@ export function createSearchWorkspace({
     } finally {
       if (state.searchAbort === abort) {
         state.searching = false;
-        if (state.view === "search") render();
+        if (state.view === "search" && state.searchScope === "online") render();
       }
     }
   }
