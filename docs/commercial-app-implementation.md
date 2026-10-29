@@ -126,3 +126,18 @@ node --env-file=/绝对路径/商业版私有配置.env scripts/accounts.mjs sta
 正式模式还需配置原账号环境变量：HTTPS origin、账号 secret、分别受限的身份/曲库 PostgreSQL 连接、SMTP 与发件人。数据库和私有文件必须使用持久卷并做一致备份。Node 监听回环，由同主机 HTTPS 反向代理转发正确 Host 与 `X-Forwarded-Proto: https`。运行角色不能是表所有者、超级用户或 RLS bypass。
 
 首版按一个应用实例运行；队列与预算锁存数据库，生产多实例仍需要实际 PostgreSQL、共享文件与故障演练验证。本次首版验收不包含生产接入。后续已实现按月订阅与扫码支付适配，详见商业版订阅说明；真实收款联调、自动代扣续费、公开分享和外部对象存储尚未完成，不能从本机验收推断。
+
+## 失败日志
+
+商业版把需要运营排查的失败写到服务进程的标准错误输出，每行一个 JSON 对象（`time`、`level`、`event`、相关 ID 与精简后的 `error`）。日志不包含请求体、验证码、令牌、密码或支付凭据；`QINBAN_LOG=silent` 可关闭（测试默认关闭）。当前事件：
+
+| 事件 | 级别 | 含义 |
+| --- | --- | --- |
+| `http.internal-error` | error | 接口返回 500；`requestId` 与返回给用户的一致 |
+| `invite-credits.sync-failed` | warn | 邀请奖励未能同步到识谱额度，下次请求会重试 |
+| `auth.code-delivery-failed` | error | 验证码邮件发送失败，该次验证码已作废 |
+| `payment.checkout-failed` / `payment.query-failed` | warn | 支付渠道下单或查单失败 |
+| `payment.notification-rejected` | warn | 支付回调验签失败：配置错误或伪造通知 |
+| `maintenance.cleanup-failed` | error | 每小时的过期数据清理失败 |
+
+账号与支付代码（`lib/accounts/` 中除识谱发布证据绑定的 `recognition-*` 外的文件和 `lib/http-kit.mjs`）带 `// @ts-check`，由 `tsconfig.accounts.json` 检查：开启空值等严格检查，但允许未注解的参数。`npm run typecheck` 同时运行两套配置。

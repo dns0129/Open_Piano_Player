@@ -197,7 +197,7 @@ export async function encodeLibraryResources(records: LibraryRecord[]) {
   async function pack(
     record: LibraryRecord | Omit<LibraryRecord, "history">,
   ): Promise<Record<string, unknown>> {
-    const assets = [];
+    const assets: Record<string, unknown>[] = [];
     for (const a of record.assets) {
       const { data, ...info } = a;
       assets.push({ ...info, resource: await resource(data) });
