@@ -1,10 +1,10 @@
 // Offline verification of actual imported scores; makes no model/network calls.
 import {readFile,writeFile}from'node:fs/promises';
 import {JSDOM}from'jsdom';import{Element}from'vexflow';
-import{fontsReady,renderNotation}from'../src/notation.js';
-import{PianoPlayer}from'../src/audio.js';
-import{exportMusicXML}from'../lib/exporters.mjs';import{importMusicXML}from'../lib/importers.mjs';
-import{validateScore}from'../lib/score.mjs';
+import{fontsReady,renderNotation}from'../../src/notation.js';
+import{PianoPlayer}from'../../src/audio.js';
+import{exportMusicXML}from'../../lib/exporters.mjs';import{importMusicXML}from'../../lib/importers.mjs';
+import{validateScore}from'../../lib/score.mjs';
 const root=process.argv[2]||'.local/batch-five-high-accidentals-v2';
 const keys=['merry','eutopia-staff','sudi','ifyou','golden'];
 const reports=[];await fontsReady;

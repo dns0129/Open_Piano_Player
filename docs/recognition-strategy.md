@@ -2,7 +2,7 @@
 
 <!-- recognition-current {"release":"recognition-p2-v1-20261028","prompt":"piano-written-evidence-v8-20261028","accidentals":"accidentals-v2-20261018","wire":"compact-v5","cache":"reviewed-source-v4-p1","geometry":"geometry-native-pdf-v1","corpus":"recognition-corpus-v1-20261028","skill":"1.3.0","nodeMinimum":"22.19.0","nodePreferred":"24"} -->
 
-2026-10-28 P2 工程治理，承接 P1。当前整体提示词 `piano-written-evidence-v8-20261028`，升降号规则 `accidentals-v2-20261018`，传输协议 `compact-v5`，缓存 `reviewed-source-v4-p1`，Skill `1.3.0`。组件版本分别记录，不要求字符串相同。详见 [P1 实施与验证](recognition-p1-implementation-20261028.md)；P0 交付记录保留在 [P0 实施记录](recognition-p0-implementation-20261028.md)。
+2026-10-28 P2 工程治理，承接 P1。当前整体提示词 `piano-written-evidence-v8-20261028`，升降号规则 `accidentals-v2-20261018`，传输协议 `compact-v5`，缓存 `reviewed-source-v4-p1`，Skill `1.3.0`。组件版本分别记录，不要求字符串相同。详见 [P1 实施与验证](reports/recognition-p1-implementation-20261028.md)；P0 交付记录保留在 [P0 实施记录](reports/recognition-p0-implementation-20261028.md)。
 
 ## 统一读取与验收
 
@@ -65,7 +65,7 @@ node scripts/benchmark-recognition-p1.mjs BENCHMARK_ROOT NEW_OUTPUT --with-conte
 
 `npm run check` 同时执行 `recognition:release`，核对当前识别实现、模型输入文本/图像预处理指纹、固定来源/参考范围及已通过的回归证据。修改实现后重新回归；模型输入变化不能用旧响应的离线重放证明新视觉效果。回归集版本绑定来源、事件单位、参考层级、对齐方式、分母和运行范围，不能缩小分母后继续沿用同一版本。
 
-固定语料和命令见 [P2 实施记录](recognition-p2-implementation-20261028.md) 与 [语料登记](recognition-regression-corpus.json)。prepare/evaluate 均离线，既有失败、不完整和未知用量保留。真实读取须另选 `live` 并声明总调用预算；完整固定 PDF 范围目前需要至少 16 次预算，每行一次，不自动修复或复读。原图和参考不随源码发布，只有汇总、指纹与门禁结论进入 Git。
+固定语料和命令见 [P2 实施记录](reports/recognition-p2-implementation-20261028.md) 与 [语料登记](recognition-regression-corpus.json)。prepare/evaluate 均离线，既有失败、不完整和未知用量保留。真实读取须另选 `live` 并声明总调用预算；完整固定 PDF 范围目前需要至少 16 次预算，每行一次，不自动修复或复读。原图和参考不随源码发布，只有汇总、指纹与门禁结论进入 Git。
 
 DeepSeek 在界面及策略中明确为实验 / 第二意见。当前 high 思考模式使用官方支持的 auto 工具选择；没有工具调用但返回单个完整 JSON 时，经同一提交校验接收，不为此额外发起请求；纯说明、截断、多工具调用或不完整 JSON 仍不能作为完成结果。此兼容处理没有被证明能提高真实读谱准确率。
 

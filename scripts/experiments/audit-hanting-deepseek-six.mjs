@@ -1,5 +1,5 @@
 import {readFile,writeFile,readdir} from 'node:fs/promises';
-import {compareRegionReadings} from '../lib/recognition-comparison.mjs';
+import {compareRegionReadings} from '../../lib/recognition-comparison.mjs';
 const root='.local/hanting-deepseek-high-six-pages-20261018';
 const ref=JSON.parse(await readFile('.local/full-score-jobs/feb36563796cd9a9b7f118a809ad559fe4dc/job.json'));
 const key=n=>[n.midi,n.hand,Math.round(n.beat*1e4),Math.round(n.duration*1e4)].join('|');

@@ -3,11 +3,11 @@ import {readFile,writeFile,mkdir,rename} from 'node:fs/promises';
 import {join,resolve} from 'node:path';
 import {createHash,randomUUID} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
-import {createFullScoreJobStore} from '../lib/full-score-jobs.mjs';
-import {recognitionCacheKey} from '../lib/recognition-cache.mjs';
-import {SCORE_RECOGNITION} from '../lib/recognition-policy.mjs';
-import {generateScoreRegion} from '../lib/ai.mjs';
-import {assertNewReading,withFreshTempoContext} from './reread-five-high.mjs';
+import {createFullScoreJobStore} from '../../lib/full-score-jobs.mjs';
+import {recognitionCacheKey} from '../../lib/recognition-cache.mjs';
+import {SCORE_RECOGNITION} from '../../lib/recognition-policy.mjs';
+import {generateScoreRegion} from '../../lib/ai.mjs';
+import {assertNewReading,withFreshTempoContext} from '../reread-five-high.mjs';
 
 const root=resolve(process.argv[2]||'.local/batch-five-high-accidentals-v2');
 const read=async p=>JSON.parse(await readFile(p,'utf8'));

@@ -206,6 +206,6 @@ App 紧凑协议已有休止字段，Skill 主要以音符间隙表达休止。�
 - [识谱模型与规则检查及提升报告](recognition-improvement-report-20261028.md)：App 调用、协议和错误恢复建议。
 - [密集复杂 PDF 识谱评测](dense-pdf-benchmark-20261021.md)：独立参考、失败行、未知速度和 B♯ 错误。
 - [手机实拍钢琴谱识别测试](phone-score-accuracy-20261021.md)：整照与单系统补测的准确范围和参考限制。
-- [App 紧凑识谱协议](../lib/recognition-wire.mjs)：当前 MIDI、休止、声部、速度和提交错误处理。
-- [Skill 工作流](../skills/piano-score-to-musicxml/SKILL.md)与[转录校验器](../skills/piano-score-to-musicxml/scripts/score_pipeline.mjs)：原谱拼写、复核标记、覆盖和导出。
+- [App 紧凑识谱协议](../../lib/recognition-wire.mjs)：当前 MIDI、休止、声部、速度和提交错误处理。
+- [Skill 工作流](../../skills/piano-score-to-musicxml/SKILL.md)与[转录校验器](../../skills/piano-score-to-musicxml/scripts/score_pipeline.mjs)：原谱拼写、复核标记、覆盖和导出。
 - 本聊天此前的 Skill 提升报告及边界验证：作为已观察到的校验缺口依据；正式实现时将其固化为仓库回归测试。

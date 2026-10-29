@@ -1,5 +1,5 @@
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
-import {createFullScoreJobStore} from '../lib/full-score-jobs.mjs';
+import {createFullScoreJobStore} from '../../lib/full-score-jobs.mjs';
 const root='.local/recognition-optimization-20261017';await mkdir(root,{recursive:true});
 const sourceId='feb36563796cd9a9b7f118a809ad559fe4dc',source=JSON.parse(await readFile('.local/full-score-jobs/'+sourceId+'/job.json'));
 const graceOnly=process.argv.includes('--graces'),label=graceOnly?'live-graces':'live';

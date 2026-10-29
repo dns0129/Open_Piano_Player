@@ -1,5 +1,5 @@
 import {mkdir,writeFile,access} from 'node:fs/promises';
-import {createNeteaseScoreProvider} from '../lib/netease-scores.mjs';
+import {createNeteaseScoreProvider} from '../../lib/netease-scores.mjs';
 const root='.local/batch-five-20261018';await mkdir(root,{recursive:true});
 const entries=[['merry','Merry Christmas Mr. Lawrence','https://163cn.tv/biSpHIi7'],['eutopia','Eutopia','https://163cn.tv/biSp0tUq'],['sudi','天龙八部之宿敌','https://163cn.tv/biSqvgtL'],['ifyou','IF YOU','https://163cn.tv/biSp8xiy'],['golden','golden hour','https://163cn.tv/biSqltsE']];
 await Promise.all(entries.map(async([key,title,url])=>{const provider=createNeteaseScoreProvider(),scope='batch-five-'+key;try{

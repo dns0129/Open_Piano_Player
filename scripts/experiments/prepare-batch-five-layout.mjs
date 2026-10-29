@@ -1,6 +1,6 @@
 import {readFile,writeFile} from 'node:fs/promises';
-import {detectScoreSystems} from '../lib/score-image-layout.mjs';
-import {completePianoSystemRects} from '../lib/full-score-review.mjs';
+import {detectScoreSystems} from '../../lib/score-image-layout.mjs';
+import {completePianoSystemRects} from '../../lib/full-score-review.mjs';
 const root='.local/batch-five-20261018',pages=JSON.parse(await readFile(root+'/pixels.json'));
 for(const p of pages){
  const image={width:p.width,height:p.height,data:new Uint8Array(await readFile(p.gray))};

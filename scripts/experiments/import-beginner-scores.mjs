@@ -3,15 +3,15 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import MidiPackage from "@tonejs/midi/build/Midi.js";
-import { importMidi } from "../lib/importers.mjs";
-import { readScoreDocument, toPracticeScore } from "../lib/score-document.ts";
+import { importMidi } from "../../lib/importers.mjs";
+import { readScoreDocument, toPracticeScore } from "../../lib/score-document.ts";
 import {
   validateCloudBundle,
   cloudEntry,
-} from "../lib/cloud-library-format.mjs";
-import { addScore } from "../lib/score-repository.mjs";
-import { createLibraryStore } from "../lib/library-store.mjs";
-import { KEY_NAMES } from "../lib/score.mjs";
+} from "../../lib/cloud-library-format.mjs";
+import { addScore } from "../../lib/score-repository.mjs";
+import { createLibraryStore } from "../../lib/library-store.mjs";
+import { KEY_NAMES } from "../../lib/score.mjs";
 
 const manifestOption = process.argv.indexOf("--manifest");
 if (manifestOption >= 0 && !process.argv[manifestOption + 1])

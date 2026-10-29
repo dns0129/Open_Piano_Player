@@ -65,4 +65,4 @@
 
 运行 scripts/run-phone-score-benchmark.mjs 前在私有输出目录冻结 protocol.json，模型输出、原图、参考和 usage 保存在 .local/phone-score-accuracy-20261021-network/。脚本不读取 MIDI、不自动重试、不发布曲谱；进程中断后续跑的未知尝试另列，遇限流或认证问题停止派发。scripts/report-phone-score-benchmark.mjs 生成本报告及同名 JSON。
 
-来源索引见 [手机照片清单](phone-score-samples-20261021.json)。原图及逐音转录不随报告公开，模型输出和结构检查均不标成人工确认。
+来源索引见 [手机照片清单](../phone-score-samples-20261021.json)。原图及逐音转录不随报告公开，模型输出和结构检查均不标成人工确认。

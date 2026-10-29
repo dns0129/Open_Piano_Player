@@ -1,7 +1,7 @@
 import {readFile,writeFile,mkdir,access} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
-import {mergeScorePages} from '../lib/netease-scores.mjs';
+import {mergeScorePages} from '../../lib/netease-scores.mjs';
 const root='.local/batch-five-20261018';
 const {createFullScoreJobStore}=await import(pathToFileURL(resolve(root,'runtime/lib/full-score-jobs.mjs')));
 const {generateScoreRegion}=await import(pathToFileURL(resolve(root,'runtime/lib/ai.mjs')));

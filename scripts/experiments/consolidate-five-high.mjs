@@ -1,7 +1,7 @@
 // Reuse agreeing answers from this fresh run, not previous recognition caches.
 import{readFile,writeFile,readdir,rename}from'node:fs/promises';import{resolve,join}from'node:path';
-import{chooseReadingAgreement}from'../lib/reading-consensus.mjs';
-import{recognitionCacheKey}from'../lib/recognition-cache.mjs';
+import{chooseReadingAgreement}from'../../lib/reading-consensus.mjs';
+import{recognitionCacheKey}from'../../lib/recognition-cache.mjs';
 const root=resolve(process.argv[2]||'.local/batch-five-high-accidentals-v2');
 const read=async p=>JSON.parse(await readFile(p,'utf8'));
 const finishedOnly=process.argv.includes('--finished-only');

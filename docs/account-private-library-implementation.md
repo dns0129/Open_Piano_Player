@@ -2,7 +2,7 @@
 
 日期：2026-10-21。账号服务、数据库隔离与前端已实现；真实 PostgreSQL 服务、SMTP、HTTPS 和两台真实设备的联网验收尚未配置。它是可在本机使用和验证的账号版，不是已经上线的收费服务。
 
-后续商业阶段已实现托管识谱、任务数与成本控制、手机上传和基本运营；入口迁至独立商业首页 `/`，练习室为 `/practice.html`，本页继续说明账号与数据部分。[商业版实现与运行](commercial-app-implementation.md) 和 [新增验收](commercial-app-validation-20261021.md) 记录本轮变化，旧账号目录与命令兼容。
+后续商业阶段已实现托管识谱、任务数与成本控制、手机上传和基本运营；入口迁至独立商业首页 `/`，练习室为 `/practice.html`，本页继续说明账号与数据部分。[商业版实现与运行](commercial-app-implementation.md) 和 [新增验收](reports/commercial-app-validation-20261021.md) 记录本轮变化，旧账号目录与命令兼容。
 
 ## 启动与数据位置
 
@@ -52,7 +52,7 @@ npm run accounts:start
 
 自动化测试覆盖账号验证失败、过期与重放，真实 PostgreSQL RLS，A/B 账号交叉访问，CAS 并发保存，幂等重试，原始图片/PDF 哈希，EXIF 派生关系，来源页序，历史和回收站，完整备份与恢复，导入冲突，到期清理，以及关闭再打开数据库后的账号、会话、修订和原文件读回。HTTP 测试覆盖 Cookie、CSRF、Origin、会话撤销、旧本机接口拒绝，以及切换身份时的晚到数据和文件上传。
 
-全量检查命令为 `npm run check`；三种构建分别为 `npm run build`、`npm run build:pages` 和 `npm run build:hosted`。具体最终计数、浏览器验收结果与原数据保全核对见 [本轮验收记录](account-private-library-validation-20261021.md)。图片识谱的独立报告见 [24 张照片测试](phone-score-accuracy-20261021.md)，存储和播放测试不代替逐音准确性证明。
+全量检查命令为 `npm run check`；三种构建分别为 `npm run build`、`npm run build:pages` 和 `npm run build:hosted`。具体最终计数、浏览器验收结果与原数据保全核对见 [本轮验收记录](reports/account-private-library-validation-20261021.md)。图片识谱的独立报告见 [24 张照片测试](reports/phone-score-accuracy-20261021.md)，存储和播放测试不代替逐音准确性证明。
 
 账号页面使用分页元数据接口；为兼容现有练习室，hosted Adapter 会读取曲谱文档投影，列表阶段不下载原图和原文件。大量曲目时的文档懒加载和分页管理仍可优化。来源资料列表目前返回最近 100 组，账号页显示当前列表最多 100 首；完整备份覆盖全部未回收曲目及全部固定来源组。
 

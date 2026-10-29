@@ -1,10 +1,10 @@
 // Export this fresh batch only after every row and cross-row tie is checked.
 import{readFile,writeFile,mkdir}from'node:fs/promises';
 import{resolve,join}from'node:path';
-import{createFullScoreJobStore}from'../lib/full-score-jobs.mjs';
-import{addScore,verifyRepository}from'../lib/score-repository.mjs';
-import{SCORE_RECOGNITION}from'../lib/recognition-policy.mjs';
-import{FIVE_SCORES}from'./reread-five-high.mjs';
+import{createFullScoreJobStore}from'../../lib/full-score-jobs.mjs';
+import{addScore,verifyRepository}from'../../lib/score-repository.mjs';
+import{SCORE_RECOGNITION}from'../../lib/recognition-policy.mjs';
+import{FIVE_SCORES}from'../reread-five-high.mjs';
 const root=resolve(process.argv[2]||'.local/batch-five-high-accidentals-v2');
 const state=JSON.parse(await readFile(join(root,'private-jobs.json'),'utf8'));
 if(state.promptVersion!==SCORE_RECOGNITION.promptVersion)throw Error('Wrong prompt version');

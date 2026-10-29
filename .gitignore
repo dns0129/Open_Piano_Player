@@ -3,7 +3,9 @@ dist/
 .local/
 .DS_Store
 *.log
-evidence/
+# Private recognition evidence stays local; only the published timbre measurements are tracked.
+evidence/*
+!evidence/timbres/
 public/pdfjs/
 public/models/
 tmp/

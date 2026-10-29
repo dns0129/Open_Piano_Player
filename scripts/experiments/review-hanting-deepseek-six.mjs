@@ -1,6 +1,6 @@
 import {readFile,writeFile} from 'node:fs/promises';
-import {createFullScoreJobStore} from '../lib/full-score-jobs.mjs';
-import {compareRegionReadings} from '../lib/recognition-comparison.mjs';
+import {createFullScoreJobStore} from '../../lib/full-score-jobs.mjs';
+import {compareRegionReadings} from '../../lib/recognition-comparison.mjs';
 const root='.local/hanting-deepseek-high-six-pages-20261018',auth=JSON.parse(await readFile(root+'/private-job.json'));
 const reference=JSON.parse(await readFile('.local/full-score-jobs/feb36563796cd9a9b7f118a809ad559fe4dc/job.json'));
 const inspection=JSON.parse(await readFile(root+'/source-review/inspection.json'));

@@ -1,6 +1,6 @@
 import {readFile,writeFile} from 'node:fs/promises';
-import {createFullScoreJobStore} from '../lib/full-score-jobs.mjs';
-import {compareRegionReadings} from '../lib/recognition-comparison.mjs';
+import {createFullScoreJobStore} from '../../lib/full-score-jobs.mjs';
+import {compareRegionReadings} from '../../lib/recognition-comparison.mjs';
 const root='.local/hanting-sol-low-six-pages-20261017',auth=JSON.parse(await readFile(root+'/private-job.json'));
 const ref=JSON.parse(await readFile('.local/full-score-jobs/feb36563796cd9a9b7f118a809ad559fe4dc/job.json'));
 const store=createFullScoreJobStore(),job=await store.getJob(auth.id,auth);

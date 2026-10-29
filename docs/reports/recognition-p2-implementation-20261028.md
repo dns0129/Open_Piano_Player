@@ -25,7 +25,7 @@
 
 JS 评分结果另外由不导入 App 解码器的 Python 程序核验。它复算严格匹配、音高/手别和具备参考的书写字段；本轮 42 个可评分的“区域—条件”组合一致。未标注照片仅统计状态，不产生逐音准确率。
 
-公开的 [版本清单](recognition-versions.json)、[语料登记](recognition-regression-corpus.json)及[发布证据](recognition-release-evidence.json)只含版本、指纹、范围与汇总。原谱、参考音符、原始回答、用量原日志和模型凭据不进入 Git。CI 核验公开证据与当前代码是否绑定；没有私有语料的 CI 不会假装重新完成了真实识谱。
+公开的 [版本清单](../recognition-versions.json)、[语料登记](../recognition-regression-corpus.json)及[发布证据](../recognition-release-evidence.json)只含版本、指纹、范围与汇总。原谱、参考音符、原始回答、用量原日志和模型凭据不进入 Git。CI 核验公开证据与当前代码是否绑定；没有私有语料的 CI 不会假装重新完成了真实识谱。
 
 ## 3. 实际离线回归
 

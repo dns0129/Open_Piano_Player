@@ -33,7 +33,7 @@
 ### 1. 速度未知会让整行作废
 
 - 密集 PDF 评测中有一行 102 个音符全部读对，只因模型返回 `bpm=0`，整行判失败。
-- [recognition-strategy.md](recognition-strategy.md) 写明“没有数字标速时用可编辑的练习默认速度”，但该兜底只存在于 `scripts/reread-five-high.mjs`。App 正式流程中，`compactRegionSchema` 要求 `bpm≥20`，`validateScore` 也要求速度在 20–300。
+- [recognition-strategy.md](../recognition-strategy.md) 写明“没有数字标速时用可编辑的练习默认速度”，但该兜底只存在于 `scripts/reread-five-high.mjs`。App 正式流程中，`compactRegionSchema` 要求 `bpm≥20`，`validateScore` 也要求速度在 20–300。
 - 建议：允许 `bpm: null`。缺速度时沿用上一行；首行用 90 并标为“未印速度”，不再因此拒收整行。
 
 ### 2. 校验失败时，模型拿不到有用的错误信息
@@ -87,7 +87,7 @@
 | 位置 | 记录的版本 |
 |---|---|
 | 代码 `RECOGNITION_PROMPT_VERSION` | `piano-source-assessment-v6-20261026` |
-| [recognition-strategy.md](recognition-strategy.md) | `expressive-timing-v3-20261019` |
+| [recognition-strategy.md](../recognition-strategy.md) | `expressive-timing-v3-20261019` |
 | README | `accidentals-v2-20261018`，且仍描述每行独立复读 |
 | Skill | `accidentals-v2-20261018` |
 

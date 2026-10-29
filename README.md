@@ -13,7 +13,7 @@ macOS 只保留 **启动琴伴.command**。双击后在终端菜单输入数字�
 | 本地完整版（原开发者模式） | 1 | `http://127.0.0.1:8792` | 原有图片/PDF 识谱、识谱任务与设置、找谱、导入、编辑、播放和本机曲库 |
 | 商业账号版（含原账号版） | 2 | `http://127.0.0.1:8793/` | 登录、私有曲库、原谱上传、后台识谱、每人每月任务数、全站成本上限、反馈与运营 |
 
-商业版需要建立运营资格时，先在服务停止状态运行 `npm run commercial:operator -- 运营邮箱`，再通过统一菜单启动；已有账号不需要重新创建。本机预览的验证码写入独立私有开发邮箱。模型凭据与单价未配置时，识谱默认关闭，账号、上传和练习仍可使用。正式 PostgreSQL、SMTP、HTTPS 和付费模型接入尚未配置；[商业版实现、运行与预算规则](docs/commercial-app-implementation.md) 及 [本轮验收](docs/commercial-app-validation-20261021.md) 记录实际边界。
+商业版需要建立运营资格时，先在服务停止状态运行 `npm run commercial:operator -- 运营邮箱`，再通过统一菜单启动；已有账号不需要重新创建。本机预览的验证码写入独立私有开发邮箱。模型凭据与单价未配置时，识谱默认关闭，账号、上传和练习仍可使用。正式 PostgreSQL、SMTP、HTTPS 和付费模型接入尚未配置；[商业版实现、运行与预算规则](docs/commercial-app-implementation.md) 及 [本轮验收](docs/reports/commercial-app-validation-20261021.md) 记录实际边界。
 
 本机原有识谱入口为右上角 **导入乐谱 → 上传本地乐谱**，支持图片/PDF；**识谱任务** 可继续历史校对，**AI 与设置** 查看原有模型连接。商业版新增不会替换这些本机功能，原谱与任务继续保存在原来的私有目录。
 
@@ -25,7 +25,7 @@ macOS 只保留 **启动琴伴.command**。双击后在终端菜单输入数字�
 
 邀请制账号、修订、回收站、完整备份和选择迁移见 [账号与私有曲库说明](docs/account-private-library-implementation.md)、[设计](docs/account-private-library-design.md) 与 [v1 接口契约](docs/contracts/account-private-library-v1.openapi.json)。原账号版已并入统一菜单的商业账号版，维护用的 `accounts:*` 命令保留，商业版仍使用 `.local/accounts-v1/`。本地版继续使用原有 `.local/` 曲库和识谱任务，浏览器地址也保持原样。
 
-[24 张手机照片识谱报告](docs/phone-score-accuracy-20261021.md) 分开记录整照压力测试、完整谱行补测及独立视觉参考的局部一致率；未标注部分的真实准确率仍未知。测试规范见 [原生图片测试清单](docs/contracts/image-recognition-benchmark.schema.json)。
+[24 张手机照片识谱报告](docs/reports/phone-score-accuracy-20261021.md) 分开记录整照压力测试、完整谱行补测及独立视觉参考的局部一致率；未标注部分的真实准确率仍未知。测试规范见 [原生图片测试清单](docs/contracts/image-recognition-benchmark.schema.json)。
 
 ## 启动
 
@@ -126,7 +126,7 @@ App 导出的琴伴 JSON（`{ "score": {...} }`）可直接加入。曲目 ID �
 
 本节记录本机识谱流程、实验和历史任务。本机 8792 服务及 UI 保留图片/PDF 识谱、任务恢复和原有设置；研究脚本与 `.local/full-score-jobs/` 数据继续使用。商业账号版走独立凭据与任务队列，见上方商业版说明。
 
-当前识谱流程以 [识谱策略](docs/recognition-strategy.md) 为准。P1 使用 compact-v5 统一单图与整谱，保留原谱书写音名、谱号、显式休止和逐声部覆盖；默认首读一次、本行总预算两次，支持原 PDF 局部高清恢复及持久检查点。独立风险复读为默认关闭的实验选项，有分歧时保留首读并等待原图裁决。Skill 已升级至 1.3.0；实现、两行开发回归和适用边界见 [P1 实施记录](docs/recognition-p1-implementation-20261028.md)。P0 的未知速度保存与绑定内容复核证据继续保留，见 [P0 实施记录](docs/recognition-p0-implementation-20261028.md)。P2 已加入组件版本检查、固定语料与独立评分、发布证据门禁、分阶段用量汇总及可恢复的 Skill 制谱交付，见 [P2 实施记录](docs/recognition-p2-implementation-20261028.md)。
+当前识谱流程以 [识谱策略](docs/recognition-strategy.md) 为准。P1 使用 compact-v5 统一单图与整谱，保留原谱书写音名、谱号、显式休止和逐声部覆盖；默认首读一次、本行总预算两次，支持原 PDF 局部高清恢复及持久检查点。独立风险复读为默认关闭的实验选项，有分歧时保留首读并等待原图裁决。Skill 已升级至 1.3.0；实现、两行开发回归和适用边界见 [P1 实施记录](docs/reports/recognition-p1-implementation-20261028.md)。P0 的未知速度保存与绑定内容复核证据继续保留，见 [P0 实施记录](docs/reports/recognition-p0-implementation-20261028.md)。P2 已加入组件版本检查、固定语料与独立评分、发布证据门禁、分阶段用量汇总及可恢复的 Skill 制谱交付，见 [P2 实施记录](docs/reports/recognition-p2-implementation-20261028.md)。
 
 2026-10-18 升降记号策略 `accidentals-v2-20261018`：单图、谱行识别和独立复读共用专项提示词，检查密集和弦中的记号归属、调号与逐小节临时升降状态、还原号、八度和跨小节延音。请求仍固定 `gpt-6.1-sol` / `high`；结果与用量记录保存提示词版本，旧提示词的缓存、检查点和相同 PDF 自动复用不代替新识别。历史任务和人工校对不会被删除。
 

@@ -1,8 +1,8 @@
 // Reflow a public 8-bar piano edition onto two pages; musical content is unchanged.
 import {readFile,writeFile} from 'node:fs/promises';
 import {createCanvas,loadImage} from '@napi-rs/canvas';
-import createModule from '../.local/omr-benchmark-20261017/tooling/node_modules/verovio/dist/verovio-module.mjs';
-import {VerovioToolkit} from '../.local/omr-benchmark-20261017/tooling/node_modules/verovio/dist/verovio.mjs';
+import createModule from '../../.local/omr-benchmark-20261017/tooling/node_modules/verovio/dist/verovio-module.mjs';
+import {VerovioToolkit} from '../../.local/omr-benchmark-20261017/tooling/node_modules/verovio/dist/verovio.mjs';
 const out='.local/gpt-only-20261017';
 let xml=await readFile('.local/omr-benchmark-20261017/03-birthday/source.musicxml','utf8');
 xml=xml.replace(/new-system="yes"/g,'').replace(/(<measure number="5"[^>]*>)/,'$1<print new-page="yes"/>');
