@@ -1,16 +1,268 @@
-import {readFile,writeFile,mkdir,access} from 'node:fs/promises';
-import {spawn} from 'node:child_process';
-import {resolve,join} from 'node:path';
-import {createHash} from 'node:crypto';
-import {Agent} from '@earendil-works/pi-agent-core';
-import {Type} from '@earendil-works/pi-ai';
-import {models,provider,sharedCredential,publicError} from '../../lib/auth.mjs';
-const root=resolve('.local/omr-benchmark-20261017'),manifest=JSON.parse(await readFile(join(root,'manifest.json'))),python=resolve('/Users/yuanzichen/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3');
-const now=()=>new Date().toISOString(),exists=p=>access(p).then(()=>true,()=>false);
-async function run(command,args,{timeout=600000}={}){const start=performance.now();return new Promise((yes,no)=>{const child=spawn(command,args,{stdio:['ignore','pipe','pipe'],detached:true});let log='';const timer=setTimeout(()=>{try{process.kill(-child.pid,'SIGTERM')}catch{}},timeout);child.stdout.on('data',v=>log+=v);child.stderr.on('data',v=>log+=v);child.on('error',e=>{clearTimeout(timer);no(e)});child.on('close',(code,signal)=>{clearTimeout(timer);yes({code,signal,elapsedSeconds:(performance.now()-start)/1000,log})});});}
-async function omr(item){const folder=join(root,item.id,'omr');await mkdir(folder,{recursive:true});const out=join(folder,'run.json');if(await exists(out)){console.log('omr saved',item.id);return;}const app=resolve('.local/tools/Audiveris.app/Contents'),start=now();const r=await run(join(app,'runtime/Contents/Home/bin/java'),['-Djava.awt.headless=true','-Dfile.encoding=UTF-8',`-Duser.home=${resolve('.local/omr-home')}`,'--add-exports=java.desktop/sun.awt.image=ALL-UNNAMED','--enable-native-access=ALL-UNNAMED','-Xms128m','-Xmx3G','-cp',join(app,'app/*'),'Audiveris','-batch','-transcribe','-export','-output',folder,'--',join(root,item.id,'input.pdf')]);await writeFile(join(folder,'engine.log'),r.log);let parsed=false;if(await exists(join(folder,'input.mxl'))){const p=await run(python,['scripts/omr-benchmark/reference.py',join(folder,'input.mxl'),join(folder,'transcription.json')],{timeout:60000});parsed=p.code===0;await writeFile(join(folder,'parse.log'),p.log);}const report={engine:'Audiveris',version:'5.11.0',profile:'basic',inputPdfSha256:item.inputPdfSha256,cacheReused:false,start,end:now(),elapsedSeconds:r.elapsedSeconds,exitCode:r.code,signal:r.signal,parsed,status:r.code===0&&parsed?'returned':'failed'};await writeFile(out,JSON.stringify(report,null,2));console.log(JSON.stringify({id:item.id,...report}));}
-const system=`你是钢琴光学识谱评测器。只读取输入的钢琴五线谱图片，禁止按曲名或记忆补曲、创作或续写，禁止读取图片外的音乐。没有互联网和文件工具。按所有图片页序忠实转写全部双手音符，保留音高、节奏、休止形成的空拍和延音记号。不能可靠完整读取时提交complete=false及可读取部分，说明原因。不要把部分谱段声明为完整。\n时间单位是四分音符拍，中央C=MIDI60。每个纸面小节按从头开始的顺序编号1,2,...，包括弱起小节；不展开反复、跳房子或D.C./D.S.，每个印刷小节只转写一次。\n通过submit_transcription提交：measureDurations依次给全部小节的实际拍数（弱起保留实际长度）；notes每项为固定7项数组：[小节顺序号,小节内起拍(从0开始),书写时值,MIDI,手别"R"或"L",延音标记,倚音标记]。延音标记：0无延音、1延向后音、2接前音、3接前并延向后音；连奏弧线不是延音。倚音标记0或1，倚音书写时值填0、起拍填相邻主音的拍点，不从主音借演奏时间。正常音符时值按连音比例给出，例如三连八分音符为1/3拍；和弦各音单列，同起点同长度。R/L在本评测固定按谱表：上谱表R、下谱表L；不按音区切分，不猜跨谱表指法。颤音、回音等装饰记号不展开成额外音符；已经印出的倚音单独记录。无需输出音头坐标、力度或文字歌词。`;
-const schema=Type.Object({complete:Type.Boolean(),measureDurations:Type.Array(Type.Number({minimum:1/1024,maximum:64}),{maxItems:500}),notes:Type.Array(Type.Array(Type.Union([Type.Number(),Type.String()]),{minItems:7,maxItems:7}),{maxItems:5000}),warnings:Type.Array(Type.String({maxLength:400}),{maxItems:10})});
-async function ai(item){const folder=join(root,item.id,'ai-high');await mkdir(folder,{recursive:true});const out=join(folder,'run.json');if(await exists(out)){console.log('ai saved',item.id);return;}const model=models.getModel(provider,'gpt-6.1-sol');await sharedCredential();if(!model?.input.includes('image'))throw Error('Requested model unavailable');let result,calls=0;const usage={input:0,output:0,cacheRead:0,cacheWrite:0,totalTokens:0},requests=[],start=now(),t0=performance.now();const agent=new Agent({initialState:{systemPrompt:system,model,thinkingLevel:'high',tools:[{name:'submit_transcription',label:'提交钢琴转写',description:'提交所有已提供谱页的书写音符，完整覆盖时complete=true；无法完成则false并保留实际部分。',parameters:schema,execute:async(_id,args)=>{result=args;return{content:[{type:'text',text:'已保存转写，评测结束。'}],details:{accepted:true},terminate:true};}}]},streamFn:(m,c,o)=>{if(++calls>1)throw Error('Benchmark is single pass');return models.streamSimple(m,c,{...o,transport:'sse',timeoutMs:600000,maxRetries:0,maxTokens:60000,onPayload:body=>{const effort=body.reasoning?.effort;requests.push({model:body.model,reasoningEffort:effort,maxOutputTokens:body.max_output_tokens??null,inputImageCount:item.pages.length});if(body.model!=='gpt-6.1-sol'||effort!=='high')throw Error('Requested model/reasoning mismatch');}});},finishTurn:()=>({action:'end'})});
- agent.subscribe(e=>{if(e.type==='message_end'&&e.message.role==='assistant')for(const k of Object.keys(usage))usage[k]+=e.message.usage?.[k]||0;});const controller=new AbortController(),timer=setTimeout(()=>{controller.abort();agent.abort()},600000);let error=null;try{const images=[];for(const p of item.pages)images.push({type:'image',mimeType:'image/png',data:(await readFile(join(root,item.id,p.path))).toString('base64')});await agent.prompt({role:'user',content:[{type:'text',text:`评测样本${item.id.split('-')[0]}。以下为同一份钢琴谱的全部${images.length}页，按顺序给出。请一次完整读取，按纸面书写顺序转写，不展开反复，不使用曲名记忆。`},...images],timestamp:Date.now()});if(!result)throw Error(agent.state.messages.filter(m=>m.role==='assistant').at(-1)?.errorMessage||'NO_TRANSCRIPTION');}catch(e){error={code:typeof e.code==='string'?e.code:'AI_CALL_FAILED',message:publicError(e)};}finally{clearTimeout(timer);}const elapsedSeconds=(performance.now()-t0)/1000;if(result)await writeFile(join(folder,'raw.json'),JSON.stringify(result,null,2));const report={engine:'Pi / openai-codex',model:'gpt-6.1-sol',thinkingLevel:'high',singlePass:true,independentReread:false,inputPageHashes:item.pages.map(p=>p.sha256),start,end:now(),elapsedSeconds,calls,requestAudit:requests,usage,status:error?'failed':result?.complete?'returned':'partial',error,returnedNotes:result?.notes?.length??0};await writeFile(out,JSON.stringify(report,null,2));console.log(JSON.stringify({id:item.id,...report}));}
-const mode=process.argv[2];if(!['omr','ai'].includes(mode))throw Error('Specify omr or ai');for(const item of manifest)await(mode==='omr'?omr(item):ai(item));
+import { readFile, writeFile, mkdir, access } from "node:fs/promises";
+import { spawn } from "node:child_process";
+import { resolve, join } from "node:path";
+import { createHash } from "node:crypto";
+import { Agent } from "@earendil-works/pi-agent-core";
+import { Type } from "@earendil-works/pi-ai";
+import {
+  models,
+  provider,
+  sharedCredential,
+  publicError,
+} from "../../lib/auth.mjs";
+const root = resolve(".local/omr-benchmark-20261017"),
+  manifest = JSON.parse(await readFile(join(root, "manifest.json"))),
+  python = resolve(
+    "/Users/yuanzichen/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+  );
+const now = () => new Date().toISOString(),
+  exists = (p) =>
+    access(p).then(
+      () => true,
+      () => false,
+    );
+async function run(command, args, { timeout = 600000 } = {}) {
+  const start = performance.now();
+  return new Promise((yes, no) => {
+    const child = spawn(command, args, {
+      stdio: ["ignore", "pipe", "pipe"],
+      detached: true,
+    });
+    let log = "";
+    const timer = setTimeout(() => {
+      try {
+        process.kill(-child.pid, "SIGTERM");
+      } catch {}
+    }, timeout);
+    child.stdout.on("data", (v) => (log += v));
+    child.stderr.on("data", (v) => (log += v));
+    child.on("error", (e) => {
+      clearTimeout(timer);
+      no(e);
+    });
+    child.on("close", (code, signal) => {
+      clearTimeout(timer);
+      yes({
+        code,
+        signal,
+        elapsedSeconds: (performance.now() - start) / 1000,
+        log,
+      });
+    });
+  });
+}
+async function omr(item) {
+  const folder = join(root, item.id, "omr");
+  await mkdir(folder, { recursive: true });
+  const out = join(folder, "run.json");
+  if (await exists(out)) {
+    console.log("omr saved", item.id);
+    return;
+  }
+  const app = resolve(".local/tools/Audiveris.app/Contents"),
+    start = now();
+  const r = await run(join(app, "runtime/Contents/Home/bin/java"), [
+    "-Djava.awt.headless=true",
+    "-Dfile.encoding=UTF-8",
+    `-Duser.home=${resolve(".local/omr-home")}`,
+    "--add-exports=java.desktop/sun.awt.image=ALL-UNNAMED",
+    "--enable-native-access=ALL-UNNAMED",
+    "-Xms128m",
+    "-Xmx3G",
+    "-cp",
+    join(app, "app/*"),
+    "Audiveris",
+    "-batch",
+    "-transcribe",
+    "-export",
+    "-output",
+    folder,
+    "--",
+    join(root, item.id, "input.pdf"),
+  ]);
+  await writeFile(join(folder, "engine.log"), r.log);
+  let parsed = false;
+  if (await exists(join(folder, "input.mxl"))) {
+    const p = await run(
+      python,
+      [
+        "scripts/omr-benchmark/reference.py",
+        join(folder, "input.mxl"),
+        join(folder, "transcription.json"),
+      ],
+      { timeout: 60000 },
+    );
+    parsed = p.code === 0;
+    await writeFile(join(folder, "parse.log"), p.log);
+  }
+  const report = {
+    engine: "Audiveris",
+    version: "5.11.0",
+    profile: "basic",
+    inputPdfSha256: item.inputPdfSha256,
+    cacheReused: false,
+    start,
+    end: now(),
+    elapsedSeconds: r.elapsedSeconds,
+    exitCode: r.code,
+    signal: r.signal,
+    parsed,
+    status: r.code === 0 && parsed ? "returned" : "failed",
+  };
+  await writeFile(out, JSON.stringify(report, null, 2));
+  console.log(JSON.stringify({ id: item.id, ...report }));
+}
+const system = `你是钢琴光学识谱评测器。只读取输入的钢琴五线谱图片，禁止按曲名或记忆补曲、创作或续写，禁止读取图片外的音乐。没有互联网和文件工具。按所有图片页序忠实转写全部双手音符，保留音高、节奏、休止形成的空拍和延音记号。不能可靠完整读取时提交complete=false及可读取部分，说明原因。不要把部分谱段声明为完整。\n时间单位是四分音符拍，中央C=MIDI60。每个纸面小节按从头开始的顺序编号1,2,...，包括弱起小节；不展开反复、跳房子或D.C./D.S.，每个印刷小节只转写一次。\n通过submit_transcription提交：measureDurations依次给全部小节的实际拍数（弱起保留实际长度）；notes每项为固定7项数组：[小节顺序号,小节内起拍(从0开始),书写时值,MIDI,手别"R"或"L",延音标记,倚音标记]。延音标记：0无延音、1延向后音、2接前音、3接前并延向后音；连奏弧线不是延音。倚音标记0或1，倚音书写时值填0、起拍填相邻主音的拍点，不从主音借演奏时间。正常音符时值按连音比例给出，例如三连八分音符为1/3拍；和弦各音单列，同起点同长度。R/L在本评测固定按谱表：上谱表R、下谱表L；不按音区切分，不猜跨谱表指法。颤音、回音等装饰记号不展开成额外音符；已经印出的倚音单独记录。无需输出音头坐标、力度或文字歌词。`;
+const schema = Type.Object({
+  complete: Type.Boolean(),
+  measureDurations: Type.Array(
+    Type.Number({ minimum: 1 / 1024, maximum: 64 }),
+    { maxItems: 500 },
+  ),
+  notes: Type.Array(
+    Type.Array(Type.Union([Type.Number(), Type.String()]), {
+      minItems: 7,
+      maxItems: 7,
+    }),
+    { maxItems: 5000 },
+  ),
+  warnings: Type.Array(Type.String({ maxLength: 400 }), { maxItems: 10 }),
+});
+async function ai(item) {
+  const folder = join(root, item.id, "ai-high");
+  await mkdir(folder, { recursive: true });
+  const out = join(folder, "run.json");
+  if (await exists(out)) {
+    console.log("ai saved", item.id);
+    return;
+  }
+  const model = models.getModel(provider, "gpt-6.1-sol");
+  await sharedCredential();
+  if (!model?.input.includes("image"))
+    throw Error("Requested model unavailable");
+  let result,
+    calls = 0;
+  const usage = {
+      input: 0,
+      output: 0,
+      cacheRead: 0,
+      cacheWrite: 0,
+      totalTokens: 0,
+    },
+    requests = [],
+    start = now(),
+    t0 = performance.now();
+  const agent = new Agent({
+    initialState: {
+      systemPrompt: system,
+      model,
+      thinkingLevel: "high",
+      tools: [
+        {
+          name: "submit_transcription",
+          label: "提交钢琴转写",
+          description:
+            "提交所有已提供谱页的书写音符，完整覆盖时complete=true；无法完成则false并保留实际部分。",
+          parameters: schema,
+          execute: async (_id, args) => {
+            result = args;
+            return {
+              content: [{ type: "text", text: "已保存转写，评测结束。" }],
+              details: { accepted: true },
+              terminate: true,
+            };
+          },
+        },
+      ],
+    },
+    streamFn: (m, c, o) => {
+      if (++calls > 1) throw Error("Benchmark is single pass");
+      return models.streamSimple(m, c, {
+        ...o,
+        transport: "sse",
+        timeoutMs: 600000,
+        maxRetries: 0,
+        maxTokens: 60000,
+        onPayload: (body) => {
+          const effort = body.reasoning?.effort;
+          requests.push({
+            model: body.model,
+            reasoningEffort: effort,
+            maxOutputTokens: body.max_output_tokens ?? null,
+            inputImageCount: item.pages.length,
+          });
+          if (body.model !== "gpt-6.1-sol" || effort !== "high")
+            throw Error("Requested model/reasoning mismatch");
+        },
+      });
+    },
+    finishTurn: () => ({ action: "end" }),
+  });
+  agent.subscribe((e) => {
+    if (e.type === "message_end" && e.message.role === "assistant")
+      for (const k of Object.keys(usage)) usage[k] += e.message.usage?.[k] || 0;
+  });
+  const controller = new AbortController(),
+    timer = setTimeout(() => {
+      controller.abort();
+      agent.abort();
+    }, 600000);
+  let error = null;
+  try {
+    const images = [];
+    for (const p of item.pages)
+      images.push({
+        type: "image",
+        mimeType: "image/png",
+        data: (await readFile(join(root, item.id, p.path))).toString("base64"),
+      });
+    await agent.prompt({
+      role: "user",
+      content: [
+        {
+          type: "text",
+          text: `评测样本${item.id.split("-")[0]}。以下为同一份钢琴谱的全部${images.length}页，按顺序给出。请一次完整读取，按纸面书写顺序转写，不展开反复，不使用曲名记忆。`,
+        },
+        ...images,
+      ],
+      timestamp: Date.now(),
+    });
+    if (!result)
+      throw Error(
+        agent.state.messages.filter((m) => m.role === "assistant").at(-1)
+          ?.errorMessage || "NO_TRANSCRIPTION",
+      );
+  } catch (e) {
+    error = {
+      code: typeof e.code === "string" ? e.code : "AI_CALL_FAILED",
+      message: publicError(e),
+    };
+  } finally {
+    clearTimeout(timer);
+  }
+  const elapsedSeconds = (performance.now() - t0) / 1000;
+  if (result)
+    await writeFile(join(folder, "raw.json"), JSON.stringify(result, null, 2));
+  const report = {
+    engine: "Pi / openai-codex",
+    model: "gpt-6.1-sol",
+    thinkingLevel: "high",
+    singlePass: true,
+    independentReread: false,
+    inputPageHashes: item.pages.map((p) => p.sha256),
+    start,
+    end: now(),
+    elapsedSeconds,
+    calls,
+    requestAudit: requests,
+    usage,
+    status: error ? "failed" : result?.complete ? "returned" : "partial",
+    error,
+    returnedNotes: result?.notes?.length ?? 0,
+  };
+  await writeFile(out, JSON.stringify(report, null, 2));
+  console.log(JSON.stringify({ id: item.id, ...report }));
+}
+const mode = process.argv[2];
+if (!["omr", "ai"].includes(mode)) throw Error("Specify omr or ai");
+for (const item of manifest) await (mode === "omr" ? omr(item) : ai(item));

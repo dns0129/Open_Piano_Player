@@ -49,10 +49,16 @@ for (const file of program.getSourceFiles()) {
     const kind = REPORTED.get(d.code);
     if (!kind) continue;
     const { line, character } = file.getLineAndCharacterOfPosition(d.start);
-    problems.push(`${relative(root, file.fileName)}:${line + 1}:${character + 1}  ${kind}  ${ts.flattenDiagnosticMessageText(d.messageText, " ")}`);
+    problems.push(
+      `${relative(root, file.fileName)}:${line + 1}:${character + 1}  ${kind}  ${ts.flattenDiagnosticMessageText(d.messageText, " ")}`,
+    );
   }
 }
 problems.sort();
 for (const problem of problems) console.log(problem);
-console.log(problems.length ? `\n${problems.length} problem(s) in ${files.length} files.` : `Lint passed: ${files.length} files.`);
+console.log(
+  problems.length
+    ? `\n${problems.length} problem(s) in ${files.length} files.`
+    : `Lint passed: ${files.length} files.`,
+);
 process.exitCode = problems.length ? 1 : 0;

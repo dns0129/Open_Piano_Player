@@ -3,22 +3,36 @@
 // lib/recognition-notation.mjs
 var steps = "CDEFGAB";
 var fail = (path, message) => {
-  throw Object.assign(new Error(path + ": " + message), { code: "INVALID_COMPACT_REGION", expose: true, status: 422, issues: [{ code: "INVALID_NOTATION", path, message }] });
+  throw Object.assign(new Error(path + ": " + message), {
+    code: "INVALID_COMPACT_REGION",
+    expose: true,
+    status: 422,
+    issues: [{ code: "INVALID_NOTATION", path, message }]
+  });
 };
 var integer = (n, min, max) => Number.isInteger(n) && n >= min && n <= max;
 function validateRecognitionEvidence(value) {
-  if (!value || value.version !== 1 || !Array.isArray(value.notes) || value.notes.length > 1e4 || !Array.isArray(value.clefs) || !Array.isArray(value.keys) || !Array.isArray(value.voices) || !Array.isArray(value.rests)) fail("notation", "缺少书写音名、谱号、调号、休止或声部清单");
+  if (!value || value.version !== 1 || !Array.isArray(value.notes) || value.notes.length > 1e4 || !Array.isArray(value.clefs) || !Array.isArray(value.keys) || !Array.isArray(value.voices) || !Array.isArray(value.rests))
+    fail("notation", "缺少书写音名、谱号、调号、休止或声部清单");
   const ids = /* @__PURE__ */ new Set();
   for (const [i, n] of value.notes.entries()) {
-    if (!n || typeof n.noteId !== "string" || ids.has(n.noteId) || ![1, 2].includes(n.staff) || !steps.includes(n.step) || n.step.length !== 1 || !integer(n.octave, -1, 9) || !integer(n.alter, -2, 2) || !(n.printed === null || integer(n.printed, -2, 2)) || !integer(n.shift ?? 0, -24, 24) || (n.shift ?? 0) % 12 || n.position !== void 0 && n.position !== null && !integer(n.position, -30, 40)) fail(`notation.notes[${i}]`, "书写音名、谱表、显式记号或八度移位无效");
+    if (!n || typeof n.noteId !== "string" || ids.has(n.noteId) || ![1, 2].includes(n.staff) || !steps.includes(n.step) || n.step.length !== 1 || !integer(n.octave, -1, 9) || !integer(n.alter, -2, 2) || !(n.printed === null || integer(n.printed, -2, 2)) || !integer(n.shift ?? 0, -24, 24) || (n.shift ?? 0) % 12 || n.position !== void 0 && n.position !== null && !integer(n.position, -30, 40))
+      fail(`notation.notes[${i}]`, "书写音名、谱表、显式记号或八度移位无效");
     ids.add(n.noteId);
   }
-  for (const [i, c] of value.clefs.entries()) if (![1, 2].includes(c.staff) || !["G", "F", "C"].includes(c.sign) || !integer(c.line, 1, 5) || !integer(c.octaveChange ?? 0, -2, 2) || !Number.isFinite(c.beat) || c.beat < 0) fail(`notation.clefs[${i}]`, "谱号或变化位置无效");
-  for (const [i, k] of value.keys.entries()) if (![1, 2].includes(k.staff) || !integer(k.fifths, -7, 7) || !Number.isFinite(k.beat) || k.beat < 0) fail(`notation.keys[${i}]`, "调号变化无效");
-  for (const [i, v] of value.voices.entries()) if (typeof v.voice !== "string" || !["right", "left"].includes(v.hand) || !Number.isFinite(v.from) || !Number.isFinite(v.to) || v.from < 0 || v.to <= v.from) fail(`notation.voices[${i}]`, "声部活动范围须明确且时长为正");
+  for (const [i, c] of value.clefs.entries())
+    if (![1, 2].includes(c.staff) || !["G", "F", "C"].includes(c.sign) || !integer(c.line, 1, 5) || !integer(c.octaveChange ?? 0, -2, 2) || !Number.isFinite(c.beat) || c.beat < 0)
+      fail(`notation.clefs[${i}]`, "谱号或变化位置无效");
+  for (const [i, k] of value.keys.entries())
+    if (![1, 2].includes(k.staff) || !integer(k.fifths, -7, 7) || !Number.isFinite(k.beat) || k.beat < 0)
+      fail(`notation.keys[${i}]`, "调号变化无效");
+  for (const [i, v] of value.voices.entries())
+    if (typeof v.voice !== "string" || !["right", "left"].includes(v.hand) || !Number.isFinite(v.from) || !Number.isFinite(v.to) || v.from < 0 || v.to <= v.from)
+      fail(`notation.voices[${i}]`, "声部活动范围须明确且时长为正");
   const restIds = /* @__PURE__ */ new Set();
   for (const [i, r] of value.rests.entries()) {
-    if (typeof r.restId !== "string" || !r.restId || restIds.has(r.restId) || ![1, 2].includes(r.staff)) fail(`notation.rests[${i}]`, "休止引用或谱表无效或重复");
+    if (typeof r.restId !== "string" || !r.restId || restIds.has(r.restId) || ![1, 2].includes(r.staff))
+      fail(`notation.rests[${i}]`, "休止引用或谱表无效或重复");
     restIds.add(r.restId);
   }
   for (const list of [value.clefs, value.keys]) {
@@ -28,7 +42,9 @@ function validateRecognitionEvidence(value) {
       if (seen.has(k)) fail("notation", "同拍同谱表的谱号/调号重复");
       seen.add(k);
     }
-    for (const staff of [1, 2]) if (!list.some((e) => e.staff === staff && e.beat === 0)) fail("notation", "上下谱表均须有初始谱号和调号");
+    for (const staff of [1, 2])
+      if (!list.some((e) => e.staff === staff && e.beat === 0))
+        fail("notation", "上下谱表均须有初始谱号和调号");
   }
   return structuredClone(value);
 }
@@ -43,10 +59,15 @@ var invalid = (message) => Object.assign(new Error(message), {
   issues: [{ code: "INVALID_TEMPO", path: "bpm", message }]
 });
 function recognitionTempo(bpm, status, metadata = {}) {
-  if (bpm !== null && bpm !== 0 && !validBpm(bpm)) throw invalid("bpm 必须为 20–300 的数字或 null（未知）；旧响应的 0 按未知保留。");
+  if (bpm !== null && bpm !== 0 && !validBpm(bpm))
+    throw invalid(
+      "bpm 必须为 20–300 的数字或 null（未知）；旧响应的 0 按未知保留。"
+    );
   const sourceStatus = status ?? (validBpm(bpm) ? "read" : "unknown");
   if (!TEMPO_STATUSES.includes(sourceStatus) || sourceStatus === "read" !== validBpm(bpm)) {
-    throw invalid("tempoStatus 与 bpm 不一致；读出的速度使用 read，未知、未印或不可辨速度使用 null。");
+    throw invalid(
+      "tempoStatus 与 bpm 不一致；读出的速度使用 read，未知、未印或不可辨速度使用 null。"
+    );
   }
   const practice = metadata.fallbackTempo ?? metadata.tempo;
   const tempo = validBpm(bpm) ? bpm : validBpm(practice) ? practice : 90;
@@ -63,10 +84,18 @@ function recognitionTempo(bpm, status, metadata = {}) {
   };
 }
 function validateTempoEvidence(value) {
-  if (!value || value.version !== 1 || !TEMPO_STATUSES.includes(value.sourceStatus) || !["source-reading", "user-practice", "default-practice"].includes(value.playbackSource) || (value.sourceStatus === "read" ? !validBpm(value.sourceBpm) || value.rawBpm !== value.sourceBpm : value.sourceBpm !== null || ![null, 0].includes(value.rawBpm))) {
+  if (!value || value.version !== 1 || !TEMPO_STATUSES.includes(value.sourceStatus) || !["source-reading", "user-practice", "default-practice"].includes(
+    value.playbackSource
+  ) || (value.sourceStatus === "read" ? !validBpm(value.sourceBpm) || value.rawBpm !== value.sourceBpm : value.sourceBpm !== null || ![null, 0].includes(value.rawBpm))) {
     throw invalid("原谱速度证据无效，不能把练习默认速度标为原谱速度。");
   }
-  return { version: 1, sourceStatus: value.sourceStatus, sourceBpm: value.sourceBpm, rawBpm: value.rawBpm, playbackSource: value.playbackSource };
+  return {
+    version: 1,
+    sourceStatus: value.sourceStatus,
+    sourceBpm: value.sourceBpm,
+    rawBpm: value.rawBpm,
+    playbackSource: value.playbackSource
+  };
 }
 
 // lib/notation-rhythm.mjs
@@ -752,8 +781,7 @@ function validatePracticeScore(raw) {
         21,
         108
       );
-      if (!Number.isInteger(midi))
-        throw new Error("音高必须为 MIDI 整数。");
+      if (!Number.isInteger(midi)) throw new Error("音高必须为 MIDI 整数。");
       const beat = number(note.beat, "起始拍", 0, 2e4);
       const duration = number(note.duration, "时值", 1 / 1024, 256);
       if (beat + duration > 2e4)
@@ -843,7 +871,11 @@ function validatePracticeScore(raw) {
     title: text(raw.title, "未命名乐谱"),
     composer: text(raw.composer, "未知"),
     tempo,
-    ...raw.recognitionEvidence ? { recognitionEvidence: validateRecognitionEvidence(raw.recognitionEvidence) } : {},
+    ...raw.recognitionEvidence ? {
+      recognitionEvidence: validateRecognitionEvidence(
+        raw.recognitionEvidence
+      )
+    } : {},
     ...raw.tempoEvidence ? { tempoEvidence: validateTempoEvidence(raw.tempoEvidence) } : {},
     timeSignature: [...ts],
     keySignature,
@@ -1091,12 +1123,23 @@ var { Midi } = MidiPackage;
 var { parseMidi, writeMidi } = MidiFilePackage;
 var MUSICXML_DIVISIONS = 15360 * 27 * 7 * 11 * 13;
 var DIVISIONS = MUSICXML_DIVISIONS;
-var escapeXML = (value) => String(value ?? "").replace(/[<>&"']/g, (char) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&apos;" })[char]);
+var escapeXML = (value) => String(value ?? "").replace(
+  /[<>&"']/g,
+  (char) => ({
+    "<": "&lt;",
+    ">": "&gt;",
+    "&": "&amp;",
+    '"': "&quot;",
+    "'": "&apos;"
+  })[char]
+);
 var limit = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
 var tick = (beat) => Math.round(beat * DIVISIONS);
 var gcd = (a, b) => b ? gcd(b, a % b) : a;
 function normalizedNotes(score) {
-  return (score.notes || []).filter((note) => Number.isFinite(note.midi) && Number.isFinite(note.beat) && Number.isFinite(note.duration) && note.duration > 0 && note.beat >= 0).map((note) => ({
+  return (score.notes || []).filter(
+    (note) => Number.isFinite(note.midi) && Number.isFinite(note.beat) && Number.isFinite(note.duration) && note.duration > 0 && note.beat >= 0
+  ).map((note) => ({
     ...note,
     midi: Math.round(limit(note.midi, 0, 127)),
     start: tick(note.beat),
@@ -1125,19 +1168,50 @@ function rhythmXML(ticks, rhythm) {
   for (const [name2, beats2] of types) {
     for (let dots = 0; dots <= 2; dots++) {
       const value = beats2 * (2 - 1 / 2 ** dots) * DIVISIONS;
-      if (Math.abs(ticks - value) < 0.01) return `<type>${name2}</type>${"<dot/>".repeat(dots)}`;
+      if (Math.abs(ticks - value) < 0.01)
+        return `<type>${name2}</type>${"<dot/>".repeat(dots)}`;
     }
   }
-  const [, beats] = types.reduce((best, candidate) => Math.abs(Math.log2(ticks / (candidate[1] * DIVISIONS))) < Math.abs(Math.log2(ticks / (best[1] * DIVISIONS))) ? candidate : best, types[4]);
+  const [, beats] = types.reduce(
+    (best, candidate) => Math.abs(Math.log2(ticks / (candidate[1] * DIVISIONS))) < Math.abs(Math.log2(ticks / (best[1] * DIVISIONS))) ? candidate : best,
+    types[4]
+  );
   const name = types.find((entry) => entry[1] === beats)[0];
   const baseTicks = Math.round(beats * DIVISIONS);
   const divisor = gcd(baseTicks, ticks);
   return `<type>${name}</type><time-modification><actual-notes>${baseTicks / divisor}</actual-notes><normal-notes>${ticks / divisor}</normal-notes></time-modification>`;
 }
 function pitchXML(midi, useFlats, written) {
-  if (written) return "<pitch><step>" + written.step + "</step>" + (written.alter ? "<alter>" + written.alter + "</alter>" : "") + "<octave>" + written.octave + "</octave></pitch>";
-  const sharps = [["C", 0], ["C", 1], ["D", 0], ["D", 1], ["E", 0], ["F", 0], ["F", 1], ["G", 0], ["G", 1], ["A", 0], ["A", 1], ["B", 0]];
-  const flats = [["C", 0], ["D", -1], ["D", 0], ["E", -1], ["E", 0], ["F", 0], ["G", -1], ["G", 0], ["A", -1], ["A", 0], ["B", -1], ["B", 0]];
+  if (written)
+    return "<pitch><step>" + written.step + "</step>" + (written.alter ? "<alter>" + written.alter + "</alter>" : "") + "<octave>" + written.octave + "</octave></pitch>";
+  const sharps = [
+    ["C", 0],
+    ["C", 1],
+    ["D", 0],
+    ["D", 1],
+    ["E", 0],
+    ["F", 0],
+    ["F", 1],
+    ["G", 0],
+    ["G", 1],
+    ["A", 0],
+    ["A", 1],
+    ["B", 0]
+  ];
+  const flats = [
+    ["C", 0],
+    ["D", -1],
+    ["D", 0],
+    ["E", -1],
+    ["E", 0],
+    ["F", 0],
+    ["G", -1],
+    ["G", 0],
+    ["A", -1],
+    ["A", 0],
+    ["B", -1],
+    ["B", 0]
+  ];
   const [step, alter] = (useFlats ? flats : sharps)[midi % 12];
   return `<pitch><step>${step}</step>${alter ? `<alter>${alter}</alter>` : ""}<octave>${Math.floor(midi / 12) - 1}</octave></pitch>`;
 }
@@ -1148,15 +1222,29 @@ function assignVoices(notes, rests = []) {
     if (!byVoice.has(name)) byVoice.set(name, /* @__PURE__ */ new Map());
     const groups = byVoice.get(name), key = [note.start, note.ticks, note.rest ? "rest" : "note"].join(":");
     if (groups.has(key) && !note.rest) groups.get(key).notes.push(note);
-    else groups.set(key, { start: note.start, ticks: note.ticks, notes: note.rest ? [] : [note], rest: note.rest, rhythm: note.rhythm, sourceRest: note.rest ? note : void 0 });
+    else
+      groups.set(key, {
+        start: note.start,
+        ticks: note.ticks,
+        notes: note.rest ? [] : [note],
+        rest: note.rest,
+        rhythm: note.rhythm,
+        sourceRest: note.rest ? note : void 0
+      });
   }
   const voices = [];
   for (const [name, groups] of byVoice) {
     const lanes = [];
-    for (const group of [...groups.values()].sort((a, b) => a.start - b.start || b.ticks - a.ticks)) {
+    for (const group of [...groups.values()].sort(
+      (a, b) => a.start - b.start || b.ticks - a.ticks
+    )) {
       let lane = lanes.find((v) => v.end <= group.start);
       if (!lane) {
-        lane = { id: lanes.length ? name + "-" + (lanes.length + 1) : name, end: 0, groups: [] };
+        lane = {
+          id: lanes.length ? name + "-" + (lanes.length + 1) : name,
+          end: 0,
+          groups: []
+        };
         lanes.push(lane);
       }
       lane.groups.push(group);
@@ -1170,19 +1258,35 @@ function exportMusicXML(score, { noteIds = false } = {}) {
   score = createDisplayRepresentation(score).score;
   const notes = normalizedNotes(score);
   const incoming = new Set(notes.filter((n) => n.tieTo).map((n) => n.tieTo));
-  const expressive = !!score.recognitionEvidence || notes.some((n) => n.rhythm || n.dynamic || n.accent || n.articulation || n.ornament || n.arpeggio || n.tieTo || n.grace || n.fermata);
+  const expressive = !!score.recognitionEvidence || notes.some(
+    (n) => n.rhythm || n.dynamic || n.accent || n.articulation || n.ornament || n.arpeggio || n.tieTo || n.grace || n.fermata
+  );
   const numerator = Math.round(limit(score.timeSignature?.[0] || 4, 1, 32));
   const denominatorValue = Number(score.timeSignature?.[1]) || 4;
   const denominator = [1, 2, 4, 8, 16, 32].includes(denominatorValue) ? denominatorValue : 4;
   const measureTicks = Math.round(numerator * 4 / denominator * DIVISIONS);
-  const durationTicks = Math.max(tick(Number(score.durationBeats) || 0), ...notes.map((note) => note.start + note.ticks), 1);
+  const durationTicks = Math.max(
+    tick(Number(score.durationBeats) || 0),
+    ...notes.map((note) => note.start + note.ticks),
+    1
+  );
   const measureCount = score.measureMap?.length || Math.max(1, Math.ceil(durationTicks / measureTicks));
   const fifths = Math.round(limit(score.keySignature || 0, -7, 7));
   const tempo = limit(score.tempo || 88, 20, 300);
   const guitar = score.instrument === "guitar";
   const staffOf = (n) => guitar ? 1 : n.staff || (n.hand === "left" ? 2 : 1);
-  const rests = (score.rests || []).filter((r) => r.provenance !== "inferred").map((r) => ({ ...r, rest: true, start: tick(r.beat), ticks: tick(r.duration) }));
-  const hands = (guitar ? [1] : [1, 2]).map((staff) => assignVoices(notes.filter((n) => staffOf(n) === staff), rests.filter((r) => (guitar ? 1 : r.staff) === staff)));
+  const rests = (score.rests || []).filter((r) => r.provenance !== "inferred").map((r) => ({
+    ...r,
+    rest: true,
+    start: tick(r.beat),
+    ticks: tick(r.duration)
+  }));
+  const hands = (guitar ? [1] : [1, 2]).map(
+    (staff) => assignVoices(
+      notes.filter((n) => staffOf(n) === staff),
+      rests.filter((r) => (guitar ? 1 : r.staff) === staff)
+    )
+  );
   const source = [score.source?.label, score.source?.license, score.source?.url].filter(Boolean).join(" · ");
   const sourceClefs = score.recognitionEvidence?.clefs || [];
   const clefXML = (staff, beat) => {
@@ -1198,28 +1302,52 @@ function exportMusicXML(score, { noteIds = false } = {}) {
     const length = end - begin;
     const content = [];
     if (index === 0) {
-      content.push(`<attributes><divisions>${DIVISIONS}</divisions><key><fifths>${fifths}</fifths>${score.mode ? `<mode>${score.mode}</mode>` : ""}</key><time><beats>${numerator}</beats><beat-type>${denominator}</beat-type></time><staves>${guitar ? 1 : 2}</staves>` + clefXML(1, 0) + (guitar ? "" : clefXML(2, 0)) + "</attributes>");
-      content.push(`<direction placement="above"><direction-type><metronome><beat-unit>quarter</beat-unit><per-minute>${tempo}</per-minute></metronome></direction-type><staff>1</staff><sound tempo="${tempo}"/></direction>`);
-      if (score.tempoMap?.length || score.fermatas?.length) content.push(`<direction><direction-type><other-direction>${escapeXML("qinban-timing:" + JSON.stringify({ tempoMap: score.tempoMap || [], fermatas: score.fermatas || [] }))}</other-direction></direction-type></direction>`);
+      content.push(
+        `<attributes><divisions>${DIVISIONS}</divisions><key><fifths>${fifths}</fifths>${score.mode ? `<mode>${score.mode}</mode>` : ""}</key><time><beats>${numerator}</beats><beat-type>${denominator}</beat-type></time><staves>${guitar ? 1 : 2}</staves>` + clefXML(1, 0) + (guitar ? "" : clefXML(2, 0)) + "</attributes>"
+      );
+      content.push(
+        `<direction placement="above"><direction-type><metronome><beat-unit>quarter</beat-unit><per-minute>${tempo}</per-minute></metronome></direction-type><staff>1</staff><sound tempo="${tempo}"/></direction>`
+      );
+      if (score.tempoMap?.length || score.fermatas?.length)
+        content.push(
+          `<direction><direction-type><other-direction>${escapeXML("qinban-timing:" + JSON.stringify({ tempoMap: score.tempoMap || [], fermatas: score.fermatas || [] }))}</other-direction></direction-type></direction>`
+        );
     }
-    for (const e of score.tempoMap || []) if (e.beat >= bounds.start && e.beat < bounds.end) content.push(`<direction placement="above"><direction-type><metronome><beat-unit>quarter</beat-unit><per-minute>${e.bpm}</per-minute></metronome></direction-type><offset>${tick(e.beat - bounds.start)}</offset><sound tempo="${e.bpm}"/></direction>`);
-    if (index > 0 && bounds.timeSignature.join("/") !== scoreMeasureBounds(score, index - 1).timeSignature.join("/")) content.push(`<attributes><time><beats>${bounds.timeSignature[0]}</beats><beat-type>${bounds.timeSignature[1]}</beat-type></time></attributes>`);
-    if (index > 0 && currentKey !== scoreKeySignature(score, index - 1)) content.push("<attributes><key><fifths>" + currentKey + "</fifths></key></attributes>");
+    for (const e of score.tempoMap || [])
+      if (e.beat >= bounds.start && e.beat < bounds.end)
+        content.push(
+          `<direction placement="above"><direction-type><metronome><beat-unit>quarter</beat-unit><per-minute>${e.bpm}</per-minute></metronome></direction-type><offset>${tick(e.beat - bounds.start)}</offset><sound tempo="${e.bpm}"/></direction>`
+        );
+    if (index > 0 && bounds.timeSignature.join("/") !== scoreMeasureBounds(score, index - 1).timeSignature.join("/"))
+      content.push(
+        `<attributes><time><beats>${bounds.timeSignature[0]}</beats><beat-type>${bounds.timeSignature[1]}</beat-type></time></attributes>`
+      );
+    if (index > 0 && currentKey !== scoreKeySignature(score, index - 1))
+      content.push(
+        "<attributes><key><fifths>" + currentKey + "</fifths></key></attributes>"
+      );
     if (index > 0) {
-      const changes = sourceClefs.filter((c) => Math.abs(c.beat - bounds.start) < 1e-6);
-      if (changes.length) content.push("<attributes>" + changes.map((c) => clefXML(c.staff, bounds.start)).join("") + "</attributes>");
+      const changes = sourceClefs.filter(
+        (c) => Math.abs(c.beat - bounds.start) < 1e-6
+      );
+      if (changes.length)
+        content.push(
+          "<attributes>" + changes.map((c) => clefXML(c.staff, bounds.start)).join("") + "</attributes>"
+        );
     }
     let firstVoice = true;
     let voiceId = 0;
     for (let staffIndex = 0; staffIndex < hands.length; staffIndex++) {
       for (const voice of hands[staffIndex]) {
         voiceId = voice.id;
-        if (!firstVoice) content.push(`<backup><duration>${length}</duration></backup>`);
+        if (!firstVoice)
+          content.push(`<backup><duration>${length}</duration></backup>`);
         firstVoice = false;
         let cursor = begin;
         const rest = (amount, rhythm, original) => `<note><rest/><duration>${amount}</duration><voice>${escapeXML(voiceId)}</voice>${rhythmXML(amount, rhythm)}<staff>${staffIndex + 1}</staff>${original ? '<play><other-play type="qinban-rest">' + escapeXML(JSON.stringify(original)) + "</other-play></play>" : ""}</note>`;
         for (const group of voice.groups) {
-          if (group.start >= end || group.start + group.ticks <= begin) continue;
+          if (group.start >= end || group.start + group.ticks <= begin)
+            continue;
           const start = Math.max(group.start, begin);
           const stop = Math.min(group.start + group.ticks, end);
           if (start > cursor) content.push(rest(start - cursor));
@@ -1233,24 +1361,66 @@ function exportMusicXML(score, { noteIds = false } = {}) {
           group.notes.forEach((note, chordIndex) => {
             const attack = start === note.start, begins = tieStart || !!note.tieTo, ends = tieStop || attack && incoming.has(note.id);
             const ties = `${ends ? '<tie type="stop"/>' : ""}${begins ? '<tie type="start"/>' : ""}`;
-            const articulation = attack ? [note.accent === "accent" ? "<accent/>" : note.accent === "marcato" ? '<strong-accent type="up"/>' : "", note.articulation ? `<${note.articulation}/>` : ""].join("") : "";
+            const articulation = attack ? [
+              note.accent === "accent" ? "<accent/>" : note.accent === "marcato" ? '<strong-accent type="up"/>' : "",
+              note.articulation ? `<${note.articulation}/>` : ""
+            ].join("") : "";
             const auxAccidental = ornamentAccidental(note, fifths), auxMark = auxAccidental ? `<accidental-mark placement="${note.ornament === "mordent-lower" ? "below" : "above"}">${{ bb: "flat-flat", b: "flat", n: "natural", "#": "sharp", "##": "double-sharp" }[auxAccidental]}</accidental-mark>` : "";
             const ornament = attack && note.ornament ? `<ornaments>${note.ornament === "trill" ? "<trill-mark/>" : note.ornament === "mordent-upper" ? "<inverted-mordent/>" : "<mordent/>"}${auxMark}</ornaments>` : "";
             const notation = `${ends ? '<tied type="stop"/>' : ""}${begins ? '<tied type="start"/>' : ""}${articulation ? `<articulations>${articulation}</articulations>` : ""}${ornament}${attack && note.arpeggio ? `<arpeggiate direction="${note.arpeggio}"/>` : ""}${stop === note.start + note.ticks && note.fermata ? "<fermata/>" : ""}`;
             const notations = notation ? `<notations>${notation}</notations>` : "";
-            if (attack && note.dynamic && !group.notes.slice(0, chordIndex).some((n) => n.dynamic)) content.push(`<direction placement="below"><direction-type><dynamics><${note.dynamic}/></dynamics></direction-type><voice>${escapeXML(voiceId)}</voice><staff>${staffIndex + 1}</staff></direction>`);
-            const expression = expressive && attack ? { ...Object.fromEntries(["rhythm", "id", "hand", "staff", "sourcePositions", "dynamic", "accent", "articulation", "ornament", "ornamentInterval", "arpeggio", "tieTo", "velocity", "grace", "fermata"].filter((k) => note[k] !== void 0 && (k !== "rhythm" || Math.abs(writtenBeats(note.rhythm) * DIVISIONS - (stop - start)) < 1)).map((k) => [k, note[k]])), voice: note.voice ?? "" } : null;
+            if (attack && note.dynamic && !group.notes.slice(0, chordIndex).some((n) => n.dynamic))
+              content.push(
+                `<direction placement="below"><direction-type><dynamics><${note.dynamic}/></dynamics></direction-type><voice>${escapeXML(voiceId)}</voice><staff>${staffIndex + 1}</staff></direction>`
+              );
+            const expression = expressive && attack ? {
+              ...Object.fromEntries(
+                [
+                  "rhythm",
+                  "id",
+                  "hand",
+                  "staff",
+                  "sourcePositions",
+                  "dynamic",
+                  "accent",
+                  "articulation",
+                  "ornament",
+                  "ornamentInterval",
+                  "arpeggio",
+                  "tieTo",
+                  "velocity",
+                  "grace",
+                  "fermata"
+                ].filter(
+                  (k) => note[k] !== void 0 && (k !== "rhythm" || Math.abs(
+                    writtenBeats(note.rhythm) * DIVISIONS - (stop - start)
+                  ) < 1)
+                ).map((k) => [k, note[k]])
+              ),
+              voice: note.voice ?? ""
+            } : null;
             const play = expression ? `<play><other-play type="qinban-expression">${escapeXML(JSON.stringify(expression))}</other-play></play>` : "";
-            if (attack && note.grace) for (const g of note.grace.notes) content.push(`<note><grace slash="${note.grace.slash ? "yes" : "no"}"/>${pitchXML(g.midi, currentKey < 0, g.pitch)}<voice>${escapeXML(voiceId)}</voice><type>16th</type><staff>${staffIndex + 1}</staff></note>`);
-            content.push(`<note${noteIds ? ` id="note-${escapeXML(note.id)}-m${index + 1}"` : ""}${expressive ? ` dynamics="${((note.velocity ?? 0.7) * 127 / 90 * 100).toFixed(4)}"` : ""}>${chordIndex ? "<chord/>" : ""}${pitchXML(note.midi, currentKey < 0, note.pitch)}<duration>${stop - start}</duration>${ties}<voice>${escapeXML(voiceId)}</voice>${rhythmXML(stop - start, note.rhythm)}${note.accidental ? "<accidental>" + escapeXML(note.accidental) + "</accidental>" : ""}<staff>${staffIndex + 1}</staff>${notations}${play}</note>`);
+            if (attack && note.grace)
+              for (const g of note.grace.notes)
+                content.push(
+                  `<note><grace slash="${note.grace.slash ? "yes" : "no"}"/>${pitchXML(g.midi, currentKey < 0, g.pitch)}<voice>${escapeXML(voiceId)}</voice><type>16th</type><staff>${staffIndex + 1}</staff></note>`
+                );
+            content.push(
+              `<note${noteIds ? ` id="note-${escapeXML(note.id)}-m${index + 1}"` : ""}${expressive ? ` dynamics="${((note.velocity ?? 0.7) * 127 / 90 * 100).toFixed(4)}"` : ""}>${chordIndex ? "<chord/>" : ""}${pitchXML(note.midi, currentKey < 0, note.pitch)}<duration>${stop - start}</duration>${ties}<voice>${escapeXML(voiceId)}</voice>${rhythmXML(stop - start, note.rhythm)}${note.accidental ? "<accidental>" + escapeXML(note.accidental) + "</accidental>" : ""}<staff>${staffIndex + 1}</staff>${notations}${play}</note>`
+            );
           });
           cursor = stop;
         }
         if (cursor < end) content.push(rest(end - cursor));
       }
     }
-    if (index === measureCount - 1) content.push('<barline location="right"><bar-style>light-heavy</bar-style></barline>');
-    measures.push(`<measure number="${index + 1}"${length < tick(beatsPerMeasure({ timeSignature: bounds.timeSignature })) ? ' implicit="yes"' : ""}>${content.join("")}</measure>`);
+    if (index === measureCount - 1)
+      content.push(
+        '<barline location="right"><bar-style>light-heavy</bar-style></barline>'
+      );
+    measures.push(
+      `<measure number="${index + 1}"${length < tick(beatsPerMeasure({ timeSignature: bounds.timeSignature })) ? ' implicit="yes"' : ""}>${content.join("")}</measure>`
+    );
   }
   return `<?xml version="1.0" encoding="UTF-8"?>
 <score-partwise version="4.0"><work><work-title>${escapeXML(score.title || "钢琴练习")}</work-title></work><identification><creator type="composer">${escapeXML(score.composer || "")}</creator>${source ? `<source>${escapeXML(source)}</source>` : ""}${score.recognitionEvidence ? '<miscellaneous><miscellaneous-field name="qinban-recognition-evidence">' + escapeXML(JSON.stringify(score.recognitionEvidence)) + "</miscellaneous-field></miscellaneous>" : ""}</identification><credit><credit-words>${escapeXML(source)}</credit-words></credit><part-list><score-part id="P1"><part-name>${guitar ? "Guitar" : "Piano"}</part-name><part-abbreviation>${guitar ? "Gtr." : "Pno."}</part-abbreviation><score-instrument id="P1-I1"><instrument-name>${guitar ? "Guitar" : "Piano"}</instrument-name></score-instrument><midi-instrument id="P1-I1"><midi-channel>1</midi-channel><midi-program>${guitar ? 25 : 1}</midi-program></midi-instrument></score-part></part-list><part id="P1">${measures.join("")}</part></score-partwise>`;
@@ -1263,39 +1433,75 @@ function exportMidi(score) {
   midi.name = score.title || "钢琴练习";
   midi.header.name = midi.name;
   const timeline = performance.timing, holds = timeline.segments.filter((s) => s.from === s.to);
-  const midiBeat = (beat) => beat + holds.filter((s) => s.from <= beat).reduce((sum, s) => sum + (s.end - s.start) * timeline.tempoAt(s.from) / 60, 0);
+  const midiBeat = (beat) => beat + holds.filter((s) => s.from <= beat).reduce(
+    (sum, s) => sum + (s.end - s.start) * timeline.tempoAt(s.from) / 60,
+    0
+  );
   midi.header.tempos = [];
   let performedBeat = 0;
   for (const s of timeline.segments) {
-    const hold = s.from === s.to, count = hold ? 1 : Math.min(Math.max(1, Math.floor(32768 / Math.max(1, timeline.segments.length))), Math.max(1, Math.ceil((s.to - s.from) / (s.slope ? 1 / 32 : 2e4))));
+    const hold = s.from === s.to, count = hold ? 1 : Math.min(
+      Math.max(
+        1,
+        Math.floor(32768 / Math.max(1, timeline.segments.length))
+      ),
+      Math.max(
+        1,
+        Math.ceil((s.to - s.from) / (s.slope ? 1 / 32 : 2e4))
+      )
+    );
     for (let i = 0; i < count; i++) {
       const length = hold ? (s.end - s.start) * timeline.tempoAt(s.from) / 60 : (s.to - s.from) / count;
       const a = hold ? s.start : timeline.secondsAt(s.from + i * length), b = hold ? s.end : timeline.secondsAt(s.from + (i + 1) * length, "before");
-      midi.header.tempos.push({ ticks: Math.round(performedBeat * midi.header.ppq), bpm: 60 * length / (b - a) });
+      midi.header.tempos.push({
+        ticks: Math.round(performedBeat * midi.header.ppq),
+        bpm: 60 * length / (b - a)
+      });
       performedBeat += length;
     }
   }
   if (!midi.header.tempos.length) midi.header.setTempo(tempo);
   else midi.header.update();
-  const meters = score.measureMap || [{ beat: 0, timeSignature: score.timeSignature || [4, 4] }];
-  for (let i = 0; i < meters.length; i++) if (i === 0 || meters[i].timeSignature.join("/") !== meters[i - 1].timeSignature.join("/")) midi.header.timeSignatures.push({ ticks: Math.round(midiBeat(meters[i].beat) * midi.header.ppq), timeSignature: meters[i].timeSignature });
+  const meters = score.measureMap || [
+    { beat: 0, timeSignature: score.timeSignature || [4, 4] }
+  ];
+  for (let i = 0; i < meters.length; i++)
+    if (i === 0 || meters[i].timeSignature.join("/") !== meters[i - 1].timeSignature.join("/"))
+      midi.header.timeSignatures.push({
+        ticks: Math.round(midiBeat(meters[i].beat) * midi.header.ppq),
+        timeSignature: meters[i].timeSignature
+      });
   const notes = normalizedNotes({ ...score, notes: performance.notes });
   for (const hand of score.instrument === "guitar" ? ["guitar"] : ["right", "left"]) {
     const track = midi.addTrack();
     track.name = hand === "guitar" ? "尼龙弦吉他 · Guitar" : hand === "right" ? "右手 · Right hand" : "左手 · Left hand";
     track.instrument.number = hand === "guitar" ? 24 : 0;
     track.channel = hand === "right" ? 0 : 1;
-    for (const note of notes.filter((entry) => hand === "guitar" || entry.hand === hand)) {
+    for (const note of notes.filter(
+      (entry) => hand === "guitar" || entry.hand === hand
+    )) {
       track.addNote({
         midi: note.midi,
         ticks: Math.round(midiBeat(note.beat) * midi.header.ppq),
-        durationTicks: Math.max(1, Math.round((midiBeat(note.beat + note.duration) - midiBeat(note.beat)) * midi.header.ppq)),
+        durationTicks: Math.max(
+          1,
+          Math.round(
+            (midiBeat(note.beat + note.duration) - midiBeat(note.beat)) * midi.header.ppq
+          )
+        ),
         velocity: limit(note.velocity ?? 0.75, 0, 1)
       });
     }
   }
   const data = parseMidi(midi.toArray());
-  if (score.mode && data.tracks[0]) data.tracks[0].unshift({ deltaTime: 0, meta: true, type: "keySignature", key: score.keySignature || 0, scale: score.mode === "minor" ? 1 : 0 });
+  if (score.mode && data.tracks[0])
+    data.tracks[0].unshift({
+      deltaTime: 0,
+      meta: true,
+      type: "keySignature",
+      key: score.keySignature || 0,
+      scale: score.mode === "minor" ? 1 : 0
+    });
   const endTick = Math.max(
     Math.round(midiBeat(Number(score.durationBeats) || 0) * midi.header.ppq),
     ...midi.tracks.map((track) => track.durationTicks),
@@ -1304,7 +1510,8 @@ function exportMidi(score) {
   for (const track of data.tracks) {
     let elapsed = 0;
     for (const event of track) {
-      if (event.type === "endOfTrack") event.deltaTime = Math.max(event.deltaTime, endTick - elapsed);
+      if (event.type === "endOfTrack")
+        event.deltaTime = Math.max(event.deltaTime, endTick - elapsed);
       elapsed += event.deltaTime;
     }
   }

@@ -1,21 +1,21 @@
 {
   "schema": "recognition-release-evidence/v1",
   "release": "recognition-p2-v1-20261028",
-  "recordedAt": "2026-10-29T03:12:56.666Z",
+  "recordedAt": "2026-10-29T03:20:59.705Z",
   "implementation": {
-    "digest": "9d04fccc220e4f112a33d7c36c01449a8b7408df71a706a15380f994cd109308",
+    "digest": "2bfac623de3eb6655adbb3fed11e7b120b60529fc16d6abebfa04de20840fb25",
     "files": [
       {
         "path": "lib/accounts/recognition-budget.mjs",
-        "sha256": "6f0644e94a2af0ce536adcf824e40174d2b3e1ccd770dec3190bde6bbc63464e"
+        "sha256": "6a2031a94a98fe54dd9e1e16cdf1afc1e2dcf9b377e42437137b3815f165b0bc"
       },
       {
         "path": "lib/accounts/recognition-jobs.mjs",
-        "sha256": "bf4a33f3e342a0c2e98f114e5f0bb0ba10c9a6cec0d1977e9371c83214468e8d"
+        "sha256": "5bf60c9dc4de360bfbaee517b86bc1cf37755cee60eb0ccb2a810facff37dfdd"
       },
       {
         "path": "lib/accounts/recognition-provider.mjs",
-        "sha256": "1f4b7193f1cdfb2853b30ba28382b4f5ff2c1690f4950ec5640c074ed5adb78f"
+        "sha256": "5a96fd8743c73174d15d93455c733fddd43ca3163718634cc70f83c8cce92c0a"
       },
       {
         "path": "lib/accounts/recognition-source.mjs",
@@ -23,67 +23,67 @@
       },
       {
         "path": "lib/ai.mjs",
-        "sha256": "2184127eb2082bdd0212b95e1561442c9e164b83cf0c9b7972b5fe19a047b2da"
+        "sha256": "fd54a919e965bbfab1a8fb6eb59e864c9270c471d06c0c5018874988c1392574"
       },
       {
         "path": "lib/deepseek-vision.mjs",
-        "sha256": "311591d25a6b4b9c82d68494fe67ae21d8292090da8e754e0dabd068c63519ef"
+        "sha256": "fe71bc5b5df676e3b4a10c59520ec77986beb51c7fd47ba6ff00d52558877078"
       },
       {
         "path": "lib/digital-recognition.mjs",
-        "sha256": "2c2a015e5ff1cd017b9f0b2ac443c2835efcb2b19b75b6750d91ce98b1f3171a"
+        "sha256": "383d28bb6ff36549cfdb99a347bd3c5947525ca252f48d6aa96ee38acc706887"
       },
       {
         "path": "lib/exporters.mjs",
-        "sha256": "58cadc82c4c8f82a18123a63e9446529c28ac71d94682103225442a993a3d472"
+        "sha256": "b4509396b3b87420927373678e13adde7ccf1ed56e4eed0f5d028a630dacaf51"
       },
       {
         "path": "lib/full-score-jobs.mjs",
-        "sha256": "d99e9e4f0a8cad1c550a72f724b794218c46eba6fc9113309a83e8f15edb6932"
+        "sha256": "6150f496de978b9efb050bc1b0d1d67a9cb8d1a13163ea462baa944f73dd50b6"
       },
       {
         "path": "lib/full-score-recovery.mjs",
-        "sha256": "6380206afcdfb80cfdd8b7b13c67d043ba2337a86aecd66504aa3260b881d7d6"
+        "sha256": "f2c7c5da6f9a161ba340d316dc9847a9296179d000b3461e2d0f16c696fc1336"
       },
       {
         "path": "lib/full-score-review.mjs",
-        "sha256": "5819b1139063e572e48bfdb0fccebdbe1d36350a3c5738a99545a5e52d9cedd5"
+        "sha256": "98fe2c514981a83f678df89d288a534dc6f6b60314fbee279a9f44014e82324e"
       },
       {
         "path": "lib/importers.mjs",
-        "sha256": "8a11a1b8ce8021fc998ff2cc78b31b26de0a49a1f8e8ee1f7fd2498410cf8627"
+        "sha256": "e748f9709952e1449445712e8d7ef0e5ffc58ef0dc7dee2900bf6e21e4ec0a32"
       },
       {
         "path": "lib/node-runtime.mjs",
-        "sha256": "9a9ef7007a2a7e33222285c715e17a3a60fd51fcc49f67e2ab893b68e3f5fffa"
+        "sha256": "b27130c05416e12af487c1ac62abd8fa63d358659669194c802db5e95767107f"
       },
       {
         "path": "lib/omr-review.mjs",
-        "sha256": "7e7c38a766e6619df1e08115306081176f69c10963be6b1fe69b361391c1687a"
+        "sha256": "abbbd5d00e65932991f54ab17335f24182111203991f03c7843ad2263745c4af"
       },
       {
         "path": "lib/recognition-accounting.mjs",
-        "sha256": "079921c94ddc1e94918ffb43d1760d860c2e88217d033a56aac9a722ad6d2603"
+        "sha256": "237cf214431e1e4420c4cffdef163893785391493ab81cd95b1be919bccf96ec"
       },
       {
         "path": "lib/recognition-cache.mjs",
-        "sha256": "befe26846276984f1008940b5bdc113ffa43a2e1a5b9328d0c9f029da198fe5b"
+        "sha256": "c8b60e3eeb445311621c8f4e03b9861e0427358a76a474f4f6359289743ba221"
       },
       {
         "path": "lib/recognition-comparison.mjs",
-        "sha256": "b9522bbad3ceb9b8e4f310645a9d73fc6ebf1400830ca168ec0d6aae9716ee9a"
+        "sha256": "092cda6f4ab5c3099959d09b83a17241e4f5f5b7b8ec80e661d9a6c9894c12b7"
       },
       {
         "path": "lib/recognition-edit.mjs",
-        "sha256": "a069a0aeffa718936b3db5e4e0b26ed609c7575cbc76d6494864fbeb43669967"
+        "sha256": "e4f921d5d8efdd55b59445085fb1d84983de2f6590fd5ef9dcd4d6e278e83475"
       },
       {
         "path": "lib/recognition-gate.mjs",
-        "sha256": "a2dab03dd7c078fd96e92aa95f10b1b76804d8b30260750e9489e05889f34677"
+        "sha256": "3af884ac7bccd31e3a4739f2a0204260c64f26fce7b7f01653891d38b3a12af4"
       },
       {
         "path": "lib/recognition-governance.mjs",
-        "sha256": "6746e598663c346a01aa13c4e08a183c7b2afb2e0d3848494ab66d71019b68a1"
+        "sha256": "76b4792e51717ed0455389230d2465c41960386aae010ea3691524cc398aaedf"
       },
       {
         "path": "lib/recognition-image-input.mjs",
@@ -91,23 +91,23 @@
       },
       {
         "path": "lib/recognition-live-regression.mjs",
-        "sha256": "4ed3fa008591cb84daebe8be5e5cec81ceb3ec68104e4a79b0ed88df81428fdb"
+        "sha256": "97afbedadca96aef724b6783579bd954f145e69833787655806af37ed839b77f"
       },
       {
         "path": "lib/recognition-notation.mjs",
-        "sha256": "14c6ad26a7d7585040e75afd8387b0bf737466fabb63b2c4ddbb14616d17c2e7"
+        "sha256": "4234753a7db73cfba6dcc1693b71dfa92b0a0e51f2e088053719dddf00a6ddfa"
       },
       {
         "path": "lib/recognition-plan.mjs",
-        "sha256": "7288241acd74b87511142b8459de1ebaf1f2ae4bc6225b65df558f60699c5aec"
+        "sha256": "161673fe4e39992332f51c5e821597a0abb14e72ef65908ecf708fcc3f47d73f"
       },
       {
         "path": "lib/recognition-policy.mjs",
-        "sha256": "5b23ce7bebee32e587e44561cb5e2e90749a19a730bb640c165617a1d0bbc57f"
+        "sha256": "9959f104eaf67e7f5c61c6e573d4892eba5c1f0b86059eb97e9fb7f4a6ecd04f"
       },
       {
         "path": "lib/recognition-prompts.mjs",
-        "sha256": "8ae2962616ed365d86f36ac383cfe4903aebf1b11be3b1e05e61dec3934eed0b"
+        "sha256": "0298a92dee25da32f096fae3121beb92d56c32b80884a5eb7fbf85dd856cf287"
       },
       {
         "path": "lib/recognition-regions.mjs",
@@ -115,39 +115,39 @@
       },
       {
         "path": "lib/recognition-regression-io.mjs",
-        "sha256": "d291a8cefea05485f8a64f43837fc1b89c5fe87f6404d61e60018b9ce781592c"
+        "sha256": "201c4e5fb87c93379387bccd68c329089a84ad6c7a17ca4e13727603fc4a096c"
       },
       {
         "path": "lib/recognition-regression.mjs",
-        "sha256": "61eeb55269ba13cf94ac2a9db214ff131792dc0ca4f898fb27e0051bbf70d57a"
+        "sha256": "563cf6575cce9c8253594ae7aa656a7017e1e06e92ff7d2d65c24577b608e4c7"
       },
       {
         "path": "lib/recognition-review-actions.mjs",
-        "sha256": "1ba3f1fb9dfec97b19a8ba4f5b695b1e87a1738ce960d9f7e417d0557a3f262d"
+        "sha256": "861219ad7b817bcd637cbde92b05b071ad5b59084fddd6891db0c4fb2f621c8d"
       },
       {
         "path": "lib/recognition-submission.mjs",
-        "sha256": "4e63c897aead855aabdf33c21039382b7d2904d86da87ac5c7ef8c032a9aca45"
+        "sha256": "dfb6cf5bdc40ccfe6ffd818accca19302191eb49f923686f7f4e40eea2f21bf6"
       },
       {
         "path": "lib/recognition-tempo.mjs",
-        "sha256": "a2d334693b1ffa0973c9faf7b6953b53d406ef65861860ec04db9cdac0a91160"
+        "sha256": "542a24a7551df7bd733554c3882b5d900e149cfa57f668012a9be3859232f52a"
       },
       {
         "path": "lib/recognition-transcription.mjs",
-        "sha256": "5f689ed4eb62162638f09a048dbdef2895de57e49ad6a28d1d2eee066a094fb6"
+        "sha256": "3affc26399d7466691e134ee00d4289719cdc7028b68f42092ab48ee61fdbe19"
       },
       {
         "path": "lib/recognition-usage.mjs",
-        "sha256": "dca419375c9efbe4f4d75069e37368f04209da912c5289ff24be83092be80220"
+        "sha256": "4efa4c2732a25c8f50c7794900cc1fa68c16b22eeada74486f2d419a07a55dd7"
       },
       {
         "path": "lib/recognition-versions.mjs",
-        "sha256": "88eece1af1e891bf27e5ea96a045b542ecbb94b2405ec78ac78491b1f6b115db"
+        "sha256": "ef129dbf28829630090f965bab0cf676cb7b778ce5e4dbbf23d3076f66f0c7e6"
       },
       {
         "path": "lib/recognition-wire.mjs",
-        "sha256": "c24a4354c7254bebf8e954226e7d8ccf7b4521ef114c94c5720b98eef83f1479"
+        "sha256": "6c52ca574dc1d0e15f3cc02f1a73a8fe658918b3769233982968acd9927923f4"
       },
       {
         "path": "lib/score-image-layout.mjs",
@@ -159,7 +159,7 @@
       },
       {
         "path": "lib/score-region.mjs",
-        "sha256": "5c6a7d309c927729d25223944741a154e5dc0f44e2df9444274c67d5b81954d7"
+        "sha256": "416aeffc36f8960ecb7a328c34501658562acc7b8ee0379aadd2f78ebba7f73c"
       },
       {
         "path": "lib/score-types.ts",
@@ -167,19 +167,19 @@
       },
       {
         "path": "lib/score-validation.mjs",
-        "sha256": "a9fd4402848d00bb2535d9bb33dae74143adeb00b48b81d3a071368c2d7aac3c"
+        "sha256": "e49396887c12771acfaeb964149298b1bd8d374944dfd183e50e999cb9f8df2a"
       },
       {
         "path": "lib/source-assessment.mjs",
-        "sha256": "afa8829eacdd3841d32a438fd8dacf5211c09088e2ea3bb2cdd2ac930be547fe"
+        "sha256": "7c40d2fc07e6e473e9e0585b568f5db7f850357a9421a294ef79a22efadb6f08"
       },
       {
         "path": "scripts/check-recognition-release.mjs",
-        "sha256": "7470e382f1c26f50d3e8f377cb4f2866dcf417523c59689e02532535ba23d1a3"
+        "sha256": "cfd0b7f07429c417e9b4d8c2b57da272dcba3db3fbe8afe57ae295d3d7c60ebb"
       },
       {
         "path": "scripts/check-recognition-versions.mjs",
-        "sha256": "f7cdaef23722e6e8173f9de07fc3c419ddeaba3c82da3569a56a918173af1803"
+        "sha256": "64d53124fdf888c757bb6fc7d04766409c8dd8da6fa4eb71e3d0b63e43fe6bc3"
       },
       {
         "path": "scripts/omr-benchmark/reference.py",
@@ -187,11 +187,11 @@
       },
       {
         "path": "scripts/prepare-recognition-regression.mjs",
-        "sha256": "bbd4d0137c323183f4d1019631e434401579a01cb7fbbb0ce0c3e1b230c0747d"
+        "sha256": "dcf1d7b251ec5596426d6039dd782db2ed766194145e181042b61d1627bb0748"
       },
       {
         "path": "scripts/recognition-regression.mjs",
-        "sha256": "c07a1aea4f25f9647fcc620b23b33a16dbdc3da5ffbf28d058ba1055dd4182b5"
+        "sha256": "5af55ec35a0e19fc2b3182df18678e9b5e1c53b69081a6a6b13298d33b41074f"
       },
       {
         "path": "scripts/verify-recognition-regression.py",
@@ -199,7 +199,7 @@
       },
       {
         "path": "scripts/with-node.mjs",
-        "sha256": "03c7d1f84480eecefb5ad243aee34f2e1a495ad06c38e059020f5fbdc4372125"
+        "sha256": "a059dc2ee8daaa0bd04b7be9f36359a1f25a9b21f01cdfd821e894e6da9e44d8"
       },
       {
         "path": "skills/piano-score-to-musicxml/package.json",
@@ -207,23 +207,23 @@
       },
       {
         "path": "skills/piano-score-to-musicxml/scripts/artifact-output.mjs",
-        "sha256": "333c44f08b9f22768efdcaeda4538e3b7cc1fa0e60bbdc73aba3e33423e058e4"
+        "sha256": "53bd046ac8023033073b359e80debf20c2ea26f04c96383c5098c346713e9af6"
       },
       {
         "path": "skills/piano-score-to-musicxml/scripts/core/qinban-core.mjs",
-        "sha256": "3cb45310d71496be59fc746ddd0fbda989b84866f044c16387204fbe5383f126"
+        "sha256": "d6b777b19eac7601efbe4805c6b51a4e281c07c3815f7da0422f339586d050b4"
       },
       {
         "path": "skills/piano-score-to-musicxml/scripts/review-evidence.mjs",
-        "sha256": "239b3709427c9a0c4eaf5bb07bab13b493613a8939eb7f278dd6804a00242e39"
+        "sha256": "522866dde93600cecb29056d781319c2f76b6374ee5c671861b55ae858fd0da4"
       },
       {
         "path": "skills/piano-score-to-musicxml/scripts/score_pipeline.mjs",
-        "sha256": "434dd28b3c8f131d8f7c86cfa0fb00c01f15f3bdc6807dd4f34fa34dc9fd9407"
+        "sha256": "b79587e68528fbc2d8ffe15bd4d716645ad19af31ac0b2ec029a5819de8d1dc1"
       },
       {
         "path": "skills/piano-score-to-musicxml/scripts/written-evidence.mjs",
-        "sha256": "14c6ad26a7d7585040e75afd8387b0bf737466fabb63b2c4ddbb14616d17c2e7"
+        "sha256": "4234753a7db73cfba6dcc1693b71dfa92b0a0e51f2e088053719dddf00a6ddfa"
       },
       {
         "path": "src/full-score-import-parts.js",
@@ -299,7 +299,7 @@
   "evaluation": {
     "mode": "offline-frozen-responses",
     "providerCalls": 0,
-    "sourceEvaluationSha256": "83493493ebc27a0b5eb47dcbacc40792e6d7463efafb14a1bc49c55a1ea6e3e0",
+    "sourceEvaluationSha256": "3efd35690a1c829ea6204313331893cceeb7108511170d410f0099a2d07ed0d6",
     "suiteSha256": "43a326cb85d9f04afd7dac9a91e30ee6516bc90df6f389d3a05a8308b5b52b8c",
     "sourceFiles": 158,
     "baselinePromptDigest": "5e44d82e7876c4439e347d878f794883a83bbbb97d9d784f700ee8be1a6034b1",
