@@ -1,12 +1,5 @@
 import { editWrittenEvidence } from "../lib/recognition-edit.mjs";
-const escape = (value) =>
-  String(value ?? "").replace(
-    /[<>&"']/g,
-    (c) =>
-      ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&#39;" })[
-        c
-      ],
-  );
+import { escapeHTML as escape } from "./html.js";
 export function writtenEvidenceEditor(region) {
   const evidence = region?.score?.recognitionEvidence;
   if (!evidence) return "";

@@ -303,6 +303,36 @@ function setScore(score, warnings = [], sourceRecord = null) {
       .catch((error) => toast(error.message, true));
 }
 
+// Badge beside the score title; checked in this order, the first match wins.
+const PROVENANCE_TAGS = {
+  "full-score-agent-approved": "已审核 · AI逐谱校对",
+  "full-score-model-reviewed": "AI全谱校对版 · 待人工确认",
+  "full-score-ai-draft": "数字谱 · 待校对",
+  "full-pdf-reviewed": "完整PDF · 已复核",
+  "pdf-transcription-checked": "7页全谱 · 已核对",
+  "audio-transcription": "音频转写 · 待校对",
+  "image-ai": "AI 识谱 · 待校对",
+  "public-domain-arrangement": "简易练习编配",
+};
+function provenanceTag(s) {
+  if (
+    capabilities.mode === "hosted" &&
+    scoreLibrary.records.some((r) => r.id === s.id)
+  )
+    return "私有曲谱 · 请核对原谱";
+  const kind = s.source?.kind;
+  // The two reviewed full-score kinds outrank a lingering reviewRequired flag; drafts never do.
+  if (
+    kind === "full-score-agent-approved" ||
+    kind === "full-score-model-reviewed"
+  )
+    return PROVENANCE_TAGS[kind];
+  if (s.source?.reviewRequired) return PROVENANCE_TAGS["full-score-ai-draft"];
+  return Object.hasOwn(PROVENANCE_TAGS, kind)
+    ? PROVENANCE_TAGS[kind]
+    : sectionLabel() + "乐谱";
+}
+
 let disposePracticeLayout;
 function render() {
   document.title = `琴伴 · ${sectionLabel()}练习室`;
@@ -364,7 +394,7 @@ function practiceView() {
 <div class="sidebar-section"><h3>乐谱显示</h3><div class="notation-switch">${originalNotation(s) ? `<button data-mode="source" class="${state.mode === "source" ? "selected" : ""}">原图参考</button>` : ""}${state.section === "guitar" ? `<button data-mode="tab" class="${state.mode === "tab" ? "selected" : ""}">六线谱</button>` : `<button data-mode="staff" class="${state.mode === "staff" ? "selected" : ""}">五线谱</button><button data-mode="numbered" class="${state.mode === "numbered" ? "selected" : ""}">简谱</button>`}<button data-mode="roll" class="${state.mode === "roll" ? "selected" : ""}">${state.section === "guitar" ? "音高卷帘" : "钢琴卷帘"}</button></div><label class="compact-toggle" for="follow"><input id="follow" type="checkbox" ${state.follow ? "checked" : ""}>播放时自动跟随</label><div class="transpose-control"><span>移调</span><button id="transpose-down" aria-label="降低半音">−</button><span>${esc(s.mode ? tonalityLabel(s) : keyName(s.keySignature) + " 调")}</span><button id="transpose-up" aria-label="升高半音">＋</button></div></div>
 <div class="sidebar-section sidebar-instrument"><h3>${sectionLabel()}音色</h3>${instrumentControls()}<div class="volume-control">${icon("volume-2")}<input id="volume" aria-label="音量" type="range" min="0" max="1" step="0.01" value="${state.volume}"></div></div>
 <div class="sidebar-footer"><button class="button secondary" data-edit-notes>编辑与改编</button><button class="icon-button" data-export aria-label="导出乐谱" title="导出乐谱">${icon("download")}</button></div></aside>
-<section class="score-stage" aria-label="乐谱练习区域"><div class="score-document-heading"><div><h1>${esc(s.title)}</h1><p>${esc(s.composer || sectionLabel() + "谱")}<span>♩ = <b id="paper-tempo">${state.tempo}</b></span><span>${s.timeSignature.join("/")} 拍</span><span>${s.mode ? esc(tonalityLabel(s)) : keyName(s.keySignature) + " 调号"}</span></p></div><div class="score-provenance"><button class="button secondary" data-print-score>${icon("printer")}打印乐谱</button><span class="arrangement-tag">${capabilities.mode === "hosted" && scoreLibrary.records.some((r) => r.id === s.id) ? "私有曲谱 · 请核对原谱" : s.source?.kind === "full-score-agent-approved" ? "已审核 · AI逐谱校对" : s.source?.kind === "full-score-model-reviewed" ? "AI全谱校对版 · 待人工确认" : s.source?.reviewRequired || s.source?.kind === "full-score-ai-draft" ? "数字谱 · 待校对" : s.source?.kind === "full-pdf-reviewed" ? "完整PDF · 已复核" : s.source?.kind === "pdf-transcription-checked" ? "7页全谱 · 已核对" : s.source?.kind === "audio-transcription" ? "音频转写 · 待校对" : s.source?.kind === "image-ai" ? "AI 识谱 · 待校对" : s.source?.kind === "public-domain-arrangement" ? "简易练习编配" : sectionLabel() + "乐谱"}</span><div class="source-line"><span>${esc(sourceLabel(s))}</span>${safeLink(s.source?.url, "来源")}${state.warnings.length ? `<button id="show-warnings">${state.warnings.length} 条提示</button>` : ""}</div></div></div><div id="notation" class="notation-area" aria-label="可点击定位的${sectionLabel()}乐谱"></div><div class="score-status"><span>${icon("music-2")} ${measureCount()} 小节 · 点击音符定位</span><span>${state.section === "guitar" ? "标准调弦 · 自动建议指法" : "左右手同步播放"} · ${capabilities.mode === "hosted" ? (scoreLibrary.records.some((r) => r.id === s.id) ? "乐谱保存到账号" : "公开示例") : "乐谱本地保存"}</span></div></section>
+<section class="score-stage" aria-label="乐谱练习区域"><div class="score-document-heading"><div><h1>${esc(s.title)}</h1><p>${esc(s.composer || sectionLabel() + "谱")}<span>♩ = <b id="paper-tempo">${state.tempo}</b></span><span>${s.timeSignature.join("/")} 拍</span><span>${s.mode ? esc(tonalityLabel(s)) : keyName(s.keySignature) + " 调号"}</span></p></div><div class="score-provenance"><button class="button secondary" data-print-score>${icon("printer")}打印乐谱</button><span class="arrangement-tag">${provenanceTag(s)}</span><div class="source-line"><span>${esc(sourceLabel(s))}</span>${safeLink(s.source?.url, "来源")}${state.warnings.length ? `<button id="show-warnings">${state.warnings.length} 条提示</button>` : ""}</div></div></div><div id="notation" class="notation-area" aria-label="可点击定位的${sectionLabel()}乐谱"></div><div class="score-status"><span>${icon("music-2")} ${measureCount()} 小节 · 点击音符定位</span><span>${state.section === "guitar" ? "标准调弦 · 自动建议指法" : "左右手同步播放"} · ${capabilities.mode === "hosted" ? (scoreLibrary.records.some((r) => r.id === s.id) ? "乐谱保存到账号" : "公开示例") : "乐谱本地保存"}</span></div></section>
 <section class="playback-dock" aria-label="播放控制"><div class="transport-group"><button id="restart" class="icon-button" aria-label="回到开头" title="回到开头">${icon("rotate-ccw")}</button><button id="prev-measure" class="icon-button" aria-label="上一小节" title="上一小节">${icon("skip-back")}</button><button id="play" class="play-button" aria-label="播放">${icon("play")}</button><div class="playback-status"><strong id="playback-label">准备练习</strong><span id="transport-position">第 1 / ${measureCount()} 小节</span></div></div><div class="progress-row"><span id="elapsed">0:00</span><input id="seek" type="range" aria-label="播放进度" min="0" max="${s.durationBeats}" step="0.01" value="${state.beat}"><span id="total-time">${durationText(s.durationBeats)}</span></div><div class="dock-tempo"><button class="icon-button" data-tempo-step="-4" aria-label="减慢速度">−</button><span><b data-tempo-display>${state.tempo}</b> BPM</span><button class="icon-button" data-tempo-step="4" aria-label="加快速度">＋</button></div><div class="dock-shortcuts"><button ${state.section === "guitar" ? "hidden" : ""} data-quick-hand="right" aria-pressed="${state.rightEnabled}">右手</button><button ${state.section === "guitar" ? "hidden" : ""} data-quick-hand="left" aria-pressed="${state.leftEnabled}">左手</button><button data-quick-loop aria-pressed="${state.loopEnabled}">${icon("repeat-2")}循环</button><button data-layout="sidebar" aria-controls="practice-sidebar" aria-label="打开练习设置">${icon("sliders-horizontal")}设置</button></div></section>
 ${state.section === "guitar" ? guitarFretboard() : practiceKeyboard()}<button class="layout-restore icon-button" data-layout="focus" aria-label="退出专注模式" title="退出专注模式">${icon("minimize-2")}</button>`;
 }

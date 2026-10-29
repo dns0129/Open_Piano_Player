@@ -11,21 +11,10 @@ import {
 } from "./sign-in.js";
 import { importScore } from "../../lib/importers.mjs";
 import { readScoreDocument } from "../../lib/score-document.ts";
+import { escapeHTML as esc } from "../html.js";
 import "./style.css";
 import "./auth.css";
-const root = document.querySelector("#account-app"),
-  esc = (v) =>
-    String(v ?? "").replace(
-      /[&<>"']/g,
-      (c) =>
-        ({
-          "&": "&amp;",
-          "<": "&lt;",
-          ">": "&gt;",
-          '"': "&quot;",
-          "'": "&#39;",
-        })[c],
-    );
+const root = document.querySelector("#account-app");
 const account = createAccountClient(),
   state = {
     records: [],

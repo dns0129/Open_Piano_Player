@@ -5,14 +5,8 @@ if ("serviceWorker" in navigator)
   void navigator.serviceWorker
     .register("/commercial-sw.js", { scope: "/" })
     .catch(() => {});
-export const esc = (value) =>
-  String(value ?? "").replace(
-    /[&<>"']/g,
-    (c) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
-        c
-      ],
-  );
+import { escapeHTML as esc } from "../html.js";
+export { esc };
 export const date = (value) =>
   new Date(value).toLocaleString("zh-CN", {
     month: "numeric",

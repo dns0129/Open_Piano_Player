@@ -1,9 +1,9 @@
 {
   "schema": "recognition-release-evidence/v1",
   "release": "recognition-p2-v1-20261028",
-  "recordedAt": "2026-10-28T15:25:36.782Z",
+  "recordedAt": "2026-10-29T02:38:09.163Z",
   "implementation": {
-    "digest": "191a48505f6f32d657744a1a8ab36adf8a65926a51415434784fa8280f8ccd1e",
+    "digest": "bc58b91069c3c2f6c0f85b347d4154dc3d5fc59f11a6d889c138adb60a79eb3d",
     "files": [
       {
         "path": "lib/accounts/recognition-budget.mjs",
@@ -83,7 +83,7 @@
       },
       {
         "path": "lib/recognition-governance.mjs",
-        "sha256": "9c4967d45befdecef4a7cea02ff06a307c85dd5f936896927887888f8985c04c"
+        "sha256": "6746e598663c346a01aa13c4e08a183c7b2afb2e0d3848494ab66d71019b68a1"
       },
       {
         "path": "lib/recognition-image-input.mjs",
@@ -242,8 +242,12 @@
         "sha256": "14c6ad26a7d7585040e75afd8387b0bf737466fabb63b2c4ddbb14616d17c2e7"
       },
       {
+        "path": "src/full-score-import-parts.js",
+        "sha256": "8cc65ad787b0edec1bf10972b04abf7b24763fad1713c24a008fae50b0801aac"
+      },
+      {
         "path": "src/full-score-import.js",
-        "sha256": "e49fba37ac026066e9c2fd9b8128636ac8995f1aa5bb807ede94e14c5bf1596e"
+        "sha256": "b6781e535957633a82b5927134f74ccdfb336f1d8dd564afa4bd5bebeea06d19"
       },
       {
         "path": "src/import-flows.js",
@@ -251,7 +255,7 @@
       },
       {
         "path": "src/recognition-written-editor.js",
-        "sha256": "a4630e6640641b3223b04cc12acde14ed92e39c124679d4d60c8d8cf1c85be49"
+        "sha256": "70daf4700142f12f7de29906841b7aef0c4a2558528d7a07cc4d0390e175935f"
       }
     ]
   },
@@ -311,7 +315,7 @@
   "evaluation": {
     "mode": "offline-frozen-responses",
     "providerCalls": 0,
-    "sourceEvaluationSha256": "db0f8b5f2dd9fb25e08a1ebeb0507f53b44fb5e9fbde1fcaa2d2d1e652103384",
+    "sourceEvaluationSha256": "d61882cedbf0ec06d03cd2005256150c7ed99a75bf6c03257200600b28a354d6",
     "suiteSha256": "43a326cb85d9f04afd7dac9a91e30ee6516bc90df6f389d3a05a8308b5b52b8c",
     "sourceFiles": 158,
     "baselinePromptDigest": "5e44d82e7876c4439e347d878f794883a83bbbb97d9d784f700ee8be1a6034b1",

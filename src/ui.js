@@ -84,14 +84,8 @@ export const scrollBehavior = () =>
 export const $$ = (selector, root = document) => [
   ...root.querySelectorAll(selector),
 ];
-export const esc = (value) =>
-  String(value ?? "").replace(
-    /[&<>"']/g,
-    (c) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
-        c
-      ],
-  );
+import { escapeHTML as esc } from "./html.js";
+export { esc };
 export const icon = (name, cls = "") =>
   '<i data-lucide="' + name + '" class="' + cls + '"></i>';
 export const refreshIcons = () =>

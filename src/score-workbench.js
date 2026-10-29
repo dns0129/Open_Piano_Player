@@ -7,15 +7,8 @@ import {
   pagePlayback,
 } from "../lib/score-workbench.mjs";
 import { midiName } from "../lib/score.mjs";
+import { escapeHTML as esc } from "./html.js";
 const NS = "http://www.w3.org/2000/svg";
-const esc = (v) =>
-  String(v ?? "").replace(
-    /[<>&"']/g,
-    (c) =>
-      ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&#39;" })[
-        c
-      ],
-  );
 const svgNode = (tag, attrs) => {
   const el = document.createElementNS(NS, tag);
   for (const [k, v] of Object.entries(attrs || {}))

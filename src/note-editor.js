@@ -25,15 +25,8 @@ import {
   nextTieNote,
   ornamentNeighbor,
 } from "../lib/note-effects.mjs";
+import { escapeHTML as esc } from "./html.js";
 
-const esc = (value) =>
-  String(value).replace(
-    /[&<>"']/g,
-    (c) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
-        c
-      ],
-  );
 const durations = [
   [4, "全音符"],
   [2, "二分"],

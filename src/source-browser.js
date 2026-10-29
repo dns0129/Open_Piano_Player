@@ -1,11 +1,4 @@
-const escape = (value) =>
-  String(value ?? "").replace(
-    /[&<>"']/g,
-    (c) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
-        c
-      ],
-  );
+import { escapeHTML as escape } from "./html.js";
 const labels = {
   pdf: "PDF",
   image: "图片谱面",

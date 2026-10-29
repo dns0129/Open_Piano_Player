@@ -1,11 +1,4 @@
-const escape = (value) =>
-  String(value ?? "").replace(
-    /[&<>"']/g,
-    (c) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
-        c
-      ],
-  );
+import { escapeHTML as escape } from "./html.js";
 const list = (items) =>
   items?.length
     ? `<ul>${items.map((s) => `<li>${escape(s)}</li>`).join("")}</ul>`
