@@ -1,6 +1,6 @@
 import { renderGuitarTab } from "./guitar-notation.js";
 import { createDisplayRepresentation } from "../lib/score-representations.ts";
-import { VexFlow, Font } from "vexflow/bravura";
+import { VexFlow, Font } from "vexflow/core";
 import {
   normalizePrintStyle,
   printSVGColor,
@@ -10,14 +10,14 @@ import {
 import { PDFDocument } from "pdf-lib";
 import { renderNotation, fontsReady } from "./notation.js";
 import { assetURL } from "../lib/asset-url.mjs";
-// Use the same embedded fonts as the on-screen engraver, including offline exports.
-import { Bravura } from "../node_modules/vexflow/build/esm/src/fonts/bravura.js";
-import { Academico } from "../node_modules/vexflow/build/esm/src/fonts/academico.js";
+// Exported pages inline their fonts. Bravura and Academico come from the on-screen
+// font files (already cached); the print-only faces are embedded here.
+import { musicFontDataURL } from "./notation-fonts.js";
 import { Gonville } from "../node_modules/vexflow/build/esm/src/fonts/gonville.js";
 import { Petaluma } from "../node_modules/vexflow/build/esm/src/fonts/petaluma.js";
 import { PetalumaScript } from "../node_modules/vexflow/build/esm/src/fonts/petalumascript.js";
-const MUSIC_DATA = { Bravura, Gonville, Petaluma };
-// The Bravura-only VexFlow entry registers just Bravura and Academico. Register the
+const PRINT_ONLY_MUSIC_DATA = { Gonville, Petaluma };
+// notation-fonts.js registers Bravura and Academico. Register the
 // print-only faces too, so layout measures the same glyphs the exported page draws.
 const printFontsReady =
   typeof FontFace === "undefined"
@@ -76,8 +76,13 @@ async function svgImage(svg, appearance) {
     .querySelectorAll(".notation-hit,.notation-measure-shade,.notation-cursor")
     .forEach((node) => node.remove());
   const style = document.createElementNS("http://www.w3.org/2000/svg", "style");
-  style.textContent = `@font-face{font-family:Bravura;src:url("${Bravura}")}@font-face{font-family:Academico;src:url("${Academico}")}`;
-  style.textContent += `@font-face{font-family:${appearance.musicFont};src:url("${MUSIC_DATA[appearance.musicFont]}")}@font-face{font-family:'Petaluma Script';src:url("${PetalumaScript}")}`;
+  const [bravura, academico] = await Promise.all([
+    musicFontDataURL("Bravura"),
+    musicFontDataURL("Academico"),
+  ]);
+  const musicData = PRINT_ONLY_MUSIC_DATA[appearance.musicFont] ?? bravura;
+  style.textContent = `@font-face{font-family:Bravura;src:url("${bravura}")}@font-face{font-family:Academico;src:url("${academico}")}`;
+  style.textContent += `@font-face{font-family:${appearance.musicFont};src:url("${musicData}")}@font-face{font-family:'Petaluma Script';src:url("${PetalumaScript}")}`;
   copy.prepend(style);
   const palette = PRINT_PAGE_STYLES[appearance.pageStyle];
   for (const node of copy.querySelectorAll("*")) {
