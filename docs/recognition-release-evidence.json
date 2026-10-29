@@ -1,9 +1,9 @@
 {
   "schema": "recognition-release-evidence/v1",
   "release": "recognition-p2-v1-20261028",
-  "recordedAt": "2026-10-29T03:20:59.705Z",
+  "recordedAt": "2026-10-29T03:40:29.391Z",
   "implementation": {
-    "digest": "2bfac623de3eb6655adbb3fed11e7b120b60529fc16d6abebfa04de20840fb25",
+    "digest": "3e6c68f5f84d79b5f112f9ad2303e8d649daf1023f47dc8d8511bcd7d796925e",
     "files": [
       {
         "path": "lib/accounts/recognition-budget.mjs",
@@ -83,7 +83,7 @@
       },
       {
         "path": "lib/recognition-governance.mjs",
-        "sha256": "76b4792e51717ed0455389230d2465c41960386aae010ea3691524cc398aaedf"
+        "sha256": "f5e8dd4199e413d54ae8d11d2fecb912a1f6fb0533ba930bda7c5c5efdc16793"
       },
       {
         "path": "lib/recognition-image-input.mjs",
@@ -226,12 +226,48 @@
         "sha256": "4234753a7db73cfba6dcc1693b71dfa92b0a0e51f2e088053719dddf00a6ddfa"
       },
       {
+        "path": "src/full-score-import-actions.js",
+        "sha256": "c74466a8d3ea7189190bbfe705b5ba478330cc60e05e327864a7257a4b022c5f"
+      },
+      {
+        "path": "src/full-score-import-context.js",
+        "sha256": "da4900e557e586a05d80a79e773fdbb2112a3ce8d75bfc471dd41379dd793698"
+      },
+      {
+        "path": "src/full-score-import-drag.js",
+        "sha256": "8e446b2bcc318ecae1ff5650af1dd72396e820d488b0b46978beb841f1213391"
+      },
+      {
+        "path": "src/full-score-import-jobs.js",
+        "sha256": "22abbac2382d6d6fe94f823cd362668b44c33acf73277ffb3be46dd56d65f2ed"
+      },
+      {
+        "path": "src/full-score-import-markup.js",
+        "sha256": "fd1b405a155f7a48af3e37126f7a64322f87aab7d1560e7f781f00363de1e782"
+      },
+      {
+        "path": "src/full-score-import-pages.js",
+        "sha256": "0de04f5be3f23b5023109129b3e990f13fc93172ac6277e27378f9535664a90c"
+      },
+      {
         "path": "src/full-score-import-parts.js",
-        "sha256": "8cc65ad787b0edec1bf10972b04abf7b24763fad1713c24a008fae50b0801aac"
+        "sha256": "fad21fab2205124c4b86978c7fbcacfbcdf4fa405a04695ecae34cdf15aecd90"
+      },
+      {
+        "path": "src/full-score-import-review.js",
+        "sha256": "a99026eea84a67dafa7ec1291c708d111bdb6f535676d309f7563ad1199bb8d1"
+      },
+      {
+        "path": "src/full-score-import-save.js",
+        "sha256": "6f78f4fcfd36ed3c8c083f283e90cb7a6b8051afc39c326cc2c537752d8f6a6c"
+      },
+      {
+        "path": "src/full-score-import-view.js",
+        "sha256": "b905825b507b13f5bd2d58234951bd7c0f1c3ab3777c39d07a46345ad8475d2b"
       },
       {
         "path": "src/full-score-import.js",
-        "sha256": "b6781e535957633a82b5927134f74ccdfb336f1d8dd564afa4bd5bebeea06d19"
+        "sha256": "a5314693912ff6872c44970e323d7fb5aac3a4c54d5208cf78049135f7bd85a7"
       },
       {
         "path": "src/import-flows.js",
@@ -299,7 +335,7 @@
   "evaluation": {
     "mode": "offline-frozen-responses",
     "providerCalls": 0,
-    "sourceEvaluationSha256": "3efd35690a1c829ea6204313331893cceeb7108511170d410f0099a2d07ed0d6",
+    "sourceEvaluationSha256": "1180cd1b5826a40ea7fbe4405be2e538b5abeac65a71696733d0dce4e7ce3d92",
     "suiteSha256": "43a326cb85d9f04afd7dac9a91e30ee6516bc90df6f389d3a05a8308b5b52b8c",
     "sourceFiles": 158,
     "baselinePromptDigest": "5e44d82e7876c4439e347d878f794883a83bbbb97d9d784f700ee8be1a6034b1",

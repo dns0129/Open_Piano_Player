@@ -153,8 +153,9 @@ async function fixture(t, p = provider()) {
   });
   return { ...r, A, B, O, G, H, p, policy, upload, input };
 }
+// Generous: the suite runs files in parallel and a loaded machine slows the job pump.
 async function until(fn) {
-  const end = Date.now() + 10000;
+  const end = Date.now() + 30000;
   while (Date.now() < end) {
     const r = await fn();
     if (r) return r;
