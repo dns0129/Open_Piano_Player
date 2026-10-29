@@ -1,9 +1,9 @@
 {
   "schema": "recognition-release-evidence/v1",
   "release": "recognition-p2-v1-20261028",
-  "recordedAt": "2026-10-29T03:40:29.391Z",
+  "recordedAt": "2026-10-29T04:07:42.751Z",
   "implementation": {
-    "digest": "3e6c68f5f84d79b5f112f9ad2303e8d649daf1023f47dc8d8511bcd7d796925e",
+    "digest": "fa58b26a5abad9d350777484e41d42114699c8ffe23859d371ac88b63abade04",
     "files": [
       {
         "path": "lib/accounts/recognition-budget.mjs",
@@ -39,7 +39,7 @@
       },
       {
         "path": "lib/full-score-jobs.mjs",
-        "sha256": "6150f496de978b9efb050bc1b0d1d67a9cb8d1a13163ea462baa944f73dd50b6"
+        "sha256": "7390f671d95b950b3fdb0dbd8d3ea8e1c05a7a41d9516047d29e467db1d8aeef"
       },
       {
         "path": "lib/full-score-recovery.mjs",
@@ -135,7 +135,7 @@
       },
       {
         "path": "lib/recognition-transcription.mjs",
-        "sha256": "3affc26399d7466691e134ee00d4289719cdc7028b68f42092ab48ee61fdbe19"
+        "sha256": "906ceb2415205b70478b6135bdb7aceb2d3dfb4bebb2909d1a375da32c9957b2"
       },
       {
         "path": "lib/recognition-usage.mjs",
@@ -335,7 +335,7 @@
   "evaluation": {
     "mode": "offline-frozen-responses",
     "providerCalls": 0,
-    "sourceEvaluationSha256": "1180cd1b5826a40ea7fbe4405be2e538b5abeac65a71696733d0dce4e7ce3d92",
+    "sourceEvaluationSha256": "8af74cfa6fda1d4df2294c70ff22cd0849ccee69078dce645846b917a46122dc",
     "suiteSha256": "43a326cb85d9f04afd7dac9a91e30ee6516bc90df6f389d3a05a8308b5b52b8c",
     "sourceFiles": 158,
     "baselinePromptDigest": "5e44d82e7876c4439e347d878f794883a83bbbb97d9d784f700ee8be1a6034b1",

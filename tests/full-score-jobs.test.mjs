@@ -83,6 +83,50 @@ async function fixture(t, options = {}) {
   return { store, directory };
 }
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+test("recropping one failed source updates page geometry and preserves successful rows without review approval", async (t) => {
+  const { store } = await fixture(t, {
+    recognizeRegion: async ({ region }) => {
+      if (region.id === "row-2" && region.rect.height === 100)
+        throw Object.assign(Error("lower ledger clipped"), {
+          code: "NEEDS_SOURCE",
+          public: true,
+        });
+      return regionResult(region);
+    },
+  });
+  const created = await store.createJob(rawJob(2), auth);
+  await store.startJob(created.id, auth);
+  const before = await store.waitForIdle(created.id, auth);
+  assert.ok(before.regions[0].result);
+  assert.equal(before.regions[1].status, "failed");
+  const rect = { x: 10, y: 10, width: 200, height: 150 };
+  await assert.rejects(
+    store.uploadRegion(
+      created.id,
+      "row-2",
+      { image, rect: { ...rect, height: 900 } },
+      auth,
+    ),
+  );
+  const updated = await store.uploadRegion(
+    created.id,
+    "row-2",
+    { image, rect },
+    auth,
+  );
+  assert.deepEqual(updated.regions[0].result, before.regions[0].result);
+  assert.equal(updated.regions[0].attempts, 1);
+  assert.deepEqual(updated.regions[1].rect, rect);
+  assert.equal(updated.regions[1].result, null);
+  assert.equal(updated.regions[1].planCheckpoint, null);
+  assert.equal(updated.regions[1].sourceHistory.length, 1);
+  await store.startJob(created.id, auth);
+  const after = await store.waitForIdle(created.id, auth);
+  assert.equal(after.regions[0].attempts, 1);
+  assert.ok(after.regions[1].result);
+  assert.notEqual(after.regions[1].status, "confirmed");
+});
 async function legacyFixture(
   t,
   count,

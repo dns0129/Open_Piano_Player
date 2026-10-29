@@ -332,11 +332,21 @@ test("App-to-Skill bridge preserves explicit rests and cross-staff source withou
       totalPages: 1,
       excludedPages: [],
     };
+  result.score.tempoMap = [
+    { beat: 0, bpm: 90 },
+    { beat: 1, bpm: 80 },
+    { beat: 4, bpm: 70 },
+  ];
   const manifest = {
     schema: "piano-score-pages/v1",
     pages: [{ page: 1, sha256: "a".repeat(64) }],
   };
   const raw = recognitionTranscription(job, manifest);
+  assert.deepEqual(
+    raw.notation.tempoMarks.map((t) => t.beat),
+    [0, 1],
+  );
+  assert.equal(raw.score.tempoMap.at(-1).beat, 4);
   assert.equal(raw.review.humanConfirmed, false);
   assert.ok(raw.pages.every((p) => p.reviewed === false));
   const converted = validateTranscription(raw, manifest, { draft: true });
