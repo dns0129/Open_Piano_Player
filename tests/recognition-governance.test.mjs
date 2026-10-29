@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   mkdtemp,
   readFile,
+  readdir,
   writeFile,
   mkdir,
   copyFile,
@@ -246,6 +247,17 @@ test("release gate rejects changed implementation and offline evidence for a cha
     recordRecognitionRelease(root, file),
     /离线重放不能证明/,
   );
+});
+test("release fingerprint binds every module of the full-PDF review dialog", async () => {
+  const bound = new Set(
+    (await recognitionReleaseFingerprint(root)).files.map((f) => f.path),
+  );
+  const modules = (await readdir(join(root, "src"))).filter((name) =>
+    /^full-score-import.*\.js$/.test(name),
+  );
+  assert.ok(modules.length > 1);
+  for (const name of modules)
+    assert.ok(bound.has(`src/${name}`), `src/${name} is not release-gated`);
 });
 test("runtime discovery skips Node 21, respects explicit selection and requires the actual minimum patch", () => {
   assert.equal(nodeCompatible("v21.3.0"), false);
