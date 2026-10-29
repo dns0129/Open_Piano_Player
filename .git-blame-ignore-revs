@@ -4,3 +4,5 @@
 6ec12b786318313534d4c49fd6cdac066067a6ce
 # Prettier on lib/, tests/ and server.mjs
 568d5c465faae2ecaaf5fc2610a2f54bbf5921b4
+# Prettier on release-bound recognition code, scripts/ and the Skill
+713b8ea76e3e2d69791323d082f0816c475ed05d

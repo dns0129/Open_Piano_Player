@@ -195,7 +195,7 @@ test("component documentation and skill versions are checked independently; stal
   }
   const checked = await checkRecognitionVersions(dir);
   assert.notEqual(checked.versions.prompt, checked.versions.accidentals);
-  assert.equal(checked.skill, "1.3.0");
+  assert.equal(checked.skill, "1.3.1");
   const path = join(dir, "README.md");
   await writeFile(
     path,

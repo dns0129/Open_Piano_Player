@@ -1,8 +1,88 @@
-import test from 'node:test';import assert from 'node:assert/strict';import{evaluate,performed,normalizeAI}from'./score.mjs';
-const score=(notes,measures=[{measure:1,beat:0,duration:4}])=>({notes:notes.map((n,i)=>({id:'n'+i,measure:1,localBeat:n.beat,voice:'1',hand:'right',...n})),measures});
-test('extra duplicate notes reduce precision and F1, not only recall',()=>{const ref=score([{midi:60,beat:0,duration:1}]),r=evaluate(ref,score([{midi:60,beat:0,duration:1},{midi:60,beat:0,duration:1}]));assert.equal(r.strict.recall,1);assert.equal(r.strict.precision,.5);assert.equal(r.fullExact,false)});
-test('tie chains merge playback durations but retain two independently scored links',()=>{const r=score([{midi:60,beat:0,duration:1,tieStart:true},{midi:60,beat:1,duration:1,tieStart:true,tieStop:true},{midi:60,beat:2,duration:1,tieStop:true}]),p=performed(r);assert.equal(p.notes.length,1);assert.equal(p.notes[0].duration,3);assert.equal(p.tieEdges.length,2);assert.equal(p.tieProblems.length,0)});
-test('global drift is penalized while bar alignment remains diagnostic',()=>{const bars=[{measure:1,beat:0,duration:4},{measure:2,beat:4,duration:4}],r=score([{midi:60,beat:4,localBeat:0,measure:2,duration:1}],bars),a=structuredClone(r);a.notes[0].beat=5;const e=evaluate(r,a);assert.equal(e.strict.tp,0);assert.equal(e.barAligned.tp,1)});
-test('failed extraction contributes zero matches over all reference notes',()=>{const e=evaluate(score([{midi:60,beat:0,duration:1}]),null,{complete:false});assert.equal(e.strict.recall,0);assert.equal(e.strict.fn,1);assert.equal(e.fullExact,false)});
-test('grace pitch is scored separately without assigning arbitrary performed time',()=>{const r=score([{midi:62,beat:0,duration:0,grace:true},{midi:60,beat:0,duration:1}]),a=structuredClone(r);a.notes[0].midi=63;const e=evaluate(r,a);assert.equal(e.strict.tp,1);assert.equal(e.graces.tp,0);assert.equal(e.fullExact,false)});
-test('fractional tuple values and pickup lengths preserve the same global timeline',()=>{const a=normalizeAI({measureDurations:[1,4],notes:[[1,0,1,60,'L',0,0],[2,0,'1/3',72,'R',0,0]]});assert.equal(a.notes[1].beat,1);assert.equal(a.notes[1].duration,1/3);assert.throws(()=>normalizeAI({measureDurations:[4],notes:[[1,0,1,109,'R',0,0]]}))});
+import test from "node:test";
+import assert from "node:assert/strict";
+import { evaluate, performed, normalizeAI } from "./score.mjs";
+const score = (notes, measures = [{ measure: 1, beat: 0, duration: 4 }]) => ({
+  notes: notes.map((n, i) => ({
+    id: "n" + i,
+    measure: 1,
+    localBeat: n.beat,
+    voice: "1",
+    hand: "right",
+    ...n,
+  })),
+  measures,
+});
+test("extra duplicate notes reduce precision and F1, not only recall", () => {
+  const ref = score([{ midi: 60, beat: 0, duration: 1 }]),
+    r = evaluate(
+      ref,
+      score([
+        { midi: 60, beat: 0, duration: 1 },
+        { midi: 60, beat: 0, duration: 1 },
+      ]),
+    );
+  assert.equal(r.strict.recall, 1);
+  assert.equal(r.strict.precision, 0.5);
+  assert.equal(r.fullExact, false);
+});
+test("tie chains merge playback durations but retain two independently scored links", () => {
+  const r = score([
+      { midi: 60, beat: 0, duration: 1, tieStart: true },
+      { midi: 60, beat: 1, duration: 1, tieStart: true, tieStop: true },
+      { midi: 60, beat: 2, duration: 1, tieStop: true },
+    ]),
+    p = performed(r);
+  assert.equal(p.notes.length, 1);
+  assert.equal(p.notes[0].duration, 3);
+  assert.equal(p.tieEdges.length, 2);
+  assert.equal(p.tieProblems.length, 0);
+});
+test("global drift is penalized while bar alignment remains diagnostic", () => {
+  const bars = [
+      { measure: 1, beat: 0, duration: 4 },
+      { measure: 2, beat: 4, duration: 4 },
+    ],
+    r = score(
+      [{ midi: 60, beat: 4, localBeat: 0, measure: 2, duration: 1 }],
+      bars,
+    ),
+    a = structuredClone(r);
+  a.notes[0].beat = 5;
+  const e = evaluate(r, a);
+  assert.equal(e.strict.tp, 0);
+  assert.equal(e.barAligned.tp, 1);
+});
+test("failed extraction contributes zero matches over all reference notes", () => {
+  const e = evaluate(score([{ midi: 60, beat: 0, duration: 1 }]), null, {
+    complete: false,
+  });
+  assert.equal(e.strict.recall, 0);
+  assert.equal(e.strict.fn, 1);
+  assert.equal(e.fullExact, false);
+});
+test("grace pitch is scored separately without assigning arbitrary performed time", () => {
+  const r = score([
+      { midi: 62, beat: 0, duration: 0, grace: true },
+      { midi: 60, beat: 0, duration: 1 },
+    ]),
+    a = structuredClone(r);
+  a.notes[0].midi = 63;
+  const e = evaluate(r, a);
+  assert.equal(e.strict.tp, 1);
+  assert.equal(e.graces.tp, 0);
+  assert.equal(e.fullExact, false);
+});
+test("fractional tuple values and pickup lengths preserve the same global timeline", () => {
+  const a = normalizeAI({
+    measureDurations: [1, 4],
+    notes: [
+      [1, 0, 1, 60, "L", 0, 0],
+      [2, 0, "1/3", 72, "R", 0, 0],
+    ],
+  });
+  assert.equal(a.notes[1].beat, 1);
+  assert.equal(a.notes[1].duration, 1 / 3);
+  assert.throws(() =>
+    normalizeAI({ measureDurations: [4], notes: [[1, 0, 1, 109, "R", 0, 0]] }),
+  );
+});

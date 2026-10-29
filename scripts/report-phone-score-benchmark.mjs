@@ -1,21 +1,195 @@
-import {readFile,writeFile,access} from 'node:fs/promises';
-import {createHash} from 'node:crypto';
-import {join,resolve} from 'node:path';
-import {compareBenchmarkSubset} from '../lib/phone-benchmark-scoring.mjs';
-const root=resolve('.local/phone-score-accuracy-20261021-network'),source=JSON.parse(await readFile('docs/phone-score-samples-20261021.json','utf8'));
-const exists=p=>access(p).then(()=>true,()=>false),read=async p=>JSON.parse(await readFile(p,'utf8'));
-const trace=(await readFile(join(root,'usage.jsonl'),'utf8')).trim().split('\n').filter(Boolean).map(line=>JSON.parse(line));
-const interrupted=await exists(join(root,'interrupted-attempts.json'))?await read(join(root,'interrupted-attempts.json')):null;
-const cases=[];
-for(const sample of source.samples){const dir=join(root,sample.id);if(!await exists(join(dir,'run.json'))){cases.push({id:sample.id,status:'pending'});continue;}const run=await read(join(dir,'run.json')),raw=await exists(join(dir,'raw.json'))?await read(join(dir,'raw.json')):null;cases.push({id:sample.id,resumedAfterInterruption:interrupted?.samples.includes(sample.id)||false,status:run.status,modelComplete:raw?.raw?.complete??null,rawNotes:raw?.raw?.notes?.length??0,seconds:run.wallSeconds,usage:raw?.usage||run.usage||trace.findLast(t=>t.regionId===sample.id&&t.usage)?.usage||null,errorCode:run.error?.code||null,startedAt:run.startedAt,endedAt:run.endedAt});}
-const refs=[];
-for(const[sampleId,name]of[['p21_q1','reference-p21-bars1-2.json'],['p10_q1','reference-p10-bar5.json']]){const bytes=await readFile(join(root,name)),reference=JSON.parse(bytes),raw=await exists(join(root,sampleId,'raw.json'))?(await read(join(root,sampleId,'raw.json'))).raw:null;refs.push({sampleId,referenceType:reference.referenceType,humanConfirmed:false,referenceHash:createHash('sha256').update(bytes).digest('hex'),scope:reference.scope,...compareBenchmarkSubset(reference,raw)});}
-let crop=null;if(await exists(join(root,'system-crop/run.json'))){const run=await read(join(root,'system-crop/run.json')),raw=await exists(join(root,'system-crop/raw.json'))?await read(join(root,'system-crop/raw.json')):null,reference=await read(join(root,'reference-p21-bars1-2.json'));crop={...run,notes:raw?.raw?.notes?.length||0,measures:raw?.raw?.bars?.length||0,usage:raw?.usage||null,subset:compareBenchmarkSubset(reference,raw?.raw),printedTempoKnown:raw?.raw?.bpm>0};}
-const completed=cases.filter(c=>c.status!=='pending'),usage=cases.filter(c=>c.usage),totals={};for(const field of ['input','output','cacheRead','reasoning','totalTokens'])totals[field]={sum:usage.reduce((n,c)=>n+(Number(c.usage[field])||0),0),reportedCalls:usage.filter(c=>c.usage[field]!==undefined).length};
-const aggregate={referenceNotes:0,predictedNotes:0,matchedEvents:0,pitchCorrect:0,strictCorrect:0,missing:0,extras:0,exactMeasures:0,referenceMeasures:0};for(const r of refs){for(const k of Object.keys(aggregate).filter(k=>!['exactMeasures','referenceMeasures'].includes(k)))aggregate[k]+=r[k];aggregate.exactMeasures+=r.bars.filter(b=>b.exact).length;aggregate.referenceMeasures+=r.bars.length;}
-const starts=completed.map(c=>Date.parse(c.startedAt)),ends=completed.map(c=>Date.parse(c.endedAt)),report={generatedAt:new Date().toISOString(),status:completed.length===24?'completed':'in-progress',scope:'24 native photos submitted as multi-system single-region stress test; separate one-system crop is not the same scope',model:'gpt-6.1-sol',reasoningEffort:'high',wholePhoto:{attempted:completed.length,total:24,structuredComplete:cases.filter(c=>c.status==='returned'&&c.modelComplete).length,partial:cases.filter(c=>c.modelComplete===false).length,failedWithoutRaw:cases.filter(c=>c.status==='failed'&&c.modelComplete===null).length,batchWallSeconds:starts.length?(Math.max(...ends)-Math.min(...starts))/1000:null,cases,usage:totals},independentAgentVisualSubset:{...aggregate,accuracyForUnlabelledRemainder:null,humanGroundTruth:false,references:refs},singleSystemSupplement:crop,cost:{settledBilling:null,sdkEstimateCalls:usage.filter(c=>c.usage.cost?.total!==undefined).length,sdkEstimatesOnly:usage.some(c=>c.usage.cost?.total!==undefined)?usage.reduce((sum,c)=>sum+(c.usage.cost?.total||0),0):null,manualReviewMinutes:null},interruptedAttempts:interrupted?{samples:interrupted.samples,status:interrupted.status,usage:null,requestStart:null}:null,environmentFailure:{sandboxAttempts:24,reason:'DNS ENOTFOUND; no model response; usage unknown',keptInPrivateDirectory:'.local/phone-score-accuracy-20261021/'}};
-await writeFile('docs/phone-score-accuracy-20261021.json',JSON.stringify(report,null,2)+'\n');
-const pct=(a,b)=>b?`${(100*a/b).toFixed(1)}%`:'未知';
-const rows=cases.map(c=>`| ${c.id} | ${c.status==='pending'?'尚未完成':c.status==='returned'?'结构返回完整':c.modelComplete===false?'不完整，拒绝导入':'请求或格式失败'} ${c.resumedAfterInterruption?'（中断后续跑）':''} | ${c.rawNotes||0} | ${c.seconds?.toFixed(1)||'—'} | ${c.errorCode||'—'} |`).join('\n');
-const text=`# 手机实拍钢琴谱识别测试报告\n\n日期：2026-10-21。状态：${report.status==='completed'?'本轮测试完成':'识别仍在运行，统计尚未完整'}。模型固定为 gpt-6.1-sol / high。\n\n## 结果与适用范围\n\n原始整照 ${completed.length}/24 张已完成请求，其中 ${report.wholePhoto.structuredComplete} 张返回完整结构（模型自报完整并通过结构检查，尚非逐音确认）、${report.wholePhoto.partial} 张明确为不完整，${report.wholePhoto.failedWithoutRaw} 张没有可评分原始结果。这里测量的是“把多系统整照作为一个识谱区域”的压力场景，不能等同现有 App 按完整谱行裁切后的成功率。全部失败和部分输出均保留。${interrupted?`另有 ${interrupted.samples.length} 张（${interrupted.samples.join("、")}）在原进程结束后没有留下结果，原调用是否完成及用量未知；已保留中断记录并只续跑这两张，表中展示其恢复后结果。不能将这两次未知尝试视为免费或零用量。`:""}\n\n独立视觉参考只覆盖两张照片中的 3 个小节、${aggregate.referenceNotes} 个音符。参考由当前代理对照原图和谱线算术独立转录，在查看识别答案前冻结，未经人工逐音确认，不是人工金标准。其余音符真实准确率未知，也不以数据集整曲 MIDI 作为照片逐音真值。\n\n## 有参考的小范围比对\n\n- 音高、起拍、时值同时正确：${aggregate.strictCorrect}/${aggregate.referenceNotes}，一致率 ${pct(aggregate.strictCorrect,aggregate.referenceNotes)}。\n- 音高正确占全部参考音：${aggregate.pitchCorrect}/${aggregate.referenceNotes}，${pct(aggregate.pitchCorrect,aggregate.referenceNotes)}；按起拍和谱表可对齐 ${aggregate.matchedEvents}/${aggregate.referenceNotes} 个参考音。\n- 漏音：${aggregate.missing}/${aggregate.referenceNotes}；额外音符：${aggregate.extras}/${aggregate.referenceNotes}。\n- 完全一致小节：${aggregate.exactMeasures}/${aggregate.referenceMeasures}。显式升降记号、声部细节、踏板和其他演奏记号没有独立真值，不报告对应准确率。\n\n这些小节是有意选择的可读范围，不是随机抽样；上述比例不能推广至 20 首作品或收费版用户照片。\n\n## 单系统补测\n\n${crop?`同一 p21_q1 原图第一条完整双谱表系统，无缩放裁切并无损保存 PNG，单独请求一次：${crop.status==='returned'?'返回完整结构':'未返回完整结构'}，${crop.measures} 小节、${crop.notes} 音符，用时 ${crop.seconds.toFixed(1)} 秒。与已冻结的前两小节参考比较为 ${crop.subset.strictCorrect}/${crop.subset.referenceNotes} 音高、起拍、时值同时一致。整照与裁切的范围和图像字节不同，不能把差异全部归因于算法优化。该例原谱速度未读出，模型使用 bpm=0 表示未知；本补测只验证结构输出，未把它冒充可直接导入、播放的成品谱。`:'补测尚未结束。'}\n\n## 全部样本记录\n\n| 样本 | 保留结果状态 | 原始输出音符数 | 请求秒数 | 错误代码 |\n| --- | --- | ---: | ---: | --- |\n${rows}\n\n## 耗时 用量与成本\n\n- 识谱批次日历跨度（含中断和恢复等待）：${report.wholePhoto.batchWallSeconds?.toFixed(1)||'未知'} 秒，计算最早联网首读开始至最晚已完成请求结束，包含其间排队、并行和暂停；不把每张耗时简单相加当作总等待时间。\n- ${usage.length}/${completed.length} 个整照请求有实际 usage；已报告 totalTokens 合计 ${totals.totalTokens.sum}。输入、缓存、输出、reasoning 分字段保留在 JSON 中，不重复求和。裁切补测用量另列，未混入整照分母。\n- 已结算金额未知；SDK 中的 cost 字段只是运行时模型价格表估算，不当作实际账单。人工校对耗时没有可靠计时，记为未知。\n- 初次沙箱运行遇到 DNS ENOTFOUND，24 次派发尝试均无模型输出，用量未知；后续联网运行使用独立目录，初次记录保留，不混入识别准确率。\n\n## 对产品的结论\n\n首版应保留“完整系统行选区 → 原图核对 → 未完成明确拒绝”的流程；本轮没有证明任意手机整照能直接自动变成完整可练谱。单行补测是可继续扩大验证的正向样本，样本数不足以作商业准确率承诺。下一轮需要更多独立逐音参考、自动 / 手动分行的单独统计，以及对模糊、透视、批注和截断谱行分别报告。\n\n## 复现与证据\n\n运行 scripts/run-phone-score-benchmark.mjs 前在私有输出目录冻结 protocol.json，模型输出、原图、参考和 usage 保存在 .local/phone-score-accuracy-20261021-network/。脚本不读取 MIDI、不自动重试、不发布曲谱；进程中断后续跑的未知尝试另列，遇限流或认证问题停止派发。scripts/report-phone-score-benchmark.mjs 生成本报告及同名 JSON。\n\n来源索引见 [手机照片清单](phone-score-samples-20261021.json)。原图及逐音转录不随报告公开，模型输出和结构检查均不标成人工确认。\n`;
-await writeFile('docs/phone-score-accuracy-20261021.md',text);console.log(JSON.stringify({status:report.status,completed:completed.length,complete:report.wholePhoto.structuredComplete,referenceStrict:`${aggregate.strictCorrect}/${aggregate.referenceNotes}`,crop:crop?.status}));
+import { readFile, writeFile, access } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { join, resolve } from "node:path";
+import { compareBenchmarkSubset } from "../lib/phone-benchmark-scoring.mjs";
+const root = resolve(".local/phone-score-accuracy-20261021-network"),
+  source = JSON.parse(
+    await readFile("docs/phone-score-samples-20261021.json", "utf8"),
+  );
+const exists = (p) =>
+    access(p).then(
+      () => true,
+      () => false,
+    ),
+  read = async (p) => JSON.parse(await readFile(p, "utf8"));
+const trace = (await readFile(join(root, "usage.jsonl"), "utf8"))
+  .trim()
+  .split("\n")
+  .filter(Boolean)
+  .map((line) => JSON.parse(line));
+const interrupted = (await exists(join(root, "interrupted-attempts.json")))
+  ? await read(join(root, "interrupted-attempts.json"))
+  : null;
+const cases = [];
+for (const sample of source.samples) {
+  const dir = join(root, sample.id);
+  if (!(await exists(join(dir, "run.json")))) {
+    cases.push({ id: sample.id, status: "pending" });
+    continue;
+  }
+  const run = await read(join(dir, "run.json")),
+    raw = (await exists(join(dir, "raw.json")))
+      ? await read(join(dir, "raw.json"))
+      : null;
+  cases.push({
+    id: sample.id,
+    resumedAfterInterruption: interrupted?.samples.includes(sample.id) || false,
+    status: run.status,
+    modelComplete: raw?.raw?.complete ?? null,
+    rawNotes: raw?.raw?.notes?.length ?? 0,
+    seconds: run.wallSeconds,
+    usage:
+      raw?.usage ||
+      run.usage ||
+      trace.findLast((t) => t.regionId === sample.id && t.usage)?.usage ||
+      null,
+    errorCode: run.error?.code || null,
+    startedAt: run.startedAt,
+    endedAt: run.endedAt,
+  });
+}
+const refs = [];
+for (const [sampleId, name] of [
+  ["p21_q1", "reference-p21-bars1-2.json"],
+  ["p10_q1", "reference-p10-bar5.json"],
+]) {
+  const bytes = await readFile(join(root, name)),
+    reference = JSON.parse(bytes),
+    raw = (await exists(join(root, sampleId, "raw.json")))
+      ? (await read(join(root, sampleId, "raw.json"))).raw
+      : null;
+  refs.push({
+    sampleId,
+    referenceType: reference.referenceType,
+    humanConfirmed: false,
+    referenceHash: createHash("sha256").update(bytes).digest("hex"),
+    scope: reference.scope,
+    ...compareBenchmarkSubset(reference, raw),
+  });
+}
+let crop = null;
+if (await exists(join(root, "system-crop/run.json"))) {
+  const run = await read(join(root, "system-crop/run.json")),
+    raw = (await exists(join(root, "system-crop/raw.json")))
+      ? await read(join(root, "system-crop/raw.json"))
+      : null,
+    reference = await read(join(root, "reference-p21-bars1-2.json"));
+  crop = {
+    ...run,
+    notes: raw?.raw?.notes?.length || 0,
+    measures: raw?.raw?.bars?.length || 0,
+    usage: raw?.usage || null,
+    subset: compareBenchmarkSubset(reference, raw?.raw),
+    printedTempoKnown: raw?.raw?.bpm > 0,
+  };
+}
+const completed = cases.filter((c) => c.status !== "pending"),
+  usage = cases.filter((c) => c.usage),
+  totals = {};
+for (const field of [
+  "input",
+  "output",
+  "cacheRead",
+  "reasoning",
+  "totalTokens",
+])
+  totals[field] = {
+    sum: usage.reduce((n, c) => n + (Number(c.usage[field]) || 0), 0),
+    reportedCalls: usage.filter((c) => c.usage[field] !== undefined).length,
+  };
+const aggregate = {
+  referenceNotes: 0,
+  predictedNotes: 0,
+  matchedEvents: 0,
+  pitchCorrect: 0,
+  strictCorrect: 0,
+  missing: 0,
+  extras: 0,
+  exactMeasures: 0,
+  referenceMeasures: 0,
+};
+for (const r of refs) {
+  for (const k of Object.keys(aggregate).filter(
+    (k) => !["exactMeasures", "referenceMeasures"].includes(k),
+  ))
+    aggregate[k] += r[k];
+  aggregate.exactMeasures += r.bars.filter((b) => b.exact).length;
+  aggregate.referenceMeasures += r.bars.length;
+}
+const starts = completed.map((c) => Date.parse(c.startedAt)),
+  ends = completed.map((c) => Date.parse(c.endedAt)),
+  report = {
+    generatedAt: new Date().toISOString(),
+    status: completed.length === 24 ? "completed" : "in-progress",
+    scope:
+      "24 native photos submitted as multi-system single-region stress test; separate one-system crop is not the same scope",
+    model: "gpt-6.1-sol",
+    reasoningEffort: "high",
+    wholePhoto: {
+      attempted: completed.length,
+      total: 24,
+      structuredComplete: cases.filter(
+        (c) => c.status === "returned" && c.modelComplete,
+      ).length,
+      partial: cases.filter((c) => c.modelComplete === false).length,
+      failedWithoutRaw: cases.filter(
+        (c) => c.status === "failed" && c.modelComplete === null,
+      ).length,
+      batchWallSeconds: starts.length
+        ? (Math.max(...ends) - Math.min(...starts)) / 1000
+        : null,
+      cases,
+      usage: totals,
+    },
+    independentAgentVisualSubset: {
+      ...aggregate,
+      accuracyForUnlabelledRemainder: null,
+      humanGroundTruth: false,
+      references: refs,
+    },
+    singleSystemSupplement: crop,
+    cost: {
+      settledBilling: null,
+      sdkEstimateCalls: usage.filter((c) => c.usage.cost?.total !== undefined)
+        .length,
+      sdkEstimatesOnly: usage.some((c) => c.usage.cost?.total !== undefined)
+        ? usage.reduce((sum, c) => sum + (c.usage.cost?.total || 0), 0)
+        : null,
+      manualReviewMinutes: null,
+    },
+    interruptedAttempts: interrupted
+      ? {
+          samples: interrupted.samples,
+          status: interrupted.status,
+          usage: null,
+          requestStart: null,
+        }
+      : null,
+    environmentFailure: {
+      sandboxAttempts: 24,
+      reason: "DNS ENOTFOUND; no model response; usage unknown",
+      keptInPrivateDirectory: ".local/phone-score-accuracy-20261021/",
+    },
+  };
+await writeFile(
+  "docs/phone-score-accuracy-20261021.json",
+  JSON.stringify(report, null, 2) + "\n",
+);
+const pct = (a, b) => (b ? `${((100 * a) / b).toFixed(1)}%` : "未知");
+const rows = cases
+  .map(
+    (c) =>
+      `| ${c.id} | ${c.status === "pending" ? "尚未完成" : c.status === "returned" ? "结构返回完整" : c.modelComplete === false ? "不完整，拒绝导入" : "请求或格式失败"} ${c.resumedAfterInterruption ? "（中断后续跑）" : ""} | ${c.rawNotes || 0} | ${c.seconds?.toFixed(1) || "—"} | ${c.errorCode || "—"} |`,
+  )
+  .join("\n");
+const text = `# 手机实拍钢琴谱识别测试报告\n\n日期：2026-10-21。状态：${report.status === "completed" ? "本轮测试完成" : "识别仍在运行，统计尚未完整"}。模型固定为 gpt-6.1-sol / high。\n\n## 结果与适用范围\n\n原始整照 ${completed.length}/24 张已完成请求，其中 ${report.wholePhoto.structuredComplete} 张返回完整结构（模型自报完整并通过结构检查，尚非逐音确认）、${report.wholePhoto.partial} 张明确为不完整，${report.wholePhoto.failedWithoutRaw} 张没有可评分原始结果。这里测量的是“把多系统整照作为一个识谱区域”的压力场景，不能等同现有 App 按完整谱行裁切后的成功率。全部失败和部分输出均保留。${interrupted ? `另有 ${interrupted.samples.length} 张（${interrupted.samples.join("、")}）在原进程结束后没有留下结果，原调用是否完成及用量未知；已保留中断记录并只续跑这两张，表中展示其恢复后结果。不能将这两次未知尝试视为免费或零用量。` : ""}\n\n独立视觉参考只覆盖两张照片中的 3 个小节、${aggregate.referenceNotes} 个音符。参考由当前代理对照原图和谱线算术独立转录，在查看识别答案前冻结，未经人工逐音确认，不是人工金标准。其余音符真实准确率未知，也不以数据集整曲 MIDI 作为照片逐音真值。\n\n## 有参考的小范围比对\n\n- 音高、起拍、时值同时正确：${aggregate.strictCorrect}/${aggregate.referenceNotes}，一致率 ${pct(aggregate.strictCorrect, aggregate.referenceNotes)}。\n- 音高正确占全部参考音：${aggregate.pitchCorrect}/${aggregate.referenceNotes}，${pct(aggregate.pitchCorrect, aggregate.referenceNotes)}；按起拍和谱表可对齐 ${aggregate.matchedEvents}/${aggregate.referenceNotes} 个参考音。\n- 漏音：${aggregate.missing}/${aggregate.referenceNotes}；额外音符：${aggregate.extras}/${aggregate.referenceNotes}。\n- 完全一致小节：${aggregate.exactMeasures}/${aggregate.referenceMeasures}。显式升降记号、声部细节、踏板和其他演奏记号没有独立真值，不报告对应准确率。\n\n这些小节是有意选择的可读范围，不是随机抽样；上述比例不能推广至 20 首作品或收费版用户照片。\n\n## 单系统补测\n\n${crop ? `同一 p21_q1 原图第一条完整双谱表系统，无缩放裁切并无损保存 PNG，单独请求一次：${crop.status === "returned" ? "返回完整结构" : "未返回完整结构"}，${crop.measures} 小节、${crop.notes} 音符，用时 ${crop.seconds.toFixed(1)} 秒。与已冻结的前两小节参考比较为 ${crop.subset.strictCorrect}/${crop.subset.referenceNotes} 音高、起拍、时值同时一致。整照与裁切的范围和图像字节不同，不能把差异全部归因于算法优化。该例原谱速度未读出，模型使用 bpm=0 表示未知；本补测只验证结构输出，未把它冒充可直接导入、播放的成品谱。` : "补测尚未结束。"}\n\n## 全部样本记录\n\n| 样本 | 保留结果状态 | 原始输出音符数 | 请求秒数 | 错误代码 |\n| --- | --- | ---: | ---: | --- |\n${rows}\n\n## 耗时 用量与成本\n\n- 识谱批次日历跨度（含中断和恢复等待）：${report.wholePhoto.batchWallSeconds?.toFixed(1) || "未知"} 秒，计算最早联网首读开始至最晚已完成请求结束，包含其间排队、并行和暂停；不把每张耗时简单相加当作总等待时间。\n- ${usage.length}/${completed.length} 个整照请求有实际 usage；已报告 totalTokens 合计 ${totals.totalTokens.sum}。输入、缓存、输出、reasoning 分字段保留在 JSON 中，不重复求和。裁切补测用量另列，未混入整照分母。\n- 已结算金额未知；SDK 中的 cost 字段只是运行时模型价格表估算，不当作实际账单。人工校对耗时没有可靠计时，记为未知。\n- 初次沙箱运行遇到 DNS ENOTFOUND，24 次派发尝试均无模型输出，用量未知；后续联网运行使用独立目录，初次记录保留，不混入识别准确率。\n\n## 对产品的结论\n\n首版应保留“完整系统行选区 → 原图核对 → 未完成明确拒绝”的流程；本轮没有证明任意手机整照能直接自动变成完整可练谱。单行补测是可继续扩大验证的正向样本，样本数不足以作商业准确率承诺。下一轮需要更多独立逐音参考、自动 / 手动分行的单独统计，以及对模糊、透视、批注和截断谱行分别报告。\n\n## 复现与证据\n\n运行 scripts/run-phone-score-benchmark.mjs 前在私有输出目录冻结 protocol.json，模型输出、原图、参考和 usage 保存在 .local/phone-score-accuracy-20261021-network/。脚本不读取 MIDI、不自动重试、不发布曲谱；进程中断后续跑的未知尝试另列，遇限流或认证问题停止派发。scripts/report-phone-score-benchmark.mjs 生成本报告及同名 JSON。\n\n来源索引见 [手机照片清单](phone-score-samples-20261021.json)。原图及逐音转录不随报告公开，模型输出和结构检查均不标成人工确认。\n`;
+await writeFile("docs/phone-score-accuracy-20261021.md", text);
+console.log(
+  JSON.stringify({
+    status: report.status,
+    completed: completed.length,
+    complete: report.wholePhoto.structuredComplete,
+    referenceStrict: `${aggregate.strictCorrect}/${aggregate.referenceNotes}`,
+    crop: crop?.status,
+  }),
+);
