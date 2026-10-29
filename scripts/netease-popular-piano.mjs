@@ -663,7 +663,99 @@ export async function prepare(root) {
   });
 }
 
-export async function run(root) {
+export function createBatchRequestGate(
+  read,
+  { onStopped = () => {}, onActivity = () => {} } = {},
+) {
+  const state = { stopped: null, consecutiveFailures: 0 };
+  const recognize = async (request, options) => {
+    if (state.stopped)
+      throw Object.assign(Error("供应商暂不可用；保留进度"), {
+        code: state.stopped,
+        public: true,
+        providerCalls: 0,
+        usageAudit: { actualRequests: 0, usage: null },
+      });
+    onActivity(1);
+    try {
+      const result = await read(request, options);
+      state.consecutiveFailures = 0;
+      return result;
+    } catch (e) {
+      if (
+        [
+          "MODEL_RATE_LIMIT",
+          "MODEL_BALANCE_REQUIRED",
+          "PI_NOT_CONNECTED",
+          "PI_AUTH_REQUIRED",
+        ].includes(e.code)
+      ) {
+        state.stopped = e.code;
+        onStopped(e.code);
+      }
+      if (
+        ["MODEL_REQUEST_FAILED", "MODEL_SERVICE_UNAVAILABLE"].includes(
+          e.code,
+        ) ||
+        e.name === "TimeoutError"
+      ) {
+        state.consecutiveFailures++;
+        if (state.consecutiveFailures >= 3) {
+          state.stopped = "MODEL_SERVICE_UNAVAILABLE";
+          onStopped(state.stopped);
+          throw Object.assign(
+            Error(
+              "模型请求连续3次失败，已停止后续请求并保留进度；确认服务恢复后再继续。",
+            ),
+            {
+              code: state.stopped,
+              public: true,
+              cause: e,
+              ...Object.fromEntries(
+                ["providerCalls", "usageAudit", "submissionAudit"]
+                  .filter((k) => e[k] !== undefined)
+                  .map((k) => [k, e[k]]),
+              ),
+            },
+          );
+        }
+      } else state.consecutiveFailures = 0;
+      throw e;
+    } finally {
+      onActivity(-1);
+    }
+  };
+  return { state, recognize };
+}
+
+export function selectRecoveryRegionIds(
+  regions,
+  jobId,
+  { missingOnly = false, scheduled = {} } = {},
+) {
+  return regions
+    .filter(
+      (r) =>
+        !r.result &&
+        r.status !== "confirmed" &&
+        !scheduled[jobId + "/" + r.id] &&
+        (missingOnly ||
+          ([
+            "MODEL_REQUEST_FAILED",
+            "RECOGNITION_FAILED",
+            "MODEL_SERVICE_UNAVAILABLE",
+          ].includes(r.error?.code) &&
+            (r.recognitionAttempts || []).filter(
+              (a) => a.stage === "provider-turn",
+            ).length <= 4)),
+    )
+    .map((r) => r.id);
+}
+
+export async function run(
+  root,
+  { transportRecovery = false, missingOnly = false, maxConcurrency = 16 } = {},
+) {
   const { createFullScoreJobStore } =
     await import("../lib/full-score-jobs.mjs");
   const { createSettingsStore } = await import("../lib/settings.mjs");
@@ -686,36 +778,42 @@ export async function run(root) {
     jobs: [],
     imports: [],
   }));
+  state.transportRecovery ||= { rows: {} };
+  if (missingOnly) {
+    state.missingRecoveryHistory ||= [];
+    if (state.missingRecovery)
+      state.missingRecoveryHistory.push(state.missingRecovery);
+    state.missingRecovery = {
+      id: randomUUID(),
+      startedAt: new Date().toISOString(),
+      rows: {},
+    };
+  }
+  const recovery = missingOnly
+    ? state.missingRecovery
+    : state.transportRecovery;
+  const recoveryMode = transportRecovery || missingOnly;
   let stopped = null,
     active = 0,
     peak = 0;
-  const adapter = async (request, options) => {
-    if (stopped)
-      throw Object.assign(Error("供应商限额或认证阻塞；保留进度"), {
-        code: stopped,
-        public: true,
-      });
-    active++;
-    peak = Math.max(peak, active);
-    try {
-      return await generateScoreRegion(request, await settings.read(), options);
-    } catch (e) {
-      if (
-        [
-          "MODEL_RATE_LIMIT",
-          "MODEL_BALANCE_REQUIRED",
-          "PI_NOT_CONNECTED",
-          "PI_AUTH_REQUIRED",
-        ].includes(e.code)
-      )
-        stopped = e.code;
-      throw e;
-    } finally {
-      active--;
-    }
-  };
+  const requestGate = createBatchRequestGate(
+    (request, options) =>
+      settings
+        .read()
+        .then((value) => generateScoreRegion(request, value, options)),
+    {
+      onStopped: (code) => {
+        stopped = code;
+      },
+      onActivity: (delta) => {
+        active += delta;
+        peak = Math.max(peak, active);
+      },
+    },
+  );
+  const adapter = requestGate.recognize;
   const store = createFullScoreJobStore({
-    maxConcurrency: 16,
+    maxConcurrency,
     recognizeRegion: adapter,
   });
   const save = () => atomicJson(join(root, "private-run.json"), state);
@@ -753,7 +851,7 @@ export async function run(root) {
   try {
     // Four score workers share one physical model gate. Successful rows persist
     // in the standard job store and are never reissued by resume.
-    await mapLimit(discovery.selected, 4, async (song) => {
+    await mapLimit(discovery.selected, recoveryMode ? 2 : 4, async (song) => {
       if (
         stopped ||
         state.imports.some((i) => i.sheetId === song.sheetId && i.imported)
@@ -813,15 +911,50 @@ export async function run(root) {
         }),
       );
       const before = await store.getJob(j.id, j);
-      const regionIds = before.regions
-        .filter((r) => !r.result && r.attempts < 2)
+      if (recoveryMode) {
+        const regionIds = selectRecoveryRegionIds(before.regions, j.id, {
+          missingOnly,
+          scheduled: recovery.rows,
+        });
+        if (regionIds.length) {
+          for (const id of regionIds)
+            recovery.rows[j.id + "/" + id] = {
+              scheduledAt: new Date().toISOString(),
+              priorAttempts: before.regions.find((r) => r.id === id).attempts,
+            };
+          await save();
+          await store.retryRegions(j.id, j, { regionIds });
+          const afterRecovery = await store.waitForIdle(j.id, j);
+          for (const id of regionIds) {
+            const r = afterRecovery.regions.find((r) => r.id === id),
+              key = j.id + "/" + id;
+            if (r.status === "queued" || r.error?.providerCalls === 0)
+              delete recovery.rows[key];
+            else recovery.rows[key].endedAt = new Date().toISOString();
+          }
+          await save();
+          if (stopped) return;
+        }
+      }
+      const current = recoveryMode ? await store.getJob(j.id, j) : before;
+      const regionIds = current.regions
+        .filter(
+          (r) =>
+            !missingOnly &&
+            !r.result &&
+            r.attempts < 2 &&
+            (!transportRecovery || !r.error),
+        )
         .map((r) => r.id);
       if (regionIds.length) await store.startJob(j.id, { ...j, regionIds });
       let job = await store.waitForIdle(j.id, j);
       const invalid = job.regions
         .filter(
           (r) =>
-            r.result && r.result.checks?.passed === false && r.attempts < 2,
+            !missingOnly &&
+            r.result &&
+            r.result.checks?.passed === false &&
+            r.attempts < 2,
         )
         .map((r) => r.id);
       if (!stopped && invalid.length) {
@@ -1370,6 +1503,30 @@ if (
   } else if (command === "prepare")
     await withRunLease(root, () => prepare(root), "prepare");
   else if (command === "run") await withRunLease(root, () => run(root));
+  else if (command === "recover-transport" || command === "resume-missing")
+    await withRunLease(root, async () => {
+      await atomicJson(join(root, "pipeline-status.json"), {
+        status:
+          command === "resume-missing"
+            ? "resuming-missing"
+            : "recovering-transport",
+        startedAt: new Date().toISOString(),
+        concurrency: 4,
+      });
+      await run(root, {
+        transportRecovery: command === "recover-transport",
+        missingOnly: command === "resume-missing",
+        maxConcurrency: 4,
+      });
+      await artifacts(root);
+      const summary = await report(root);
+      await atomicJson(join(root, "pipeline-status.json"), {
+        status: summary.imported === 100 ? "complete" : "needs-attention",
+        at: new Date().toISOString(),
+        imported: summary.imported,
+        stopped: summary.stopped,
+      });
+    });
   else if (command === "artifacts") await artifacts(root);
   else if (command === "repair") await repair(root);
   else if (command === "report") await report(root);

@@ -9,8 +9,113 @@ import {
   compositionKey,
   expandSystemCrops,
   withRunLease,
+  createBatchRequestGate,
+  selectRecoveryRegionIds,
   rankCandidates,
 } from "../scripts/netease-popular-piano.mjs";
+
+test("explicit missing-only resume preserves every existing result, including results awaiting review", () => {
+  const rows = [
+    { id: "valid", result: { checks: { passed: true } } },
+    { id: "needs-review", result: { checks: { passed: false } } },
+    {
+      id: "network",
+      result: null,
+      error: { code: "MODEL_REQUEST_FAILED" },
+      attempts: 2,
+    },
+    {
+      id: "source",
+      result: null,
+      error: { code: "NEEDS_SOURCE" },
+      attempts: 2,
+    },
+    { id: "pending", result: null, status: "queued" },
+  ];
+  assert.deepEqual(
+    selectRecoveryRegionIds(rows, "job", { missingOnly: true }),
+    ["network", "source", "pending"],
+  );
+  assert.deepEqual(
+    selectRecoveryRegionIds(rows, "job", {
+      missingOnly: true,
+      scheduled: { "job/network": {} },
+    }),
+    ["source", "pending"],
+  );
+});
+import { createFullScoreJobStore } from "../lib/full-score-jobs.mjs";
+
+test("a systemic provider outage stops the batch after three failures and leaves undispatched rows resumable", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "qinban-outage-"));
+  let calls = 0;
+  const gate = createBatchRequestGate(async () => {
+    calls++;
+    throw Object.assign(Error("upstream request failed"), {
+      code: "MODEL_REQUEST_FAILED",
+      public: true,
+    });
+  });
+  const store = createFullScoreJobStore({
+    directory,
+    maxConcurrency: 1,
+    recognizeRegion: gate.recognize,
+  });
+  try {
+    const image = {
+      mimeType: "image/png",
+      data: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl6P7sAAAAASUVORK5CYII=",
+    };
+    const j = await store.createJob({
+      title: "Synthetic provider outage",
+      totalPages: 1,
+      regions: Array.from({ length: 12 }, (_, i) => ({
+        id: "row-" + i,
+        page: 1,
+        system: i + 1,
+        rect: { x: 0, y: i * 100, width: 600, height: 90 },
+        pageWidth: 600,
+        pageHeight: 1300,
+        image,
+      })),
+    });
+    await store.startJob(j.id, j);
+    const result = await store.waitForIdle(j.id, j);
+    assert.equal(
+      calls,
+      3,
+      "must not dispatch the rest of the batch into a known outage",
+    );
+    assert.equal(result.progress.failed, 3);
+    assert.equal(result.progress.pending, 9);
+    assert.equal(gate.state.stopped, "MODEL_SERVICE_UNAVAILABLE");
+  } finally {
+    await store.close();
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("source doubts are not transport outages and successful reads reset the failure streak", async () => {
+  let calls = 0;
+  const gate = createBatchRequestGate(async (kind) => {
+    calls++;
+    if (kind === "ok") return {};
+    throw Object.assign(Error("fixture"), { code: kind });
+  });
+  for (const code of [
+    "NEEDS_SOURCE",
+    "NEEDS_SOURCE",
+    "NEEDS_SOURCE",
+    "MODEL_REQUEST_FAILED",
+    "MODEL_REQUEST_FAILED",
+  ])
+    await assert.rejects(gate.recognize(code));
+  assert.equal(gate.state.stopped, null);
+  await gate.recognize("ok");
+  await assert.rejects(gate.recognize("MODEL_REQUEST_FAILED"));
+  assert.equal(gate.state.stopped, null);
+  assert.equal(calls, 7);
+});
 
 test("one batch owner fences a duplicate model runner and releases the lease after failure", async () => {
   const dir = await mkdtemp(join(tmpdir(), "qinban-batch-lease-"));
