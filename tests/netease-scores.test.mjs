@@ -473,6 +473,18 @@ test("direct data arrays require page identity and reject a different sheet ID",
   p.close();
 });
 
+test("legacy HTTP-only image hosts retain the API protocol, while HTTPS sources never downgrade", () => {
+  for (const host of ["p101.music.126.net", "p201.music.126.net"]) {
+    for (const protocol of ["http:", "https:"]) {
+      const address = `${protocol}//${host}/score.jpg?signature=fixture&param=original`;
+      const result = normalizeNeteasePreview({
+        data: [{ sheetId: 1, pageNumber: 1, url: address }],
+      });
+      assert.equal(result.pages[0].url, address);
+    }
+  }
+});
+
 test("known NetEase CDN HTTP addresses are upgraded to HTTPS without changing signed paths or queries", () => {
   const result = normalizeNeteasePreview({
     code: 200,
