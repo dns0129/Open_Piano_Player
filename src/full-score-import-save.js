@@ -33,7 +33,7 @@ function retainOriginalPages({ draft, thumbnails }, notation, selectedAssets) {
 }
 
 export async function importUnreviewed(ctx) {
-  const { draft, state, assets } = ctx;
+  const { draft, state, assets, onImport } = ctx;
   if (!state.scopeReviewed || !state.pianoConfirmed)
     throw new Error("请先确认钢琴谱身份和全部页、谱行范围。");
   state.importing = true;
@@ -77,7 +77,7 @@ export async function importUnreviewed(ctx) {
       })),
     };
     retainOriginalPages(ctx, sourceNotation, selectedAssets);
-    await ctx.onImport({
+    await onImport({
       score,
       sourceNotation,
       measureMap: final.measureMap,
@@ -96,7 +96,7 @@ export async function importUnreviewed(ctx) {
 }
 
 export async function importReviewed(ctx) {
-  const { draft, state, assets } = ctx;
+  const { draft, state, assets, onImport } = ctx;
   const summary = fullScoreReviewSummary(draft);
   if (!summary.canImport)
     throw new Error(summary.issues[0]?.message || "尚未完成全部校对。");
@@ -174,7 +174,7 @@ export async function importReviewed(ctx) {
       ]),
     ];
     retainOriginalPages(ctx, sourceNotation, selectedAssets);
-    await ctx.onImport({
+    await onImport({
       score,
       sourceNotation,
       measureMap: final.measureMap || sourceNotation.measureMap,
