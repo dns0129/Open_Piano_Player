@@ -31,6 +31,21 @@ import {
 } from "../lib/full-score-review.mjs";
 import { escapeHTML } from "./html.js";
 import {
+  activeRegion,
+  assertAlive,
+  beginOperation,
+  cancelLateResponse,
+  capability,
+  createImportContext,
+  isRunning,
+  pageInfo,
+  requireApi,
+  retryEngine,
+  scopeLocked,
+  selectedRegions,
+  setMessage,
+} from "./full-score-import-context.js";
+import {
   blobFromImage,
   blobImage,
   canvasBlob,
@@ -60,92 +75,47 @@ export function mountFullScoreImport(
     api = {},
   } = {},
 ) {
-  source = source && typeof source === "object" ? source : {};
   const root = document.createElement("section");
   root.className = "full-score-import";
   host.replaceChildren(root);
-  const draft = {
-    id: `pdf-${Date.now().toString(36)}`,
-    title: (file?.name || source.songName || "钢琴谱").replace(/\.pdf$/i, ""),
-    composer: "",
+  const ctx = createImportContext({
+    root,
+    file,
     source,
-    totalPages: 0,
-    pages: [],
-    regions: [],
-    tempo: undefined,
-    timeSignature: undefined,
-    keySignature: undefined,
-  };
-  const state = {
-    scanning: true,
-    scannedPages: 0,
-    busy: false,
-    importing: false,
-    activePage: 1,
-    activeRegionId: "",
-    selectedNoteId: "",
-    selecting: false,
-    stage: "scope",
-    pianoConfirmed: source.pianoSourceVerified === true,
-    scopeReviewed: false,
-    capabilities: null,
-    engine: "pi",
-    riskReview: false,
-    retryEngine: "current",
-    retryEnlarge: true,
-    pdfHash: null,
-    selectedHeadIndex: null,
-    autoContinue: true,
-    job: null,
-    error: "",
-    message: "正在打开 PDF，随后逐页检查钢琴双手谱表。",
-    uploaded: 0,
-    progress: null,
-  };
-  const assets = new Map(),
-    thumbnails = new Map(),
-    remoteSignatures = new Map();
-  let documentTask,
-    pdf,
-    disposed = false,
-    scanCancelled = false,
-    operationCancelled = false,
-    operationVersion = 0,
-    pollTimer = 0,
-    renderEpoch = 0,
-    manualSequence = 0,
-    previewRenderer,
-    selector,
-    activePrepared,
-    preparedPromise,
-    pdfQueue = Promise.resolve();
-  let noteDrag = null;
-  let pageWorkbench, pageWorkbenchHost, restoreParentInert;
+    resumeJob,
+    onImport,
+    onClose,
+    api,
+  });
+  const { draft, state, assets, thumbnails, remoteSignatures, moveHistory } =
+    ctx;
+  source = ctx.source;
+  ctx.render = render;
   function closePageWorkbench() {
-    pageWorkbench?.destroy();
-    pageWorkbench = null;
-    pageWorkbenchHost?.remove();
-    pageWorkbenchHost = null;
-    restoreParentInert?.();
-    restoreParentInert = null;
-    if (!disposed) render();
+    ctx.pageWorkbench?.destroy();
+    ctx.pageWorkbench = null;
+    ctx.pageWorkbenchHost?.remove();
+    ctx.pageWorkbenchHost = null;
+    ctx.restoreParentInert?.();
+    ctx.restoreParentInert = null;
+    if (!ctx.disposed) render();
   }
   async function openPageWorkbench() {
-    if (isRunning() || state.importing || disposed) return;
-    const regions = selectedRegions();
+    if (isRunning(ctx) || state.importing || ctx.disposed) return;
+    const regions = selectedRegions(ctx);
     for (const region of regions) await ensureRegionAsset(region);
-    if (disposed) return;
+    if (ctx.disposed) return;
     const modal = root.closest(".modal");
     const prior = modal?.inert;
     if (modal) {
       modal.inert = true;
-      restoreParentInert = () => {
+      ctx.restoreParentInert = () => {
         modal.inert = prior;
       };
     }
-    pageWorkbenchHost = document.createElement("div");
-    document.body.append(pageWorkbenchHost);
-    pageWorkbench = mountRecognitionPageEditor(pageWorkbenchHost, {
+    ctx.pageWorkbenchHost = document.createElement("div");
+    document.body.append(ctx.pageWorkbenchHost);
+    ctx.pageWorkbench = mountRecognitionPageEditor(ctx.pageWorkbenchHost, {
       draft,
       regions,
       assets,
@@ -154,71 +124,8 @@ export function mountFullScoreImport(
       onClose: closePageWorkbench,
     });
   }
-  const moveHistory = [];
-  let operationController = new AbortController();
-  const selectedRegions = () =>
-    draft.regions
-      .filter(
-        (region) =>
-          region.selected &&
-          draft.pages.some(
-            (page) => page.page === region.page && page.decision === "include",
-          ),
-      )
-      .sort(
-        (a, b) => a.page - b.page || a.rect.y - b.rect.y || a.rect.x - b.rect.x,
-      );
-  const activeRegion = () =>
-    draft.regions.find((region) => region.id === state.activeRegionId);
-  const pageInfo = (page) =>
-    draft.pages.find((candidate) => candidate.page === page);
-  const isRunning = () => state.busy || state.job?.status === "running";
-  const scopeLocked = () => Boolean(state.job) || state.busy || state.scanning;
-  const assertAlive = (intent) => {
-    if (
-      disposed ||
-      operationCancelled ||
-      (intent !== undefined && intent !== operationVersion)
-    )
-      throw new Error("操作已停止。");
-  };
-  async function cancelLateResponse(response, fallbackId, intent) {
-    if (
-      !disposed &&
-      !operationCancelled &&
-      (intent === undefined || intent === operationVersion)
-    )
-      return false;
-    // A later explicit restart owns the job now; an old response must neither
-    // overwrite that state nor cancel the new user-authorized run.
-    if (!disposed && !operationCancelled && intent !== operationVersion)
-      return true;
-    const id = unwrap(response)?.id || fallbackId;
-    if (id && typeof api.cancelJob === "function")
-      await api.cancelJob(id).catch(() => {});
-    return true;
-  }
-  const requireApi = (name) => {
-    if (typeof api[name] !== "function")
-      throw new Error(`服务器尚未提供 ${name} 接口，请刷新后重试。`);
-    return api[name];
-  };
-  const setMessage = (message, error = "") => {
-    state.message = message;
-    state.error = error;
-    render();
-  };
-
-  function capability() {
-    const raw = state.capabilities?.fullScore || state.capabilities || {};
-    return {
-      pi: raw.pi?.ready !== false && raw.pi?.available !== false,
-      deepseek: raw.deepseek?.ready === true,
-    };
-  }
-
   function render() {
-    if (disposed) return;
+    if (ctx.disposed) return;
     const sameRegion = root.dataset.viewRegion === state.activeRegionId;
     const scrollPositions = sameRegion
       ? [
@@ -255,16 +162,16 @@ export function mountFullScoreImport(
         }
       : null;
     const advancedOpen = root.querySelector(".fsi-advanced")?.open;
-    const epoch = ++renderEpoch;
-    selector?.destroy();
-    selector = null;
-    previewRenderer?.destroy();
-    previewRenderer = null;
+    const epoch = ++ctx.renderEpoch;
+    ctx.selector?.destroy();
+    ctx.selector = null;
+    ctx.previewRenderer?.destroy();
+    ctx.previewRenderer = null;
     const summary = fullScoreReviewSummary(draft),
       regions = draft.regions.filter(
         (region) => region.page === state.activePage,
       ),
-      current = activeRegion();
+      current = activeRegion(ctx);
     const failedCount = (state.job?.regions || []).filter(
       (region) =>
         region.status === "failed" ||
@@ -277,17 +184,17 @@ export function mountFullScoreImport(
         (state.progress.confirmed || 0) +
         (state.progress.failed || 0)
       : summary.recognizedCount;
-    const total = state.progress?.total || selectedRegions().length;
+    const total = state.progress?.total || selectedRegions(ctx).length;
     const pageCards = draft.pages
       .map(
         (page) =>
-          `<div class="fsi-page${page.page === state.activePage ? " is-current" : ""}"><button type="button" data-action="page" data-page="${page.page}" aria-label="查看 PDF 第 ${page.page} 页"><img src="${escapeHTML(thumbnails.get(page.page)?.url || "")}" alt="第 ${page.page} 页原始 PDF 缩略图"><strong>第 ${page.page} 页</strong> · ${draft.regions.filter((region) => region.page === page.page).length} 行</button><select aria-label="第 ${page.page} 页的处理方式" data-page-decision="${page.page}" ${scopeLocked() ? "disabled" : ""}><option value="pending" ${page.decision === "pending" ? "selected" : ""}>需决定识别或排除</option><option value="include" ${page.decision === "include" ? "selected" : ""}>识别此页</option><option value="not-score" ${page.decision === "exclude" && page.excludeReason === "not-score" ? "selected" : ""}>封面/空白/非谱面</option><option value="music" ${page.decision === "exclude" && page.excludeReason === "music" ? "selected" : ""}>跳过谱页（仅片段）</option></select></div>`,
+          `<div class="fsi-page${page.page === state.activePage ? " is-current" : ""}"><button type="button" data-action="page" data-page="${page.page}" aria-label="查看 PDF 第 ${page.page} 页"><img src="${escapeHTML(thumbnails.get(page.page)?.url || "")}" alt="第 ${page.page} 页原始 PDF 缩略图"><strong>第 ${page.page} 页</strong> · ${draft.regions.filter((region) => region.page === page.page).length} 行</button><select aria-label="第 ${page.page} 页的处理方式" data-page-decision="${page.page}" ${scopeLocked(ctx) ? "disabled" : ""}><option value="pending" ${page.decision === "pending" ? "selected" : ""}>需决定识别或排除</option><option value="include" ${page.decision === "include" ? "selected" : ""}>识别此页</option><option value="not-score" ${page.decision === "exclude" && page.excludeReason === "not-score" ? "selected" : ""}>封面/空白/非谱面</option><option value="music" ${page.decision === "exclude" && page.excludeReason === "music" ? "selected" : ""}>跳过谱页（仅片段）</option></select></div>`,
       )
       .join("");
     const regionRows = regions
       .map(
         (region) =>
-          `<div class="fsi-region${region.id === state.activeRegionId ? " is-current" : ""}"><input type="checkbox" data-region-selected="${escapeHTML(region.id)}" aria-label="识别${scopeLabel(region)}" ${region.selected ? "checked" : ""} ${scopeLocked() ? "disabled" : ""}><button type="button" data-action="region" data-region-id="${escapeHTML(region.id)}">第 ${region.system} 行<small>${escapeHTML(region.reviewed ? "已审核" : region.status === "failed" ? `失败：${region.error || "请重试"}` : region.status === "complete" ? `${region.notes.length} 音符 · 待校对` : region.status === "running" ? "识别中" : "等待识别")}</small></button>${!region.selected ? `<select data-region-reason="${escapeHTML(region.id)}" aria-label="第 ${region.system} 行排除原因" ${scopeLocked() ? "disabled" : ""}><option value="" ${!region.excludeReason ? "selected" : ""}>请选择排除原因</option><option value="not-score" ${region.excludeReason === "not-score" ? "selected" : ""}>非谱面/误检</option><option value="music" ${region.excludeReason === "music" ? "selected" : ""}>跳过音乐（仅片段）</option></select>` : ""}</div>`,
+          `<div class="fsi-region${region.id === state.activeRegionId ? " is-current" : ""}"><input type="checkbox" data-region-selected="${escapeHTML(region.id)}" aria-label="识别${scopeLabel(region)}" ${region.selected ? "checked" : ""} ${scopeLocked(ctx) ? "disabled" : ""}><button type="button" data-action="region" data-region-id="${escapeHTML(region.id)}">第 ${region.system} 行<small>${escapeHTML(region.reviewed ? "已审核" : region.status === "failed" ? `失败：${region.error || "请重试"}` : region.status === "complete" ? `${region.notes.length} 音符 · 待校对` : region.status === "running" ? "识别中" : "等待识别")}</small></button>${!region.selected ? `<select data-region-reason="${escapeHTML(region.id)}" aria-label="第 ${region.system} 行排除原因" ${scopeLocked(ctx) ? "disabled" : ""}><option value="" ${!region.excludeReason ? "selected" : ""}>请选择排除原因</option><option value="not-score" ${region.excludeReason === "not-score" ? "selected" : ""}>非谱面/误检</option><option value="music" ${region.excludeReason === "music" ? "selected" : ""}>跳过音乐（仅片段）</option></select>` : ""}</div>`,
       )
       .join("");
     const notesTable = current?.notes?.length
@@ -332,28 +239,28 @@ export function mountFullScoreImport(
             `<option value="${value}" ${draft.keySignature === value ? "selected" : ""}>${value === 0 ? "无升降号" : value > 0 ? `${value} 个升号` : `${-value} 个降号`}</option>`,
         )
         .join("")}</select></label></div>
-      <details class="fsi-job-settings" ${!state.job || state.job.status === "running" || !state.pianoConfirmed ? "open" : ""}><summary>识别设置与任务控制</summary><div class="fsi-flags"><label><input type="checkbox" data-piano-confirmed ${state.pianoConfirmed ? "checked" : ""} ${state.scanning || isRunning() ? "disabled" : ""}> 我已对照谱头/来源，确认这是钢琴双手五线谱</label></div>
-      <div class="fsi-actions"><label>识谱服务商 <select data-recognition-engine ${state.job || isRunning() || state.scanning ? "disabled" : ""}><option value="pi" ${state.engine === "pi" ? "selected" : ""}>Pi Agent / ChatGPT</option><option value="deepseek" ${state.engine === "deepseek" ? "selected" : ""}>DeepSeek（实验 / 第二意见）· API 计费</option></select></label><strong data-recognition-model>${state.engine === "deepseek" ? "DeepSeek Flash" : "GPT-6.1 Sol"} · ${state.job?.recognition?.reasoningEffort === "low" ? "low" : "high"}</strong><label><input type="checkbox" data-auto-continue ${state.autoContinue ? "checked" : ""} ${state.scanning || isRunning() ? "disabled" : ""}> 自动继续全部谱行</label><label><input type="checkbox" data-risk-review ${state.riskReview ? "checked" : ""} ${state.job || isRunning() ? "disabled" : ""}> 复读高风险谱行（实验，可能增加一次调用）</label><button type="button" class="fsi-primary" data-action="start" ${state.scanning || state.busy || state.job?.status === "running" || state.importing ? "disabled" : ""}>${state.job ? "继续识别剩余谱行" : "一键识别全部选中谱行"}</button><button type="button" data-action="cancel" ${!state.scanning && !isRunning() ? "disabled" : ""}>停止任务</button>${state.job ? '<button type="button" data-action="reset" ' + (isRunning() ? "disabled" : "") + ">重新选择范围</button>" : ""}</div>
-      <p class="fsi-muted">${selectedRegions().length} 个谱行全新识别基线为 ${state.engine === "deepseek" ? "DeepSeek Flash" : "GPT-6.1 Sol"} ${state.job?.recognition?.reasoningEffort === "low" ? "low" : "high"} ${state.job?.estimate?.modelCalls ?? state.job?.estimate?.piCalls ?? selectedRegions().length} 次（每行仅首次识别）；重试另计，最多 100 行并行，可随时停止。相同原图复用已校对结果，中断保留已完成转写。${state.job?.calls ? `${state.job?.reuse?.hits ? ` 已复用 ${state.job.reuse.hits} 行，节省 ${state.job.reuse.savedCalls} 次模型调用。` : ""} ${state.job.reusedExactPdf ? "该任务历史" : "本任务"}已发起 ${state.engine === "deepseek" ? "DeepSeek" : "Pi"} 识别 ${state.job.calls.recognition || 0} 次。` : ""}</p>
-      </details>${state.job ? `<div class="fsi-batch-bar"><div class="fsi-actions"><button type="button" class="fsi-primary" data-action="page-workbench" ${isRunning() || state.importing || state.scanning || !selectedRegions().some((r) => r.notes?.length) ? "disabled" : ""}>整页左右对照修改</button><button type="button" class="fsi-primary" data-action="approve-all" ${isRunning() || state.importing || state.scanning || !state.pianoConfirmed || !selectedRegions().length || selectedRegions().some((r) => r.status !== "complete") ? "disabled" : ""}>一键审核全部</button><strong>${summary.reviewedCount} / ${summary.selectedCount} 行已审核</strong><details class="fsi-retry-options"><summary>重试选项（${failedCount} 行失败）</summary><div class="fsi-actions"><label>重识别模型 <select data-retry-engine ${isRunning() || state.importing ? "disabled" : ""}><option value="current" ${state.retryEngine === "current" ? "selected" : ""}>保持当前模型</option><option value="pi" ${state.retryEngine === "pi" ? "selected" : ""}>GPT-6.1 Sol · high</option><option value="deepseek" ${state.retryEngine === "deepseek" ? "selected" : ""}>DeepSeek Flash（实验）</option></select></label><label><input type="checkbox" data-retry-enlarge ${state.retryEnlarge ? "checked" : ""} ${isRunning() || state.importing ? "disabled" : ""}> 放大原图识别（最多 2 倍）</label><button type="button" data-action="retry-failed" ${isRunning() || state.importing || !failedCount ? "disabled" : ""}>一键重新识别失败谱行（${failedCount}）</button></div><p class="fsi-muted">重识别保留成功结果；额外模型调用另计。放大不会增加原图细节。</p></details></div><p class="fsi-muted">一键审核会确认全部所选谱行、覆盖范围及识别疑点，无需逐行勾选；审核后仍可编辑，再点击“保存到曲库”。结构错误会定位到对应谱行。</p></div>` : ""}
+      <details class="fsi-job-settings" ${!state.job || state.job.status === "running" || !state.pianoConfirmed ? "open" : ""}><summary>识别设置与任务控制</summary><div class="fsi-flags"><label><input type="checkbox" data-piano-confirmed ${state.pianoConfirmed ? "checked" : ""} ${state.scanning || isRunning(ctx) ? "disabled" : ""}> 我已对照谱头/来源，确认这是钢琴双手五线谱</label></div>
+      <div class="fsi-actions"><label>识谱服务商 <select data-recognition-engine ${state.job || isRunning(ctx) || state.scanning ? "disabled" : ""}><option value="pi" ${state.engine === "pi" ? "selected" : ""}>Pi Agent / ChatGPT</option><option value="deepseek" ${state.engine === "deepseek" ? "selected" : ""}>DeepSeek（实验 / 第二意见）· API 计费</option></select></label><strong data-recognition-model>${state.engine === "deepseek" ? "DeepSeek Flash" : "GPT-6.1 Sol"} · ${state.job?.recognition?.reasoningEffort === "low" ? "low" : "high"}</strong><label><input type="checkbox" data-auto-continue ${state.autoContinue ? "checked" : ""} ${state.scanning || isRunning(ctx) ? "disabled" : ""}> 自动继续全部谱行</label><label><input type="checkbox" data-risk-review ${state.riskReview ? "checked" : ""} ${state.job || isRunning(ctx) ? "disabled" : ""}> 复读高风险谱行（实验，可能增加一次调用）</label><button type="button" class="fsi-primary" data-action="start" ${state.scanning || state.busy || state.job?.status === "running" || state.importing ? "disabled" : ""}>${state.job ? "继续识别剩余谱行" : "一键识别全部选中谱行"}</button><button type="button" data-action="cancel" ${!state.scanning && !isRunning(ctx) ? "disabled" : ""}>停止任务</button>${state.job ? '<button type="button" data-action="reset" ' + (isRunning(ctx) ? "disabled" : "") + ">重新选择范围</button>" : ""}</div>
+      <p class="fsi-muted">${selectedRegions(ctx).length} 个谱行全新识别基线为 ${state.engine === "deepseek" ? "DeepSeek Flash" : "GPT-6.1 Sol"} ${state.job?.recognition?.reasoningEffort === "low" ? "low" : "high"} ${state.job?.estimate?.modelCalls ?? state.job?.estimate?.piCalls ?? selectedRegions(ctx).length} 次（每行仅首次识别）；重试另计，最多 100 行并行，可随时停止。相同原图复用已校对结果，中断保留已完成转写。${state.job?.calls ? `${state.job?.reuse?.hits ? ` 已复用 ${state.job.reuse.hits} 行，节省 ${state.job.reuse.savedCalls} 次模型调用。` : ""} ${state.job.reusedExactPdf ? "该任务历史" : "本任务"}已发起 ${state.engine === "deepseek" ? "DeepSeek" : "Pi"} 识别 ${state.job.calls.recognition || 0} 次。` : ""}</p>
+      </details>${state.job ? `<div class="fsi-batch-bar"><div class="fsi-actions"><button type="button" class="fsi-primary" data-action="page-workbench" ${isRunning(ctx) || state.importing || state.scanning || !selectedRegions(ctx).some((r) => r.notes?.length) ? "disabled" : ""}>整页左右对照修改</button><button type="button" class="fsi-primary" data-action="approve-all" ${isRunning(ctx) || state.importing || state.scanning || !state.pianoConfirmed || !selectedRegions(ctx).length || selectedRegions(ctx).some((r) => r.status !== "complete") ? "disabled" : ""}>一键审核全部</button><strong>${summary.reviewedCount} / ${summary.selectedCount} 行已审核</strong><details class="fsi-retry-options"><summary>重试选项（${failedCount} 行失败）</summary><div class="fsi-actions"><label>重识别模型 <select data-retry-engine ${isRunning(ctx) || state.importing ? "disabled" : ""}><option value="current" ${state.retryEngine === "current" ? "selected" : ""}>保持当前模型</option><option value="pi" ${state.retryEngine === "pi" ? "selected" : ""}>GPT-6.1 Sol · high</option><option value="deepseek" ${state.retryEngine === "deepseek" ? "selected" : ""}>DeepSeek Flash（实验）</option></select></label><label><input type="checkbox" data-retry-enlarge ${state.retryEnlarge ? "checked" : ""} ${isRunning(ctx) || state.importing ? "disabled" : ""}> 放大原图识别（最多 2 倍）</label><button type="button" data-action="retry-failed" ${isRunning(ctx) || state.importing || !failedCount ? "disabled" : ""}>一键重新识别失败谱行（${failedCount}）</button></div><p class="fsi-muted">重识别保留成功结果；额外模型调用另计。放大不会增加原图细节。</p></details></div><p class="fsi-muted">一键审核会确认全部所选谱行、覆盖范围及识别疑点，无需逐行勾选；审核后仍可编辑，再点击“保存到曲库”。结构错误会定位到对应谱行。</p></div>` : ""}
       <div class="fsi-status" role="status" aria-live="polite"><strong>${escapeHTML(state.message)}</strong><p>已检查 ${state.scannedPages} / ${draft.totalPages || "…"} 页 · ${processed} / ${total} 行已处理 · ${completed} 行已审核${state.busy && state.uploaded ? ` · 已上传 ${state.uploaded} 行` : ""}</p><progress max="${state.scanning ? draft.totalPages || 1 : total || 1}" value="${state.scanning ? state.scannedPages : processed}"></progress></div>
       ${state.error ? `<div class="fsi-error" role="alert">${escapeHTML(state.error)}</div>` : ""}
-      <div class="fsi-workspace"><aside class="fsi-pages" aria-label="PDF 所有页面">${pageCards || '<p class="fsi-muted">正在读取页面…</p>'}</aside><section class="fsi-view" aria-label="当前谱行校对"><div class="fsi-actions"><h3>第 ${state.activePage} 页${current ? ` · 第 ${current.system} 行` : ""}</h3><button type="button" data-action="scope" ${state.scanning || state.busy ? "disabled" : ""}>页面与范围</button><button type="button" data-action="review" ${!current?.notes ? "disabled" : ""}>整页对照修改</button>${!scopeLocked() ? '<button type="button" data-action="select-crop">手动调整/补充谱行</button>' : ""}</div>
-      ${pageInfo(state.activePage)?.assessment ? `<p class="fsi-muted">${escapeHTML(pageInfo(state.activePage).assessment.message)}</p>` : ""}
+      <div class="fsi-workspace"><aside class="fsi-pages" aria-label="PDF 所有页面">${pageCards || '<p class="fsi-muted">正在读取页面…</p>'}</aside><section class="fsi-view" aria-label="当前谱行校对"><div class="fsi-actions"><h3>第 ${state.activePage} 页${current ? ` · 第 ${current.system} 行` : ""}</h3><button type="button" data-action="scope" ${state.scanning || state.busy ? "disabled" : ""}>页面与范围</button><button type="button" data-action="review" ${!current?.notes ? "disabled" : ""}>整页对照修改</button>${!scopeLocked(ctx) ? '<button type="button" data-action="select-crop">手动调整/补充谱行</button>' : ""}</div>
+      ${pageInfo(ctx, state.activePage)?.assessment ? `<p class="fsi-muted">${escapeHTML(pageInfo(ctx, state.activePage).assessment.message)}</p>` : ""}
       <div class="fsi-regions" aria-label="当前页面全部谱行">${regionRows || '<p class="fsi-muted" style="padding:9px">此页未找到可用的双手谱行。请明确排除封面，或手动框选清晰双谱表。</p>'}</div>
       ${state.selecting ? '<div class="fsi-selector"><p>请切换“手动框选”，拖出完整的一行双手谱。添加/替换都必须包含谱号、上下加线及全部小节。</p><div data-crop-selector></div><div class="fsi-actions"><button type="button" data-action="add-crop">添加为新谱行</button><button type="button" data-action="replace-crop" ' + (!current ? "disabled" : "") + ">替换当前谱行范围</button></div></div>" : `<div class="fsi-original${state.stage === "review" && current?.notes ? " can-locate" : ""}" data-original-frame><div class="fsi-source-canvas">${originalURL ? `<img src="${escapeHTML(originalURL)}" alt="${state.stage === "review" && current ? `${scopeLabel(current)}原始钢琴谱裁切；选中音符后可点击校准位置` : `PDF 第 ${state.activePage} 页原始谱面`}" data-original-image>${sourceMarkers(current)}` : '<p class="fsi-muted" style="padding:20px">正在准备原谱预览…</p>'}<span class="fsi-position" data-note-position hidden></span></div></div>`}
       ${
         state.stage === "review" && current?.notes
-          ? `<p class="fsi-muted">${current.positionlessSource ? "此结果未提供逐音原图坐标，可选中音符后点击原图补充定位。" : "拖动原图上的编号圆点，校准跟谱位置；也可在下表选中音符后点击音头定位。"}拍点以此行第 0 拍为起点。</p><div class="fsi-actions"><button type="button" data-action="undo-move" ${!moveHistory.length || state.busy || state.importing ? "disabled" : ""}>撤销上次拖拽／定位</button></div>${noteRoll(current)}<details class="fsi-note-details"><summary>音符明细与精确修改（${current.notes.length} 音符）</summary><div class="fsi-actions"><label>本行总拍数（含休止） <input type="number" min="0.0009765625" step="0.000001" data-region-duration value="${escapeHTML(current.durationBeats ?? "")}" aria-label="当前谱行总拍数" style="width:100px"></label><button type="button" data-action="add-note">新增音符</button><button type="button" data-action="preview">更新转写谱面预览</button><button type="button" data-action="retry-region" ${isRunning() ? "disabled" : ""}>重新读取此行原图</button><button type="button" data-action="retry-enlarged" ${isRunning() || current.reviewed ? "disabled" : ""}>放大／换模型重识别此行</button></div>${notesTable}${writtenEvidenceEditor(current)}</details>${reviewAdvanced}${omrReviewMarkup(current)}<div class="fsi-mini-notation" data-notation-preview><p class="fsi-muted">点击“更新转写谱面预览”，与上方原始谱面对照。</p></div><label><input type="checkbox" data-region-coverage ${current.coverageComplete ? "checked" : ""}> 已确认本行的全部小节、左右手及末尾休止均已转写</label>${current.warnings?.length ? `<div class="fsi-warning">${current.warnings.map(escapeHTML).join("<br>")}</div>` : ""}${
+          ? `<p class="fsi-muted">${current.positionlessSource ? "此结果未提供逐音原图坐标，可选中音符后点击原图补充定位。" : "拖动原图上的编号圆点，校准跟谱位置；也可在下表选中音符后点击音头定位。"}拍点以此行第 0 拍为起点。</p><div class="fsi-actions"><button type="button" data-action="undo-move" ${!moveHistory.length || state.busy || state.importing ? "disabled" : ""}>撤销上次拖拽／定位</button></div>${noteRoll(current)}<details class="fsi-note-details"><summary>音符明细与精确修改（${current.notes.length} 音符）</summary><div class="fsi-actions"><label>本行总拍数（含休止） <input type="number" min="0.0009765625" step="0.000001" data-region-duration value="${escapeHTML(current.durationBeats ?? "")}" aria-label="当前谱行总拍数" style="width:100px"></label><button type="button" data-action="add-note">新增音符</button><button type="button" data-action="preview">更新转写谱面预览</button><button type="button" data-action="retry-region" ${isRunning(ctx) ? "disabled" : ""}>重新读取此行原图</button><button type="button" data-action="retry-enlarged" ${isRunning(ctx) || current.reviewed ? "disabled" : ""}>放大／换模型重识别此行</button></div>${notesTable}${writtenEvidenceEditor(current)}</details>${reviewAdvanced}${omrReviewMarkup(current)}<div class="fsi-mini-notation" data-notation-preview><p class="fsi-muted">点击“更新转写谱面预览”，与上方原始谱面对照。</p></div><label><input type="checkbox" data-region-coverage ${current.coverageComplete ? "checked" : ""}> 已确认本行的全部小节、左右手及末尾休止均已转写</label>${current.warnings?.length ? `<div class="fsi-warning">${current.warnings.map(escapeHTML).join("<br>")}</div>` : ""}${
               currentIssues.length
                 ? `<ul class="fsi-checklist">${currentIssues
                     .slice(0, 8)
                     .map((issue) => `<li>${escapeHTML(issue.message)}</li>`)
                     .join("")}</ul>`
                 : ""
-            }<div class="fsi-actions"><button type="button" class="fsi-primary" data-action="confirm-region" ${isRunning() || currentIssues.length ? "disabled" : ""}>${current.reviewed ? "此行已审核；修改后需重新确认" : "仅审核当前行（可选）"}</button><button type="button" data-action="next-unreviewed">下一个待校对谱行</button></div>`
+            }<div class="fsi-actions"><button type="button" class="fsi-primary" data-action="confirm-region" ${isRunning(ctx) || currentIssues.length ? "disabled" : ""}>${current.reviewed ? "此行已审核；修改后需重新确认" : "仅审核当前行（可选）"}</button><button type="button" data-action="next-unreviewed">下一个待校对谱行</button></div>`
           : current?.status === "failed"
-            ? `<div class="fsi-error">${escapeHTML(current.error || "此行识别失败，完整导入已被阻止。")}</div><button type="button" data-action="retry-region" ${isRunning() ? "disabled" : ""}>重试此行</button><button type="button" data-action="retry-enlarged" ${isRunning() ? "disabled" : ""}>放大原图后重试此行</button>`
+            ? `<div class="fsi-error">${escapeHTML(current.error || "此行识别失败，完整导入已被阻止。")}</div><button type="button" data-action="retry-region" ${isRunning(ctx) ? "disabled" : ""}>重试此行</button><button type="button" data-action="retry-enlarged" ${isRunning(ctx) ? "disabled" : ""}>放大原图后重试此行</button>`
             : ""
       }
       ${
@@ -361,14 +268,14 @@ export function mountFullScoreImport(
           ? scoreDiagnosisCard(
               state.job.regions?.find((r) => r.id === current.id),
               {
-                busy: state.busy || isRunning() || state.importing,
+                busy: state.busy || isRunning(ctx) || state.importing,
                 dirty: current.dirty,
               },
             )
           : ""
       }
       </section></div>
-      <footer class="fsi-footer"><div><strong>${summary.reviewedCount} / ${summary.selectedCount} 行完成审核 · ${summary.noteCount} 音符</strong><p>${summary.musicExcluded ? "已排除含音乐的页面或谱行，导入名称会明确标注“所选谱段”。" : "可一键审核全部，也可单独审核当前行；修改过的谱行需要重新审核。"}</p>${!summary.canImport && !state.scanning ? `<p class="fsi-muted">${escapeHTML(summary.issues[0]?.message || "")}</p>` : ""}</div><label><input type="checkbox" data-scope-reviewed ${state.scopeReviewed ? "checked" : ""}> 我已确认全部页和谱行的处理范围，排除项均已检查</label><button type="button" class="fsi-primary" data-action="import" ${!summary.canImport || state.importing || isRunning() || !state.scopeReviewed ? "disabled" : ""}>${state.importing ? "正在保存…" : summary.musicExcluded ? "保存所选片段到曲库" : "保存到曲库"}</button>${state.job && state.job.regions.every((r) => r.result) ? `<button type="button" data-action="import-draft" ${state.importing || isRunning() || !state.scopeReviewed ? "disabled" : ""}>导入AI草稿（待校对）</button>` : ""}</footer>`;
+      <footer class="fsi-footer"><div><strong>${summary.reviewedCount} / ${summary.selectedCount} 行完成审核 · ${summary.noteCount} 音符</strong><p>${summary.musicExcluded ? "已排除含音乐的页面或谱行，导入名称会明确标注“所选谱段”。" : "可一键审核全部，也可单独审核当前行；修改过的谱行需要重新审核。"}</p>${!summary.canImport && !state.scanning ? `<p class="fsi-muted">${escapeHTML(summary.issues[0]?.message || "")}</p>` : ""}</div><label><input type="checkbox" data-scope-reviewed ${state.scopeReviewed ? "checked" : ""}> 我已确认全部页和谱行的处理范围，排除项均已检查</label><button type="button" class="fsi-primary" data-action="import" ${!summary.canImport || state.importing || isRunning(ctx) || !state.scopeReviewed ? "disabled" : ""}>${state.importing ? "正在保存…" : summary.musicExcluded ? "保存所选片段到曲库" : "保存到曲库"}</button>${state.job && state.job.regions.every((r) => r.result) ? `<button type="button" data-action="import-draft" ${state.importing || isRunning(ctx) || !state.scopeReviewed ? "disabled" : ""}>导入AI草稿（待校对）</button>` : ""}</footer>`;
     if (state.busy || state.importing)
       for (const input of root.querySelectorAll(
         "[data-note-field],[data-written-kind],[data-region-duration],[data-region-coverage],[data-rest-field],[data-measure-durations],[data-continuity],[data-tie-direction],[data-internal-tie],[data-head-reviewed],[data-tie-reviewed],[data-scope-reviewed],[data-source-note],[data-roll-note]",
@@ -418,7 +325,7 @@ export function mountFullScoreImport(
         input.setSelectionRange(focus.start, focus.start);
     }
     void renderActiveView(epoch).catch((error) => {
-      if (!disposed && epoch === renderEpoch) {
+      if (!ctx.disposed && epoch === ctx.renderEpoch) {
         state.error = errorText(error);
         const alert = document.createElement("p");
         alert.className = "fsi-error";
@@ -434,9 +341,9 @@ export function mountFullScoreImport(
     targetWidth,
     { includePixels = false } = {},
   ) {
-    const work = pdfQueue.then(async () => {
-      if (disposed) throw new Error("PDF 已关闭。");
-      const page = await pdf.getPage(pageNumber),
+    const work = ctx.pdfQueue.then(async () => {
+      if (ctx.disposed) throw new Error("PDF 已关闭。");
+      const page = await ctx.pdf.getPage(pageNumber),
         base = page.getViewport({ scale: 1 });
       let scale = Math.min(
         includePixels ? 3 : 2.5,
@@ -475,7 +382,7 @@ export function mountFullScoreImport(
         page.cleanup();
       }
     });
-    pdfQueue = work.catch(() => {});
+    ctx.pdfQueue = work.catch(() => {});
     return work;
   }
 
@@ -490,33 +397,33 @@ export function mountFullScoreImport(
   }
 
   async function ensurePrepared(pageNumber) {
-    if (activePrepared?.page === pageNumber) return activePrepared;
-    if (preparedPromise) {
-      await preparedPromise;
-      if (activePrepared?.page === pageNumber) return activePrepared;
+    if (ctx.activePrepared?.page === pageNumber) return ctx.activePrepared;
+    if (ctx.preparedPromise) {
+      await ctx.preparedPromise;
+      if (ctx.activePrepared?.page === pageNumber) return ctx.activePrepared;
     }
     const task = preparePage(pageNumber).then((prepared) => {
-      if (disposed) {
+      if (ctx.disposed) {
         prepared.destroy();
         throw new Error("预览已关闭。");
       }
-      activePrepared?.destroy();
-      activePrepared = prepared;
+      ctx.activePrepared?.destroy();
+      ctx.activePrepared = prepared;
       return prepared;
     });
-    preparedPromise = task;
+    ctx.preparedPromise = task;
     try {
       return await task;
     } finally {
-      if (preparedPromise === task) preparedPromise = null;
+      if (ctx.preparedPromise === task) ctx.preparedPromise = null;
     }
   }
 
   async function renderActiveView(epoch) {
-    const region = activeRegion();
+    const region = activeRegion(ctx);
     if (state.selecting) {
       const prepared = await ensurePrepared(state.activePage);
-      if (disposed || epoch !== renderEpoch) return;
+      if (ctx.disposed || epoch !== ctx.renderEpoch) return;
       const wrapped = {
         ...prepared,
         getAssessment: (options) =>
@@ -530,13 +437,13 @@ export function mountFullScoreImport(
             confirmedPiano: state.pianoConfirmed || options?.confirmedPiano,
           }),
       };
-      selector = mountScoreImageSelector(
+      ctx.selector = mountScoreImageSelector(
         root.querySelector("[data-crop-selector]"),
         wrapped,
       );
     } else if (state.stage === "review" && region?.notes) {
       if (!assets.has(region.id)) await ensureRegionAsset(region);
-      if (disposed || epoch !== renderEpoch) return;
+      if (ctx.disposed || epoch !== ctx.renderEpoch) return;
       const image = root.querySelector("[data-original-image]");
       if (image) {
         image.addEventListener("load", updatePositionMarker, { once: true });
@@ -703,7 +610,7 @@ export function mountFullScoreImport(
   }
 
   function updatePositionMarker() {
-    const region = activeRegion(),
+    const region = activeRegion(ctx),
       note =
         state.selectedHeadIndex !== null
           ? region?.sourceHeadAudit?.unmapped?.[state.selectedHeadIndex]
@@ -721,35 +628,35 @@ export function mountFullScoreImport(
   }
 
   function updateReviewControls() {
-    const region = activeRegion(),
+    const region = activeRegion(ctx),
       confirm = root.querySelector('[data-action="confirm-region"]');
     if (confirm && region)
       confirm.disabled =
-        isRunning() || fullScoreRegionIssues(region).length > 0;
+        isRunning(ctx) || fullScoreRegionIssues(region).length > 0;
     const button = root.querySelector('[data-action="import"]');
     if (button)
       button.disabled =
         state.importing ||
-        isRunning() ||
+        isRunning(ctx) ||
         !state.scopeReviewed ||
         !fullScoreReviewSummary(draft).canImport;
   }
 
   async function applyManualCrop(replace) {
-    if (scopeLocked())
+    if (scopeLocked(ctx))
       throw new Error("任务开始后不可更改源范围；请先停止并重新选择范围。");
-    const options = selector?.getSelectionOptions();
+    const options = ctx.selector?.getSelectionOptions();
     if (options?.mode !== "manual" || !options.rect)
       throw new Error("请先切换“手动框选”，在原图上拖出完整的双手谱行。");
-    const [image] = selector.getSelection();
-    const page = pageInfo(state.activePage),
-      current = activeRegion();
+    const [image] = ctx.selector.getSelection();
+    const page = pageInfo(ctx, state.activePage),
+      current = activeRegion(ctx);
     if (replace && !current) throw new Error("请先选择要替换的谱行。");
     const rect = normalizeCropRect(image.region.rect, page.width, page.height);
     const region = replace
       ? current
       : {
-          id: `p${page.page}-manual-${Date.now().toString(36)}-${++manualSequence}`,
+          id: `p${page.page}-manual-${Date.now().toString(36)}-${++ctx.manualSequence}`,
           page: page.page,
           system: 1,
         };
@@ -776,6 +683,7 @@ export function mountFullScoreImport(
     state.activeRegionId = region.id;
     state.selecting = false;
     setMessage(
+      ctx,
       `${scopeLabel(region)}已${replace ? "替换" : "添加"}；请确认没有重叠或漏掉其他谱行。`,
     );
   }
@@ -828,10 +736,10 @@ export function mountFullScoreImport(
       } else if (["running", "queued", "pending"].includes(remote.status))
         local.status = remote.status === "running" ? "running" : "pending";
     }
-    const firstReady = selectedRegions().find(
+    const firstReady = selectedRegions(ctx).find(
       (region) => region.notes && !region.reviewed,
     );
-    if (firstReady && (!activeRegion()?.notes || state.stage === "scope")) {
+    if (firstReady && (!activeRegion(ctx)?.notes || state.stage === "scope")) {
       state.activePage = firstReady.page;
       state.activeRegionId = firstReady.id;
       state.selectedNoteId = firstReady.notes[0]?.id || "";
@@ -856,29 +764,33 @@ export function mountFullScoreImport(
   }
 
   function poll() {
-    clearTimeout(pollTimer);
-    if (disposed || !state.job || state.job.status !== "running") return;
-    const intent = operationVersion,
+    clearTimeout(ctx.pollTimer);
+    if (ctx.disposed || !state.job || state.job.status !== "running") return;
+    const intent = ctx.operationVersion,
       jobId = state.job.id;
-    pollTimer = setTimeout(async () => {
-      if (disposed) return;
+    ctx.pollTimer = setTimeout(async () => {
+      if (ctx.disposed) return;
       try {
-        const response = await requireApi("getJob")(jobId);
+        const response = await requireApi(ctx, "getJob")(jobId);
         if (
-          disposed ||
-          operationCancelled ||
-          intent !== operationVersion ||
+          ctx.disposed ||
+          ctx.operationCancelled ||
+          intent !== ctx.operationVersion ||
           jobId !== state.job?.id
         )
           return;
         applySnapshot(response);
       } catch (error) {
-        if (!disposed && !operationCancelled && intent === operationVersion) {
+        if (
+          !ctx.disposed &&
+          !ctx.operationCancelled &&
+          intent === ctx.operationVersion
+        ) {
           state.error = `读取任务进度失败：${errorText(error)}。识别结果不会当作已完成。`;
           render();
         }
       }
-      if (!disposed && state.job?.status === "running") poll();
+      if (!ctx.disposed && state.job?.status === "running") poll();
     }, 1500);
   }
 
@@ -890,7 +802,7 @@ export function mountFullScoreImport(
       throw new Error(
         "请先对照谱头/来源，确认上传的是钢琴双手谱，而非照片或其他乐器谱。",
       );
-    const caps = capability();
+    const caps = capability(ctx);
     if (!caps[state.engine])
       throw new Error(
         state.engine === "deepseek"
@@ -901,23 +813,20 @@ export function mountFullScoreImport(
       (region) =>
         !region.selected &&
         region.excludeReason === "music" &&
-        pageInfo(region.page)?.decision === "include",
+        pageInfo(ctx, region.page)?.decision === "include",
     );
     if (skippedMusic)
       throw new Error(
         "当前整谱任务不能跳过同页中的音乐谱行。请保留这些行；封面和误检可明确排除。",
       );
-    const intent = ++operationVersion;
-    operationCancelled = false;
-    if (operationController.signal.aborted)
-      operationController = new AbortController();
+    const intent = beginOperation(ctx);
     state.busy = true;
     state.uploaded = 0;
     state.error = "";
     state.message = `正在准备全部谱行，随后使用 ${state.engine === "deepseek" ? "DeepSeek Flash" : "GPT-6.1 Sol"} high 首次识别。`;
     render();
     try {
-      const regions = selectedRegions();
+      const regions = selectedRegions(ctx);
       if (
         !state.job &&
         !state.riskReview &&
@@ -925,7 +834,7 @@ export function mountFullScoreImport(
         typeof api.findReviewedJob === "function"
       ) {
         const reused = await api.findReviewedJob(state.pdfHash, state.engine);
-        assertAlive(intent);
+        assertAlive(ctx, intent);
         if (reused) {
           restoreScope(reused);
           applySnapshot(reused);
@@ -955,7 +864,7 @@ export function mountFullScoreImport(
               : {}),
           };
         });
-        const response = await requireApi("createJob")(
+        const response = await requireApi(ctx, "createJob")(
           {
             title: draft.title,
             composer: draft.composer || undefined,
@@ -983,10 +892,10 @@ export function mountFullScoreImport(
             timeSignature: draft.timeSignature,
             keySignature: draft.keySignature,
           },
-          { signal: operationController.signal },
+          { signal: ctx.operationController.signal },
         );
-        if (await cancelLateResponse(response, undefined, intent)) return;
-        assertAlive(intent);
+        if (await cancelLateResponse(ctx, response, undefined, intent)) return;
+        assertAlive(ctx, intent);
         applySnapshot(response);
       }
       if (!state.job.originalPdf?.uploaded && !state.job.originalPdf?.bytes) {
@@ -999,13 +908,13 @@ export function mountFullScoreImport(
           "正在将原始 PDF 保存到本机任务，刷新后可以恢复；此步骤不调用模型。";
         render();
         const image = await blobImage(file);
-        assertAlive(intent);
+        assertAlive(ctx, intent);
         const response = await upload(state.job.id, {
           ...image,
           mimeType: "application/pdf",
           name: file.name || "score.pdf",
         });
-        assertAlive(intent);
+        assertAlive(ctx, intent);
         applySnapshot(response);
       }
       // Upload every pending row for GPT; retain already recognized legacy rows.
@@ -1013,7 +922,7 @@ export function mountFullScoreImport(
       let prepared, preparedPage;
       try {
         for (const region of regions) {
-          assertAlive(intent);
+          assertAlive(ctx, intent);
           const existing = state.job.regions?.find(
             (candidate) => candidate.id === region.id,
           );
@@ -1025,12 +934,12 @@ export function mountFullScoreImport(
             prepared?.destroy();
             prepared = await preparePage(region.page);
             preparedPage = region.page;
-            assertAlive(intent);
+            assertAlive(ctx, intent);
           }
           const image = assets.has(region.id)
             ? await blobImage(assets.get(region.id).blob)
             : await cropRegion(prepared, region);
-          assertAlive(intent);
+          assertAlive(ctx, intent);
           // Revalidate every actual crop even when an earlier manual preview cached it.
           if (assets.has(region.id))
             prepared.getSelection({
@@ -1038,13 +947,13 @@ export function mountFullScoreImport(
               rect: region.rect,
               confirmedPiano: state.pianoConfirmed,
             });
-          await requireApi("uploadRegion")(
+          await requireApi(ctx, "uploadRegion")(
             state.job.id,
             region.id,
             { image: { data: image.data, mimeType: image.mimeType } },
-            { signal: operationController.signal },
+            { signal: ctx.operationController.signal },
           );
-          assertAlive(intent);
+          assertAlive(ctx, intent);
           state.uploaded++;
           state.message = `谱行已上传 ${state.uploaded} / ${regions.length}，全部源范围都保留在任务中。`;
           render();
@@ -1052,36 +961,41 @@ export function mountFullScoreImport(
       } finally {
         prepared?.destroy();
       }
-      assertAlive(intent);
-      const started = await requireApi("startJob")(
+      assertAlive(ctx, intent);
+      const started = await requireApi(ctx, "startJob")(
         state.job.id,
         {
           autoContinue: state.autoContinue,
           batchSize: 2,
           expectedVersion: state.job.runVersion,
         },
-        { signal: operationController.signal },
+        { signal: ctx.operationController.signal },
       );
-      if (await cancelLateResponse(started, state.job.id, intent)) return;
+      if (await cancelLateResponse(ctx, started, state.job.id, intent)) return;
       applySnapshot(started);
       poll();
     } catch (error) {
-      if (disposed || operationCancelled || intent !== operationVersion) return;
+      if (
+        ctx.disposed ||
+        ctx.operationCancelled ||
+        intent !== ctx.operationVersion
+      )
+        return;
       throw error;
     } finally {
-      if (intent === operationVersion) {
+      if (intent === ctx.operationVersion) {
         state.busy = false;
-        if (!disposed) render();
+        if (!ctx.disposed) render();
       }
     }
   }
 
   async function cancel() {
-    scanCancelled = true;
-    operationCancelled = true;
-    operationVersion++;
-    operationController.abort();
-    clearTimeout(pollTimer);
+    ctx.scanCancelled = true;
+    ctx.operationCancelled = true;
+    ctx.operationVersion++;
+    ctx.operationController.abort();
+    clearTimeout(ctx.pollTimer);
     if (
       state.job &&
       (state.job.status === "running" || state.busy) &&
@@ -1090,11 +1004,11 @@ export function mountFullScoreImport(
       try {
         applySnapshot(await api.cancelJob(state.job.id));
       } catch (error) {
-        if (!disposed)
+        if (!ctx.disposed)
           state.error = `停止请求失败：${errorText(error)}。请重试停止。`;
       }
     }
-    if (!disposed) {
+    if (!ctx.disposed) {
       state.busy = false;
       state.message = state.scanning
         ? "已停止继续扫描；尚未检查的页面会阻止完整导入。请关闭后重新导入以继续。"
@@ -1103,7 +1017,7 @@ export function mountFullScoreImport(
     }
   }
 
-  async function confirmRegion(region = activeRegion(), batch = false) {
+  async function confirmRegion(region = activeRegion(ctx), batch = false) {
     if (!region) return;
     if (state.job?.status === "running")
       throw new Error(
@@ -1151,7 +1065,7 @@ export function mountFullScoreImport(
     state.message = `正在提交${scopeLabel(region)}的人工审核。`;
     render();
     try {
-      const response = await requireApi("confirmRegion")(
+      const response = await requireApi(ctx, "confirmRegion")(
         state.job.id,
         region.id,
         editedResult,
@@ -1167,13 +1081,13 @@ export function mountFullScoreImport(
       state.message = `${scopeLabel(region)}已审核；音符修改后会要求重新确认。`;
     } finally {
       if (!batch) state.busy = false;
-      if (!disposed) render();
+      if (!ctx.disposed) render();
     }
   }
 
   async function approveAll() {
     if (!state.pianoConfirmed) throw new Error("请先确认这是钢琴双手五线谱。");
-    if (isRunning() || state.importing || state.scanning) return;
+    if (isRunning(ctx) || state.importing || state.scanning) return;
     const { summary } = prepareBulkReview(draft);
     if (!summary.canImport) {
       const issue = summary.issues[0];
@@ -1187,8 +1101,7 @@ export function mountFullScoreImport(
         `${region ? scopeLabel(region) + "：" : ""}${issue?.message || "没有可审核的谱行。"}`,
       );
     }
-    const intent = ++operationVersion;
-    operationCancelled = false;
+    const intent = beginOperation(ctx);
     // The action itself acknowledges scope and per-row review flags.
     state.scopeReviewed = true;
     for (const candidate of summary.selected) {
@@ -1211,18 +1124,20 @@ export function mountFullScoreImport(
     render();
     try {
       for (const candidate of summary.selected) {
-        assertAlive(intent);
+        assertAlive(ctx, intent);
         const region = draft.regions.find((r) => r.id === candidate.id);
         if (!region.reviewed || region.dirty) await confirmRegion(region, true);
       }
-      assertAlive(intent);
+      assertAlive(ctx, intent);
       applySnapshot(
-        await requireApi("confirmJob")(state.job.id, { scopeConfirmed: true }),
+        await requireApi(ctx, "confirmJob")(state.job.id, {
+          scopeConfirmed: true,
+        }),
       );
       state.message = `已审核全部 ${summary.selectedCount} 行。可继续修正音符，或点击“保存到曲库”。`;
     } finally {
       state.busy = false;
-      if (!disposed) render();
+      if (!ctx.disposed) render();
     }
   }
 
@@ -1256,7 +1171,7 @@ export function mountFullScoreImport(
     render();
     try {
       const response = unwrap(
-          await requireApi("exportDraft")(state.job.id, {
+          await requireApi(ctx, "exportDraft")(state.job.id, {
             scopeConfirmed: true,
           }),
         ),
@@ -1268,7 +1183,7 @@ export function mountFullScoreImport(
           title: draft.title + " · AI草稿（待校对）",
         }),
         selectedAssets = [];
-      for (const region of selectedRegions()) {
+      for (const region of selectedRegions(ctx)) {
         const asset = await ensureRegionAsset(region);
         selectedAssets.push({
           id: region.id,
@@ -1306,7 +1221,7 @@ export function mountFullScoreImport(
       });
     } finally {
       state.importing = false;
-      if (!disposed) render();
+      if (!ctx.disposed) render();
     }
   }
 
@@ -1322,7 +1237,7 @@ export function mountFullScoreImport(
     try {
       if (state.job)
         applySnapshot(
-          await requireApi("confirmJob")(state.job.id, {
+          await requireApi(ctx, "confirmJob")(state.job.id, {
             scopeConfirmed: true,
           }),
         );
@@ -1398,13 +1313,13 @@ export function mountFullScoreImport(
           method: final.reviewStatus || local.reviewStatus.method,
         },
       });
-      if (!disposed) {
+      if (!ctx.disposed) {
         state.message = "已保存完整乐谱与原始谱行图片。";
         render();
       }
     } finally {
       state.importing = false;
-      if (!disposed) render();
+      if (!ctx.disposed) render();
     }
   }
 
@@ -1414,10 +1329,7 @@ export function mountFullScoreImport(
   ) {
     const region = draft.regions.find((candidate) => candidate.id === regionId);
     if (!region || !state.job) throw new Error("请先创建识别任务。");
-    const intent = ++operationVersion;
-    operationCancelled = false;
-    if (operationController.signal.aborted)
-      operationController = new AbortController();
+    const intent = beginOperation(ctx);
     region.reviewed = false;
     region.dirty = false;
     remoteSignatures.delete(region.id);
@@ -1431,58 +1343,55 @@ export function mountFullScoreImport(
       if (!saved?.image) {
         const prepared = await ensurePrepared(region.page),
           image = await cropRegion(prepared, region);
-        assertAlive(intent);
-        const uploaded = await requireApi("uploadRegion")(
+        assertAlive(ctx, intent);
+        const uploaded = await requireApi(ctx, "uploadRegion")(
           state.job.id,
           region.id,
           { image: { data: image.data, mimeType: image.mimeType } },
-          { signal: operationController.signal },
+          { signal: ctx.operationController.signal },
         );
-        assertAlive(intent);
+        assertAlive(ctx, intent);
         applySnapshot(uploaded);
       }
-      const response = await requireApi("retryRegion")(
+      const response = await requireApi(ctx, "retryRegion")(
         state.job.id,
         region.id,
-        { engine: retryEngine(), expectedVersion: state.job.runVersion, phase },
-        { signal: operationController.signal },
+        {
+          engine: retryEngine(ctx),
+          expectedVersion: state.job.runVersion,
+          phase,
+        },
+        { signal: ctx.operationController.signal },
       );
-      if (await cancelLateResponse(response, state.job.id, intent)) return;
+      if (await cancelLateResponse(ctx, response, state.job.id, intent)) return;
       applySnapshot(response);
       poll();
     } catch (error) {
-      if (disposed || operationCancelled || intent !== operationVersion) return;
+      if (
+        ctx.disposed ||
+        ctx.operationCancelled ||
+        intent !== ctx.operationVersion
+      )
+        return;
       throw error;
     } finally {
-      if (intent === operationVersion) {
+      if (intent === ctx.operationVersion) {
         state.busy = false;
-        if (!disposed) render();
+        if (!ctx.disposed) render();
       }
     }
-  }
-
-  function retryEngine() {
-    const engine =
-      state.retryEngine === "current" ? state.engine : state.retryEngine;
-    if (!capability()[engine])
-      throw new Error(
-        engine === "deepseek"
-          ? "请先在 AI 设置连接 DeepSeek。"
-          : "请先在 AI 设置连接 Pi / ChatGPT。",
-      );
-    return engine;
   }
 
   async function enlargeRegion(region, intent) {
     let bitmap, canvas;
     try {
-      const original = await requireApi("readRegionImage")(
+      const original = await requireApi(ctx, "readRegionImage")(
         state.job.id,
         region.id,
       );
-      assertAlive(intent);
+      assertAlive(ctx, intent);
       bitmap = await createImageBitmap(original);
-      assertAlive(intent);
+      assertAlive(ctx, intent);
       const scale = Math.min(
         2,
         4000 / bitmap.width,
@@ -1500,14 +1409,14 @@ export function mountFullScoreImport(
       context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
       const blob = await canvasBlob(canvas),
         image = await blobImage(blob);
-      assertAlive(intent);
-      const uploaded = await requireApi("uploadRegion")(
+      assertAlive(ctx, intent);
+      const uploaded = await requireApi(ctx, "uploadRegion")(
         state.job.id,
         region.id,
         { image },
-        { signal: operationController.signal },
+        { signal: ctx.operationController.signal },
       );
-      assertAlive(intent);
+      assertAlive(ctx, intent);
       storeAsset(region, image, blob);
       remoteSignatures.delete(region.id);
       applySnapshot(uploaded);
@@ -1524,8 +1433,8 @@ export function mountFullScoreImport(
     single = false,
     enlarge = state.retryEnlarge,
   } = {}) {
-    if (!state.job || isRunning()) return;
-    const engine = retryEngine();
+    if (!state.job || isRunning(ctx)) return;
+    const engine = retryEngine(ctx);
     const ids = single
       ? [state.activeRegionId]
       : state.job.regions
@@ -1539,11 +1448,8 @@ export function mountFullScoreImport(
     if (!regions.length) throw new Error("没有需要重新识别的失败谱行。");
     if (regions.some((r) => !r || r.reviewed))
       throw new Error("已审核谱行请通过人工校对修改。");
-    const intent = ++operationVersion;
-    operationCancelled = false;
-    if (operationController.signal.aborted)
-      operationController = new AbortController();
-    clearTimeout(pollTimer);
+    const intent = beginOperation(ctx);
+    clearTimeout(ctx.pollTimer);
     state.busy = true;
     state.error = "";
     state.message = `正在准备重新识别 ${ids.length} 个谱行。`;
@@ -1551,16 +1457,16 @@ export function mountFullScoreImport(
     try {
       if (enlarge)
         for (const region of regions) {
-          assertAlive(intent);
+          assertAlive(ctx, intent);
           await enlargeRegion(region, intent);
         }
-      assertAlive(intent);
-      const response = await requireApi("retryRegions")(
+      assertAlive(ctx, intent);
+      const response = await requireApi(ctx, "retryRegions")(
         state.job.id,
         { engine, regionIds: ids, expectedVersion: state.job.runVersion },
-        { signal: operationController.signal },
+        { signal: ctx.operationController.signal },
       );
-      if (await cancelLateResponse(response, state.job.id, intent)) return;
+      if (await cancelLateResponse(ctx, response, state.job.id, intent)) return;
       for (const region of regions) {
         region.dirty = false;
         region.reviewed = false;
@@ -1569,9 +1475,9 @@ export function mountFullScoreImport(
       applySnapshot(response);
       poll();
     } finally {
-      if (intent === operationVersion) {
+      if (intent === ctx.operationVersion) {
         state.busy = false;
-        if (!disposed) render();
+        if (!ctx.disposed) render();
       }
     }
   }
@@ -1581,7 +1487,7 @@ export function mountFullScoreImport(
   }
 
   async function preview() {
-    const region = activeRegion(),
+    const region = activeRegion(ctx),
       element = root.querySelector("[data-notation-preview]");
     if (!region || !element) return;
     if (!region.notes?.length) {
@@ -1595,9 +1501,9 @@ export function mountFullScoreImport(
         notes: region.notes,
       });
       const { renderNotation } = await import("./notation.js");
-      if (disposed || !element.isConnected) return;
-      previewRenderer?.destroy();
-      previewRenderer = renderNotation(element, score, {
+      if (ctx.disposed || !element.isConnected) return;
+      ctx.previewRenderer?.destroy();
+      ctx.previewRenderer = renderNotation(element, score, {
         mode: "staff",
         autoScroll: false,
         onSeek: (beat) => {
@@ -1607,7 +1513,7 @@ export function mountFullScoreImport(
           updatePositionMarker();
         },
       });
-      previewRenderer.setBeat(0);
+      ctx.previewRenderer.setBeat(0);
     } catch (error) {
       element.textContent = `当前修改尚不能排版：${errorText(error)}。请继续对照原图修正。`;
     }
@@ -1616,7 +1522,7 @@ export function mountFullScoreImport(
   root.addEventListener("click", (event) => {
     const image = event.target.closest("[data-original-image]");
     if (image && state.stage === "review" && !state.busy && !state.importing) {
-      const region = activeRegion();
+      const region = activeRegion(ctx);
       const note = region?.notes?.find(
         (candidate) => candidate.id === state.selectedNoteId,
       );
@@ -1758,10 +1664,10 @@ export function mountFullScoreImport(
           break;
         case "add-note": {
           state.selectedHeadIndex = null;
-          const region = activeRegion();
+          const region = activeRegion(ctx);
           if (!region?.notes) break;
           const note = {
-            id: `manual-${Date.now().toString(36)}-${++manualSequence}`,
+            id: `manual-${Date.now().toString(36)}-${++ctx.manualSequence}`,
             midi: 60,
             beat: 0,
             duration: 0.25,
@@ -1778,7 +1684,7 @@ export function mountFullScoreImport(
           break;
         }
         case "delete-note": {
-          const region = activeRegion();
+          const region = activeRegion(ctx);
           removeWrittenEvent(region, "note", action.dataset.noteId);
           region.notes = region.notes.filter(
             (note) => note.id !== action.dataset.noteId,
@@ -1788,7 +1694,7 @@ export function mountFullScoreImport(
           break;
         }
         case "add-rest": {
-          const region = activeRegion();
+          const region = activeRegion(ctx);
           region.rests ||= [];
           region.rests.push({
             beat: 0,
@@ -1801,7 +1707,7 @@ export function mountFullScoreImport(
           break;
         }
         case "delete-rest": {
-          const region = activeRegion();
+          const region = activeRegion(ctx);
           removeWrittenEvent(
             region,
             "rest",
@@ -1813,14 +1719,14 @@ export function mountFullScoreImport(
           break;
         }
         case "clear-ties": {
-          const region = activeRegion();
+          const region = activeRegion(ctx);
           region.continuity = { tieIn: [], tieOut: [] };
           edited(region);
           render();
           break;
         }
         case "clear-internal-ties": {
-          const region = activeRegion();
+          const region = activeRegion(ctx);
           region.internalTies = [];
           edited(region);
           render();
@@ -1830,7 +1736,7 @@ export function mountFullScoreImport(
         case "diagnose-source":
         case "apply-revision":
         case "undo-revision": {
-          const region = activeRegion();
+          const region = activeRegion(ctx);
           const remote = state.job?.regions?.find((r) => r.id === region?.id);
           if (!remote || region.dirty)
             throw new Error("请先保存当前人工编辑，再继续诊断。");
@@ -1863,7 +1769,7 @@ export function mountFullScoreImport(
           render();
           try {
             applySnapshot(
-              await requireApi(method)(state.job.id, region.id, input),
+              await requireApi(ctx, method)(state.job.id, region.id, input),
             );
             state.message =
               kind === "assess-source"
@@ -1875,7 +1781,7 @@ export function mountFullScoreImport(
                     : "已撤销修订并恢复原版本。";
           } finally {
             state.busy = false;
-            if (!disposed) render();
+            if (!ctx.disposed) render();
           }
           break;
         }
@@ -1883,7 +1789,7 @@ export function mountFullScoreImport(
           await confirmRegion();
           break;
         case "next-unreviewed": {
-          const regions = selectedRegions(),
+          const regions = selectedRegions(ctx),
             currentIndex = regions.findIndex(
               (region) => region.id === state.activeRegionId,
             ),
@@ -1900,6 +1806,7 @@ export function mountFullScoreImport(
             render();
           } else
             setMessage(
+              ctx,
               "当前没有已完成识别且待审核的谱行；请等待剩余任务或重试失败谱行。",
             );
           break;
@@ -1918,7 +1825,7 @@ export function mountFullScoreImport(
           break;
       }
     })().catch((error) => {
-      if (!disposed) {
+      if (!ctx.disposed) {
         state.busy = false;
         state.error = errorText(error);
         render();
@@ -1946,11 +1853,11 @@ export function mountFullScoreImport(
     else if (input.hasAttribute("data-piano-confirmed"))
       state.pianoConfirmed = input.checked;
     else if (input.hasAttribute("data-tie-reviewed")) {
-      const region = activeRegion();
+      const region = activeRegion(ctx);
       region.tieAudit.reviewed = input.checked;
       edited(region);
     } else if (input.hasAttribute("data-head-reviewed")) {
-      const region = activeRegion();
+      const region = activeRegion(ctx);
       region.sourceHeadAudit.reviewed = input.checked;
       edited(region);
     } else if (input.hasAttribute("data-scope-reviewed"))
@@ -1962,7 +1869,7 @@ export function mountFullScoreImport(
     else if (input.hasAttribute("data-auto-continue"))
       state.autoContinue = input.checked;
     else if (input.dataset.pageDecision) {
-      const page = pageInfo(Number(input.dataset.pageDecision));
+      const page = pageInfo(ctx, Number(input.dataset.pageDecision));
       page.decision = ["include", "pending"].includes(input.value)
         ? input.value
         : "exclude";
@@ -1978,15 +1885,15 @@ export function mountFullScoreImport(
         (region) => region.id === input.dataset.regionReason,
       ).excludeReason = input.value;
     else if (input.hasAttribute("data-region-duration")) {
-      const region = activeRegion();
+      const region = activeRegion(ctx);
       region.durationBeats = numberValue(input.value);
       edited(region);
     } else if (input.hasAttribute("data-region-coverage")) {
-      const region = activeRegion();
+      const region = activeRegion(ctx);
       region.coverageComplete = input.checked;
       edited(region);
     } else if (input.hasAttribute("data-measure-durations")) {
-      const region = activeRegion();
+      const region = activeRegion(ctx);
       const values = input.value
         .trim()
         .split(/[,，\s]+/)
@@ -1997,7 +1904,7 @@ export function mountFullScoreImport(
       region.coverage.measureCount = values.length;
       edited(region);
     } else if (input.dataset.tieDirection) {
-      const region = activeRegion();
+      const region = activeRegion(ctx);
       region.continuity ||= { tieIn: [], tieOut: [] };
       const direction = input.dataset.tieDirection;
       region.continuity[direction] = (
@@ -2007,7 +1914,7 @@ export function mountFullScoreImport(
         region.continuity[direction].push({ noteId: input.dataset.noteId });
       edited(region);
     } else if (input.hasAttribute("data-internal-tie")) {
-      const region = activeRegion();
+      const region = activeRegion(ctx);
       region.internalTies = (region.internalTies || []).filter(
         (tie) =>
           tie.fromNoteId !== input.dataset.fromNote ||
@@ -2024,7 +1931,7 @@ export function mountFullScoreImport(
         const value = JSON.parse(input.value);
         if (!Array.isArray(value.tieIn) || !Array.isArray(value.tieOut))
           throw new Error();
-        const region = activeRegion();
+        const region = activeRegion(ctx);
         region.continuity = value;
         edited(region);
       } catch {
@@ -2051,14 +1958,14 @@ export function mountFullScoreImport(
       return;
     }
     if (input.hasAttribute("data-region-duration")) {
-      const region = activeRegion();
+      const region = activeRegion(ctx);
       region.durationBeats = numberValue(input.value);
       edited(region);
       updateReviewControls();
       return;
     }
     if (input.hasAttribute("data-measure-durations")) {
-      const region = activeRegion();
+      const region = activeRegion(ctx);
       const values = input.value
         .trim()
         .split(/[,，\s]+/)
@@ -2072,7 +1979,7 @@ export function mountFullScoreImport(
       return;
     }
     if (input.dataset.restField) {
-      const region = activeRegion(),
+      const region = activeRegion(ctx),
         rest = region?.rests?.[Number(input.dataset.restIndex)];
       if (rest) {
         rest[input.dataset.restField] = ["hand", "voice"].includes(
@@ -2086,7 +1993,7 @@ export function mountFullScoreImport(
       return;
     }
     if (input.dataset.writtenKind) {
-      const region = activeRegion();
+      const region = activeRegion(ctx);
       if (region && applyWrittenEvidenceInput(input, region)) {
         edited(region);
         updateReviewControls();
@@ -2094,7 +2001,7 @@ export function mountFullScoreImport(
       return;
     }
     if (!input.dataset.noteField) return;
-    const region = activeRegion(),
+    const region = activeRegion(ctx),
       note = region?.notes?.find(
         (candidate) => candidate.id === input.dataset.noteId,
       );
@@ -2119,7 +2026,7 @@ export function mountFullScoreImport(
   root.addEventListener("pointerdown", (event) => {
     const marker = event.target.closest("[data-source-note],[data-roll-note]");
     const image = root.querySelector("[data-original-image]");
-    const region = activeRegion();
+    const region = activeRegion(ctx);
     if (
       event.button !== 0 ||
       state.stage !== "review" ||
@@ -2142,7 +2049,7 @@ export function mountFullScoreImport(
       mode === "roll" ? root.querySelector("[data-note-roll]") : image
     )?.getBoundingClientRect();
     if (!bounds?.width || !bounds.height) return;
-    noteDrag = {
+    ctx.noteDrag = {
       pointerId: event.pointerId,
       region,
       note,
@@ -2159,7 +2066,7 @@ export function mountFullScoreImport(
   });
 
   root.addEventListener("pointermove", (event) => {
-    const drag = noteDrag;
+    const drag = ctx.noteDrag;
     if (!drag || drag.pointerId !== event.pointerId) return;
     event.preventDefault();
     const dx = event.clientX - drag.startX,
@@ -2205,9 +2112,9 @@ export function mountFullScoreImport(
   });
 
   function finishNoteDrag(event) {
-    const drag = noteDrag;
+    const drag = ctx.noteDrag;
     if (!drag || drag.pointerId !== event.pointerId) return;
-    noteDrag = null;
+    ctx.noteDrag = null;
     if (root.hasPointerCapture?.(event.pointerId))
       root.releasePointerCapture(event.pointerId);
     if (
@@ -2215,7 +2122,7 @@ export function mountFullScoreImport(
       drag.values &&
       !state.busy &&
       !state.importing &&
-      drag.region === activeRegion()
+      drag.region === activeRegion(ctx)
     )
       commitMove(drag.region, drag.note, drag.values);
     else render();
@@ -2224,11 +2131,11 @@ export function mountFullScoreImport(
   root.addEventListener("pointercancel", finishNoteDrag);
   root.addEventListener("lostpointercapture", finishNoteDrag);
   root.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && noteDrag) {
+    if (event.key === "Escape" && ctx.noteDrag) {
       event.stopPropagation();
       finishNoteDrag({
         ...event,
-        pointerId: noteDrag.pointerId,
+        pointerId: ctx.noteDrag.pointerId,
         type: "pointercancel",
       });
       return;
@@ -2244,7 +2151,7 @@ export function mountFullScoreImport(
     )
       return;
     event.preventDefault();
-    const region = activeRegion(),
+    const region = activeRegion(ctx),
       id = marker.dataset.sourceNote || marker.dataset.rollNote;
     const note = region?.notes.find((n) => n.id === id);
     if (!note) return;
@@ -2309,8 +2216,8 @@ export function mountFullScoreImport(
       system: region.system,
       jobSystem: region.system,
       rect: { ...region.rect },
-      pageWidth: region.pageWidth || pageInfo(region.page)?.width,
-      pageHeight: region.pageHeight || pageInfo(region.page)?.height,
+      pageWidth: region.pageWidth || pageInfo(ctx, region.page)?.width,
+      pageHeight: region.pageHeight || pageInfo(ctx, region.page)?.height,
       selected: true,
       excludeReason: "",
       status: "pending",
@@ -2344,13 +2251,13 @@ export function mountFullScoreImport(
         ? Promise.resolve(api.getCapabilities()).catch(() => null)
         : Promise.resolve(null),
     ]);
-    if (disposed) return;
+    if (ctx.disposed) return;
     state.capabilities = capabilities;
     pdfjs.GlobalWorkerOptions.workerSrc = new URL(
       "pdfjs-dist/build/pdf.worker.min.mjs",
       import.meta.url,
     ).href;
-    documentTask = pdfjs.getDocument({
+    ctx.documentTask = pdfjs.getDocument({
       data: new Uint8Array(await file.arrayBuffer()),
       isEvalSupported: false,
       wasmUrl: assetURL("/pdfjs/wasm/"),
@@ -2358,20 +2265,20 @@ export function mountFullScoreImport(
       cMapUrl: assetURL("/pdfjs/cmaps/"),
       cMapPacked: true,
     });
-    pdf = await documentTask.promise;
-    if (disposed) return;
-    if (pdf.numPages > 200)
+    ctx.pdf = await ctx.documentTask.promise;
+    if (ctx.disposed) return;
+    if (ctx.pdf.numPages > 200)
       throw new Error(
         "PDF 超过 200 页，请先提取明确的练习范围。不会截取前 200 页冒充全谱。",
       );
-    draft.totalPages = pdf.numPages;
+    draft.totalPages = ctx.pdf.numPages;
     render();
-    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
-      if (disposed || scanCancelled) break;
+    for (let pageNumber = 1; pageNumber <= ctx.pdf.numPages; pageNumber++) {
+      if (ctx.disposed || ctx.scanCancelled) break;
       // An 800px preview can erase thin staff lines in image-only PDFs after
       // resampling. Detect at 1600px; pages are still processed sequentially.
       const low = await renderPage(pageNumber, 1600, { includePixels: true });
-      if (disposed || scanCancelled) break;
+      if (ctx.disposed || ctx.scanCancelled) break;
       const prepared = await prepareScoreImage(low.blob, {
         page: pageNumber,
         pianoSourceVerified: source.pianoSourceVerified === true,
@@ -2451,11 +2358,11 @@ export function mountFullScoreImport(
         prepared.destroy();
       }
       state.scannedPages = pageNumber;
-      state.message = `正在逐页检查：第 ${pageNumber} / ${pdf.numPages} 页，发现 ${draft.regions.length} 个谱行候选。`;
+      state.message = `正在逐页检查：第 ${pageNumber} / ${ctx.pdf.numPages} 页，发现 ${draft.regions.length} 个谱行候选。`;
       render();
     }
     state.scanning = false;
-    if (!scanCancelled && saved?.id) {
+    if (!ctx.scanCancelled && saved?.id) {
       restoreScope(saved);
       applySnapshot(saved);
       state.message = saved.reusedExactPdf
@@ -2465,37 +2372,37 @@ export function mountFullScoreImport(
       render();
       return;
     }
-    state.message = scanCancelled
+    state.message = ctx.scanCancelled
       ? "扫描已停止；未检查页面会阻止完整导入。请关闭并重新上传继续。"
-      : `全部 ${pdf.numPages} 页已检查。请排除封面/空白页，核对每个谱行是否完整包含两只手。`;
+      : `全部 ${ctx.pdf.numPages} 页已检查。请排除封面/空白页，核对每个谱行是否完整包含两只手。`;
     render();
   }
 
   function destroy() {
-    if (disposed) return;
-    disposed = true;
+    if (ctx.disposed) return;
+    ctx.disposed = true;
     closePageWorkbench();
-    scanCancelled = true;
-    operationCancelled = true;
-    operationController.abort();
-    clearTimeout(pollTimer);
+    ctx.scanCancelled = true;
+    ctx.operationCancelled = true;
+    ctx.operationController.abort();
+    clearTimeout(ctx.pollTimer);
     if (state.job?.status === "running" && typeof api.cancelJob === "function")
       void api.cancelJob(state.job.id).catch(() => {});
-    selector?.destroy();
-    previewRenderer?.destroy();
-    activePrepared?.destroy();
+    ctx.selector?.destroy();
+    ctx.previewRenderer?.destroy();
+    ctx.activePrepared?.destroy();
     for (const asset of assets.values()) URL.revokeObjectURL(asset.url);
     for (const thumbnail of thumbnails.values())
       URL.revokeObjectURL(thumbnail.url);
     assets.clear();
     thumbnails.clear();
-    void documentTask?.destroy();
+    void ctx.documentTask?.destroy();
     root.remove();
   }
 
   render();
   const ready = initialize().catch((error) => {
-    if (!disposed) {
+    if (!ctx.disposed) {
       state.scanning = false;
       state.error = errorText(error);
       state.message = "PDF 尚未完成检查，无法启动完整识谱。";
