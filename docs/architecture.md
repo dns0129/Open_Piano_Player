@@ -73,6 +73,8 @@ capabilities.js 明确区分 local / browser / hosted 模式；api-client.js 是
 - GET /api/library/backup：完整备份
 - POST /api/library/restore：backup；返回 restored / conflicts
 
+五线谱使用 vexflow/core，Bravura 与 Academico 作为带哈希的 woff2（src/fonts/，由 scripts/extract-music-fonts.mjs 从已安装的 vexflow 提取，测试校验一致）单独加载并长期缓存，不再以 base64 打进首屏脚本；打印导出从缓存读取同一文件转为 data URL 内联。两个服务对构建产物发送 ETag 与 Last-Modified，未变化的音色采样、pdf.js 与模型文件以 304 复用缓存。
+
 两个 Node 服务共用 lib/http-kit.mjs：安全响应头、请求体大小限制、JSON 解析、静态文件与有序路由表。server.mjs 的接口在会话和 CSRF 检查之后按路由表分派；lib/accounts/http.mjs 分三段路由：未登录可用（支付回调、目录、登录上下文）、任何会话可用（登录、恢复、设备）、正常账号可用（订阅、识谱、曲库、运营）。新增接口时登记到对应阶段，而不是在处理函数里自行检查会话。
 
 app.js 保留页面协调与练习控制；曲库、找谱、音频转谱、打印导出、整谱请求和恢复凭据分别由独立模块负责。

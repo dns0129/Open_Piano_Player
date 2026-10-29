@@ -17,14 +17,14 @@ import {
   Tuplet,
   Annotation,
   Fraction,
-  VexFlow,
   Barline,
   Articulation,
   Ornament,
   Modifier,
   GraceNote,
   GraceNoteGroup,
-} from "vexflow/bravura";
+} from "vexflow/core";
+import { musicFontsReady } from "./notation-fonts.js";
 import {
   beatsPerMeasure,
   KEY_NAMES,
@@ -47,19 +47,10 @@ import {
 
 const NS = "http://www.w3.org/2000/svg";
 let fontsLoaded = false;
-// VexFlow registers embedded FontFace objects; await these local faces before measuring glyphs.
-export const fontsReady =
-  typeof document !== "undefined" && document.fonts
-    ? Promise.all([
-        document.fonts.load("32px Bravura"),
-        document.fonts.load("12px Academico"),
-      ]).then(() => {
-        VexFlow.setFonts("Bravura", "Academico");
-        fontsLoaded = true;
-      })
-    : Promise.resolve().then(() => {
-        fontsLoaded = true;
-      });
+// Await the music font faces before measuring glyphs.
+export const fontsReady = musicFontsReady.then(() => {
+  fontsLoaded = true;
+});
 const symbol = (accidental) =>
   ({ "-2": "𝄫", "-1": "♭", 0: "", 1: "♯", 2: "𝄪" })[accidental] || "";
 import {
