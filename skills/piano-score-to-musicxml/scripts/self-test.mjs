@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { XMLParser } from 'fast-xml-parser';
 import MidiFilePackage from 'midi-file';
 import { build, validateTranscription, musicXML, midi, usageSummary } from './score_pipeline.mjs';
-import { performanceNotes } from './core/note-effects.mjs';
+import { performanceNotes } from './core/qinban-core.mjs';
 import {recordMeasureReview} from './review-evidence.mjs';
 import {execFileSync} from 'node:child_process';
 import {verifyArtifactOutput} from './artifact-output.mjs';

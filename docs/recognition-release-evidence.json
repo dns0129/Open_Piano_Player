@@ -1,9 +1,9 @@
 {
   "schema": "recognition-release-evidence/v1",
   "release": "recognition-p2-v1-20261028",
-  "recordedAt": "2026-10-29T02:38:09.163Z",
+  "recordedAt": "2026-10-29T03:12:56.666Z",
   "implementation": {
-    "digest": "bc58b91069c3c2f6c0f85b347d4154dc3d5fc59f11a6d889c138adb60a79eb3d",
+    "digest": "9d04fccc220e4f112a33d7c36c01449a8b7408df71a706a15380f994cd109308",
     "files": [
       {
         "path": "lib/accounts/recognition-budget.mjs",
@@ -35,7 +35,7 @@
       },
       {
         "path": "lib/exporters.mjs",
-        "sha256": "653ac57f9d26c4f66a71fdd75c1a1daef31bb667fd3a07eca34de0db6ac627db"
+        "sha256": "58cadc82c4c8f82a18123a63e9446529c28ac71d94682103225442a993a3d472"
       },
       {
         "path": "lib/full-score-jobs.mjs",
@@ -143,7 +143,7 @@
       },
       {
         "path": "lib/recognition-versions.mjs",
-        "sha256": "fabc013e554d8207e8a821f5381e693c814ed5b3d467ccc84be9c3d3ab14865d"
+        "sha256": "88eece1af1e891bf27e5ea96a045b542ecbb94b2405ec78ac78491b1f6b115db"
       },
       {
         "path": "lib/recognition-wire.mjs",
@@ -203,31 +203,15 @@
       },
       {
         "path": "skills/piano-score-to-musicxml/package.json",
-        "sha256": "4117e0ae788141ff50ba722bce92787b1df0ee7cf4cdd99f145a707b5b15b80b"
+        "sha256": "534bd5071f3fbd06f770ac544bbf5997459fbf78062366363bd3e55337e967f8"
       },
       {
         "path": "skills/piano-score-to-musicxml/scripts/artifact-output.mjs",
         "sha256": "333c44f08b9f22768efdcaeda4538e3b7cc1fa0e60bbdc73aba3e33423e058e4"
       },
       {
-        "path": "skills/piano-score-to-musicxml/scripts/core/exporters.mjs",
-        "sha256": "5e04f2327c789c9bfe6a7dd7f5c9c994d644807f312f251eaaa8ba73e4e0609b"
-      },
-      {
-        "path": "skills/piano-score-to-musicxml/scripts/core/note-effects.mjs",
-        "sha256": "47bca29f18df904e92ad0073a75dfc699207176f42ab5054ccc623694f7a3276"
-      },
-      {
-        "path": "skills/piano-score-to-musicxml/scripts/core/pitch-spelling.mjs",
-        "sha256": "f91189b7734a39d443ff75c5c5dc68bbea7b008e285838853a26423f9de64ffa"
-      },
-      {
-        "path": "skills/piano-score-to-musicxml/scripts/core/score.mjs",
-        "sha256": "428a14e0a178bd1548e05e602fc4b805c9b64b8a48be52eb8cbd9a2b2f7bb709"
-      },
-      {
-        "path": "skills/piano-score-to-musicxml/scripts/recognition-tempo.mjs",
-        "sha256": "a2d334693b1ffa0973c9faf7b6953b53d406ef65861860ec04db9cdac0a91160"
+        "path": "skills/piano-score-to-musicxml/scripts/core/qinban-core.mjs",
+        "sha256": "3cb45310d71496be59fc746ddd0fbda989b84866f044c16387204fbe5383f126"
       },
       {
         "path": "skills/piano-score-to-musicxml/scripts/review-evidence.mjs",
@@ -235,7 +219,7 @@
       },
       {
         "path": "skills/piano-score-to-musicxml/scripts/score_pipeline.mjs",
-        "sha256": "39df3941f95748242a0be761c26741b6082c41390ad93044d2601d7e20078ee5"
+        "sha256": "434dd28b3c8f131d8f7c86cfa0fb00c01f15f3bdc6807dd4f34fa34dc9fd9407"
       },
       {
         "path": "skills/piano-score-to-musicxml/scripts/written-evidence.mjs",
@@ -315,7 +299,7 @@
   "evaluation": {
     "mode": "offline-frozen-responses",
     "providerCalls": 0,
-    "sourceEvaluationSha256": "d61882cedbf0ec06d03cd2005256150c7ed99a75bf6c03257200600b28a354d6",
+    "sourceEvaluationSha256": "83493493ebc27a0b5eb47dcbacc40792e6d7463efafb14a1bc49c55a1ea6e3e0",
     "suiteSha256": "43a326cb85d9f04afd7dac9a91e30ee6516bc90df6f389d3a05a8308b5b52b8c",
     "sourceFiles": 158,
     "baselinePromptDigest": "5e44d82e7876c4439e347d878f794883a83bbbb97d9d784f700ee8be1a6034b1",

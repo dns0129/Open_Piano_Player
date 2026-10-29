@@ -6,15 +6,13 @@ import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { XMLParser, XMLBuilder, XMLValidator } from 'fast-xml-parser';
 import MidiFilePackage from 'midi-file';
-import { validateScore, scoreMeasureIndex } from './core/score.mjs';
-import { exportMusicXML, exportMidi } from './core/exporters.mjs';
-import { performanceNotes } from './core/note-effects.mjs';
+import { validateScore, scoreMeasureIndex, exportMusicXML, exportMidi, performanceNotes, recognitionTempo, validateTempoEvidence, MUSICXML_DIVISIONS } from './core/qinban-core.mjs';
 import {reviewEvidenceBlockers} from './review-evidence.mjs';
 import {auditWrittenNotation} from './written-evidence.mjs';
-import {recognitionTempo,validateTempoEvidence} from './recognition-tempo.mjs';
 
 const { parseMidi, writeMidi } = MidiFilePackage;
-const DIVISIONS = 15360, EPS = 1e-6;
+// Post-processing reads the exporter's own <duration> units.
+const DIVISIONS = MUSICXML_DIVISIONS, EPS = 1e-6;
 const letters = ['C','D','E','F','G','A','B'], semitones = [0,2,4,5,7,9,11];
 const units = { whole:4, half:2, quarter:1, eighth:.5, '16th':.25, '32nd':.125, '64th':.0625, '128th':.03125 };
 const accidentals = { '-2':'flat-flat', '-1':'flat', 0:'natural', 1:'sharp', 2:'double-sharp' };
@@ -182,7 +180,7 @@ function addNotation(note,mark) {
 
 export function musicXML(checked) {
   const {score,noteMeta,notation,keys,tempos}=checked;
-  const tree=new XMLParser(options).parse(exportMusicXML(score));
+  const tree=new XMLParser(options).parse(exportMusicXML(score,{noteIds:true}));
   const root=child(tree,'score-partwise')['score-partwise'];
   const measures=children(child(root,'part'),'part').filter(n=>nameOf(n)==='measure');
   const segments=new Map();

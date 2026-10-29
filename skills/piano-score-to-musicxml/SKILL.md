@@ -2,7 +2,7 @@
 name: piano-score-to-musicxml
 description: "将多页钢琴五线谱 PDF 或图片转录为可编辑数字谱，校对音高、升降号、节奏和演奏记号，重新排版并导出 MusicXML、MIDI。用于识谱、原谱与新谱核对、琴伴曲库导入；不用于凭歌曲名创作或音频转谱。"
 metadata:
-  version: "1.3.0"
+  version: "1.3.1"
   source: "dns0129/Open_Piano_Player"
 ---
 

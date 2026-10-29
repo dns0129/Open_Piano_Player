@@ -124,7 +124,7 @@ report.json 每字段提供 sum 和 reportedCalls；部分缺失时只能说“�
 
 ## 实现来源与格式依据
 
-`scripts/core/{score,note-effects,pitch-spelling,exporters}.mjs` 来自琴伴提交 `ccb7c7a5e58c8d3640385018febb14348ebdbc86`；Skill 中 exporter 另加稳定音符 ID、显式声部分离，并避免同一和弦重复插入力度标记。Skill 的转换器在其外校验原谱证据、保留音名及附点/连音、倚音/连奏弧/延长记号、调号/速度变化，并调用 Verovio 重排。没有打包项目原谱、私有运行目录或第三方 node_modules。
+`scripts/core/qinban-core.mjs` 由琴伴仓库的 `scripts/build-skill-core.mjs` 从 `lib/` 生成（乐谱校验、MusicXML/MIDI 导出、演奏展开与速度规则），不手工修改；琴伴的测试会在它落后于 `lib/` 时失败。Skill 调用导出器时开启稳定音符 ID（`id="note-<id>-m<小节>"`）；显式声部分层、原谱休止与和弦只标一次力度已由琴伴导出器本身提供。Skill 的转换器在其外校验原谱证据、保留音名及附点/连音、倚音/连奏弧/延长记号、调号/速度变化，并调用 Verovio 重排。没有打包项目原谱、私有运行目录或第三方 node_modules。
 
 MusicXML 4 主规范：[pitch](https://www.w3.org/2021/06/musicxml40/musicxml-reference/elements/pitch/)、[metronome](https://www.w3.org/2021/06/musicxml40/musicxml-reference/elements/metronome/)、[offset](https://www.w3.org/2021/06/musicxml40/musicxml-reference/elements/offset/)、[tie](https://www.w3.org/2021/06/musicxml40/musicxml-reference/elements/tie/)、[grace](https://www.w3.org/2021/06/musicxml40/musicxml-reference/elements/grace/)。新适配应按标准元素实现并做回读/排版验证；XML语法通过不能代替完整 MusicXML schema 或所有编辑器兼容性验证。
 
