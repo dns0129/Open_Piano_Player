@@ -18,6 +18,9 @@ dist-hosted/
 __pycache__/
 *.pyc
 
+# The project Skill can reuse local dependencies through a directory symlink.
+skills/piano-score-to-musicxml/node_modules
+
 # Experiment and verification output stays local; only the published score files are tracked.
 output/*
 !output/scores/

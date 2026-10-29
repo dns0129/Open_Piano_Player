@@ -449,10 +449,23 @@ export function validateTranscription(raw, manifest, { draft = false } = {}) {
   for (const id of Object.keys(noteMeta))
     assert(ids.has(id), `多余的原谱音符证据 ${id}`);
   const graces = notation.graces || [];
+  const graceGroups = new Map(),
+    closedGraceGroups = new Set();
+  let previousGraceGroup;
   for (const g of graces) {
     knownKeys(
       g,
-      ["id", "beforeNote", "pitch", "type", "slash", "source", "checked"],
+      [
+        "id",
+        "beforeNote",
+        "pitch",
+        "type",
+        "slash",
+        "source",
+        "checked",
+        "printedAccidental",
+        "chordGroup",
+      ],
       "notation.graces",
     );
     assert(
@@ -470,6 +483,35 @@ export function validateTranscription(raw, manifest, { draft = false } = {}) {
       "倚音音高/符值无效",
     );
     checkSource(g, g.id);
+    assert(
+      g.printedAccidental === undefined ||
+        g.printedAccidental === null ||
+        (Number.isInteger(g.printedAccidental) &&
+          Math.abs(g.printedAccidental) <= 2),
+      "倚音显式升降号必须为null或-2到2的整数",
+    );
+    if (previousGraceGroup && previousGraceGroup !== g.chordGroup)
+      closedGraceGroups.add(previousGraceGroup);
+    if (g.chordGroup !== undefined) {
+      assert(
+        typeof g.chordGroup === "string" &&
+          g.chordGroup.length > 0 &&
+          g.chordGroup.length <= 100,
+        "倚音和弦分组无效",
+      );
+      assert(!closedGraceGroups.has(g.chordGroup), "倚音和弦组必须连续");
+      const group = graceGroups.get(g.chordGroup);
+      if (group)
+        assert(
+          group.beforeNote === g.beforeNote &&
+            group.source.staff === g.source.staff &&
+            group.type === g.type &&
+            group.slash === g.slash,
+          "倚音和弦组须具有相同锚点、谱表、符值和斜线",
+        );
+      else graceGroups.set(g.chordGroup, g);
+    }
+    previousGraceGroup = g.chordGroup;
     assert(
       g.source.measure === noteMeta[g.beforeNote].source.measure,
       "倚音和锚点必须属于同一小节",
@@ -546,6 +588,32 @@ export function validateTranscription(raw, manifest, { draft = false } = {}) {
     ),
     voices: notation.voices || [],
   };
+  // Only explicit source accidental evidence can affect a principal's state.
+  // Grace notes stay zero-time source events, separate from playback borrowing.
+  const sourceGraces = graces.filter((g) => g.printedAccidental !== undefined);
+  evidence.notes.push(
+    ...sourceGraces.map((g) => ({
+      noteId: g.id,
+      staff: g.source.staff,
+      step: g.pitch.step,
+      octave: g.pitch.octave,
+      alter: g.pitch.alter,
+      printed: g.printedAccidental,
+      shift: 0,
+    })),
+  );
+  evidence.graces = sourceGraces.map((g) => {
+    const anchor = byId.get(g.beforeNote);
+    return {
+      noteId: g.id,
+      anchor: g.beforeNote,
+      midi: pitch(g.pitch),
+      beat: anchor.beat,
+      duration: 0,
+      hand: anchor.hand,
+      voice: anchor.voice || `${anchor.hand}-1`,
+    };
+  });
   const audit = auditWrittenNotation(
     { ...score, recognitionEvidence: evidence },
     score.measureMap.map((m) => m.duration),
@@ -840,17 +908,25 @@ export function musicXML(checked) {
       addNotation(segments.get(id).at(segment).note, mark);
     }
   }
+  const emittedGraceGroups = new Set();
   for (const g of notation.graces || []) {
     const { note: anchor, content } = segments.get(g.beforeNote)[0];
     const grace = element("grace", null);
     grace[":@"] = { "@slash": g.slash ? "yes" : "no" };
     const node = element("note", [
       grace,
+      ...(g.chordGroup && emittedGraceGroups.has(g.chordGroup)
+        ? [element("chord", null)]
+        : []),
       pitchElement(g.pitch),
       element("voice", getText(anchor.note, "voice")),
       element("type", g.type),
+      ...(g.printedAccidental !== undefined && g.printedAccidental !== null
+        ? [element("accidental", accidentals[g.printedAccidental])]
+        : []),
       element("staff", getText(anchor.note, "staff")),
     ]);
+    if (g.chordGroup) emittedGraceGroups.add(g.chordGroup);
     node[":@"] = { "@id": `grace-${g.id}` };
     content.splice(content.indexOf(anchor), 0, node);
   }

@@ -36,28 +36,82 @@ node scripts/score_pipeline.mjs --input work/transcription.json \
 ```json
 {
   "schema": "piano-score-transcription/v1",
-  "provenance": {"promptVersion":"accidentals-v2-20261018", "model":"实际使用的模型", "reasoning":"实际档位", "calls":[]},
-  "pages": [{"page":1,"sha256":"manifest 中的真实值","status":"score","reviewed":true,"systems":[
-    {"id":"p1s1","staves":2,"measureStart":1,"measureEnd":4,"complete":true,"reviewed":true}
-  ]}],
-  "score": {"version":1,"id":"piece-v1","title":"曲名","composer":"原作者","tempo":90,
-    "timeSignature":[4,4],"keySignature":0,"mode":"major","durationBeats":16,
-    "measureMap":[{"beat":0,"duration":4,"timeSignature":[4,4]}],
-    "source":{"kind":"image-ai","label":"版本与来源","url":"https://example.org/score"},
-    "notes":[{"id":"n1","midi":70,"beat":0,"duration":1,"hand":"right","voice":"1"}]
+  "provenance": {
+    "promptVersion": "accidentals-v2-20261018",
+    "model": "实际使用的模型",
+    "reasoning": "实际档位",
+    "calls": []
   },
-  "notation": {"notes":{"n1":{
-    "pitch":{"step":"B","alter":-1,"octave":4},"printedAccidental":-1,
-    "source":{"page":1,"system":"p1s1","measure":1,"staff":1},"checked":true
-  }},"keys":[{"measure":1,"fifths":0,"mode":"major"}],
-    "tempoMarks":[{"beat":0,"unit":"quarter","dots":0,"bpm":90}],
-    "graces":[],"spanners":[],"unhandled":[]},
-  "issues":[],"review":{"status":"checked","method":"model-original-reread","humanConfirmed":false}
+  "pages": [
+    {
+      "page": 1,
+      "sha256": "manifest 中的真实值",
+      "status": "score",
+      "reviewed": true,
+      "systems": [
+        {
+          "id": "p1s1",
+          "staves": 2,
+          "measureStart": 1,
+          "measureEnd": 4,
+          "complete": true,
+          "reviewed": true
+        }
+      ]
+    }
+  ],
+  "score": {
+    "version": 1,
+    "id": "piece-v1",
+    "title": "曲名",
+    "composer": "原作者",
+    "tempo": 90,
+    "timeSignature": [4, 4],
+    "keySignature": 0,
+    "mode": "major",
+    "durationBeats": 16,
+    "measureMap": [{ "beat": 0, "duration": 4, "timeSignature": [4, 4] }],
+    "source": {
+      "kind": "image-ai",
+      "label": "版本与来源",
+      "url": "https://example.org/score"
+    },
+    "notes": [
+      {
+        "id": "n1",
+        "midi": 70,
+        "beat": 0,
+        "duration": 1,
+        "hand": "right",
+        "voice": "1"
+      }
+    ]
+  },
+  "notation": {
+    "notes": {
+      "n1": {
+        "pitch": { "step": "B", "alter": -1, "octave": 4 },
+        "printedAccidental": -1,
+        "source": { "page": 1, "system": "p1s1", "measure": 1, "staff": 1 },
+        "checked": true
+      }
+    },
+    "keys": [{ "measure": 1, "fifths": 0, "mode": "major" }],
+    "tempoMarks": [{ "beat": 0, "unit": "quarter", "dots": 0, "bpm": 90 }],
+    "graces": [],
+    "spanners": [],
+    "unhandled": []
+  },
+  "issues": [],
+  "review": {
+    "status": "checked",
+    "method": "model-original-reread",
+    "humanConfirmed": false
+  }
 }
 ```
 
 上例只展示字段形状，省略的其余小节/音符必须实际补齐；不要将不完整示意直接投入生产。页与行的 `reviewed`、音符的 `checked`、系统行的 `complete` 及 `review.humanConfirmed` 均须为布尔值，字符串或数字即使在草稿模式也会失败。页与行的 `reviewed`、音符的 `checked` 只在完成对应原图复核后设 true。`humanConfirmed` 仅在用户/人工确实确认后设 true。
-
 
 ### v1.1 复核证据与未知速度
 
@@ -94,16 +148,16 @@ App 的 `lib/recognition-transcription.mjs` 可把具有 compact-v5 书写证据
 
 直接放入 `score.notes[]`，不加效果等于原谱没有该标记：
 
-| 字段 | 值 | MusicXML / MIDI |
-| --- | --- | --- |
-| dynamic | pp,p,mp,mf,f,ff | 原生力度 / velocity |
-| accent | accent,marcato | `accent`/`strong-accent` / 提高触键力度 |
-| articulation | staccato,tenuto | 原生符号 / 缩短或保持发声 |
-| ornament | trill,mordent-upper,mordent-lower | 颤音、上/下波音 / 展开辅助音 |
-| ornamentInterval | 1或2 | 必须按原谱辅助音确定半音间隔，不凭调式猜 |
-| arpeggio | up,down | 原生琶音记号 / 同手和弦顺序触发 |
-| tieTo | 后续音符 ID | 原生 tie+tied / 合并为一次发声 |
-| velocity | 0..1 | 发声力度；有 dynamic 时默认从动态表取得 |
+| 字段             | 值                                | MusicXML / MIDI                          |
+| ---------------- | --------------------------------- | ---------------------------------------- |
+| dynamic          | pp,p,mp,mf,f,ff                   | 原生力度 / velocity                      |
+| accent           | accent,marcato                    | `accent`/`strong-accent` / 提高触键力度  |
+| articulation     | staccato,tenuto                   | 原生符号 / 缩短或保持发声                |
+| ornament         | trill,mordent-upper,mordent-lower | 颤音、上/下波音 / 展开辅助音             |
+| ornamentInterval | 1或2                              | 必须按原谱辅助音确定半音间隔，不凭调式猜 |
+| arpeggio         | up,down                           | 原生琶音记号 / 同手和弦顺序触发          |
+| tieTo            | 后续音符 ID                       | 原生 tie+tied / 合并为一次发声           |
+| velocity         | 0..1                              | 发声力度；有 dynamic 时默认从动态表取得  |
 
 每个有 ornament 的音必须给 ornamentInterval；方向由 ornament 区分。实际展开是练习播放近似，不是人类演奏的完整力度/速度模型。延音线只能连接同手同声部、同音高、时间相接的音；不能同时带断奏、装饰音或琶音。连奏弧另存 spanners，绝不能用 tieTo 代替。原谱仅一个延长保持符号时也不能凭空加 tieTo。
 
@@ -111,7 +165,7 @@ App 的 `lib/recognition-transcription.mjs` 可把具有 compact-v5 书写证据
 
 - `notation.notes[id].rhythm` 可明确 `{ "type":"eighth", "dots":0, "tuplet":{"actual":3,"normal":2,"group":"triplet-1","number":1} }`，必须与真实 duration 相等。同一连音分组共用 group ID、比例和编号，生成原生连音数字/括号；带休止、嵌套或跨声部分组需要额外适配，不能漏标后当作完整支持。跨小节自动拆分的延音音头由工具重算符值。
 - `notation.notes[id].fermata` 可为 normal/angled/square。保存在 MusicXML；不会猜测延长秒数。
-- `notation.graces[]`：`{id,beforeNote,pitch,type,slash,source,checked}`。type 为 eighth/16th/32nd，slash 为布尔。无 duration，锚定主音之前，保存在 MusicXML。当前 MIDI/琴伴 JSON 不演奏这些零时值倚音，报告明确提示。
+- `notation.graces[]`：`{id,beforeNote,pitch,type,slash,source,checked,printedAccidental?,chordGroup?}`。type 为 eighth/16th/32nd，slash 为布尔，均须来自纸面符形，不能按播放借时推算。无 duration，锚定主音之前，保存在 MusicXML。`printedAccidental` 为 null 或 -2..2，明确保留倚音上的显式升降号并参与同拍主音的临时记号检查；不能把它伪造到主音。旧输入缺少该字段时不把倚音音高当作显式记号。原图共杆、垂直排列的倚音和弦可赋相同 `chordGroup`；组内须连续且锚点、谱表、符值、斜线一致，导出原生 `<grace>` 与 `<chord>`，不改成连续长音。当前 MIDI/琴伴 JSON 不演奏这些零时值倚音，报告明确提示。
 - `notation.spanners[]`：`{type:"slur",start:"n1",end:"n8",number:1}`；number1..6。MusicXML 保留，MIDI 不模拟连奏触键。
 - `notation.keys[]` 从小节1开始，列出全部调号/调式变化；`notation.tempoMarks[]` 从beat0开始，列出全部变速，字段 `{beat,unit,dots,bpm}`。例如附点四分音符94 = quarterBpm141。XML保留原单位，MIDI使用换算后的速度。琴伴 JSON 当前只播放首个速度、主要按全局调号显示。
 - 踏板、渐强渐弱、回音(turn)、长波浪线、反复/D.C./D.S.、复杂连音括号、其他未实现内容放入 `notation.unhandled:[{"message":"第几页/行/小节的什么符号待适配"}]`。默认阻塞完成导出；不能删掉记录后假装完成。需要完整还原这些符号时，扩展 MusicXML 适配或使用编辑器，并另做验证。

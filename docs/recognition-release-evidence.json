@@ -1,9 +1,9 @@
 {
   "schema": "recognition-release-evidence/v1",
   "release": "recognition-p2-v1-20261028",
-  "recordedAt": "2026-10-29T21:15:50.465Z",
+  "recordedAt": "2026-10-29T21:50:50.518Z",
   "implementation": {
-    "digest": "307184e2285e35efb73ce2a49cb73051b712e210a436d8af4d9e15f62a8d0c5f",
+    "digest": "44e6a6932b11cd5eab386c5684be2dca29ec2024f0194b0c5aebad94bb309069",
     "files": [
       {
         "path": "lib/accounts/recognition-budget.mjs",
@@ -135,7 +135,7 @@
       },
       {
         "path": "lib/recognition-transcription.mjs",
-        "sha256": "906ceb2415205b70478b6135bdb7aceb2d3dfb4bebb2909d1a375da32c9957b2"
+        "sha256": "206cc37d567de37753704e281efb1a7a66f31bb3bfcf6268847feda019a3a73a"
       },
       {
         "path": "lib/recognition-usage.mjs",
@@ -143,7 +143,7 @@
       },
       {
         "path": "lib/recognition-versions.mjs",
-        "sha256": "ef129dbf28829630090f965bab0cf676cb7b778ce5e4dbbf23d3076f66f0c7e6"
+        "sha256": "fb183477b2530d4a28681e34df629511b516c5d550edc94458b7eea56eba38f4"
       },
       {
         "path": "lib/recognition-wire.mjs",
@@ -203,7 +203,7 @@
       },
       {
         "path": "skills/piano-score-to-musicxml/package.json",
-        "sha256": "534bd5071f3fbd06f770ac544bbf5997459fbf78062366363bd3e55337e967f8"
+        "sha256": "6f471f13a378595c5fb6fd910029cfab5a2647c415b1e1e26693c5f2e96a1380"
       },
       {
         "path": "skills/piano-score-to-musicxml/scripts/artifact-output.mjs",
@@ -219,7 +219,7 @@
       },
       {
         "path": "skills/piano-score-to-musicxml/scripts/score_pipeline.mjs",
-        "sha256": "b79587e68528fbc2d8ffe15bd4d716645ad19af31ac0b2ec029a5819de8d1dc1"
+        "sha256": "9864bb6710a3f29c085a042bf165320aa0c46f49dca5e2906041a37a81c18063"
       },
       {
         "path": "skills/piano-score-to-musicxml/scripts/written-evidence.mjs",
@@ -335,7 +335,7 @@
   "evaluation": {
     "mode": "offline-frozen-responses",
     "providerCalls": 0,
-    "sourceEvaluationSha256": "17af74e7a8bc777c72b54fc994578d604cadc375d90a907b4ab05aa908bfa9df",
+    "sourceEvaluationSha256": "a2819d96022a285d73dabe0b824062af55e5b92d18ee79e5469b5d1979ecedf0",
     "suiteSha256": "43a326cb85d9f04afd7dac9a91e30ee6516bc90df6f389d3a05a8308b5b52b8c",
     "sourceFiles": 158,
     "baselinePromptDigest": "5e44d82e7876c4439e347d878f794883a83bbbb97d9d784f700ee8be1a6034b1",

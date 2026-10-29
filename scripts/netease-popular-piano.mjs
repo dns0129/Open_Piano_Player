@@ -8,7 +8,7 @@ import {
 } from "node:fs/promises";
 import { resolve, join } from "node:path";
 import { pathToFileURL } from "node:url";
-import { randomUUID } from "node:crypto";
+import { randomUUID, createHash } from "node:crypto";
 import { homedir } from "node:os";
 import { normalizeCropRect } from "../lib/score-image-layout.mjs";
 import {
@@ -1120,11 +1120,38 @@ export async function artifacts(root) {
       );
       if (job.status === "running") throw Error("识别仍在运行，不能导出");
       const manifest = await read(join(dir, "page-manifest.json"));
-      const transcription = recognitionTranscription(job, manifest);
+      const graceSource = await read(
+        join(dir, "source-grace-notation.json"),
+      ).catch((e) => {
+        if (e.code === "ENOENT") return null;
+        throw e;
+      });
+      if (
+        graceSource &&
+        (graceSource.schema !== "qinban-source-grace-notation/v1" ||
+          !Array.isArray(graceSource.graces))
+      )
+        throw Error("倚音纸面来源清单无效");
+      const transcription = recognitionTranscription(job, manifest, {
+        sourceGraceNotation: graceSource?.graces || [],
+      });
       transcription.provenance = {
         ...transcription.provenance,
         model: "gpt-6.1-sol",
         reasoning: "high",
+        ...(graceSource
+          ? {
+              sourceGraceEvidence: {
+                schema: graceSource.schema,
+                sha256: createHash("sha256")
+                  .update(
+                    await readFile(join(dir, "source-grace-notation.json")),
+                  )
+                  .digest("hex"),
+                humanConfirmed: false,
+              },
+            }
+          : {}),
         calls: job.regions.flatMap((r) =>
           (r.recognitionAttempts || [])
             .filter((a) => a.stage === "provider-turn")
@@ -1145,13 +1172,34 @@ export async function artifacts(root) {
             })),
         ),
       };
-      const input = join(dir, "transcription.json");
+      const graceVersion = graceSource
+        ? (await read(resolve("skills/piano-score-to-musicxml/package.json")))
+            .version
+        : null;
+      if (
+        graceSource &&
+        (typeof graceVersion !== "string" ||
+          !/^\d+\.\d+\.\d+$/.test(graceVersion))
+      )
+        throw Error("项目 Skill 版本无效");
+      const input = join(
+        dir,
+        graceSource
+          ? `transcription-source-graces-v${graceVersion}.json`
+          : "transcription.json",
+      );
+      const output = join(
+        dir,
+        graceSource
+          ? `skill-result-source-graces-v${graceVersion}`
+          : "skill-result",
+      );
       // Keep an unchanged input byte-for-byte so completed artifact sets can
       // resume without invalidating their fingerprints.
       const existing = await read(input).catch(() => null);
-      const complete = await read(
-        join(dir, "skill-result", "artifact-manifest.json"),
-      ).catch(() => null);
+      const complete = await read(join(output, "artifact-manifest.json")).catch(
+        () => null,
+      );
       if (
         !existing ||
         (!complete &&
@@ -1167,10 +1215,18 @@ export async function artifacts(root) {
           });
         await atomicJson(input, transcription);
       }
-      const report = await build(
+      // Opt-in source engraving metadata uses the project Skill's newer grace
+      // contract in a separate artifact set. Existing completed exports retain
+      // their original runtime, bytes, and manifest fingerprints.
+      const activeBuild = graceSource
+        ? (
+            await import("../skills/piano-score-to-musicxml/scripts/score_pipeline.mjs")
+          ).build
+        : build;
+      const report = await activeBuild(
         input,
         join(dir, "page-manifest.json"),
-        join(dir, "skill-result"),
+        output,
         { draft: true, render: true, resume: true },
       );
       results.push({
@@ -1178,6 +1234,13 @@ export async function artifacts(root) {
         status: report.status,
         measures: report.measures,
         engravedPages: report.engravedPages,
+        ...(graceSource
+          ? {
+              resultDirectory: output,
+              skillVersion: graceVersion,
+              writtenGraces: transcription.notation.graces.length,
+            }
+          : {}),
       });
     } catch (e) {
       results.push({

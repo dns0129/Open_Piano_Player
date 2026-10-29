@@ -49,6 +49,8 @@ node scripts/netease-popular-piano.mjs resume-missing .local/netease-top100-2026
 
 `artifacts` 使用已安装的 `piano-score-to-musicxml` Skill，将书写证据转换为 `transcription.json`，生成 MusicXML、MIDI、重新排版 SVG 和校验报告。源页哈希、实际 provider usage、模型和档位一并保留。缺少人工复核或符号适配时使用草稿状态；不能通过补签人工确认来消除阻塞。
 
+另有纸面倚音证据时，可在曲目目录保存 `source-grace-notation.json`（`schema: qinban-source-grace-notation/v1`，`graces` 为接入文档规定的清单）。它只映射当前图哈希匹配的既有倚音，不改主音的显式记号；带此清单的曲目使用项目内 Skill 1.3.2，另存带版本号的 `transcription-source-graces-v1.3.2.json` 与 `skill-result-source-graces-v1.3.2/`，并记录来源清单哈希。既有完整产物继续使用原运行时与文件哈希，旧失败暂存和用户编辑不覆盖；本机已安装 Skill 不会被此命令修改。
+
 原谱、会话、任务 token、模型响应、曲库资源和 Skill 成果只写入 `.local`，不随代码发布到 GitHub。`report.html` / `report.json` 分别提供可阅读的100首链接状态表和机器报告。链接找到、原谱准备、模型识别、曲库读回及浏览器播放是不同状态。
 
 本次发布回归使用原有固定42个来源案例、9组离线重放和独立评分器；没有为回归新增模型调用，也不据此宣称本批谱面识别准确率提高。
