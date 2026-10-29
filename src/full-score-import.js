@@ -1,5 +1,5 @@
 import "./score-workbench.css";
-import { mountRecognitionPageEditor } from "./recognition-page-editor.js";
+
 import {
   writtenEvidenceEditor,
   applyWrittenEvidenceInput,
@@ -9,16 +9,12 @@ import {
   removeWrittenEvent,
 } from "../lib/recognition-edit.mjs";
 import "./full-score-import.css";
-import {
-  sourcePoint,
-  rollRange,
-  rollMove,
-} from "../lib/recognition-review-actions.mjs";
+import { sourcePoint, rollRange } from "../lib/recognition-review-actions.mjs";
 import { scoreDiagnosisCard } from "./score-diagnosis-card.js";
 import { assetURL } from "../lib/asset-url.mjs";
 import { mountScoreImageSelector } from "./score-image.js";
-import { normalizeCropRect } from "../lib/score-image-layout.mjs";
-import { validateScore, midiName } from "../lib/score.mjs";
+
+import { midiName } from "../lib/score.mjs";
 import {
   validateFullScorePdfUpload,
   fullScoreRegionIssues,
@@ -29,8 +25,8 @@ import {
   ensurePrepared,
   ensureRegionAsset,
   scanPage,
-  storeAsset,
 } from "./full-score-import-pages.js";
+import { bindNoteDrag } from "./full-score-import-drag.js";
 import {
   applySnapshot,
   approveAll,
@@ -64,6 +60,17 @@ import {
   scopeLabel,
   unwrap,
 } from "./full-score-import-parts.js";
+import {
+  applyManualCrop,
+  closePageWorkbench,
+  commitMove,
+  openPageWorkbench,
+  preview,
+  selectMapNote,
+  undoMove,
+  updatePositionMarker,
+  updateReviewControls,
+} from "./full-score-import-review.js";
 
 /**
  * Generic PDF -> all-page scope -> asynchronous recognition -> per-line review.
@@ -97,39 +104,6 @@ export function mountFullScoreImport(
     ctx;
   source = ctx.source;
   ctx.render = render;
-  function closePageWorkbench() {
-    ctx.pageWorkbench?.destroy();
-    ctx.pageWorkbench = null;
-    ctx.pageWorkbenchHost?.remove();
-    ctx.pageWorkbenchHost = null;
-    ctx.restoreParentInert?.();
-    ctx.restoreParentInert = null;
-    if (!ctx.disposed) render();
-  }
-  async function openPageWorkbench() {
-    if (isRunning(ctx) || state.importing || ctx.disposed) return;
-    const regions = selectedRegions(ctx);
-    for (const region of regions) await ensureRegionAsset(ctx, region);
-    if (ctx.disposed) return;
-    const modal = root.closest(".modal");
-    const prior = modal?.inert;
-    if (modal) {
-      modal.inert = true;
-      ctx.restoreParentInert = () => {
-        modal.inert = prior;
-      };
-    }
-    ctx.pageWorkbenchHost = document.createElement("div");
-    document.body.append(ctx.pageWorkbenchHost);
-    ctx.pageWorkbench = mountRecognitionPageEditor(ctx.pageWorkbenchHost, {
-      draft,
-      regions,
-      assets,
-      thumbnails,
-      initialPage: state.activePage,
-      onClose: closePageWorkbench,
-    });
-  }
   function render() {
     if (ctx.disposed) return;
     const sameRegion = root.dataset.viewRegion === state.activeRegionId;
@@ -369,14 +343,16 @@ export function mountFullScoreImport(
       if (ctx.disposed || epoch !== ctx.renderEpoch) return;
       const image = root.querySelector("[data-original-image]");
       if (image) {
-        image.addEventListener("load", updatePositionMarker, { once: true });
+        image.addEventListener("load", () => updatePositionMarker(ctx), {
+          once: true,
+        });
         if (image.src !== assets.get(region.id).url)
           image.src = assets.get(region.id).url;
       } else {
-        render();
+        ctx.render();
         return;
       }
-      updatePositionMarker();
+      updatePositionMarker(ctx);
     }
   }
 
@@ -418,178 +394,6 @@ export function mountFullScoreImport(
     return `<div class="fsi-roll-heading"><strong>拖拽调整音高与拍点</strong><span class="fsi-muted">绿：右手 · 蓝：左手</span></div><p class="fsi-muted">上下每格一个半音，左右吸附到 1/4 拍（按住 Alt 精调到 1/16 拍）。方向键也可调整，Shift + 左右移动 1 拍。原图定位单独保留。</p><div class="fsi-roll-scroll"><div class="fsi-roll" data-note-roll style="width:${width}px;height:${rows * 20}px;--roll-beats:${region.durationBeats}">${Array.from({ length: ticks }, (_, i) => `<span class="fsi-roll-beat" style="left:${(i / region.durationBeats) * 100}%">${i} 拍</span>`).join("")}${region.notes.map((note, index) => `<button type="button" class="fsi-roll-note${note.hand === "left" ? " is-left" : ""}${note.id === state.selectedNoteId ? " is-selected" : ""}" data-roll-note="${escapeHTML(note.id)}" style="left:${(note.beat / region.durationBeats) * 100}%;top:${(range.max - note.midi) * 20}px;width:${(note.duration / region.durationBeats) * 100}%" aria-label="音符 ${index + 1} ${escapeHTML(midiName(note.midi))}，第 ${note.beat} 拍，拖拽或方向键调整" title="${index + 1} · ${escapeHTML(midiName(note.midi))} · ${note.beat} 拍">${index + 1} ${escapeHTML(midiName(note.midi))}</button>`).join("")}</div></div>`;
   }
 
-  function selectMapNote(noteId) {
-    state.selectedNoteId = noteId;
-    state.selectedHeadIndex = null;
-    for (const marker of root.querySelectorAll(
-      "[data-source-note],[data-roll-note]",
-    ))
-      marker.classList.toggle(
-        "is-selected",
-        (marker.dataset.sourceNote || marker.dataset.rollNote) === noteId,
-      );
-    for (const row of root.querySelectorAll(".fsi-review-table tr"))
-      row.classList.toggle(
-        "is-selected",
-        row.querySelector("[data-note-id]")?.dataset.noteId === noteId,
-      );
-    updatePositionMarker();
-  }
-
-  function commitMove(region, note, values) {
-    const before = Object.fromEntries(
-      Object.keys(values).map((key) => [key, note[key]]),
-    );
-    if (Object.keys(values).every((key) => values[key] === note[key]))
-      return false;
-    moveHistory.push({
-      regionId: region.id,
-      noteId: note.id,
-      before,
-      after: { ...values },
-    });
-    if (moveHistory.length > 100) moveHistory.shift();
-    Object.assign(note, values);
-    refreshWrittenPitch(region, note.id);
-    edited(region);
-    state.message = "已调整音符；可撤销，审核全部后保存到曲库。";
-    render();
-    return true;
-  }
-
-  function undoMove() {
-    const move = moveHistory.at(-1);
-    if (!move) return;
-    const region = draft.regions.find((r) => r.id === move.regionId);
-    const note = region?.notes?.find((n) => n.id === move.noteId);
-    if (
-      !note ||
-      !Object.keys(move.after).every((key) => note[key] === move.after[key])
-    )
-      throw new Error("此音符已被后续编辑或重新识别，无法撤销旧移动。");
-    moveHistory.pop();
-    Object.assign(note, move.before);
-    edited(region);
-    state.activeRegionId = region.id;
-    state.activePage = region.page;
-    state.stage = "review";
-    state.selectedNoteId = note.id;
-    state.message = "已撤销上次移动；请审核后保存。";
-    render();
-  }
-
-  function updatePositionMarker() {
-    const region = activeRegion(ctx),
-      note =
-        state.selectedHeadIndex !== null
-          ? region?.sourceHeadAudit?.unmapped?.[state.selectedHeadIndex]
-          : region?.notes?.find(
-              (candidate) => candidate.id === state.selectedNoteId,
-            ),
-      marker = root.querySelector("[data-note-position]");
-    if (!marker) return;
-    marker.hidden =
-      !note || !finite(note.x) || !finite(note.y) || state.stage !== "review";
-    if (!marker.hidden) {
-      marker.style.left = `${((note.x - region.rect.x) / region.rect.width) * 100}%`;
-      marker.style.top = `${((note.y - region.rect.y) / region.rect.height) * 100}%`;
-    }
-  }
-
-  function updateReviewControls() {
-    const region = activeRegion(ctx),
-      confirm = root.querySelector('[data-action="confirm-region"]');
-    if (confirm && region)
-      confirm.disabled =
-        isRunning(ctx) || fullScoreRegionIssues(region).length > 0;
-    const button = root.querySelector('[data-action="import"]');
-    if (button)
-      button.disabled =
-        state.importing ||
-        isRunning(ctx) ||
-        !state.scopeReviewed ||
-        !fullScoreReviewSummary(draft).canImport;
-  }
-
-  async function applyManualCrop(replace) {
-    if (scopeLocked(ctx))
-      throw new Error("任务开始后不可更改源范围；请先停止并重新选择范围。");
-    const options = ctx.selector?.getSelectionOptions();
-    if (options?.mode !== "manual" || !options.rect)
-      throw new Error("请先切换“手动框选”，在原图上拖出完整的双手谱行。");
-    const [image] = ctx.selector.getSelection();
-    const page = pageInfo(ctx, state.activePage),
-      current = activeRegion(ctx);
-    if (replace && !current) throw new Error("请先选择要替换的谱行。");
-    const rect = normalizeCropRect(image.region.rect, page.width, page.height);
-    const region = replace
-      ? current
-      : {
-          id: `p${page.page}-manual-${Date.now().toString(36)}-${++ctx.manualSequence}`,
-          page: page.page,
-          system: 1,
-        };
-    Object.assign(region, {
-      rect,
-      pageWidth: page.width,
-      pageHeight: page.height,
-      selected: true,
-      excludeReason: "",
-      status: "pending",
-      notes: undefined,
-      reviewed: false,
-      assetId: region.id,
-    });
-    if (!replace) draft.regions.push(region);
-    draft.regions
-      .filter((candidate) => candidate.page === page.page)
-      .sort((a, b) => a.rect.y - b.rect.y)
-      .forEach((candidate, index) => {
-        candidate.system = index + 1;
-      });
-    storeAsset(ctx, region, image);
-    page.decision = "include";
-    state.activeRegionId = region.id;
-    state.selecting = false;
-    setMessage(
-      ctx,
-      `${scopeLabel(region)}已${replace ? "替换" : "添加"}；请确认没有重叠或漏掉其他谱行。`,
-    );
-  }
-
-  async function preview() {
-    const region = activeRegion(ctx),
-      element = root.querySelector("[data-notation-preview]");
-    if (!region || !element) return;
-    if (!region.notes?.length) {
-      element.textContent = `此行为全休止谱行，共 ${region.durationBeats} 拍。请对照上方原图及休止表，确认两只手的全部休止时段。`;
-      return;
-    }
-    try {
-      const score = validateScore({
-        ...region.score,
-        durationBeats: region.durationBeats,
-        notes: region.notes,
-      });
-      const { renderNotation } = await import("./notation.js");
-      if (ctx.disposed || !element.isConnected) return;
-      ctx.previewRenderer?.destroy();
-      ctx.previewRenderer = renderNotation(element, score, {
-        mode: "staff",
-        autoScroll: false,
-        onSeek: (beat) => {
-          state.selectedNoteId =
-            region.notes.find((note) => Math.abs(note.beat - beat) < 0.00001)
-              ?.id || state.selectedNoteId;
-          updatePositionMarker();
-        },
-      });
-      ctx.previewRenderer.setBeat(0);
-    } catch (error) {
-      element.textContent = `当前修改尚不能排版：${errorText(error)}。请继续对照原图修正。`;
-    }
-  }
-
   root.addEventListener("click", (event) => {
     const image = event.target.closest("[data-original-image]");
     if (image && state.stage === "review" && !state.busy && !state.importing) {
@@ -605,11 +409,14 @@ export function mountFullScoreImport(
           event.clientX,
           event.clientY,
         );
-      if (note && point) commitMove(region, note, point);
+      if (note && point) commitMove(ctx, region, note, point);
     }
     const mapNote = event.target.closest("[data-source-note],[data-roll-note]");
     if (mapNote)
-      selectMapNote(mapNote.dataset.sourceNote || mapNote.dataset.rollNote);
+      selectMapNote(
+        ctx,
+        mapNote.dataset.sourceNote || mapNote.dataset.rollNote,
+      );
     const action = event.target.closest("[data-action]");
     if (!action || action.disabled) return;
     if (
@@ -653,7 +460,7 @@ export function mountFullScoreImport(
               (region) => region.page === state.activePage && region.selected,
             )?.id || "";
           state.selecting = false;
-          render();
+          ctx.render();
           break;
         case "region": {
           state.selectedHeadIndex = null;
@@ -665,27 +472,27 @@ export function mountFullScoreImport(
           state.stage = region.notes ? "review" : "scope";
           state.selectedNoteId = region.notes?.[0]?.id || "";
           state.selecting = false;
-          render();
+          ctx.render();
           break;
         }
         case "scope":
           state.stage = "scope";
           state.selecting = false;
-          render();
+          ctx.render();
           break;
         case "review":
-          await openPageWorkbench();
+          await openPageWorkbench(ctx);
           break;
         case "select-crop":
           state.selecting = true;
           state.stage = "scope";
-          render();
+          ctx.render();
           break;
         case "add-crop":
-          await applyManualCrop(false);
+          await applyManualCrop(ctx, false);
           break;
         case "replace-crop":
-          await applyManualCrop(true);
+          await applyManualCrop(ctx, true);
           break;
         case "start":
           await startRecognition(ctx);
@@ -694,7 +501,7 @@ export function mountFullScoreImport(
           await cancel(ctx);
           break;
         case "page-workbench":
-          await openPageWorkbench();
+          await openPageWorkbench(ctx);
           break;
         case "approve-all":
           await approveAll(ctx);
@@ -721,17 +528,17 @@ export function mountFullScoreImport(
           });
           remoteSignatures.clear();
           state.message = "可重新选择页面与谱行；旧任务已停止。";
-          render();
+          ctx.render();
           break;
         case "select-note":
           state.selectedHeadIndex = null;
           state.selectedNoteId = action.dataset.noteId;
-          render();
+          ctx.render();
           break;
         case "source-head":
           state.selectedHeadIndex = Number(action.dataset.headIndex);
           state.selectedNoteId = "";
-          render();
+          ctx.render();
           break;
         case "add-note": {
           state.selectedHeadIndex = null;
@@ -751,7 +558,7 @@ export function mountFullScoreImport(
           region.notes.push(note);
           state.selectedNoteId = note.id;
           edited(region);
-          render();
+          ctx.render();
           break;
         }
         case "delete-note": {
@@ -761,7 +568,7 @@ export function mountFullScoreImport(
             (note) => note.id !== action.dataset.noteId,
           );
           edited(region);
-          render();
+          ctx.render();
           break;
         }
         case "add-rest": {
@@ -774,7 +581,7 @@ export function mountFullScoreImport(
             voice: "left-1",
           });
           edited(region);
-          render();
+          ctx.render();
           break;
         }
         case "delete-rest": {
@@ -786,21 +593,21 @@ export function mountFullScoreImport(
           );
           region.rests.splice(Number(action.dataset.restIndex), 1);
           edited(region);
-          render();
+          ctx.render();
           break;
         }
         case "clear-ties": {
           const region = activeRegion(ctx);
           region.continuity = { tieIn: [], tieOut: [] };
           edited(region);
-          render();
+          ctx.render();
           break;
         }
         case "clear-internal-ties": {
           const region = activeRegion(ctx);
           region.internalTies = [];
           edited(region);
-          render();
+          ctx.render();
           break;
         }
         case "assess-source":
@@ -837,7 +644,7 @@ export function mountFullScoreImport(
               : kind === "diagnose-source"
                 ? "已确认移交；独立诊断智能体正在准备方案，不会自动修改乐谱…"
                 : "正在保存修订操作…";
-          render();
+          ctx.render();
           try {
             applySnapshot(
               ctx,
@@ -853,7 +660,7 @@ export function mountFullScoreImport(
                     : "已撤销修订并恢复原版本。";
           } finally {
             state.busy = false;
-            if (!ctx.disposed) render();
+            if (!ctx.disposed) ctx.render();
           }
           break;
         }
@@ -875,7 +682,7 @@ export function mountFullScoreImport(
             state.selectedNoteId = next.notes[0]?.id || "";
             state.selectedHeadIndex = null;
             state.stage = "review";
-            render();
+            ctx.render();
           } else
             setMessage(
               ctx,
@@ -884,10 +691,10 @@ export function mountFullScoreImport(
           break;
         }
         case "undo-move":
-          undoMove();
+          undoMove(ctx);
           break;
         case "preview":
-          await preview();
+          await preview(ctx);
           break;
         case "import":
           await importReviewed(ctx);
@@ -900,7 +707,7 @@ export function mountFullScoreImport(
       if (!ctx.disposed) {
         state.busy = false;
         state.error = errorText(error);
-        render();
+        ctx.render();
       }
     });
   });
@@ -1010,7 +817,7 @@ export function mountFullScoreImport(
         state.error = "跨行延音须为含 tieIn、tieOut 两个数组的 JSON。";
       }
     }
-    render();
+    ctx.render();
   });
 
   root.addEventListener("input", (event) => {
@@ -1033,7 +840,7 @@ export function mountFullScoreImport(
       const region = activeRegion(ctx);
       region.durationBeats = numberValue(input.value);
       edited(region);
-      updateReviewControls();
+      updateReviewControls(ctx);
       return;
     }
     if (input.hasAttribute("data-measure-durations")) {
@@ -1047,7 +854,7 @@ export function mountFullScoreImport(
       region.coverage.measureDurations = values;
       region.coverage.measureCount = values.length;
       edited(region);
-      updateReviewControls();
+      updateReviewControls(ctx);
       return;
     }
     if (input.dataset.restField) {
@@ -1060,7 +867,7 @@ export function mountFullScoreImport(
           ? input.value
           : numberValue(input.value);
         edited(region);
-        updateReviewControls();
+        updateReviewControls(ctx);
       }
       return;
     }
@@ -1068,7 +875,7 @@ export function mountFullScoreImport(
       const region = activeRegion(ctx);
       if (region && applyWrittenEvidenceInput(input, region)) {
         edited(region);
-        updateReviewControls();
+        updateReviewControls(ctx);
       }
       return;
     }
@@ -1092,176 +899,9 @@ export function mountFullScoreImport(
         Number.isInteger(note.midi) && note.midi >= 21 && note.midi <= 108
           ? midiName(note.midi)
           : "";
-    updateReviewControls();
+    updateReviewControls(ctx);
   });
-
-  root.addEventListener("pointerdown", (event) => {
-    const marker = event.target.closest("[data-source-note],[data-roll-note]");
-    const image = root.querySelector("[data-original-image]");
-    const region = activeRegion(ctx);
-    if (
-      event.button !== 0 ||
-      state.stage !== "review" ||
-      !region?.notes ||
-      state.busy ||
-      state.importing
-    )
-      return;
-    if (!marker) return;
-    const noteId =
-      marker?.dataset.sourceNote ||
-      marker?.dataset.rollNote ||
-      state.selectedNoteId;
-    const note = region.notes.find((n) => n.id === noteId);
-    if (!note) return;
-    selectMapNote(note.id);
-    event.preventDefault();
-    const mode = marker.hasAttribute("data-roll-note") ? "roll" : "source";
-    const bounds = (
-      mode === "roll" ? root.querySelector("[data-note-roll]") : image
-    )?.getBoundingClientRect();
-    if (!bounds?.width || !bounds.height) return;
-    ctx.noteDrag = {
-      pointerId: event.pointerId,
-      region,
-      note,
-      marker,
-      mode,
-      bounds,
-      range: rollRange(region),
-      startX: event.clientX,
-      startY: event.clientY,
-      values: null,
-    };
-    root.setPointerCapture?.(event.pointerId);
-    marker.focus({ preventScroll: true });
-  });
-
-  root.addEventListener("pointermove", (event) => {
-    const drag = ctx.noteDrag;
-    if (!drag || drag.pointerId !== event.pointerId) return;
-    event.preventDefault();
-    const dx = event.clientX - drag.startX,
-      dy = event.clientY - drag.startY;
-    if (Math.hypot(dx, dy) < 3 && !drag.values) return;
-    drag.values =
-      drag.mode === "source"
-        ? {
-            x: Math.max(
-              drag.region.rect.x,
-              Math.min(
-                drag.region.rect.x + drag.region.rect.width,
-                drag.note.x + (dx / drag.bounds.width) * drag.region.rect.width,
-              ),
-            ),
-            y: Math.max(
-              drag.region.rect.y,
-              Math.min(
-                drag.region.rect.y + drag.region.rect.height,
-                drag.note.y +
-                  (dy / drag.bounds.height) * drag.region.rect.height,
-              ),
-            ),
-          }
-        : rollMove(
-            drag.note,
-            drag.region,
-            drag.range,
-            drag.bounds,
-            dx,
-            dy,
-            event.altKey ? 1 / 16 : 1 / 4,
-          );
-    if (!drag.values) return;
-    if (drag.mode === "source") {
-      drag.marker.style.left = `${((drag.values.x - drag.region.rect.x) / drag.region.rect.width) * 100}%`;
-      drag.marker.style.top = `${((drag.values.y - drag.region.rect.y) / drag.region.rect.height) * 100}%`;
-    } else {
-      drag.marker.style.left = `${(drag.values.beat / drag.region.durationBeats) * 100}%`;
-      drag.marker.style.top = `${(drag.range.max - drag.values.midi) * 20}px`;
-      drag.marker.textContent = `${midiName(drag.values.midi)} · ${drag.values.beat} 拍`;
-    }
-  });
-
-  function finishNoteDrag(event) {
-    const drag = ctx.noteDrag;
-    if (!drag || drag.pointerId !== event.pointerId) return;
-    ctx.noteDrag = null;
-    if (root.hasPointerCapture?.(event.pointerId))
-      root.releasePointerCapture(event.pointerId);
-    if (
-      event.type === "pointerup" &&
-      drag.values &&
-      !state.busy &&
-      !state.importing &&
-      drag.region === activeRegion(ctx)
-    )
-      commitMove(drag.region, drag.note, drag.values);
-    else render();
-  }
-  root.addEventListener("pointerup", finishNoteDrag);
-  root.addEventListener("pointercancel", finishNoteDrag);
-  root.addEventListener("lostpointercapture", finishNoteDrag);
-  root.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && ctx.noteDrag) {
-      event.stopPropagation();
-      finishNoteDrag({
-        ...event,
-        pointerId: ctx.noteDrag.pointerId,
-        type: "pointercancel",
-      });
-      return;
-    }
-    const marker = event.target.closest("[data-source-note],[data-roll-note]");
-    if (
-      !marker ||
-      !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(
-        event.key,
-      ) ||
-      state.busy ||
-      state.importing
-    )
-      return;
-    event.preventDefault();
-    const region = activeRegion(ctx),
-      id = marker.dataset.sourceNote || marker.dataset.rollNote;
-    const note = region?.notes.find((n) => n.id === id);
-    if (!note) return;
-    selectMapNote(id);
-    const dx =
-      event.key === "ArrowLeft" ? -1 : event.key === "ArrowRight" ? 1 : 0;
-    const dy = event.key === "ArrowUp" ? -1 : event.key === "ArrowDown" ? 1 : 0;
-    const step = event.shiftKey ? 10 : 1;
-    const values = marker.hasAttribute("data-source-note")
-      ? {
-          x: Math.max(
-            region.rect.x,
-            Math.min(region.rect.x + region.rect.width, note.x + dx * step),
-          ),
-          y: Math.max(
-            region.rect.y,
-            Math.min(region.rect.y + region.rect.height, note.y + dy * step),
-          ),
-        }
-      : {
-          beat: Math.max(
-            0,
-            Math.min(
-              Math.max(0, region.durationBeats - note.duration),
-              note.beat +
-                dx * (event.shiftKey ? 1 : event.altKey ? 1 / 16 : 1 / 4),
-            ),
-          ),
-          midi: Math.max(21, Math.min(108, note.midi - dy)),
-        };
-    commitMove(region, note, values);
-    const key = marker.hasAttribute("data-source-note")
-      ? "sourceNote"
-      : "rollNote";
-    [...root.querySelectorAll("[data-source-note],[data-roll-note]")]
-      .find((el) => el.dataset[key] === id)
-      ?.focus({ preventScroll: true });
-  });
+  bindNoteDrag(ctx);
 
   async function initialize() {
     await validateFullScorePdfUpload(file);
@@ -1307,13 +947,13 @@ export function mountFullScoreImport(
         "PDF 超过 200 页，请先提取明确的练习范围。不会截取前 200 页冒充全谱。",
       );
     draft.totalPages = ctx.pdf.numPages;
-    render();
+    ctx.render();
     for (let pageNumber = 1; pageNumber <= ctx.pdf.numPages; pageNumber++) {
       if (ctx.disposed || ctx.scanCancelled) break;
       if (!(await scanPage(ctx, pageNumber))) break;
       state.scannedPages = pageNumber;
       state.message = `正在逐页检查：第 ${pageNumber} / ${ctx.pdf.numPages} 页，发现 ${draft.regions.length} 个谱行候选。`;
-      render();
+      ctx.render();
     }
     state.scanning = false;
     if (!ctx.scanCancelled && saved?.id) {
@@ -1323,19 +963,19 @@ export function mountFullScoreImport(
         ? `已复用相同 PDF 的已校对全谱：${draft.totalPages} 页、${draft.regions.length} 行，本次新增模型调用 0 次。原图与校对结果保留，请确认范围后导入。`
         : `已恢复保存的任务：${draft.totalPages} 页、${draft.regions.length} 行。原图、已识别结果与审核状态保留；请再次核对范围确认。`;
       if (saved.status === "running") poll(ctx);
-      render();
+      ctx.render();
       return;
     }
     state.message = ctx.scanCancelled
       ? "扫描已停止；未检查页面会阻止完整导入。请关闭并重新上传继续。"
       : `全部 ${ctx.pdf.numPages} 页已检查。请排除封面/空白页，核对每个谱行是否完整包含两只手。`;
-    render();
+    ctx.render();
   }
 
   function destroy() {
     if (ctx.disposed) return;
     ctx.disposed = true;
-    closePageWorkbench();
+    closePageWorkbench(ctx);
     ctx.scanCancelled = true;
     ctx.operationCancelled = true;
     ctx.operationController.abort();
@@ -1354,13 +994,13 @@ export function mountFullScoreImport(
     root.remove();
   }
 
-  render();
+  ctx.render();
   const ready = initialize().catch((error) => {
     if (!ctx.disposed) {
       state.scanning = false;
       state.error = errorText(error);
       state.message = "PDF 尚未完成检查，无法启动完整识谱。";
-      render();
+      ctx.render();
     }
   });
   return { ready, destroy, cancel: () => cancel(ctx), getDraft: () => draft };
