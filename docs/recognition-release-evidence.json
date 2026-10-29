@@ -1,9 +1,9 @@
 {
   "schema": "recognition-release-evidence/v1",
   "release": "recognition-p2-v1-20261028",
-  "recordedAt": "2026-10-29T14:17:02.358Z",
+  "recordedAt": "2026-10-29T21:15:50.465Z",
   "implementation": {
-    "digest": "1153fe57d329d79a493598a82dcb24b5df4003dfc582b565d8d9293e20170a22",
+    "digest": "307184e2285e35efb73ce2a49cb73051b712e210a436d8af4d9e15f62a8d0c5f",
     "files": [
       {
         "path": "lib/accounts/recognition-budget.mjs",
@@ -159,7 +159,7 @@
       },
       {
         "path": "lib/score-region.mjs",
-        "sha256": "416aeffc36f8960ecb7a328c34501658562acc7b8ee0379aadd2f78ebba7f73c"
+        "sha256": "ea846d3a089dbee9f5ff27adb86c0e915658eabdcae463223f1284de1bd88729"
       },
       {
         "path": "lib/score-types.ts",
@@ -335,7 +335,7 @@
   "evaluation": {
     "mode": "offline-frozen-responses",
     "providerCalls": 0,
-    "sourceEvaluationSha256": "ca3243267c1ebae8284a0b9aea1d1c1e005a284f164375e2344b614b32490477",
+    "sourceEvaluationSha256": "17af74e7a8bc777c72b54fc994578d604cadc375d90a907b4ab05aa908bfa9df",
     "suiteSha256": "43a326cb85d9f04afd7dac9a91e30ee6516bc90df6f389d3a05a8308b5b52b8c",
     "sourceFiles": 158,
     "baselinePromptDigest": "5e44d82e7876c4439e347d878f794883a83bbbb97d9d784f700ee8be1a6034b1",
