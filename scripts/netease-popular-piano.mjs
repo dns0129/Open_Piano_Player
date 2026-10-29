@@ -752,10 +752,22 @@ export function selectRecoveryRegionIds(
     .map((r) => r.id);
 }
 
+export function batchScheduling({ recoveryMode = false, maxConcurrency } = {}) {
+  const limit = Number(maxConcurrency ?? (recoveryMode ? 4 : 16));
+  if (!Number.isInteger(limit) || limit < 1 || limit > 100)
+    throw Error("识谱并发必须是1到100之间的整数");
+  return {
+    maxConcurrency: limit,
+    scoreWorkers: Math.max(recoveryMode ? 2 : 4, Math.ceil(limit / 4)),
+  };
+}
+
 export async function run(
   root,
-  { transportRecovery = false, missingOnly = false, maxConcurrency = 16 } = {},
+  { transportRecovery = false, missingOnly = false, maxConcurrency } = {},
 ) {
+  const recoveryMode = transportRecovery || missingOnly;
+  const scheduling = batchScheduling({ recoveryMode, maxConcurrency });
   const { createFullScoreJobStore } =
     await import("../lib/full-score-jobs.mjs");
   const { createSettingsStore } = await import("../lib/settings.mjs");
@@ -792,7 +804,6 @@ export async function run(
   const recovery = missingOnly
     ? state.missingRecovery
     : state.transportRecovery;
-  const recoveryMode = transportRecovery || missingOnly;
   let stopped = null,
     active = 0,
     peak = 0;
@@ -813,7 +824,7 @@ export async function run(
   );
   const adapter = requestGate.recognize;
   const store = createFullScoreJobStore({
-    maxConcurrency,
+    maxConcurrency: scheduling.maxConcurrency,
     recognizeRegion: adapter,
   });
   const save = () => atomicJson(join(root, "private-run.json"), state);
@@ -843,15 +854,18 @@ export async function run(
       stopped,
       active,
       peak,
+      concurrency: scheduling.maxConcurrency,
+      scoreWorkers: scheduling.scoreWorkers,
       jobs,
       imports: state.imports,
     });
   };
   const timer = setInterval(() => progress().catch(() => {}), 15000);
   try {
-    // Four score workers share one physical model gate. Successful rows persist
+    // Score workers share one physical model gate. Successful rows persist
     // in the standard job store and are never reissued by resume.
-    await mapLimit(discovery.selected, recoveryMode ? 2 : 4, async (song) => {
+    const workers = scheduling.scoreWorkers;
+    await mapLimit(discovery.selected, workers, async (song) => {
       if (
         stopped ||
         state.imports.some((i) => i.sheetId === song.sheetId && i.imported)
@@ -1505,18 +1519,26 @@ if (
   else if (command === "run") await withRunLease(root, () => run(root));
   else if (command === "recover-transport" || command === "resume-missing")
     await withRunLease(root, async () => {
+      const concurrencyFlag = process.argv
+        .slice(4)
+        .find((arg) => arg.startsWith("--concurrency="));
+      const scheduling = batchScheduling({
+        recoveryMode: true,
+        maxConcurrency: concurrencyFlag?.slice("--concurrency=".length),
+      });
       await atomicJson(join(root, "pipeline-status.json"), {
         status:
           command === "resume-missing"
             ? "resuming-missing"
             : "recovering-transport",
         startedAt: new Date().toISOString(),
-        concurrency: 4,
+        concurrency: scheduling.maxConcurrency,
+        scoreWorkers: scheduling.scoreWorkers,
       });
       await run(root, {
         transportRecovery: command === "recover-transport",
         missingOnly: command === "resume-missing",
-        maxConcurrency: 4,
+        maxConcurrency: scheduling.maxConcurrency,
       });
       await artifacts(root);
       const summary = await report(root);

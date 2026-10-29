@@ -12,7 +12,21 @@ import {
   createBatchRequestGate,
   selectRecoveryRegionIds,
   rankCandidates,
+  batchScheduling,
 } from "../scripts/netease-popular-piano.mjs";
+
+test("explicit 100-request recovery also opens enough score workers to fill the shared gate", () => {
+  assert.deepEqual(batchScheduling({ recoveryMode: true }), {
+    maxConcurrency: 4,
+    scoreWorkers: 2,
+  });
+  assert.deepEqual(
+    batchScheduling({ recoveryMode: true, maxConcurrency: "100" }),
+    { maxConcurrency: 100, scoreWorkers: 25 },
+  );
+  for (const maxConcurrency of [0, 101, -1, 1.5, "bad"])
+    assert.throws(() => batchScheduling({ maxConcurrency }), /1.*100/);
+});
 
 test("explicit missing-only resume preserves every existing result, including results awaiting review", () => {
   const rows = [

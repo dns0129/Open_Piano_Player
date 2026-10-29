@@ -84,6 +84,55 @@ async function fixture(t, options = {}) {
 }
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+test("100 physical requests are shared across scores without exceeding the cap", async (t) => {
+  let active = 0,
+    maximum = 0,
+    calls = 0,
+    release,
+    full;
+  const held = new Promise((resolve) => (release = resolve));
+  const hundred = new Promise((resolve) => (full = resolve));
+  const { store } = await fixture(t, {
+    maxConcurrency: 100,
+    recognizeRegion: async ({ region }) => {
+      calls++;
+      maximum = Math.max(maximum, ++active);
+      if (active === 100) full();
+      await held;
+      active--;
+      return regionResult(region);
+    },
+  });
+  const jobs = await Promise.all(
+    [1, 2].map(() => store.createJob(rawJob(60), auth)),
+  );
+  let timeout;
+  try {
+    await Promise.all(jobs.map((j) => store.startJob(j.id, auth)));
+    await Promise.race([
+      hundred,
+      new Promise((_, reject) => {
+        timeout = setTimeout(
+          () => reject(Error("100 requests never started")),
+          10000,
+        );
+      }),
+    ]);
+    assert.equal(active, 100);
+    assert.equal(calls, 100);
+  } finally {
+    clearTimeout(timeout);
+    release();
+  }
+  const results = await Promise.all(
+    jobs.map((j) => store.waitForIdle(j.id, auth)),
+  );
+  assert.equal(maximum, 100);
+  assert.equal(calls, 120);
+  assert.equal(active, 0);
+  assert.ok(results.every((j) => j.progress.needsReview === 60));
+});
+
 test("recropping one failed source updates page geometry and preserves successful rows without review approval", async (t) => {
   const { store } = await fixture(t, {
     recognizeRegion: async ({ region }) => {
