@@ -1,5 +1,19 @@
 // Review editing in the full-PDF import dialog: note selection, moves with undo,
 // manual crops, the notation preview and the full-page comparison workbench.
+import { validateScore } from "../lib/score.mjs";
+import {
+  fullScoreRegionIssues,
+  fullScoreReviewSummary,
+} from "../lib/full-score-review.mjs";
+import { normalizeCropRect } from "../lib/score-image-layout.mjs";
+import { refreshWrittenPitch } from "../lib/recognition-edit.mjs";
+import { mountRecognitionPageEditor } from "./recognition-page-editor.js";
+import {
+  edited,
+  errorText,
+  finite,
+  scopeLabel,
+} from "./full-score-import-parts.js";
 import {
   activeRegion,
   isRunning,
@@ -8,21 +22,8 @@ import {
   selectedRegions,
   setMessage,
 } from "./full-score-import-context.js";
-import {
-  edited,
-  errorText,
-  finite,
-  scopeLabel,
-} from "./full-score-import-parts.js";
-import {
-  fullScoreRegionIssues,
-  fullScoreReviewSummary,
-} from "../lib/full-score-review.mjs";
-import { normalizeCropRect } from "../lib/score-image-layout.mjs";
 import { ensureRegionAsset, storeAsset } from "./full-score-import-pages.js";
-import { validateScore } from "../lib/score.mjs";
-import { mountRecognitionPageEditor } from "./recognition-page-editor.js";
-import { refreshWrittenPitch } from "../lib/recognition-edit.mjs";
+
 export function closePageWorkbench(ctx) {
   ctx.pageWorkbench?.destroy();
   ctx.pageWorkbench = null;
@@ -78,6 +79,7 @@ export function selectMapNote(ctx, noteId) {
   updatePositionMarker(ctx);
 }
 
+/** Applies a drag or click move as one undoable step (at most 100 kept). */
 export function commitMove(ctx, region, note, values) {
   const { moveHistory, state } = ctx;
   const before = Object.fromEntries(
@@ -141,6 +143,7 @@ export function updatePositionMarker(ctx) {
   }
 }
 
+/** Refreshes the confirm/import buttons without a redraw while typing. */
 export function updateReviewControls(ctx) {
   const { root, state, draft } = ctx;
   const region = activeRegion(ctx),

@@ -1,12 +1,12 @@
 // Dragging notes in the full-PDF import dialog: source-position markers on the
 // original image and pitch/beat blocks in the roll, by pointer or arrow keys.
+import { midiName } from "../lib/score.mjs";
+import { rollMove, rollRange } from "../lib/recognition-review-actions.mjs";
 import { activeRegion } from "./full-score-import-context.js";
 import { commitMove, selectMapNote } from "./full-score-import-review.js";
-import { rollMove, rollRange } from "../lib/recognition-review-actions.mjs";
-import { midiName } from "../lib/score.mjs";
+
 export function bindNoteDrag(ctx) {
   const { root, state } = ctx;
-
   root.addEventListener("pointerdown", (event) => {
     const marker = event.target.closest("[data-source-note],[data-roll-note]");
     const image = root.querySelector("[data-original-image]");

@@ -64,6 +64,7 @@ export function buildViewModel(ctx) {
   };
 }
 
+/** Redraws the dialog; installed as ctx.render by the entry module. */
 export function render(ctx) {
   const { root, state } = ctx;
   if (ctx.disposed) return;

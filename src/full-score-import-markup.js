@@ -52,6 +52,7 @@ function noteRoll(region, state) {
   return `<div class="fsi-roll-heading"><strong>拖拽调整音高与拍点</strong><span class="fsi-muted">绿：右手 · 蓝：左手</span></div><p class="fsi-muted">上下每格一个半音，左右吸附到 1/4 拍（按住 Alt 精调到 1/16 拍）。方向键也可调整，Shift + 左右移动 1 拍。原图定位单独保留。</p><div class="fsi-roll-scroll"><div class="fsi-roll" data-note-roll style="width:${width}px;height:${rows * 20}px;--roll-beats:${region.durationBeats}">${Array.from({ length: ticks }, (_, i) => `<span class="fsi-roll-beat" style="left:${(i / region.durationBeats) * 100}%">${i} 拍</span>`).join("")}${region.notes.map((note, index) => `<button type="button" class="fsi-roll-note${note.hand === "left" ? " is-left" : ""}${note.id === state.selectedNoteId ? " is-selected" : ""}" data-roll-note="${escapeHTML(note.id)}" style="left:${(note.beat / region.durationBeats) * 100}%;top:${(range.max - note.midi) * 20}px;width:${(note.duration / region.durationBeats) * 100}%" aria-label="音符 ${index + 1} ${escapeHTML(midiName(note.midi))}，第 ${note.beat} 拍，拖拽或方向键调整" title="${index + 1} · ${escapeHTML(midiName(note.midi))} · ${note.beat} 拍">${index + 1} ${escapeHTML(midiName(note.midi))}</button>`).join("")}</div></div>`;
 }
 
+/** The whole dialog body for one render. */
 export function fullScoreImportMarkup({
   draft,
   state,

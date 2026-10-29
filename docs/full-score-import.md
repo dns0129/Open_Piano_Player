@@ -29,13 +29,13 @@
 | `full-score-import-drag.js` | 原图圆点与音高网格的指针拖拽、方向键微调 | context、review |
 | `full-score-import-markup.js` | 纯函数：视图模型 → HTML 字符串，不读 DOM、不改状态 | parts、written-editor、diagnosis-card |
 | `full-score-import-view.js` | 由 `ctx` 生成视图模型；重绘时保存/恢复滚动、焦点与展开状态；挂载框选器和原图 | context、pages、review、markup |
-| `full-score-import-actions.js` | `data-action` 点击动作表、`change`/`input` 字段处理 | 以上全部 |
-| `full-score-import.js` | 入口：建 `ctx`、装 `render`、绑定事件、初始化扫描与恢复、销毁 | 以上全部 |
+| `full-score-import-actions.js` | `data-action` 点击动作表、`change`/`input` 字段处理 | context、jobs、save、review |
+| `full-score-import.js` | 入口：建 `ctx`、装 `render`、绑定事件、初始化扫描与恢复、销毁 | context、pages、jobs、review、view、actions、drag |
 
 ## 接缝
 
 - **视图模型**：`buildViewModel(ctx)` 一次算出 `summary`、当前页谱行、当前谱行、已选谱行、失败数、进度、`running`/`locked` 等派生值；`fullScoreImportMarkup(vm)` 只读这些值。原本 `render()` 中反复调用的选择器在一次重绘内结果相同，因此合并计算不改变输出。
-- **动作表**：`clickActions` 以 `data-action` 名为键，值为 `(ctx, element) => …`。忙碌时被屏蔽的动作集中在 `BUSY_BLOCKED_ACTIONS`。分发器保持原有顺序：先处理原图点击定位与选中标记，再查表；运行前清空错误，异常统一显示为错误提示。
+- **动作表**：`clickActions` 以 `data-action` 名为键，值为 `(ctx, element) => …`。忙碌时被屏蔽的动作集中在 `BUSY_BLOCKED_ACTIONS`。诊断四步（评估、诊断、应用、撤销修订）共用 `runDiagnosisStep`。分发器保持原有顺序：先处理原图点击定位与选中标记，再查表；运行前清空错误，异常统一显示为错误提示。
 - **操作纪元**：开始识别、重试、批量审核都经 `beginOperation` 递增纪元；停止和关闭使旧纪元失效。晚到的响应只在纪元仍然有效时写入状态。
 
 ## 发布门禁
