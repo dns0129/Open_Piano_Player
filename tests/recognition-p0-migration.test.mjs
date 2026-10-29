@@ -10,7 +10,7 @@ test("P0 migration preserves settled billing records and enforces at most two di
     CREATE TABLE qinban_control.attempts(id text PRIMARY KEY,job_id text,region_id text,cost bigint,usage jsonb,UNIQUE(job_id,region_id));
     INSERT INTO qinban_control.attempts VALUES('original','job','row',123,'{"input":10}');`);
   const sql = await readFile(
-    new URL("../db/accounts-recognition-p0.sql", import.meta.url),
+    new URL("../db/0005-accounts-recognition-p0.sql", import.meta.url),
     "utf8",
   );
   await db.exec(sql);

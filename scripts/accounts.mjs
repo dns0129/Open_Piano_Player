@@ -3,6 +3,12 @@ import {fileURLToPath} from 'node:url';
 // .local/ and dist-hosted/ are resolved from the working directory; pin it to the project.
 process.chdir(fileURLToPath(new URL('..',import.meta.url)));
 const command=process.argv[2]||'start';
+// Production schema changes run separately, as the table owner, before the runtime roles connect.
+if(command==='migrate'){
+ const url=process.env.QINBAN_MIGRATION_DATABASE_URL;if(!url){console.error('请设置 QINBAN_MIGRATION_DATABASE_URL（表所有者的维护连接）。');process.exit(1)}
+ const {migratePostgres}=await import('../lib/accounts/migrations.mjs');const applied=await migratePostgres(url);
+ console.log(applied.length?`已应用迁移：${applied.join('、')}`:'数据库已是最新，没有待执行的迁移。');process.exit(0)
+}
 const runtime=await createHostedRuntime();
 if(command==='invite'||command==='operator'){
  try{const result=await (command==='operator'?runtime.identity.bootstrapOperator(process.argv[3]):runtime.identity.invite(process.argv[3]));console.log(command==='operator'?`已为 ${result.email} 建立运营登录资格；请重新用邮箱验证码登录。`:`已邀请 ${result.email}；有效期至 ${result.expiresAt}。账号须完成验证码验证后建立。`)}finally{await runtime.close()}

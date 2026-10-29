@@ -39,6 +39,7 @@
     "accounts:start": "node scripts/accounts.mjs start",
     "accounts:invite": "node scripts/accounts.mjs invite",
     "accounts:invite-code": "node scripts/accounts.mjs invite-code",
+    "accounts:migrate": "node scripts/accounts.mjs migrate",
     "commercial:build": "npm run build:hosted",
     "commercial:start": "node scripts/accounts.mjs start",
     "commercial:operator": "node scripts/accounts.mjs operator",

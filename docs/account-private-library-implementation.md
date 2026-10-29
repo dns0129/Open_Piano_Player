@@ -42,7 +42,7 @@ npm run accounts:start
 
 `lib/accounts/identity.mjs` 集中处理身份；`private-library.mjs` 处理所属关系、文件接入和修订；`transfers.mjs` 处理完整备份和导入回执。HTTP 层不接受客户端指定 owner，资源下载必须通过本人会话。私有表统一 FORCE RLS，关联资源使用 `(owner_id, id)` 外键，应用侧同时限定 owner。跨账号对象统一返回 404。
 
-`db/accounts-v1.sql` 是维护凭据执行的初始化 SQL。身份表位于 qinban_identity，曲库表位于 qinban_private；运行时身份角色与曲库角色分开，均不拥有表，也不能绕过 RLS。本机嵌入式数据库在事务中切换到对应非特权角色；正式连接适配器使用两个受限连接池，并拒绝超级用户、RLS bypass、表所有者和相互继承权限的配置。
+`db/0001-accounts-v1.sql` 是维护凭据执行的初始化 SQL。身份表位于 qinban_identity，曲库表位于 qinban_private；运行时身份角色与曲库角色分开，均不拥有表，也不能绕过 RLS。本机嵌入式数据库在事务中切换到对应非特权角色；正式连接适配器使用两个受限连接池，并拒绝超级用户、RLS bypass、表所有者和相互继承权限的配置。
 
 上传先预留容量，核对实际字节、SHA 和解码后的类型，再成为可引用资源。默认每账号 1 GiB；原图、派生图、历史、回收站、备份和暂存预留均参与容量限制。对象采用临时文件和原子重命名；定时维护清理过期暂存、导出、回执及无引用对象，孤立文件延迟一天并再次查库后回收。显式保存的来源组不会因尚无数字谱而被自动回收。
 
@@ -58,6 +58,6 @@ npm run accounts:start
 
 ## 正式接入前仍需完成
 
-正式配置使用 `QINBAN_ACCOUNT_PROFILE=production`、`QINBAN_PUBLIC_ORIGIN`、`QINBAN_ACCOUNT_SECRET`、`QINBAN_AUTH_DATABASE_URL`、`QINBAN_LIBRARY_DATABASE_URL`、`QINBAN_SMTP_URL` 和 `QINBAN_MAIL_FROM`。密钥只放服务器配置；运行时不自动用管理员身份迁移数据库。先以独立维护身份依次执行 `db/accounts-v1.sql` 、增量 `db/accounts-commerce-v1.sql` 和 `db/accounts-invites-v1.sql`，再建立分别继承 qinban_identity / qinban_library 的两个 LOGIN 角色，运行账户不能同时继承另一角色，也不能拥有表。
+正式配置使用 `QINBAN_ACCOUNT_PROFILE=production`、`QINBAN_PUBLIC_ORIGIN`、`QINBAN_ACCOUNT_SECRET`、`QINBAN_AUTH_DATABASE_URL`、`QINBAN_LIBRARY_DATABASE_URL`、`QINBAN_SMTP_URL` 和 `QINBAN_MAIL_FROM`。密钥只放服务器配置；运行时不自动用管理员身份迁移数据库。先以独立维护身份运行 `QINBAN_MIGRATION_DATABASE_URL=… npm run accounts:migrate`，按序应用 `db/` 中尚未执行的迁移（规则见 [db/README.md](../db/README.md)），再建立分别继承 qinban_identity / qinban_library 的两个 LOGIN 角色，运行账户不能同时继承另一角色，也不能拥有表。
 
 当前文件 Adapter 是服务器私有文件目录，正式部署必须配置持久卷、数据库与文件的一致备份和恢复演练；尚未接入 S3 等外部对象存储。还需实际完成 PostgreSQL 服务连接、真实邮件、域名与 TLS、反向代理、付费模型、多设备切换与权限传播验收。支付与教师分享尚未实现。本机验收不能代替这些部署证据。

@@ -358,35 +358,45 @@ test("concurrent owners cannot oversubscribe global reservations", async (t) => 
       };
     }),
     f = await fixture(t, p);
-  await f.policy({
-    dailyCap: 1500,
-    monthlyCap: 3000,
-    jobCap: 1500,
-    maxActive: 2,
-  });
-  const a = await f.recognition.create(f.A.session.userId, f.input(f.G), key()),
-    b = await f.recognition.create(f.B.session.userId, f.input(f.H), key());
-  await f.recognition.start();
-  await until(
-    async () =>
-      p.calls.length === 1 &&
-      (await f.recognition.get(f.B.session.userId, b.jobId)).state === "failed",
-  );
-  assert.equal(
-    (await f.operations.overview(f.O.session)).budget.dayCommitted,
-    1000,
-  );
-  assert.equal(
-    (await f.recognition.budget.quota(f.B.session.userId)).remaining,
-    30,
-  );
-  release();
-  await until(
-    async () =>
-      (await f.recognition.get(f.A.session.userId, a.jobId)).state ===
-      "needs_review",
-  );
-  assert.equal(p.calls.length, 1);
+  // A failed wait must not leave the held provider call blocking fixture shutdown.
+  try {
+    await f.policy({
+      dailyCap: 1500,
+      monthlyCap: 3000,
+      jobCap: 1500,
+      maxActive: 2,
+    });
+    const a = await f.recognition.create(
+        f.A.session.userId,
+        f.input(f.G),
+        key(),
+      ),
+      b = await f.recognition.create(f.B.session.userId, f.input(f.H), key());
+    await f.recognition.start();
+    await until(
+      async () =>
+        p.calls.length === 1 &&
+        (await f.recognition.get(f.B.session.userId, b.jobId)).state ===
+          "failed",
+    );
+    assert.equal(
+      (await f.operations.overview(f.O.session)).budget.dayCommitted,
+      1000,
+    );
+    assert.equal(
+      (await f.recognition.budget.quota(f.B.session.userId)).remaining,
+      30,
+    );
+    release();
+    await until(
+      async () =>
+        (await f.recognition.get(f.A.session.userId, a.jobId)).state ===
+        "needs_review",
+    );
+    assert.equal(p.calls.length, 1);
+  } finally {
+    release();
+  }
 });
 test("uncertain calls retain budget, block new work and require audited operator reconciliation", async (t) => {
   const p = provider(
