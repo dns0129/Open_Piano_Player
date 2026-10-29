@@ -10,7 +10,6 @@ import {
 } from "../lib/recognition-edit.mjs";
 import "./full-score-import.css";
 import {
-  prepareBulkReview,
   sourcePoint,
   rollRange,
   rollMove,
@@ -22,49 +21,50 @@ import { normalizeCropRect } from "../lib/score-image-layout.mjs";
 import { validateScore, midiName } from "../lib/score.mjs";
 import {
   validateFullScorePdfUpload,
-  normalizeFullScoreRegionResult,
   fullScoreRegionIssues,
-  fullScoreScopeIssues,
   fullScoreReviewSummary,
-  assembleFullScoreReview,
 } from "../lib/full-score-review.mjs";
 import { escapeHTML } from "./html.js";
 import {
-  cropRegion,
   ensurePrepared,
   ensureRegionAsset,
-  preparePage,
   scanPage,
   storeAsset,
 } from "./full-score-import-pages.js";
 import {
+  applySnapshot,
+  approveAll,
+  cancel,
+  confirmRegion,
+  poll,
+  restoreScope,
+  retryEnlargedRegion,
+  retryFailed,
+  retryRegion,
+  startRecognition,
+} from "./full-score-import-jobs.js";
+import { importReviewed, importUnreviewed } from "./full-score-import-save.js";
+import {
   activeRegion,
-  assertAlive,
-  beginOperation,
-  cancelLateResponse,
-  capability,
   createImportContext,
   isRunning,
   pageInfo,
   requireApi,
-  retryEngine,
   scopeLocked,
   selectedRegions,
   setMessage,
 } from "./full-score-import-context.js";
 import {
-  blobImage,
-  canvasBlob,
   edited,
   errorText,
+  finite,
+  numberValue,
   internalTieCandidates,
   omrReviewMarkup,
   scopeLabel,
   unwrap,
 } from "./full-score-import-parts.js";
 
-const finite = (value) => typeof value === "number" && Number.isFinite(value);
-const numberValue = (value) => (value === "" ? undefined : Number(value));
 /**
  * Generic PDF -> all-page scope -> asynchronous recognition -> per-line review.
  * Returns immediately so a modal can clean up while PDF loading is in flight.
@@ -557,804 +557,6 @@ export function mountFullScoreImport(
     );
   }
 
-  function applySnapshot(response) {
-    const snapshot = unwrap(response);
-    if (!snapshot?.id) return;
-    state.job = { ...state.job, ...snapshot };
-    state.engine = snapshot.engine === "deepseek" ? "deepseek" : "pi";
-    state.riskReview = snapshot.metadata?.recognitionPlan?.review === "risk";
-    state.progress = snapshot.progress || state.progress;
-    for (const remote of snapshot.regions || []) {
-      const index = draft.regions.findIndex(
-        (region) => region.id === remote.id,
-      );
-      if (index < 0) continue;
-      let local = draft.regions[index];
-      if (remote.result) {
-        const signature = JSON.stringify(remote.result);
-        if (remoteSignatures.get(remote.id) !== signature && !local.dirty) {
-          local = normalizeFullScoreRegionResult(local, remote.result);
-          draft.regions[index] = local;
-          remoteSignatures.set(remote.id, signature);
-          if (!draft.tempo && remote.result.score?.tempo)
-            draft.tempo = remote.result.score.tempo;
-          if (!draft.timeSignature && remote.result.score?.timeSignature)
-            draft.timeSignature = [...remote.result.score.timeSignature];
-          if (
-            draft.keySignature === undefined &&
-            finite(remote.result.score?.keySignature)
-          )
-            draft.keySignature = remote.result.score.keySignature;
-        }
-        if (
-          remote.status === "confirmed" ||
-          remote.result.reviewStatus === "confirmed"
-        )
-          local.reviewed = !local.dirty;
-        local.status = "complete";
-      } else if (remote.status === "failed") {
-        delete local.notes;
-        delete local.score;
-        local.reviewed = false;
-        remoteSignatures.delete(remote.id);
-        local.status = "failed";
-        local.error =
-          typeof remote.error === "object"
-            ? remote.error.message
-            : remote.error || "识别失败，请重试。";
-      } else if (["running", "queued", "pending"].includes(remote.status))
-        local.status = remote.status === "running" ? "running" : "pending";
-    }
-    const firstReady = selectedRegions(ctx).find(
-      (region) => region.notes && !region.reviewed,
-    );
-    if (firstReady && (!activeRegion(ctx)?.notes || state.stage === "scope")) {
-      state.activePage = firstReady.page;
-      state.activeRegionId = firstReady.id;
-      state.selectedNoteId = firstReady.notes[0]?.id || "";
-      state.stage = "review";
-      state.selecting = false;
-    }
-    state.message =
-      snapshot.status === "draft"
-        ? "任务已创建，正在保存原谱，尚未开始识别。"
-        : snapshot.status === "running"
-          ? "正在逐行识别；已完成的谱行现在可以开始校对。"
-          : snapshot.status === "paused"
-            ? "任务已暂停；已识别结果保留，可校对或继续剩余谱行。"
-            : snapshot.status === "failed"
-              ? "部分谱行失败，需重试或修正后才能完整导入。"
-              : snapshot.status === "cancelled"
-                ? "任务已停止，已完成结果仍可查看。"
-                : snapshot.status === "complete"
-                  ? "所有谱行已通过审核，可导入练习。"
-                  : "识别结果已到达，可一键审核全部，或先拖拽修正有问题的音符。";
-    render();
-  }
-
-  function poll() {
-    clearTimeout(ctx.pollTimer);
-    if (ctx.disposed || !state.job || state.job.status !== "running") return;
-    const intent = ctx.operationVersion,
-      jobId = state.job.id;
-    ctx.pollTimer = setTimeout(async () => {
-      if (ctx.disposed) return;
-      try {
-        const response = await requireApi(ctx, "getJob")(jobId);
-        if (
-          ctx.disposed ||
-          ctx.operationCancelled ||
-          intent !== ctx.operationVersion ||
-          jobId !== state.job?.id
-        )
-          return;
-        applySnapshot(response);
-      } catch (error) {
-        if (
-          !ctx.disposed &&
-          !ctx.operationCancelled &&
-          intent === ctx.operationVersion
-        ) {
-          state.error = `读取任务进度失败：${errorText(error)}。识别结果不会当作已完成。`;
-          render();
-        }
-      }
-      if (!ctx.disposed && state.job?.status === "running") poll();
-    }, 1500);
-  }
-
-  async function startRecognition() {
-    if (state.scanning) throw new Error("请等待全部 PDF 页面检查完毕。");
-    const issues = fullScoreScopeIssues(draft);
-    if (issues.length) throw new Error(issues[0].message);
-    if (!state.pianoConfirmed)
-      throw new Error(
-        "请先对照谱头/来源，确认上传的是钢琴双手谱，而非照片或其他乐器谱。",
-      );
-    const caps = capability(ctx);
-    if (!caps[state.engine])
-      throw new Error(
-        state.engine === "deepseek"
-          ? "请先配置 DeepSeek API Key，并选择 deepseek-flash。"
-          : "Pi 识谱尚未连接，请先在 AI 设置中完成连接。",
-      );
-    const skippedMusic = draft.regions.some(
-      (region) =>
-        !region.selected &&
-        region.excludeReason === "music" &&
-        pageInfo(ctx, region.page)?.decision === "include",
-    );
-    if (skippedMusic)
-      throw new Error(
-        "当前整谱任务不能跳过同页中的音乐谱行。请保留这些行；封面和误检可明确排除。",
-      );
-    const intent = beginOperation(ctx);
-    state.busy = true;
-    state.uploaded = 0;
-    state.error = "";
-    state.message = `正在准备全部谱行，随后使用 ${state.engine === "deepseek" ? "DeepSeek Flash" : "GPT-6.1 Sol"} high 首次识别。`;
-    render();
-    try {
-      const regions = selectedRegions(ctx);
-      if (
-        !state.job &&
-        !state.riskReview &&
-        state.pdfHash &&
-        typeof api.findReviewedJob === "function"
-      ) {
-        const reused = await api.findReviewedJob(state.pdfHash, state.engine);
-        assertAlive(ctx, intent);
-        if (reused) {
-          restoreScope(reused);
-          applySnapshot(reused);
-          state.message =
-            "已复用同一服务商识别且已校对的相同 PDF，本次新增模型调用 0 次；请核对范围后导入。";
-          render();
-          return;
-        }
-      }
-      if (!state.job) {
-        const pageSystemCounts = new Map();
-        const regionManifest = regions.map((region) => {
-          const system = (pageSystemCounts.get(region.page) || 0) + 1;
-          pageSystemCounts.set(region.page, system);
-          region.jobSystem = system;
-          return {
-            id: region.id,
-            page: region.page,
-            system,
-            rect: region.rect,
-            pageWidth: region.pageWidth,
-            pageHeight: region.pageHeight,
-            staffLines: region.staffLines,
-            context: `${scopeLabel(region)}，仅识别此行完整双手小节；禁止补写前后谱行。`,
-            ...(region.expectedMeasureCount
-              ? { expectedMeasureCount: region.expectedMeasureCount }
-              : {}),
-          };
-        });
-        const response = await requireApi(ctx, "createJob")(
-          {
-            title: draft.title,
-            composer: draft.composer || undefined,
-            source,
-            totalPages: draft.totalPages,
-            pages: draft.pages.map((page) => ({
-              page: page.page,
-              width: page.width,
-              height: page.height,
-              pdfWidth: page.pdfWidth,
-              pdfHeight: page.pdfHeight,
-            })),
-            regions: regionManifest,
-            excludedPages: draft.pages
-              .filter((page) => page.decision === "exclude")
-              .map((page) => ({ page: page.page, reason: page.excludeReason })),
-            needsUserScopeConfirmation: true,
-            engineChoice: state.engine,
-            recognitionPlan: {
-              review: state.riskReview ? "risk" : "off",
-              maxCalls: 2,
-              recover: true,
-            },
-            tempo: draft.tempo,
-            timeSignature: draft.timeSignature,
-            keySignature: draft.keySignature,
-          },
-          { signal: ctx.operationController.signal },
-        );
-        if (await cancelLateResponse(ctx, response, undefined, intent)) return;
-        assertAlive(ctx, intent);
-        applySnapshot(response);
-      }
-      if (!state.job.originalPdf?.uploaded && !state.job.originalPdf?.bytes) {
-        const upload = api.uploadDocument || api.uploadPdf;
-        if (typeof upload !== "function")
-          throw new Error(
-            "服务器尚未提供原始 PDF 上传接口，无法保存可恢复的识谱任务。",
-          );
-        state.message =
-          "正在将原始 PDF 保存到本机任务，刷新后可以恢复；此步骤不调用模型。";
-        render();
-        const image = await blobImage(file);
-        assertAlive(ctx, intent);
-        const response = await upload(state.job.id, {
-          ...image,
-          mimeType: "application/pdf",
-          name: file.name || "score.pdf",
-        });
-        assertAlive(ctx, intent);
-        applySnapshot(response);
-      }
-      // Upload every pending row for GPT; retain already recognized legacy rows.
-      // Preparing missing images must never erase approved historical results.
-      let prepared, preparedPage;
-      try {
-        for (const region of regions) {
-          assertAlive(ctx, intent);
-          const existing = state.job.regions?.find(
-            (candidate) => candidate.id === region.id,
-          );
-          if (existing?.image || existing?.result) {
-            state.uploaded++;
-            continue;
-          }
-          if (region.page !== preparedPage) {
-            prepared?.destroy();
-            prepared = await preparePage(ctx, region.page);
-            preparedPage = region.page;
-            assertAlive(ctx, intent);
-          }
-          const image = assets.has(region.id)
-            ? await blobImage(assets.get(region.id).blob)
-            : await cropRegion(ctx, prepared, region);
-          assertAlive(ctx, intent);
-          // Revalidate every actual crop even when an earlier manual preview cached it.
-          if (assets.has(region.id))
-            prepared.getSelection({
-              mode: "manual",
-              rect: region.rect,
-              confirmedPiano: state.pianoConfirmed,
-            });
-          await requireApi(ctx, "uploadRegion")(
-            state.job.id,
-            region.id,
-            { image: { data: image.data, mimeType: image.mimeType } },
-            { signal: ctx.operationController.signal },
-          );
-          assertAlive(ctx, intent);
-          state.uploaded++;
-          state.message = `谱行已上传 ${state.uploaded} / ${regions.length}，全部源范围都保留在任务中。`;
-          render();
-        }
-      } finally {
-        prepared?.destroy();
-      }
-      assertAlive(ctx, intent);
-      const started = await requireApi(ctx, "startJob")(
-        state.job.id,
-        {
-          autoContinue: state.autoContinue,
-          batchSize: 2,
-          expectedVersion: state.job.runVersion,
-        },
-        { signal: ctx.operationController.signal },
-      );
-      if (await cancelLateResponse(ctx, started, state.job.id, intent)) return;
-      applySnapshot(started);
-      poll();
-    } catch (error) {
-      if (
-        ctx.disposed ||
-        ctx.operationCancelled ||
-        intent !== ctx.operationVersion
-      )
-        return;
-      throw error;
-    } finally {
-      if (intent === ctx.operationVersion) {
-        state.busy = false;
-        if (!ctx.disposed) render();
-      }
-    }
-  }
-
-  async function cancel() {
-    ctx.scanCancelled = true;
-    ctx.operationCancelled = true;
-    ctx.operationVersion++;
-    ctx.operationController.abort();
-    clearTimeout(ctx.pollTimer);
-    if (
-      state.job &&
-      (state.job.status === "running" || state.busy) &&
-      typeof api.cancelJob === "function"
-    ) {
-      try {
-        applySnapshot(await api.cancelJob(state.job.id));
-      } catch (error) {
-        if (!ctx.disposed)
-          state.error = `停止请求失败：${errorText(error)}。请重试停止。`;
-      }
-    }
-    if (!ctx.disposed) {
-      state.busy = false;
-      state.message = state.scanning
-        ? "已停止继续扫描；尚未检查的页面会阻止完整导入。请关闭后重新导入以继续。"
-        : "任务已停止，已完成的结果保留。";
-      render();
-    }
-  }
-
-  async function confirmRegion(region = activeRegion(ctx), batch = false) {
-    if (!region) return;
-    if (state.job?.status === "running")
-      throw new Error(
-        "可以先编辑校对；请等待识别任务结束或停止后再提交此行审核。",
-      );
-    const issues = fullScoreRegionIssues(region);
-    if (issues.length) throw new Error(issues[0].message);
-    if (!state.job) throw new Error("此谱行没有对应的服务器识别任务。");
-    const rawScore = {
-      ...region.score,
-      title: `${draft.title} · ${scopeLabel(region)}`,
-      durationBeats: region.durationBeats,
-      notes: region.notes,
-      ...(region.score?.recognitionEvidence ? { rests: region.rests } : {}),
-    };
-    const score = region.notes.length
-      ? validateScore(rawScore)
-      : { ...rawScore, notes: [] };
-    const originals = new Map(region.notes.map((note) => [note.id, note]));
-    score.notes = score.notes.map((note) => ({
-      ...note,
-      voice: originals.get(note.id)?.voice || `${note.hand}-1`,
-    }));
-    const editedResult = {
-      score,
-      positions: region.notes
-        .filter((note) => finite(note.x) && finite(note.y))
-        .map((note) => ({
-          noteId: note.id,
-          x: note.x,
-          y: note.y,
-          coordinateSpace: "page",
-        })),
-      rests: region.rests || [],
-      coverage: { ...region.coverage, complete: region.coverageComplete },
-      continuity: region.continuity || {},
-      internalTies: region.internalTies || [],
-      corrections: region.corrections || [],
-      sourceHeadAudit: region.sourceHeadAudit,
-      tieAudit: region.tieAudit,
-      warnings: region.warnings || [],
-    };
-    state.busy = true;
-    state.error = "";
-    state.message = `正在提交${scopeLabel(region)}的人工审核。`;
-    render();
-    try {
-      const response = await requireApi(ctx, "confirmRegion")(
-        state.job.id,
-        region.id,
-        editedResult,
-      );
-      region.reviewed = true;
-      region.dirty = false;
-      applySnapshot(response);
-      const now = draft.regions.find((candidate) => candidate.id === region.id);
-      if (now) {
-        now.reviewed = true;
-        now.dirty = false;
-      }
-      state.message = `${scopeLabel(region)}已审核；音符修改后会要求重新确认。`;
-    } finally {
-      if (!batch) state.busy = false;
-      if (!ctx.disposed) render();
-    }
-  }
-
-  async function approveAll() {
-    if (!state.pianoConfirmed) throw new Error("请先确认这是钢琴双手五线谱。");
-    if (isRunning(ctx) || state.importing || state.scanning) return;
-    const { summary } = prepareBulkReview(draft);
-    if (!summary.canImport) {
-      const issue = summary.issues[0];
-      const region = draft.regions.find((r) => r.id === issue?.regionId);
-      if (region) {
-        state.activeRegionId = region.id;
-        state.activePage = region.page;
-        state.stage = "review";
-      }
-      throw new Error(
-        `${region ? scopeLabel(region) + "：" : ""}${issue?.message || "没有可审核的谱行。"}`,
-      );
-    }
-    const intent = beginOperation(ctx);
-    // The action itself acknowledges scope and per-row review flags.
-    state.scopeReviewed = true;
-    for (const candidate of summary.selected) {
-      const local = draft.regions.find((r) => r.id === candidate.id);
-      if (
-        !local.coverageComplete ||
-        local.sourceHeadAudit?.reviewed === false ||
-        local.tieAudit?.reviewed === false
-      )
-        edited(local);
-      Object.assign(local, {
-        coverageComplete: true,
-        ...(candidate.sourceHeadAudit
-          ? { sourceHeadAudit: candidate.sourceHeadAudit }
-          : {}),
-        ...(candidate.tieAudit ? { tieAudit: candidate.tieAudit } : {}),
-      });
-    }
-    state.busy = true;
-    render();
-    try {
-      for (const candidate of summary.selected) {
-        assertAlive(ctx, intent);
-        const region = draft.regions.find((r) => r.id === candidate.id);
-        if (!region.reviewed || region.dirty) await confirmRegion(region, true);
-      }
-      assertAlive(ctx, intent);
-      applySnapshot(
-        await requireApi(ctx, "confirmJob")(state.job.id, {
-          scopeConfirmed: true,
-        }),
-      );
-      state.message = `已审核全部 ${summary.selectedCount} 行。可继续修正音符，或点击“保存到曲库”。`;
-    } finally {
-      state.busy = false;
-      if (!ctx.disposed) render();
-    }
-  }
-
-  function retainOriginalPages(notation, selectedAssets) {
-    notation.pages = draft.pages
-      .filter((p) => p.decision === "include" && thumbnails.has(p.page))
-      .map((p) => {
-        const id = `original-page-${p.page}`,
-          image = thumbnails.get(p.page);
-        selectedAssets.push({
-          id,
-          page: p.page,
-          blob: image.blob,
-          mimeType: image.blob.type,
-        });
-        return {
-          page: p.page,
-          assetId: id,
-          width: p.width,
-          height: p.height,
-          imageUrl: image.url,
-        };
-      });
-  }
-
-  async function importUnreviewed() {
-    if (!state.scopeReviewed || !state.pianoConfirmed)
-      throw new Error("请先确认钢琴谱身份和全部页、谱行范围。");
-    state.importing = true;
-    state.error = "";
-    render();
-    try {
-      const response = unwrap(
-          await requireApi(ctx, "exportDraft")(state.job.id, {
-            scopeConfirmed: true,
-          }),
-        ),
-        final = response.result;
-      if (!final?.score || !final.sourceNotation)
-        throw new Error("整谱草稿尚未完整识别。");
-      const score = validateScore({
-          ...final.score,
-          title: draft.title + " · AI草稿（待校对）",
-        }),
-        selectedAssets = [];
-      for (const region of selectedRegions(ctx)) {
-        const asset = await ensureRegionAsset(ctx, region);
-        selectedAssets.push({
-          id: region.id,
-          page: region.page,
-          system: region.system,
-          blob: asset.blob,
-          mimeType: asset.mimeType,
-          rect: { ...region.rect },
-        });
-      }
-      const sourceNotation = {
-        ...final.sourceNotation,
-        title: score.title,
-        scoreId: score.id,
-        coordinateUnit: "page-image-pixels",
-        systems: final.sourceNotation.systems.map((system) => ({
-          ...system,
-          assetId: system.id,
-          imageUrl: assets.get(system.id).url,
-          staffLines: draft.regions.find((r) => r.id === system.id)?.staffLines,
-        })),
-      };
-      retainOriginalPages(sourceNotation, selectedAssets);
-      await onImport({
-        score,
-        sourceNotation,
-        measureMap: final.measureMap,
-        assets: selectedAssets,
-        warnings: final.warnings,
-        reviewStatus: {
-          method: "ai-unreviewed",
-          complete: false,
-          humanConfirmed: false,
-        },
-      });
-    } finally {
-      state.importing = false;
-      if (!ctx.disposed) render();
-    }
-  }
-
-  async function importReviewed() {
-    const summary = fullScoreReviewSummary(draft);
-    if (!summary.canImport)
-      throw new Error(summary.issues[0]?.message || "尚未完成全部校对。");
-    if (!state.scopeReviewed)
-      throw new Error("请先确认已逐页核对全部谱行范围与排除项。");
-    state.importing = true;
-    state.error = "";
-    render();
-    try {
-      if (state.job)
-        applySnapshot(
-          await requireApi(ctx, "confirmJob")(state.job.id, {
-            scopeConfirmed: true,
-          }),
-        );
-      const local = assembleFullScoreReview(draft),
-        final = state.job?.result;
-      if (
-        !final?.score ||
-        !final.sourceNotation ||
-        state.job.status !== "complete"
-      )
-        throw new Error(
-          "服务器尚未确认所有谱行及跨行连续性；不会导入部分结果冒充全谱。",
-        );
-      // The server merges cross-line ties and preserves the actual pickup and
-      // measure map. Do not replace its timeline with fixed-length measures.
-      const score = validateScore({
-        ...final.score,
-        title: local.score.title,
-        tempo: draft.tempo || final.score.tempo,
-        source: local.score.source,
-      });
-      const selectedAssets = [];
-      for (const region of summary.selected) {
-        const asset = await ensureRegionAsset(ctx, region);
-        selectedAssets.push({
-          id: region.id,
-          page: region.page,
-          system: region.system,
-          blob: asset.blob,
-          mimeType: asset.mimeType,
-          rect: { ...region.rect },
-        });
-      }
-      const sourceNotation = {
-        ...final.sourceNotation,
-        title: score.title,
-        scoreId: score.id,
-        source: score.source,
-        coordinateUnit: "page-image-pixels",
-        measureMap: final.measureMap || final.sourceNotation.measureMap,
-        systems: final.sourceNotation.systems.map((system) => {
-          const region = summary.selected.find(
-            (candidate) =>
-              candidate.id === system.id ||
-              (candidate.page === system.page &&
-                (candidate.jobSystem || candidate.system) === system.system),
-          );
-          return {
-            ...system,
-            assetId: region?.id || system.assetId || system.id,
-            imageUrl: region ? assets.get(region.id).url : system.imageUrl,
-            staffLines: region?.staffLines || system.staffLines,
-            pageWidth: region?.pageWidth || system.pageWidth,
-            pageHeight: region?.pageHeight || system.pageHeight,
-          };
-        }),
-      };
-      const warnings = [
-        ...new Set([
-          ...(final.warnings || []),
-          ...summary.selected.flatMap((region) => region.warnings || []),
-        ]),
-      ];
-      retainOriginalPages(sourceNotation, selectedAssets);
-      await onImport({
-        score,
-        sourceNotation,
-        measureMap: final.measureMap || sourceNotation.measureMap,
-        assets: selectedAssets,
-        warnings,
-        reviewStatus: {
-          ...local.reviewStatus,
-          method: final.reviewStatus || local.reviewStatus.method,
-        },
-      });
-      if (!ctx.disposed) {
-        state.message = "已保存完整乐谱与原始谱行图片。";
-        render();
-      }
-    } finally {
-      state.importing = false;
-      if (!ctx.disposed) render();
-    }
-  }
-
-  async function retryRegion(
-    regionId = state.activeRegionId,
-    phase = "recognize",
-  ) {
-    const region = draft.regions.find((candidate) => candidate.id === regionId);
-    if (!region || !state.job) throw new Error("请先创建识别任务。");
-    const intent = beginOperation(ctx);
-    region.reviewed = false;
-    region.dirty = false;
-    remoteSignatures.delete(region.id);
-    state.busy = true;
-    state.error = "";
-    render();
-    try {
-      const saved = state.job.regions?.find(
-        (candidate) => candidate.id === region.id,
-      );
-      if (!saved?.image) {
-        const prepared = await ensurePrepared(ctx, region.page),
-          image = await cropRegion(ctx, prepared, region);
-        assertAlive(ctx, intent);
-        const uploaded = await requireApi(ctx, "uploadRegion")(
-          state.job.id,
-          region.id,
-          { image: { data: image.data, mimeType: image.mimeType } },
-          { signal: ctx.operationController.signal },
-        );
-        assertAlive(ctx, intent);
-        applySnapshot(uploaded);
-      }
-      const response = await requireApi(ctx, "retryRegion")(
-        state.job.id,
-        region.id,
-        {
-          engine: retryEngine(ctx),
-          expectedVersion: state.job.runVersion,
-          phase,
-        },
-        { signal: ctx.operationController.signal },
-      );
-      if (await cancelLateResponse(ctx, response, state.job.id, intent)) return;
-      applySnapshot(response);
-      poll();
-    } catch (error) {
-      if (
-        ctx.disposed ||
-        ctx.operationCancelled ||
-        intent !== ctx.operationVersion
-      )
-        return;
-      throw error;
-    } finally {
-      if (intent === ctx.operationVersion) {
-        state.busy = false;
-        if (!ctx.disposed) render();
-      }
-    }
-  }
-
-  async function enlargeRegion(region, intent) {
-    let bitmap, canvas;
-    try {
-      const original = await requireApi(ctx, "readRegionImage")(
-        state.job.id,
-        region.id,
-      );
-      assertAlive(ctx, intent);
-      bitmap = await createImageBitmap(original);
-      assertAlive(ctx, intent);
-      const scale = Math.min(
-        2,
-        4000 / bitmap.width,
-        4000 / bitmap.height,
-        Math.sqrt(12000000 / (bitmap.width * bitmap.height)),
-      );
-      // Images already at the size limit can still be reread or sent to another model.
-      if (scale <= 1) return;
-      canvas = document.createElement("canvas");
-      canvas.width = Math.round(bitmap.width * scale);
-      canvas.height = Math.round(bitmap.height * scale);
-      const context = canvas.getContext("2d");
-      context.imageSmoothingEnabled = true;
-      context.imageSmoothingQuality = "high";
-      context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-      const blob = await canvasBlob(canvas),
-        image = await blobImage(blob);
-      assertAlive(ctx, intent);
-      const uploaded = await requireApi(ctx, "uploadRegion")(
-        state.job.id,
-        region.id,
-        { image },
-        { signal: ctx.operationController.signal },
-      );
-      assertAlive(ctx, intent);
-      storeAsset(ctx, region, image, blob);
-      remoteSignatures.delete(region.id);
-      applySnapshot(uploaded);
-    } finally {
-      bitmap?.close();
-      if (canvas) {
-        canvas.width = 0;
-        canvas.height = 0;
-      }
-    }
-  }
-
-  async function retryFailed({
-    single = false,
-    enlarge = state.retryEnlarge,
-  } = {}) {
-    if (!state.job || isRunning(ctx)) return;
-    const engine = retryEngine(ctx);
-    const ids = single
-      ? [state.activeRegionId]
-      : state.job.regions
-          .filter(
-            (r) =>
-              r.status === "failed" ||
-              (r.status !== "confirmed" && r.result?.checks?.passed === false),
-          )
-          .map((r) => r.id);
-    const regions = ids.map((id) => draft.regions.find((r) => r.id === id));
-    if (!regions.length) throw new Error("没有需要重新识别的失败谱行。");
-    if (regions.some((r) => !r || r.reviewed))
-      throw new Error("已审核谱行请通过人工校对修改。");
-    const intent = beginOperation(ctx);
-    clearTimeout(ctx.pollTimer);
-    state.busy = true;
-    state.error = "";
-    state.message = `正在准备重新识别 ${ids.length} 个谱行。`;
-    render();
-    try {
-      if (enlarge)
-        for (const region of regions) {
-          assertAlive(ctx, intent);
-          await enlargeRegion(region, intent);
-        }
-      assertAlive(ctx, intent);
-      const response = await requireApi(ctx, "retryRegions")(
-        state.job.id,
-        { engine, regionIds: ids, expectedVersion: state.job.runVersion },
-        { signal: ctx.operationController.signal },
-      );
-      if (await cancelLateResponse(ctx, response, state.job.id, intent)) return;
-      for (const region of regions) {
-        region.dirty = false;
-        region.reviewed = false;
-        remoteSignatures.delete(region.id);
-      }
-      applySnapshot(response);
-      poll();
-    } finally {
-      if (intent === ctx.operationVersion) {
-        state.busy = false;
-        if (!ctx.disposed) render();
-      }
-    }
-  }
-
-  async function retryEnlargedRegion() {
-    await retryFailed({ single: true, enlarge: true });
-  }
-
   async function preview() {
     const region = activeRegion(ctx),
       element = root.querySelector("[data-notation-preview]");
@@ -1441,7 +643,7 @@ export function mountFullScoreImport(
       state.error = "";
       switch (action.dataset.action) {
         case "close":
-          await cancel();
+          await cancel(ctx);
           onClose();
           break;
         case "page":
@@ -1486,28 +688,28 @@ export function mountFullScoreImport(
           await applyManualCrop(true);
           break;
         case "start":
-          await startRecognition();
+          await startRecognition(ctx);
           break;
         case "cancel":
-          await cancel();
+          await cancel(ctx);
           break;
         case "page-workbench":
           await openPageWorkbench();
           break;
         case "approve-all":
-          await approveAll();
+          await approveAll(ctx);
           break;
         case "retry-failed":
-          await retryFailed();
+          await retryFailed(ctx);
           break;
         case "retry-region":
-          await retryRegion();
+          await retryRegion(ctx);
           break;
         case "retry-enlarged":
-          await retryEnlargedRegion();
+          await retryEnlargedRegion(ctx);
           break;
         case "reset":
-          await cancel();
+          await cancel(ctx);
           state.job = null;
           state.progress = null;
           state.stage = "scope";
@@ -1638,6 +840,7 @@ export function mountFullScoreImport(
           render();
           try {
             applySnapshot(
+              ctx,
               await requireApi(ctx, method)(state.job.id, region.id, input),
             );
             state.message =
@@ -1655,7 +858,7 @@ export function mountFullScoreImport(
           break;
         }
         case "confirm-region":
-          await confirmRegion();
+          await confirmRegion(ctx);
           break;
         case "next-unreviewed": {
           const regions = selectedRegions(ctx),
@@ -1687,10 +890,10 @@ export function mountFullScoreImport(
           await preview();
           break;
         case "import":
-          await importReviewed();
+          await importReviewed(ctx);
           break;
         case "import-draft":
-          await importUnreviewed();
+          await importUnreviewed(ctx);
           break;
       }
     })().catch((error) => {
@@ -2060,43 +1263,6 @@ export function mountFullScoreImport(
       ?.focus({ preventScroll: true });
   });
 
-  function restoreScope(saved) {
-    const metadata = saved.metadata || {};
-    draft.id = saved.id;
-    draft.title = metadata.title || saved.title || draft.title;
-    draft.composer = metadata.composer || draft.composer;
-    draft.tempo = metadata.tempo;
-    draft.timeSignature = metadata.timeSignature;
-    draft.keySignature = metadata.keySignature;
-    const excluded = new Map(
-      (saved.excludedPages || []).map((page) => [page.page, page.reason]),
-    );
-    for (const page of draft.pages) {
-      page.decision = excluded.has(page.page) ? "exclude" : "include";
-      page.excludeReason = excluded.get(page.page) || "";
-    }
-    const detected = new Map(
-      draft.regions.map((region) => [region.id, region]),
-    );
-    draft.regions = (saved.regions || []).map((region) => ({
-      ...detected.get(region.id),
-      id: region.id,
-      page: region.page,
-      system: region.system,
-      jobSystem: region.system,
-      rect: { ...region.rect },
-      pageWidth: region.pageWidth || pageInfo(ctx, region.page)?.width,
-      pageHeight: region.pageHeight || pageInfo(ctx, region.page)?.height,
-      selected: true,
-      excludeReason: "",
-      status: "pending",
-      reviewed: false,
-      assetId: region.id,
-    }));
-    state.activeRegionId = draft.regions[0]?.id || "";
-    state.activePage = draft.regions[0]?.page || 1;
-  }
-
   async function initialize() {
     await validateFullScorePdfUpload(file);
     let saved = unwrap(resumeJob);
@@ -2151,12 +1317,12 @@ export function mountFullScoreImport(
     }
     state.scanning = false;
     if (!ctx.scanCancelled && saved?.id) {
-      restoreScope(saved);
-      applySnapshot(saved);
+      restoreScope(ctx, saved);
+      applySnapshot(ctx, saved);
       state.message = saved.reusedExactPdf
         ? `已复用相同 PDF 的已校对全谱：${draft.totalPages} 页、${draft.regions.length} 行，本次新增模型调用 0 次。原图与校对结果保留，请确认范围后导入。`
         : `已恢复保存的任务：${draft.totalPages} 页、${draft.regions.length} 行。原图、已识别结果与审核状态保留；请再次核对范围确认。`;
-      if (saved.status === "running") poll();
+      if (saved.status === "running") poll(ctx);
       render();
       return;
     }
@@ -2197,5 +1363,5 @@ export function mountFullScoreImport(
       render();
     }
   });
-  return { ready, destroy, cancel, getDraft: () => draft };
+  return { ready, destroy, cancel: () => cancel(ctx), getDraft: () => draft };
 }

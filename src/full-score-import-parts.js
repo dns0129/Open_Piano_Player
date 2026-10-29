@@ -2,6 +2,10 @@
 // image/blob conversion, labels and review markup that depend only on their arguments.
 import { escapeHTML } from "./html.js";
 
+export const finite = (value) =>
+  typeof value === "number" && Number.isFinite(value);
+export const numberValue = (value) =>
+  value === "" ? undefined : Number(value);
 export const errorText = (error) =>
   String(error?.message || error || "操作失败，请重试。");
 export const unwrap = (value) => value?.snapshot || value?.job || value;
