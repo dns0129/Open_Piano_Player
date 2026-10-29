@@ -17,12 +17,11 @@ import {
 } from "../lib/recognition-review-actions.mjs";
 import { scoreDiagnosisCard } from "./score-diagnosis-card.js";
 import { assetURL } from "../lib/asset-url.mjs";
-import { prepareScoreImage, mountScoreImageSelector } from "./score-image.js";
+import { mountScoreImageSelector } from "./score-image.js";
 import { normalizeCropRect } from "../lib/score-image-layout.mjs";
 import { validateScore, midiName } from "../lib/score.mjs";
 import {
   validateFullScorePdfUpload,
-  completePianoSystemRects,
   normalizeFullScoreRegionResult,
   fullScoreRegionIssues,
   fullScoreScopeIssues,
@@ -30,6 +29,14 @@ import {
   assembleFullScoreReview,
 } from "../lib/full-score-review.mjs";
 import { escapeHTML } from "./html.js";
+import {
+  cropRegion,
+  ensurePrepared,
+  ensureRegionAsset,
+  preparePage,
+  scanPage,
+  storeAsset,
+} from "./full-score-import-pages.js";
 import {
   activeRegion,
   assertAlive,
@@ -46,7 +53,6 @@ import {
   setMessage,
 } from "./full-score-import-context.js";
 import {
-  blobFromImage,
   blobImage,
   canvasBlob,
   edited,
@@ -103,7 +109,7 @@ export function mountFullScoreImport(
   async function openPageWorkbench() {
     if (isRunning(ctx) || state.importing || ctx.disposed) return;
     const regions = selectedRegions(ctx);
-    for (const region of regions) await ensureRegionAsset(region);
+    for (const region of regions) await ensureRegionAsset(ctx, region);
     if (ctx.disposed) return;
     const modal = root.closest(".modal");
     const prior = modal?.inert;
@@ -336,93 +342,10 @@ export function mountFullScoreImport(
     });
   }
 
-  async function renderPage(
-    pageNumber,
-    targetWidth,
-    { includePixels = false } = {},
-  ) {
-    const work = ctx.pdfQueue.then(async () => {
-      if (ctx.disposed) throw new Error("PDF 已关闭。");
-      const page = await ctx.pdf.getPage(pageNumber),
-        base = page.getViewport({ scale: 1 });
-      let scale = Math.min(
-        includePixels ? 3 : 2.5,
-        targetWidth / base.width,
-        8000 / base.height,
-      );
-      if (base.width * base.height * scale * scale > 20000000)
-        scale *= Math.sqrt(
-          20000000 / (base.width * base.height * scale * scale),
-        );
-      const viewport = page.getViewport({ scale }),
-        canvas = document.createElement("canvas");
-      canvas.width = Math.max(20, Math.round(viewport.width));
-      canvas.height = Math.max(20, Math.round(viewport.height));
-      try {
-        await page.render({ canvasContext: canvas.getContext("2d"), viewport })
-          .promise;
-        return {
-          blob: await canvasBlob(canvas),
-          width: canvas.width,
-          height: canvas.height,
-          pdfWidth: base.width,
-          pdfHeight: base.height,
-          scale,
-          ...(includePixels
-            ? {
-                pixels: canvas
-                  .getContext("2d")
-                  .getImageData(0, 0, canvas.width, canvas.height),
-              }
-            : {}),
-        };
-      } finally {
-        canvas.width = 0;
-        canvas.height = 0;
-        page.cleanup();
-      }
-    });
-    ctx.pdfQueue = work.catch(() => {});
-    return work;
-  }
-
-  async function preparePage(pageNumber) {
-    const rendered = await renderPage(pageNumber, 2200);
-    return prepareScoreImage(rendered.blob, {
-      page: pageNumber,
-      pianoSourceVerified: source.pianoSourceVerified === true,
-      sourceLabel: source.instrumentEvidence || source.label || "",
-      maxDetectionDimension: 1600,
-    });
-  }
-
-  async function ensurePrepared(pageNumber) {
-    if (ctx.activePrepared?.page === pageNumber) return ctx.activePrepared;
-    if (ctx.preparedPromise) {
-      await ctx.preparedPromise;
-      if (ctx.activePrepared?.page === pageNumber) return ctx.activePrepared;
-    }
-    const task = preparePage(pageNumber).then((prepared) => {
-      if (ctx.disposed) {
-        prepared.destroy();
-        throw new Error("预览已关闭。");
-      }
-      ctx.activePrepared?.destroy();
-      ctx.activePrepared = prepared;
-      return prepared;
-    });
-    ctx.preparedPromise = task;
-    try {
-      return await task;
-    } finally {
-      if (ctx.preparedPromise === task) ctx.preparedPromise = null;
-    }
-  }
-
   async function renderActiveView(epoch) {
     const region = activeRegion(ctx);
     if (state.selecting) {
-      const prepared = await ensurePrepared(state.activePage);
+      const prepared = await ensurePrepared(ctx, state.activePage);
       if (ctx.disposed || epoch !== ctx.renderEpoch) return;
       const wrapped = {
         ...prepared,
@@ -442,7 +365,7 @@ export function mountFullScoreImport(
         wrapped,
       );
     } else if (state.stage === "review" && region?.notes) {
-      if (!assets.has(region.id)) await ensureRegionAsset(region);
+      if (!assets.has(region.id)) await ensureRegionAsset(ctx, region);
       if (ctx.disposed || epoch !== ctx.renderEpoch) return;
       const image = root.querySelector("[data-original-image]");
       if (image) {
@@ -455,60 +378,6 @@ export function mountFullScoreImport(
       }
       updatePositionMarker();
     }
-  }
-
-  function storeAsset(region, image, blob = blobFromImage(image)) {
-    const previous = assets.get(region.id);
-    if (previous?.url) URL.revokeObjectURL(previous.url);
-    const value = {
-      id: region.id,
-      page: region.page,
-      system: region.system,
-      mimeType: blob.type || "image/png",
-      blob,
-      url: URL.createObjectURL(blob),
-    };
-    assets.set(region.id, value);
-    region.assetId = region.id;
-    region.imageUrl = value.url;
-    return value;
-  }
-
-  async function cropRegion(prepared, region) {
-    const rect = normalizeCropRect(
-      region.rect,
-      prepared.width,
-      prepared.height,
-    );
-    const [image] = prepared.getSelection({
-      mode: "manual",
-      rect,
-      confirmedPiano: state.pianoConfirmed,
-    });
-    if (!image) throw new Error(`${scopeLabel(region)}未能生成谱面图片。`);
-    storeAsset(region, image);
-    return image;
-  }
-
-  async function ensureRegionAsset(region) {
-    if (assets.has(region.id)) return assets.get(region.id);
-    if (
-      state.job?.regions?.find((candidate) => candidate.id === region.id)
-        ?.image &&
-      typeof api.readRegionImage === "function"
-    ) {
-      try {
-        const response = await api.readRegionImage(state.job.id, region.id);
-        const image = response?.image || response;
-        if (image instanceof Blob) return storeAsset(region, null, image);
-        if (image?.data) return storeAsset(region, image);
-      } catch {
-        /* The original uploaded PDF remains the local source of truth. */
-      }
-    }
-    const prepared = await ensurePrepared(region.page);
-    await cropRegion(prepared, region);
-    return assets.get(region.id);
   }
 
   function sourceMarkers(region) {
@@ -678,7 +547,7 @@ export function mountFullScoreImport(
       .forEach((candidate, index) => {
         candidate.system = index + 1;
       });
-    storeAsset(region, image);
+    storeAsset(ctx, region, image);
     page.decision = "include";
     state.activeRegionId = region.id;
     state.selecting = false;
@@ -932,13 +801,13 @@ export function mountFullScoreImport(
           }
           if (region.page !== preparedPage) {
             prepared?.destroy();
-            prepared = await preparePage(region.page);
+            prepared = await preparePage(ctx, region.page);
             preparedPage = region.page;
             assertAlive(ctx, intent);
           }
           const image = assets.has(region.id)
             ? await blobImage(assets.get(region.id).blob)
-            : await cropRegion(prepared, region);
+            : await cropRegion(ctx, prepared, region);
           assertAlive(ctx, intent);
           // Revalidate every actual crop even when an earlier manual preview cached it.
           if (assets.has(region.id))
@@ -1184,7 +1053,7 @@ export function mountFullScoreImport(
         }),
         selectedAssets = [];
       for (const region of selectedRegions(ctx)) {
-        const asset = await ensureRegionAsset(region);
+        const asset = await ensureRegionAsset(ctx, region);
         selectedAssets.push({
           id: region.id,
           page: region.page,
@@ -1261,7 +1130,7 @@ export function mountFullScoreImport(
       });
       const selectedAssets = [];
       for (const region of summary.selected) {
-        const asset = await ensureRegionAsset(region);
+        const asset = await ensureRegionAsset(ctx, region);
         selectedAssets.push({
           id: region.id,
           page: region.page,
@@ -1341,8 +1210,8 @@ export function mountFullScoreImport(
         (candidate) => candidate.id === region.id,
       );
       if (!saved?.image) {
-        const prepared = await ensurePrepared(region.page),
-          image = await cropRegion(prepared, region);
+        const prepared = await ensurePrepared(ctx, region.page),
+          image = await cropRegion(ctx, prepared, region);
         assertAlive(ctx, intent);
         const uploaded = await requireApi(ctx, "uploadRegion")(
           state.job.id,
@@ -1417,7 +1286,7 @@ export function mountFullScoreImport(
         { signal: ctx.operationController.signal },
       );
       assertAlive(ctx, intent);
-      storeAsset(region, image, blob);
+      storeAsset(ctx, region, image, blob);
       remoteSignatures.delete(region.id);
       applySnapshot(uploaded);
     } finally {
@@ -2275,88 +2144,7 @@ export function mountFullScoreImport(
     render();
     for (let pageNumber = 1; pageNumber <= ctx.pdf.numPages; pageNumber++) {
       if (ctx.disposed || ctx.scanCancelled) break;
-      // An 800px preview can erase thin staff lines in image-only PDFs after
-      // resampling. Detect at 1600px; pages are still processed sequentially.
-      const low = await renderPage(pageNumber, 1600, { includePixels: true });
-      if (ctx.disposed || ctx.scanCancelled) break;
-      const prepared = await prepareScoreImage(low.blob, {
-        page: pageNumber,
-        pianoSourceVerified: source.pianoSourceVerified === true,
-        sourceLabel: source.instrumentEvidence || source.label || "",
-      });
-      try {
-        const highScale = Math.min(
-          2.5,
-          2200 / low.pdfWidth,
-          8000 / low.pdfHeight,
-        );
-        let safeScale = highScale;
-        if (low.pdfWidth * low.pdfHeight * safeScale * safeScale > 20000000)
-          safeScale *= Math.sqrt(
-            20000000 / (low.pdfWidth * low.pdfHeight * safeScale * safeScale),
-          );
-        const width = Math.max(20, Math.round(low.pdfWidth * safeScale)),
-          height = Math.max(20, Math.round(low.pdfHeight * safeScale));
-        const sx = width / prepared.width,
-          sy = height / prepared.height;
-        const completeRects = new Map(
-          completePianoSystemRects(low.pixels, prepared.layout).map(
-            (system) => [system.id, system.rect],
-          ),
-        );
-        const page = {
-          page: pageNumber,
-          scanned: true,
-          width,
-          height,
-          pdfWidth: low.pdfWidth,
-          pdfHeight: low.pdfHeight,
-          assessment: prepared.assessment,
-          decision: prepared.assessment.hasGrandStaff ? "include" : "pending",
-          excludeReason: "",
-        };
-        draft.pages.push(page);
-        thumbnails.set(pageNumber, {
-          blob: low.blob,
-          url: URL.createObjectURL(low.blob),
-        });
-        for (const system of prepared.systems) {
-          const completeRect = completeRects.get(system.id) || system.rect;
-          const rect = normalizeCropRect(
-            {
-              x: completeRect.x * sx,
-              y: completeRect.y * sy,
-              width: completeRect.width * sx,
-              height: completeRect.height * sy,
-            },
-            width,
-            height,
-          );
-          draft.regions.push({
-            id: `p${pageNumber}-s${system.index + 1}`,
-            page: pageNumber,
-            system: system.index + 1,
-            rect,
-            pageWidth: width,
-            pageHeight: height,
-            staffLines: {
-              right: system.staffs[0]?.lines.map((y) => y * sy) || [],
-              left: system.staffs[1]?.lines.map((y) => y * sy) || [],
-            },
-            selected:
-              system.staffs.length === 2 && prepared.assessment.hasGrandStaff,
-            excludeReason: "",
-            status: "pending",
-            reviewed: false,
-            assetId: `p${pageNumber}-s${system.index + 1}`,
-          });
-        }
-        if (!state.activeRegionId)
-          state.activeRegionId =
-            draft.regions.find((region) => region.selected)?.id || "";
-      } finally {
-        prepared.destroy();
-      }
+      if (!(await scanPage(ctx, pageNumber))) break;
       state.scannedPages = pageNumber;
       state.message = `正在逐页检查：第 ${pageNumber} / ${ctx.pdf.numPages} 页，发现 ${draft.regions.length} 个谱行候选。`;
       render();
