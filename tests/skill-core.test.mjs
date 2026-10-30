@@ -9,4 +9,18 @@ test("the Skill's generated core matches the current lib/ sources", async () => 
     await buildSkillCore(),
     "run node scripts/build-skill-core.mjs and commit the result",
   );
+  assert.equal(
+    await readFile(
+      new URL(
+        "../skills/piano-score-to-musicxml/scripts/written-evidence.mjs",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+    await readFile(
+      new URL("../lib/recognition-notation.mjs", import.meta.url),
+      "utf8",
+    ),
+    "source evidence rules must be shared with the Skill; regenerate with build-skill-core",
+  );
 });

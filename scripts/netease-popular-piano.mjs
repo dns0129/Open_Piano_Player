@@ -1,4 +1,8 @@
 import {
+  recognitionDisposition,
+  recognitionStageSummary,
+} from "../lib/recognition-disposition.mjs";
+import {
   readFile,
   writeFile,
   mkdir,
@@ -843,6 +847,7 @@ export async function run(
             id: r.id,
             error: r.error,
             issues: r.result?.checks?.errors,
+            disposition: recognitionDisposition(r.error || r.result || {}),
           })),
         calls: s.calls,
       });
@@ -1405,6 +1410,8 @@ export async function report(root) {
       geometryReady: p?.geometryReady || false,
       jobStatus: job?.status || null,
       recognizedRows: job?.regions.filter((r) => r.result).length || 0,
+      structurallyPassedRows:
+        job?.regions.filter((r) => r.result?.checks?.passed).length || 0,
       totalRows: job?.regions.length || p?.rows || null,
       imported: Boolean(imported),
       libraryId: imported?.id || null,
@@ -1422,6 +1429,13 @@ export async function report(root) {
     imported: entries.filter((s) => s.imported).length,
     stopped: state.stopped || null,
     reviewStatus: "AI草稿，未经人工逐音确认",
+    stages: recognitionStageSummary(
+      entries,
+      await read(join(root, "skill-results.json")).catch((e) => {
+        if (e.code === "ENOENT") return [];
+        throw e;
+      }),
+    ),
     entries,
     excluded: discovery.excluded,
   };

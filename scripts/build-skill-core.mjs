@@ -65,8 +65,19 @@ export async function buildSkillCore() {
   return HEADER + result.outputFiles[0].text;
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href)
+if (
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(process.argv[1]).href
+) {
   await writeFile(
     new URL("../" + SKILL_CORE, import.meta.url),
     await buildSkillCore(),
   );
+  await writeFile(
+    new URL(
+      "../skills/piano-score-to-musicxml/scripts/written-evidence.mjs",
+      import.meta.url,
+    ),
+    await readFile(new URL("../lib/recognition-notation.mjs", import.meta.url)),
+  );
+}

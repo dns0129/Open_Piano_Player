@@ -35,6 +35,8 @@ const fail = (path, message) => {
   });
 };
 const integer = (n, min, max) => Number.isInteger(n) && n >= min && n <= max;
+export const compareSourceEvents = (a, b) =>
+  a.beat - b.beat || (a.order ?? 0) - (b.order ?? 0);
 export function validateRecognitionEvidence(value) {
   if (
     !value ||
@@ -75,7 +77,8 @@ export function validateRecognitionEvidence(value) {
       !integer(c.line, 1, 5) ||
       !integer(c.octaveChange ?? 0, -2, 2) ||
       !Number.isFinite(c.beat) ||
-      c.beat < 0
+      c.beat < 0 ||
+      (c.order !== undefined && !integer(c.order, 0, 255))
     )
       fail(`notation.clefs[${i}]`, "谱号或变化位置无效");
   for (const [i, k] of value.keys.entries())
@@ -108,17 +111,28 @@ export function validateRecognitionEvidence(value) {
     restIds.add(r.restId);
   }
   for (const list of [value.clefs, value.keys]) {
-    const seen = new Set();
-    for (const e of list) {
-      const k = e.staff + ":" + e.beat;
-      if (seen.has(k)) fail("notation", "同拍同谱表的谱号/调号重复");
-      seen.add(k);
+    for (const events of groupBy(
+      list,
+      (e) => e.staff + ":" + e.beat,
+    ).values()) {
+      if (
+        events.length > 1 &&
+        (list !== value.clefs ||
+          events.some((e) => e.order === undefined) ||
+          new Set(events.map((e) => e.order)).size !== events.length)
+      )
+        fail(
+          "notation",
+          "同拍同谱表的谱号/调号重复；谱号须有原图明确的唯一order",
+        );
     }
     for (const staff of [1, 2])
       if (!list.some((e) => e.staff === staff && e.beat === 0))
         fail("notation", "上下谱表均须有初始谱号和调号");
   }
-  return structuredClone(value);
+  const normalized = structuredClone(value);
+  normalized.clefs.sort(compareSourceEvents);
+  return normalized;
 }
 
 export function decodeWrittenNotation(raw, decoded, region) {
@@ -315,7 +329,7 @@ export function auditWrittenNotation(
   const clefAt = (staff, beat) =>
     e.clefs
       .filter((c) => c.staff === staff && c.beat <= beat + EPS)
-      .sort((a, b) => a.beat - b.beat)
+      .sort(compareSourceEvents)
       .at(-1);
   const keyAt = (staff, beat) =>
     e.keys

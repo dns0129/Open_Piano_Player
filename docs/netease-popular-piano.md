@@ -54,3 +54,6 @@ node scripts/netease-popular-piano.mjs resume-missing .local/netease-top100-2026
 原谱、会话、任务 token、模型响应、曲库资源和 Skill 成果只写入 `.local`，不随代码发布到 GitHub。`report.html` / `report.json` 分别提供可阅读的100首链接状态表和机器报告。链接找到、原谱准备、模型识别、曲库读回及浏览器播放是不同状态。
 
 本次发布回归使用原有固定42个来源案例、9组离线重放和独立评分器；没有为回归新增模型调用，也不据此宣称本批谱面识别准确率提高。
+
+
+本轮真实难例的统一来源扩展、错误分流、版本化离线端到端验证及分阶段指标，见 [来源契约与验证说明](recognition-source-contract-20261030.md)。`scripts/verify-recognition-real-cases.mjs`只重放私有清单，不包含模型传输；输出到新目录，不覆盖原版，也不会创建定时任务。

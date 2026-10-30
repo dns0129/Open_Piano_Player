@@ -1,9 +1,9 @@
 {
   "schema": "recognition-release-evidence/v1",
   "release": "recognition-p2-v1-20261028",
-  "recordedAt": "2026-10-29T21:50:50.518Z",
+  "recordedAt": "2026-10-30T15:15:48.122Z",
   "implementation": {
-    "digest": "44e6a6932b11cd5eab386c5684be2dca29ec2024f0194b0c5aebad94bb309069",
+    "digest": "e4159b2150fa439d5c620b77cde43f06e10fef974b5b427bbcb3561ec4911e2f",
     "files": [
       {
         "path": "lib/accounts/recognition-budget.mjs",
@@ -35,7 +35,7 @@
       },
       {
         "path": "lib/exporters.mjs",
-        "sha256": "b4509396b3b87420927373678e13adde7ccf1ed56e4eed0f5d028a630dacaf51"
+        "sha256": "2da2d2a2ca083f8d10000b3538cc3413ed3ef68cd4804a55c0126d862c320892"
       },
       {
         "path": "lib/full-score-jobs.mjs",
@@ -74,6 +74,10 @@
         "sha256": "092cda6f4ab5c3099959d09b83a17241e4f5f5b7b8ec80e661d9a6c9894c12b7"
       },
       {
+        "path": "lib/recognition-disposition.mjs",
+        "sha256": "524021ec16e83ef23aa5b6c4b42ad64d027703196b157d55795f4bdc9e368490"
+      },
+      {
         "path": "lib/recognition-edit.mjs",
         "sha256": "e4f921d5d8efdd55b59445085fb1d84983de2f6590fd5ef9dcd4d6e278e83475"
       },
@@ -95,11 +99,11 @@
       },
       {
         "path": "lib/recognition-notation.mjs",
-        "sha256": "4234753a7db73cfba6dcc1693b71dfa92b0a0e51f2e088053719dddf00a6ddfa"
+        "sha256": "6a47ef500a9af3d410b894d9752f7b3ab8d028b7f83007660da03ea6cf540579"
       },
       {
         "path": "lib/recognition-plan.mjs",
-        "sha256": "161673fe4e39992332f51c5e821597a0abb14e72ef65908ecf708fcc3f47d73f"
+        "sha256": "8532f621ecd937eefcf0aa131887b4bdbc79902c2e10971fd1eeb49b747341dc"
       },
       {
         "path": "lib/recognition-policy.mjs",
@@ -126,6 +130,10 @@
         "sha256": "861219ad7b817bcd637cbde92b05b071ad5b59084fddd6891db0c4fb2f621c8d"
       },
       {
+        "path": "lib/recognition-source-contract.mjs",
+        "sha256": "c5e377e6d5d13f50245d382a99ec89853e39b2647556e79378bbd3376a643c43"
+      },
+      {
         "path": "lib/recognition-submission.mjs",
         "sha256": "dfb6cf5bdc40ccfe6ffd818accca19302191eb49f923686f7f4e40eea2f21bf6"
       },
@@ -143,11 +151,11 @@
       },
       {
         "path": "lib/recognition-versions.mjs",
-        "sha256": "fb183477b2530d4a28681e34df629511b516c5d550edc94458b7eea56eba38f4"
+        "sha256": "9171eb1131ea799e25dc93a5ad8350d0cc89339ca0a25f466cc3991fff57811c"
       },
       {
         "path": "lib/recognition-wire.mjs",
-        "sha256": "6c52ca574dc1d0e15f3cc02f1a73a8fe658918b3769233982968acd9927923f4"
+        "sha256": "fb28693e4f92fef4ea66f9cbf383546cd69525b08223c7612159303b91d4a466"
       },
       {
         "path": "lib/score-image-layout.mjs",
@@ -203,7 +211,7 @@
       },
       {
         "path": "skills/piano-score-to-musicxml/package.json",
-        "sha256": "6f471f13a378595c5fb6fd910029cfab5a2647c415b1e1e26693c5f2e96a1380"
+        "sha256": "eac35ddb2b4e9143768f9f2df54d93975bcc7b51773a6dc47c627d791cf6659d"
       },
       {
         "path": "skills/piano-score-to-musicxml/scripts/artifact-output.mjs",
@@ -211,7 +219,7 @@
       },
       {
         "path": "skills/piano-score-to-musicxml/scripts/core/qinban-core.mjs",
-        "sha256": "d6b777b19eac7601efbe4805c6b51a4e281c07c3815f7da0422f339586d050b4"
+        "sha256": "665aa7aec951b827b4e08d84933e37411eccf97c83a6f4b866dac437d866ca96"
       },
       {
         "path": "skills/piano-score-to-musicxml/scripts/review-evidence.mjs",
@@ -223,7 +231,7 @@
       },
       {
         "path": "skills/piano-score-to-musicxml/scripts/written-evidence.mjs",
-        "sha256": "4234753a7db73cfba6dcc1693b71dfa92b0a0e51f2e088053719dddf00a6ddfa"
+        "sha256": "6a47ef500a9af3d410b894d9752f7b3ab8d028b7f83007660da03ea6cf540579"
       },
       {
         "path": "src/full-score-import-actions.js",
@@ -335,7 +343,7 @@
   "evaluation": {
     "mode": "offline-frozen-responses",
     "providerCalls": 0,
-    "sourceEvaluationSha256": "a2819d96022a285d73dabe0b824062af55e5b92d18ee79e5469b5d1979ecedf0",
+    "sourceEvaluationSha256": "bacaf976f87ce6c2c704e41e411cacc0788715f2f9e5a4750786b83a2c9618ca",
     "suiteSha256": "43a326cb85d9f04afd7dac9a91e30ee6516bc90df6f389d3a05a8308b5b52b8c",
     "sourceFiles": 158,
     "baselinePromptDigest": "5e44d82e7876c4439e347d878f794883a83bbbb97d9d784f700ee8be1a6034b1",
