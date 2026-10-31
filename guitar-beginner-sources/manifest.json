@@ -1,0 +1,78 @@
+{
+  "version": 1,
+  "collection": "吉他入门 · 第1批",
+  "scores": [
+    {
+      "id": "guitar-beginner-open-strings",
+      "title": "空弦漫步 · 吉他入门",
+      "measures": 4,
+      "notes": 16,
+      "durationBeats": 16,
+      "tempo": 72,
+      "sha256": "9c7af589754c75e6926ab6f07a8103e30c90c07ed2fb48feb1451ccb82d97fcc"
+    },
+    {
+      "id": "guitar-beginner-first-string",
+      "title": "一弦轻唱 · 吉他入门",
+      "measures": 4,
+      "notes": 13,
+      "durationBeats": 16,
+      "tempo": 72,
+      "sha256": "db099b55ef92fdec593f01f5181594e4512180548cbe6c1b9d641b06fc74bb31"
+    },
+    {
+      "id": "guitar-beginner-two-strings",
+      "title": "两弦问答 · 吉他入门",
+      "measures": 4,
+      "notes": 15,
+      "durationBeats": 16,
+      "tempo": 76,
+      "sha256": "1ddb2838ba3bfb025cc467c4b22bc1a7e094492ebd0be90364559ac8135fb5b4"
+    },
+    {
+      "id": "guitar-beginner-mary-lamb",
+      "title": "玛丽有只小羊羔 · 吉他入门单音版",
+      "measures": 8,
+      "notes": 26,
+      "durationBeats": 32,
+      "tempo": 80,
+      "sha256": "110b0050b32e73a52f7b3931babaf981c3982dc5442a8ccd15025cdadcaa47e7"
+    },
+    {
+      "id": "guitar-beginner-ode-to-joy",
+      "title": "欢乐颂 · 吉他入门主题前段",
+      "measures": 8,
+      "notes": 30,
+      "durationBeats": 32,
+      "tempo": 84,
+      "sha256": "dff5e396ea0530cca9b2936da596e2c5857654f7a2fc7c0f280fc38d0c5cd48b"
+    },
+    {
+      "id": "guitar-beginner-twinkle",
+      "title": "小星星 · 吉他入门单音版",
+      "measures": 12,
+      "notes": 42,
+      "durationBeats": 48,
+      "tempo": 84,
+      "sha256": "642150c813b8da924474960b4736eb33ba685db547ed1be3e7da97f965ebb4da"
+    },
+    {
+      "id": "guitar-beginner-frere-jacques",
+      "title": "两只老虎 · 吉他入门单音版",
+      "measures": 8,
+      "notes": 32,
+      "durationBeats": 32,
+      "tempo": 84,
+      "sha256": "dbabef615270dc4d792548b5ccdccd64fa5703bd1c03fb788cb65783ec272bd2"
+    },
+    {
+      "id": "guitar-beginner-c-am-arpeggio",
+      "title": "小步分解 · C与Am吉他入门",
+      "measures": 4,
+      "notes": 32,
+      "durationBeats": 16,
+      "tempo": 72,
+      "sha256": "c25f6fcda816f797ba270c783835a635f74290c5ad07dafd78279777bb6742ed"
+    }
+  ]
+}
