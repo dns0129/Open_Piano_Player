@@ -191,4 +191,4 @@ MusicXML 4 主规范：[pitch](https://www.w3.org/2021/06/musicxml40/musicxml-re
 
 ### 显式来源扩展与非活动声部
 
-项目接入支持逐小节 `meters`（映射到全曲 `measureMap`）以及 `notation.clefs[].order`。同拍多谱号只有原图明确先后、各事件均有唯一非负order时才接受；保留显示事件，较大order后生效，缺少依据仍阻塞。来源谱非活动声部使用MusicXML `forward`推进时间，不生成可见休止；显式来源休止正常保留。模型线上提示词/schema未改，此扩展用于保存提交与复核来源数据，不能推断新拍号或用缩短活动范围消除疑点。
+项目接入支持逐小节 `meters`（映射到全曲 `measureMap`）以及 `notation.clefs[].order`。同拍多谱号只有原图明确先后、各事件均有唯一非负order时才接受；保留显示事件，较大order后生效，缺少依据仍阻塞。来源谱非活动声部使用MusicXML `forward`推进时间，不生成可见休止；显式来源休止正常保留。App已通过compact-v6及对应新版提示词接入这些字段；仍必须根据原图提供依据，不能推断新拍号或用缩短活动范围消除疑点。

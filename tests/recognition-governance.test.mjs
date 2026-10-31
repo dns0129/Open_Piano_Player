@@ -200,7 +200,7 @@ test("component documentation and skill versions are checked independently; stal
   await writeFile(
     path,
     (await readFile(path, "utf8")).replace(
-      "piano-written-evidence-v8",
+      "piano-written-evidence-v9",
       "obsolete-prompt",
     ),
   );

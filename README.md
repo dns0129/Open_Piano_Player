@@ -1,6 +1,6 @@
 # 琴伴 · 钢琴练习室
 
-<!-- recognition-current {"release":"recognition-p2-v1-20261028","prompt":"piano-written-evidence-v8-20261028","accidentals":"accidentals-v2-20261018","wire":"compact-v5","cache":"reviewed-source-v4-p1","geometry":"geometry-native-pdf-v1","corpus":"recognition-corpus-v1-20261028","skill":"1.3.3","nodeMinimum":"22.19.0","nodePreferred":"24"} -->
+<!-- recognition-current {"release":"recognition-skill133-app-v1-20261031","prompt":"piano-written-evidence-v9-skill133-20261031","accidentals":"accidentals-v2-20261018","wire":"compact-v6","cache":"reviewed-source-v5-skill133","geometry":"geometry-native-pdf-v1","corpus":"recognition-corpus-v1-20261028","skill":"1.3.3","nodeMinimum":"22.19.0","nodePreferred":"24"} -->
 
 钢琴乐谱与练习 App。本机版保留原有图片/PDF 识谱、找谱、乐谱导入、编辑、播放与导出；独立商业账号版负责私有曲库、托管识谱、任务数与成本控制、手机上传和运营。
 
