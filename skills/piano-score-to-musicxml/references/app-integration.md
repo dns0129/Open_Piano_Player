@@ -1,6 +1,6 @@
 # 琴伴接入
 
-<!-- recognition-current {"release":"recognition-skill133-app-v1-20261031","prompt":"piano-written-evidence-v9-skill133-20261031","accidentals":"accidentals-v2-20261018","wire":"compact-v6","cache":"reviewed-source-v5-skill133","geometry":"geometry-native-pdf-v1","corpus":"recognition-corpus-v1-20261028","skill":"1.3.3","nodeMinimum":"22.19.0","nodePreferred":"24"} -->
+<!-- recognition-current {"release":"recognition-skill133-app-v1-20261031","prompt":"piano-written-evidence-v10-p0-20261031","accidentals":"accidentals-v2-20261018","wire":"compact-v6","cache":"reviewed-source-v6-p0","geometry":"geometry-native-pdf-v1","corpus":"recognition-corpus-v1-20261028","skill":"1.3.3","nodeMinimum":"22.19.0","nodePreferred":"24"} -->
 
 `recognitionTranscription(job, manifest, {sourceGraceNotation})` 可接收另行原图核对的纸面倚音清单：每项包含已有全局 `noteId`、`type`、`slash`、可选 `chordGroup` 和当前系统图 `sourceImageSha256`。只映射已有倚音，保留原书写音名与显式记号；不从 MIDI 重建拼写，不从播放借时推断纸面符值。缺少符值/斜线证据的倚音仍留在 `unhandled`，不自动确认。当前八度移位倚音须先单独适配，不静默丢弃源写法。
 
