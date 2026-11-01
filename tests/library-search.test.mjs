@@ -65,6 +65,26 @@ test("search ranks exact titles first and supports accents, traditional Chinese 
   ];
   assert.equal(searchCloudScores(variants, "幻听")[0].id, "exact");
 });
+test("repeated query words require repeated occurrences instead of matching an unrelated composer", () => {
+  const catalogue = [
+    {
+      id: "chopin-prelude",
+      title: "e小调前奏曲 · Prelude No.4",
+      composer: "Frédéric Chopin",
+      sourceLabel: "排版：Roland Goretzki",
+    },
+    { id: "la-la-land", title: "La La Land · City of Stars" },
+  ];
+  assert.deepEqual(
+    searchCloudScores(catalogue, "La La Land").map((score) => score.id),
+    ["la-la-land"],
+  );
+  assert.deepEqual(
+    searchCloudScores(catalogue, "lalaland").map((score) => score.id),
+    ["la-la-land"],
+  );
+  assert.deepEqual(searchCloudScores(catalogue.slice(0, 1), "La La Land"), []);
+});
 test("discovery combines filters and puts unknown tempo last without inventing difficulty", () => {
   assert.equal(discoverCloudScores(scores, { level: "beginner" }).length, 2);
   assert.equal(
