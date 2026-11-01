@@ -129,6 +129,7 @@ ${number("页边距（mm）", "marginMM", 10, 24)}${number("谱面大小（%）"
           sourceNotation,
           appearance: settings(),
           preview: true,
+          showFingering: state.showFingering,
         });
         if (!status.isConnected || epoch !== revision || busy) return;
         const canvas = pages[0];
@@ -205,6 +206,7 @@ ${number("页边距（mm）", "marginMM", 10, 24)}${number("谱面大小（%）"
               mode: select.value,
               sourceNotation,
               appearance,
+              showFingering: state.showFingering,
             });
             if (!status.isConnected) return;
             pages[0].setAttribute("role", "img");

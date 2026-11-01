@@ -23,7 +23,9 @@ import {
   Modifier,
   GraceNote,
   GraceNoteGroup,
+  FretHandFinger,
 } from "vexflow/core";
+import { suggestPianoFingering } from "../lib/piano-fingering.mjs";
 import { musicFontsReady } from "./notation-fonts.js";
 import {
   beatsPerMeasure,
@@ -97,6 +99,30 @@ function svgElement(name, attrs = {}, content) {
   if (content !== undefined) node.textContent = content;
   return node;
 }
+// Use VexFlow's modifier layout so digits reserve space next to chord heads.
+class PianoFingerMark extends FretHandFinger {
+  constructor(noteId, entry) {
+    super(String(entry.finger));
+    this.noteId = noteId;
+    this.entry = entry;
+    this.setPosition(Modifier.Position.RIGHT);
+    this.setFont("Arial", 10);
+  }
+  draw() {
+    const context = this.checkContext();
+    const group = context.openGroup("piano-fingering");
+    group.classList.add("notation-fingering");
+    group.setAttribute("data-note-id", this.noteId);
+    group.setAttribute("data-finger", this.entry.finger);
+    group.setAttribute("data-source", this.entry.source);
+    group.setAttribute("aria-hidden", "true");
+    try {
+      super.draw();
+    } finally {
+      context.closeGroup();
+    }
+  }
+}
 const css = `
 .notation-root{width:100%;min-width:0;color:#273235;--score-accent:#2b796b}
 .notation-systems{display:flex;flex-direction:column;gap:16px;width:100%;min-width:0}
@@ -112,6 +138,7 @@ const css = `
 .notation-roll-note.is-active{stroke:#244e3b;stroke-width:2;filter:brightness(1.12)}
 .notation-cursor{stroke:#2b796b;stroke-width:1.65;pointer-events:none;opacity:0}
 .notation-pitch{pointer-events:none;fill:#263b35;font-family:Georgia,'Songti SC',serif;font-weight:600}
+.notation-fingering{pointer-events:none;fill:#263b35;font:10px Arial,sans-serif}
 .notation-rest{fill:#8d9891}.notation-barline{stroke:#657064;stroke-width:1;pointer-events:none}
 .notation-help{font:11px/1.6 system-ui;color:#87918b;margin:8px 0 17px}
 .notation-error{padding:24px;color:#96563d;font:13px/1.6 system-ui}
@@ -134,6 +161,21 @@ export function renderNotation(container, score, options = {}) {
   const { mode = "staff", onSeek = () => {}, showNoteNames = false } = options;
   const chains = tieChains(score.notes),
     chain = (n) => chains.get(n.id);
+  const showFingering =
+    options.showFingering !== false &&
+    score.instrument !== "guitar" &&
+    (mode === "staff" || mode === "numbered");
+  const fingerings = showFingering
+    ? options.fingerings || suggestPianoFingering(score)
+    : new Map();
+  const fingerAt = (note, beat) => {
+    const entry = fingerings.get(note.id);
+    return entry &&
+      closeTo(note.beat, beat) &&
+      (entry.source === "written" || chain(note)?.head.id === note.id)
+      ? entry
+      : null;
+  };
   const sameTie = (a, b) =>
     a.id === b.id ||
     (chain(a)?.head.id === chain(b)?.head.id &&
@@ -163,6 +205,9 @@ export function renderNotation(container, score, options = {}) {
     help.textContent += ` ${tonalityLabel(score)} · 以 6 为小调主音。`;
   if (options.onSelectNotes)
     help.textContent = "点击谱面选择音符；和弦内的单音也可在下方逐个选择。";
+  if (showFingering)
+    help.textContent +=
+      " 小数字为钢琴指法：1 拇指、2 食指、3 中指、4 无名指、5 小指；未标注处为自动建议，请按手型调整。";
   if (mode !== "roll" && hasMergedVoices(score))
     help.textContent +=
       " 复声部合并为和弦及延音线；精确起止可切换钢琴卷帘查看。";
@@ -274,7 +319,16 @@ export function renderNotation(container, score, options = {}) {
     rect.dataset.noteIds = notes.map((n) => n.id).join(" ");
     rect.setAttribute(
       "aria-label",
-      `定位第 ${scoreMeasureIndex(score, beat) + 1} 小节，${notes.length ? notes.map((n) => midiName(n.midi)).join("、") : "休止"}，第 ${(beat - scoreMeasureBounds(score, scoreMeasureIndex(score, beat)).start + 1).toFixed(2).replace(/\.00$/, "")} 拍`,
+      `定位第 ${scoreMeasureIndex(score, beat) + 1} 小节，${
+        notes.length
+          ? notes
+              .map((n) => {
+                const finger = fingerAt(n, beat);
+                return `${midiName(n.midi)}${finger ? `，${finger.source === "suggested" ? "建议" : ""}${finger.finger}指` : ""}`;
+              })
+              .join("、")
+          : "休止"
+      }，第 ${(beat - scoreMeasureBounds(score, scoreMeasureIndex(score, beat)).start + 1).toFixed(2).replace(/\.00$/, "")} 拍`,
     );
     const select = () => {
       if (options.onSelectNotes && notes.length)
@@ -400,6 +454,8 @@ export function renderNotation(container, score, options = {}) {
         );
       const chordMarks = new Set();
       pitches.forEach((n, index) => {
+        const finger = fingerAt(n, segment.beat);
+        if (finger) note.addModifier(new PianoFingerMark(n.id, finger), index);
         if (
           !closeTo(n.beat, segment.beat) ||
           (chain(n) && chain(n).head.id !== n.id)
@@ -1020,6 +1076,27 @@ export function renderNotation(container, score, options = {}) {
                 p ? String(p.degree) : "0",
               ),
             );
+            const finger = note && fingerAt(note, segment.beat);
+            if (finger)
+              group.append(
+                svgElement(
+                  "text",
+                  {
+                    x: x + 15,
+                    y: y - 19,
+                    class: "notation-fingering",
+                    "font-family": "Arial,sans-serif",
+                    "font-size": 10,
+                    fill: "#263b35",
+                    "data-note-id": note.id,
+                    "data-finger": finger.finger,
+                    "data-source": finger.source,
+                    "aria-hidden": "true",
+                    "pointer-events": "none",
+                  },
+                  String(finger.finger),
+                ),
+              );
             if (p?.accidental)
               group.append(
                 svgElement(

@@ -6,6 +6,7 @@ import {
   notationDuration,
 } from "../lib/notation-rhythm.mjs";
 import { createNoteEditor } from "../lib/note-editor.mjs";
+import { suggestPianoFingering } from "../lib/piano-fingering.mjs";
 import {
   beatsPerMeasure,
   midiName,
@@ -183,6 +184,7 @@ function mountDetailedNoteEditor(
         )
         .join("")}</div></div>
       <div data-editor-preview class="note-editor-preview" aria-label="当前小节预览"></div>
+      ${guitar ? "" : '<div class="note-editor-toolbar"><button data-apply-fingering>填入全曲自动建议指法</button><span class="form-note">1 拇指 · 2 食指 · 3 中指 · 4 无名指 · 5 小指。建议需按手型调整；填入后保存即可导出 MusicXML。</span></div>'}
       <details class="note-editor-arrangement" data-mode-panel><summary>调式改编 · ${score.mode ? esc(tonalityLabel(score)) : "原调式未标注"}</summary><p class="form-note">同主音大调 ↔ 自然小调：转换音阶内的第3、6、7级，保留节奏与声部。原有调外音保留原音高，转换后需试听；这是规则改编。</p><div class="note-editor-toolbar"><label>原调式 <select data-source-mode aria-label="原调式"><option value="" ${!sourceMode && !score.mode ? "selected" : ""}>请选择</option>${[
         ["major", "大调"],
         ["minor", "自然小调"],
@@ -230,7 +232,7 @@ function mountDetailedNoteEditor(
               )
               .join(
                 "",
-              )}<button data-preview>试听这个音</button></div></div><div><strong>时值</strong><div class="note-editor-toolbar">${durations.map(([v, label]) => `<button data-duration="${v}" aria-pressed="${Math.abs(note.duration - v) < 0.00001}" class="${Math.abs(note.duration - v) < 0.00001 ? "selected" : ""}">${label}</button>`).join("")}<button data-dotted class="${durations.some(([v]) => Math.abs(note.duration - v * 1.5) < 0.00001) ? "selected" : ""}">附点</button><span>${+note.duration.toFixed(4)} 拍</span></div></div><div class="note-editor-toolbar"><label>演奏手 <select data-hand aria-label="演奏手"><option value="right" ${note.hand === "right" ? "selected" : ""}>右手</option><option value="left" ${note.hand === "left" ? "selected" : ""}>左手</option></select></label><button data-remove>删除这个音</button></div>
+              )}<button data-preview>试听这个音</button></div></div><div><strong>时值</strong><div class="note-editor-toolbar">${durations.map(([v, label]) => `<button data-duration="${v}" aria-pressed="${Math.abs(note.duration - v) < 0.00001}" class="${Math.abs(note.duration - v) < 0.00001 ? "selected" : ""}">${label}</button>`).join("")}<button data-dotted class="${durations.some(([v]) => Math.abs(note.duration - v * 1.5) < 0.00001) ? "selected" : ""}">附点</button><span>${+note.duration.toFixed(4)} 拍</span></div></div><div class="note-editor-toolbar"><label>演奏手 <select data-hand aria-label="演奏手"><option value="right" ${note.hand === "right" ? "selected" : ""}>右手</option><option value="left" ${note.hand === "left" ? "selected" : ""}>左手</option></select></label>${guitar ? "" : `<label>指法 <select data-finger-select aria-label="钢琴指法"><option value="">自动建议（未固定）</option>${["拇指", "食指", "中指", "无名指", "小指"].map((name, i) => `<option value="${i + 1}" ${note.finger === i + 1 ? "selected" : ""}>${i + 1} · ${name}</option>`).join("")}</select></label>`}<button data-remove>删除这个音</button></div>
       ${rhythmPanel(note)}${effectsPanel(note, score)}
       <details class="note-editor-arrangement" data-chord-panel><summary>替换和弦 · ${note.hand === "right" ? "右手" : "左手"}此时的 ${group.length} 个音</summary><p class="form-note">只替换所选音符同一时刻、同一只手起奏的音组，另一只手保持原样。按从低到高沿用现有时值，新增和弦音沿用所选音符时值。</p><div class="note-editor-toolbar"><label>根音 <select data-chord-root aria-label="和弦根音">${pitchNames.map((p, i) => `<option value="${i}" ${rootNote.midi % 12 === i ? "selected" : ""}>${p}</option>`).join("")}</select></label><label>八度 <select data-chord-octave aria-label="和弦根音八度">${[1, 2, 3, 4, 5, 6, 7].map((o) => `<option ${Math.floor(rootNote.midi / 12) - 1 === o ? "selected" : ""}>${o}</option>`).join("")}</select></label><label>类型 <select data-chord-quality aria-label="和弦类型">${CHORD_QUALITIES.map((c) => `<option value="${c.id}">${c.label}</option>`).join("")}</select></label><button data-replace-chord>替换此音组</button></div></details>
       <details><summary>调整落点与特殊时值</summary><p class="form-note">拍数以四分音符为 1 拍。移动音符会保留其他音符的落点，空出的时间为休止。</p><label>起始拍（本小节从 1 起） <input data-beat type="number" step="any" min="1" max="${bar + 1}" value="${note.beat - start + 1}"></label><label>时值（拍） <input data-custom-duration type="number" min="0.0009765625" max="256" step="any" value="${note.duration}"></label><button data-timing>应用落点与时值</button></details></div>`
@@ -282,6 +284,12 @@ function mountDetailedNoteEditor(
         editor.redo();
         notice = "已重做。";
       });
+    $("[data-apply-fingering]")?.addEventListener("click", () =>
+      action(() => {
+        const count = editor.applySuggestedFingering();
+        notice = `已填入 ${count} 个自动指法，请逐音检查并保存。`;
+      }),
+    );
     $("[data-apply-mode]").onclick = () =>
       action(() => {
         const result = editor.convertMode(
@@ -354,6 +362,13 @@ function mountDetailedNoteEditor(
     );
     $("[data-hand]")?.addEventListener("change", (e) =>
       action(() => editor.update(selected, { hand: e.target.value })),
+    );
+    $("[data-finger-select]")?.addEventListener("change", (e) =>
+      action(() =>
+        editor.update(selected, {
+          finger: e.target.value ? Number(e.target.value) : undefined,
+        }),
+      ),
     );
     $("[data-remove]")?.addEventListener("click", () =>
       action(() => editor.remove(selected)),
@@ -486,12 +501,18 @@ function mountDetailedNoteEditor(
     };
     if (notes.length) {
       const preview = editor.previewMeasure(measure);
+      const fingeringPreview = guitar
+        ? undefined
+        : suggestPianoFingering(score);
+      for (const item of notes)
+        if (item.beat < start) fingeringPreview?.delete(item.id);
       try {
         renderer = (previewMode === "tab" ? renderGuitarTab : renderNotation)(
           $("[data-editor-preview]"),
           preview,
           {
             mode: previewMode,
+            fingerings: fingeringPreview,
             autoScroll: false,
             onSelectNotes: (ids) => {
               selected = ids.includes(selected)

@@ -804,6 +804,8 @@ function validatePracticeScore(raw) {
         throw new Error("乐谱总长度不能超过 20000 拍。");
       if (!["right", "left"].includes(note.hand))
         throw new Error("音符 hand 必须是 right 或 left。");
+      if (note.finger !== void 0 && (!Number.isInteger(note.finger) || note.finger < 1 || note.finger > 5))
+        throw new Error("钢琴指法必须是 1–5 的整数。");
       let id = text(note.id, `n${index}`, 80);
       if (!id || ids.has(id)) id = `note-${index}-${ids.size}`;
       ids.add(id);
@@ -813,6 +815,7 @@ function validatePracticeScore(raw) {
         duration,
         midi,
         hand: note.hand,
+        ...note.finger !== void 0 ? { finger: note.finger } : {},
         ...note.voice !== void 0 ? { voice: text(note.voice, "", 80) } : {},
         velocity: number(
           note.velocity ?? DYNAMICS.find((d) => d.id === note.dynamic)?.velocity ?? (note.hand === "left" ? 0.55 : 0.78),
@@ -1390,7 +1393,7 @@ function exportMusicXML(score, { noteIds = false } = {}) {
             ].join("") : "";
             const auxAccidental = ornamentAccidental(note, fifths), auxMark = auxAccidental ? `<accidental-mark placement="${note.ornament === "mordent-lower" ? "below" : "above"}">${{ bb: "flat-flat", b: "flat", n: "natural", "#": "sharp", "##": "double-sharp" }[auxAccidental]}</accidental-mark>` : "";
             const ornament = attack && note.ornament ? `<ornaments>${note.ornament === "trill" ? "<trill-mark/>" : note.ornament === "mordent-upper" ? "<inverted-mordent/>" : "<mordent/>"}${auxMark}</ornaments>` : "";
-            const notation = `${ends ? '<tied type="stop"/>' : ""}${begins ? '<tied type="start"/>' : ""}${articulation ? `<articulations>${articulation}</articulations>` : ""}${ornament}${attack && note.arpeggio ? `<arpeggiate direction="${note.arpeggio}"/>` : ""}${stop === note.start + note.ticks && note.fermata ? "<fermata/>" : ""}`;
+            const notation = `${ends ? '<tied type="stop"/>' : ""}${begins ? '<tied type="start"/>' : ""}${articulation ? `<articulations>${articulation}</articulations>` : ""}${ornament}${attack && note.finger ? `<technical><fingering>${note.finger}</fingering></technical>` : ""}${attack && note.arpeggio ? `<arpeggiate direction="${note.arpeggio}"/>` : ""}${stop === note.start + note.ticks && note.fermata ? "<fermata/>" : ""}`;
             const notations = notation ? `<notations>${notation}</notations>` : "";
             if (attack && note.dynamic && !group.notes.slice(0, chordIndex).some((n) => n.dynamic))
               content.push(

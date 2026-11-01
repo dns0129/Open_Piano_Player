@@ -68,6 +68,7 @@ const state = {
   loopStart: 0,
   loopEnd: 16,
   follow: true,
+  showFingering: read("qinban-show-fingering", true) !== false,
   warnings: [],
   renderer: null,
   sourceRecord: null,
@@ -379,7 +380,7 @@ function practiceView() {
 <div class="sidebar-section"><h3>演奏速度</h3><div class="tempo-control"><label class="tempo-value"><input id="tempo-number" aria-label="输入练习速度 BPM" type="number" inputmode="numeric" min="20" max="300" step="1" value="${state.tempo}"><small>BPM</small></label><button class="original-speed" data-speed="1" title="恢复原速">原速</button></div><input id="tempo" aria-label="练习速度" type="range" min="20" max="300" step="1" value="${state.tempo}"></div>
 <div class="sidebar-section"><h3>${state.section === "guitar" ? "播放设置" : "分手练习"}</h3><div class="hand-buttons" ${state.section === "guitar" ? "hidden" : ""}><button id="right-hand" aria-pressed="${state.rightEnabled}" class="hand-button right ${state.rightEnabled ? "enabled" : ""}">右手 ${icon("check")}</button><button id="left-hand" aria-pressed="${state.leftEnabled}" class="hand-button left ${state.leftEnabled ? "enabled" : ""}">左手 ${icon("check")}</button></div><label class="compact-toggle" for="metronome"><input id="metronome" type="checkbox" ${state.metronome ? "checked" : ""}>节拍器</label></div>
 <div class="sidebar-section"><div class="sidebar-section-title"><h3>片段循环</h3><label class="compact-toggle" for="loop"><input id="loop" type="checkbox" ${state.loopEnabled ? "checked" : ""}>开启循环</label></div><div class="loop-controls"><input id="loop-start" aria-label="循环起始小节" type="number" min="1" max="${measureCount()}" value="${measureIndexAtBeat(state.loopStart) + 1}"><span>至</span><input id="loop-end" aria-label="循环结束小节" type="number" min="1" max="${measureCount()}" value="${measureIndexAtBeat(Math.max(0, state.loopEnd - 0.00001)) + 1}"><small>小节</small></div></div>
-<div class="sidebar-section"><h3>乐谱显示</h3><div class="notation-switch">${originalNotation(s) ? `<button data-mode="source" class="${state.mode === "source" ? "selected" : ""}">原图参考</button>` : ""}${state.section === "guitar" ? `<button data-mode="tab" class="${state.mode === "tab" ? "selected" : ""}">六线谱</button>` : `<button data-mode="staff" class="${state.mode === "staff" ? "selected" : ""}">五线谱</button><button data-mode="numbered" class="${state.mode === "numbered" ? "selected" : ""}">简谱</button>`}<button data-mode="roll" class="${state.mode === "roll" ? "selected" : ""}">${state.section === "guitar" ? "音高卷帘" : "钢琴卷帘"}</button></div><label class="compact-toggle" for="follow"><input id="follow" type="checkbox" ${state.follow ? "checked" : ""}>播放时自动跟随</label><div class="transpose-control"><span>移调</span><button id="transpose-down" aria-label="降低半音">−</button><span>${esc(s.mode ? tonalityLabel(s) : keyName(s.keySignature) + " 调")}</span><button id="transpose-up" aria-label="升高半音">＋</button></div></div>
+<div class="sidebar-section"><h3>乐谱显示</h3><div class="notation-switch">${originalNotation(s) ? `<button data-mode="source" class="${state.mode === "source" ? "selected" : ""}">原图参考</button>` : ""}${state.section === "guitar" ? `<button data-mode="tab" class="${state.mode === "tab" ? "selected" : ""}">六线谱</button>` : `<button data-mode="staff" class="${state.mode === "staff" ? "selected" : ""}">五线谱</button><button data-mode="numbered" class="${state.mode === "numbered" ? "selected" : ""}">简谱</button>`}<button data-mode="roll" class="${state.mode === "roll" ? "selected" : ""}">${state.section === "guitar" ? "音高卷帘" : "钢琴卷帘"}</button></div><label class="compact-toggle" for="follow"><input id="follow" type="checkbox" ${state.follow ? "checked" : ""}>播放时自动跟随</label>${state.section === "guitar" ? "" : `<label class="compact-toggle" for="show-fingering"><input id="show-fingering" type="checkbox" ${state.showFingering ? "checked" : ""}>显示指法数字</label>`}<div class="transpose-control"><span>移调</span><button id="transpose-down" aria-label="降低半音">−</button><span>${esc(s.mode ? tonalityLabel(s) : keyName(s.keySignature) + " 调")}</span><button id="transpose-up" aria-label="升高半音">＋</button></div></div>
 <div class="sidebar-section sidebar-instrument"><h3>${sectionLabel()}音色</h3>${instrumentControls()}<div class="volume-control">${icon("volume-2")}<input id="volume" aria-label="音量" type="range" min="0" max="1" step="0.01" value="${state.volume}"></div></div>
 <div class="sidebar-footer"><button class="button secondary" data-edit-notes>编辑与改编</button><button class="icon-button" data-export aria-label="导出乐谱" title="导出乐谱">${icon("download")}</button></div></aside>
 <section class="score-stage" aria-label="乐谱练习区域"><div class="score-document-heading"><div><h1>${esc(s.title)}</h1><p>${esc(s.composer || sectionLabel() + "谱")}<span>♩ = <b id="paper-tempo">${state.tempo}</b></span><span>${s.timeSignature.join("/")} 拍</span><span>${s.mode ? esc(tonalityLabel(s)) : keyName(s.keySignature) + " 调号"}</span></p></div><div class="score-provenance"><button class="button secondary" data-print-score>${icon("printer")}打印乐谱</button><span class="arrangement-tag">${provenanceTag(s)}</span><div class="source-line"><span>${esc(sourceLabel(s))}</span>${safeLink(s.source?.url, "来源")}${state.warnings.length ? `<button id="show-warnings">${state.warnings.length} 条提示</button>` : ""}</div></div></div><div id="notation" class="notation-area" aria-label="可点击定位的${sectionLabel()}乐谱"></div><div class="score-status"><span>${icon("music-2")} ${measureCount()} 小节 · 点击音符定位</span><span>${state.section === "guitar" ? "标准调弦 · 自动建议指法" : "左右手同步播放"} · ${capabilities.mode === "hosted" ? (scoreLibrary.records.some((r) => r.id === s.id) ? "乐谱保存到账号" : "公开示例") : "乐谱本地保存"}</span></div></section>
@@ -651,6 +652,20 @@ function bindPractice() {
     state.renderer?.destroy();
     drawNotation();
   };
+  if ($("#show-fingering"))
+    $("#show-fingering").onchange = (e) => {
+      state.showFingering = e.target.checked;
+      try {
+        localStorage.setItem(
+          "qinban-show-fingering",
+          JSON.stringify(state.showFingering),
+        );
+      } catch {
+        /* Preferences are optional. */
+      }
+      state.renderer?.destroy();
+      drawNotation();
+    };
   $("#transpose-up").onclick = () => transpose(1);
   $("#transpose-down").onclick = () => transpose(-1);
   $$("[data-midi]").forEach(
@@ -788,6 +803,7 @@ function drawNotation() {
       mode: state.mode,
       sourceNotation: originalNotation(),
       autoScroll: state.follow,
+      showFingering: state.showFingering,
       rightEnabled: state.rightEnabled,
       leftEnabled: state.leftEnabled,
       onSeek: (beat) => player.seek(beat),

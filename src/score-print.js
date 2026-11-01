@@ -121,6 +121,7 @@ export async function createScorePages(
     sourceNotation,
     appearance: rawAppearance,
     preview = false,
+    showFingering = true,
   } = {},
 ) {
   score = createDisplayRepresentation(score).score;
@@ -289,7 +290,7 @@ export async function createScorePages(
         renderer = (mode === "tab" ? renderGuitarTab : renderNotation)(
           host,
           score,
-          { mode, autoScroll: false, renderAll: true },
+          { mode, autoScroll: false, renderAll: true, showFingering },
         );
       } finally {
         VexFlow.setFonts(...previousFonts);
