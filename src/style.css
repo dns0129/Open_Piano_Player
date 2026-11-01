@@ -2498,6 +2498,20 @@ input[type="checkbox"] {
 .audio-dropzone.has-file {
   min-height: 112px;
 }
+.audio-link {
+  margin-top: 18px;
+  display: grid;
+  gap: 8px;
+}
+.audio-link .field {
+  margin: 0;
+}
+.audio-link .button {
+  justify-self: start;
+}
+.audio-link .form-note {
+  margin: 0;
+}
 .audio-source {
   margin: 14px 0 20px;
 }

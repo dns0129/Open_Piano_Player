@@ -13,7 +13,7 @@ const checkAbort = (signal) => {
   if (signal?.aborted) throw new DOMException("已取消音频转谱。", "AbortError");
 };
 
-async function decodedAudio(file) {
+export async function decodedAudio(file) {
   if (!file || typeof file.arrayBuffer !== "function")
     throw new Error("请选择音频文件。");
   if (file.size > MAX_AUDIO_BYTES)
@@ -70,7 +70,7 @@ export async function analyzeAudio(file) {
   };
 }
 
-async function clipMono(audio, segment) {
+export async function clipMono(audio, segment) {
   const begin = Math.floor(segment.start * audio.sampleRate);
   const end = Math.min(audio.length, Math.ceil(segment.end * audio.sampleRate));
   const channels = Array.from({ length: audio.numberOfChannels }, (_, index) =>

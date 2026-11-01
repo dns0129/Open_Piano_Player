@@ -89,6 +89,8 @@ const state = {
   searchLinks: [],
   audio: {
     file: null,
+    decodedFile: null,
+    sourceLink: "",
     url: null,
     meta: null,
     title: "",
@@ -364,7 +366,7 @@ function render() {
           `<button data-nav="${view}" class="${state.view === view ? "active" : ""}" ${state.view === view ? 'aria-current="page"' : ""}>${icon(symbol)}<span>${label}</span></button>`,
       )
       .join("")}</nav>
-</div><div id="modal-root"></div><div id="toast" role="status" aria-live="polite"></div><input id="file-input" type="file" accept=".xml,.musicxml,.mxl,.mid,.midi,.json,.pdf,.png,.jpg,.jpeg,.webp" hidden><input id="audio-input" type="file" accept="audio/*,.wav,.mp3,.m4a,.aac,.ogg,.flac,.webm" hidden>`;
+</div><div id="modal-root"></div><div id="toast" role="status" aria-live="polite"></div><input id="file-input" type="file" accept=".xml,.musicxml,.mxl,.mid,.midi,.json,.pdf,.png,.jpg,.jpeg,.webp" hidden><input id="audio-input" type="file" accept="audio/*,video/*,.wav,.mp3,.m4a,.aac,.ogg,.flac,.webm,.mp4,.mov,.m4v,.mkv" hidden>`;
   refreshIcons();
   bindCommon();
   if (state.view === "practice") {
@@ -933,6 +935,9 @@ const { isAudioFile, audioView, receiveAudio, bindAudio } =
     remember,
     download,
     keyName,
+    api,
+    requestResponse: apiClient.response,
+    capabilities,
   });
 const {
   openSearch,

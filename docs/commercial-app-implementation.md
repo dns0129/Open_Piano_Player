@@ -8,7 +8,7 @@
 | 入口 | 构建与服务 | 内容 |
 | --- | --- | --- |
 | 本地开发者模式 8792 | `npm run build`、`npm start` | 原有图片/PDF 识谱、历史任务、模型设置、找谱、导入、编辑与播放 |
-| 静态 Pages | `npm run build:pages` | 乐谱练习、数字导入与音频转谱；联网识谱需本机服务 |
+| 静态 Pages | `npm run build:pages` | 乐谱练习与数字导入；Pi 音频转谱及联网识谱需本机服务 |
 | 商业账号版 8793 | `npm run commercial:build`、`npm run commercial:start` | 账号、私有曲库、上传、识谱队列、额度和运营 |
 
 商业首页 `/`，上传 `/recognition.html`，练习 `/practice.html`，账号资料 `/account.html`，运营 `/operations.html`。hosted 构建不包含开发者 `index.html`。旧账号命令与 `.local/accounts-v1/` 继续使用，增量建表不替换已有账号或曲库。
