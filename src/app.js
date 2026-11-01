@@ -89,24 +89,11 @@ const state = {
   searchLinks: [],
   audio: {
     file: null,
-    decodedFile: null,
     sourceLink: "",
-    url: null,
-    meta: null,
-    title: "",
-    start: 0,
-    end: 30,
-    tempo: "",
-    grid: "1/16",
-    mode: "piano",
-    sensitivity: "standard",
+    sourceResult: null,
     status: "idle",
-    progress: 0,
-    message: "",
     error: "",
     abort: null,
-    result: null,
-    previewMode: "staff",
   },
 };
 if (state.section === "guitar") state.instrument = defaultInstrument("guitar");
@@ -342,7 +329,6 @@ function render() {
   if (state.mode === "source" && !originalNotation()) state.mode = "staff";
   $("#source-audio")?.pause();
   state.renderer?.destroy();
-  state.audio.previewRenderer?.destroy();
   $("#app").innerHTML =
     `<div data-section="${state.section}" class="app-shell ${state.view === "practice" ? "has-practice" : ""}">
 <header id="app-header" class="app-header"><a class="brand" href="${capabilities.mode === "hosted" ? "/" : "#"}" aria-label="琴伴首页"><span class="brand-symbol">${icon("piano")}</span><span>琴伴<small>${capabilities.mode === "hosted" ? "商业版练习室" : capabilities.mode === "local" ? "开发者模式" : "公开练习版"}</small></span></a>
@@ -931,12 +917,7 @@ const { isAudioFile, audioView, receiveAudio, bindAudio } =
     player,
     render,
     toast,
-    setScore,
-    remember,
-    download,
-    keyName,
     api,
-    requestResponse: apiClient.response,
     capabilities,
   });
 const {

@@ -1,265 +1,217 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { spawnSync, execFileSync } from "node:child_process";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 import { once } from "node:events";
-import { audioSpectrum, SPECTRUM_RATE } from "../lib/audio-spectrum.mjs";
+import { convertResponsesMessages } from "@earendil-works/pi-ai/api/openai-responses-shared";
+import { models, provider } from "../lib/auth.mjs";
 import {
-  validateAudioSpectrum,
-  audioModelResultToScore,
-  createPiAudioTranscriber,
-} from "../lib/pi-audio-transcription.mjs";
-import { decodeMedia } from "../lib/audio-media.mjs";
+  createPiMediaInspector,
+  directMediaCapability,
+  inspectMediaSource,
+  normalizeMediaShare,
+} from "../lib/pi-media-source.mjs";
 import { createAppServer } from "../server.mjs";
-import { safeFetch } from "../lib/safe-network.mjs";
-import { exportMidi, exportMusicXML } from "../lib/exporters.mjs";
-import { importMidi, importMusicXML } from "../lib/importers.mjs";
-import { boot } from "./app-harness.mjs";
+import { boot, until } from "./app-harness.mjs";
 
-function sine(duration = 1, hz = 440) {
-  const samples = new Float32Array(Math.round(SPECTRUM_RATE * duration));
-  for (let i = 0; i < samples.length; i++)
-    samples[i] = 0.3 * Math.sin((2 * Math.PI * hz * i) / SPECTRUM_RATE);
-  return samples;
-}
-const audioInput = (spectrum = audioSpectrum(sine())) => ({
-  spectrum,
-  title: "练习片段",
-  tempo: 0,
-  grid: "1/16",
-  mode: "piano",
-  startSeconds: 5,
-});
-const modelResult = {
-  complete: true,
-  tempo: 120,
-  keyKnown: true,
-  keySignature: 0,
-  mode: "major",
-  meterKnown: true,
-  timeSignature: [4, 4],
-  notes: [{ midi: 69, startSeconds: 0.1, durationSeconds: 0.5, hand: "right" }],
-  warnings: [],
-};
+const shared = "我分享了一首歌：https://music.163.com/#/song?id=1857099391";
 
-test("frequency evidence is extracted from PCM without fabricating notes", () => {
-  const spectrum = audioSpectrum(sine());
-  assert.equal(spectrum.frames.length, 10);
-  assert.ok(Math.abs(spectrum.frames[4][2][0][0] - 440) < 1);
-  assert.equal(spectrum.frames[4][2][0][1], -12);
-  assert.deepEqual(
-    validateAudioSpectrum(audioInput(spectrum)).spectrum,
-    spectrum,
-  );
-  assert.throws(() => audioSpectrum(new Float32Array(SPECTRUM_RATE)), /静音/);
-  const incomplete = structuredClone(spectrum);
-  incomplete.frames.pop();
-  assert.throws(() => validateAudioSpectrum(audioInput(incomplete)), /频谱/);
-  const outOfTime = structuredClone(spectrum);
-  outOfTime.frames[2][0] = 0.9;
-  assert.throws(() => validateAudioSpectrum(audioInput(outOfTime)), /频谱/);
-});
-
-test("score uses model notes and tempo, preserves excerpt duration and marks uncertainty", () => {
-  const input = validateAudioSpectrum(audioInput());
-  const result = audioModelResultToScore(modelResult, input);
-  assert.equal(result.score.notes[0].midi, 69);
-  assert.equal(result.score.notes[0].beat, 0.25);
-  assert.equal(result.score.notes[0].duration, 1);
-  assert.equal(result.score.durationBeats, 2);
-  assert.equal(result.score.tempo, 120);
-  assert.equal(result.score.source.reviewRequired, true);
-  assert.equal(result.analysis.startSeconds, 5);
-  assert.match(result.warnings.join(" "), /没有直接听到/);
-  const unknown = audioModelResultToScore(
-    {
-      ...modelResult,
-      tempo: 0,
-      keyKnown: false,
-      meterKnown: false,
-      mode: "unknown",
-    },
-    input,
-  );
-  assert.equal(unknown.score.tempo, 90);
-  assert.match(unknown.warnings.join(" "), /90 BPM/);
-  assert.throws(
-    () => audioModelResultToScore({ ...modelResult, complete: false }, input),
-    /完整/,
-  );
-  assert.throws(
-    () =>
-      audioModelResultToScore(
-        {
-          ...modelResult,
-          notes: [
-            {
-              ...modelResult.notes[0],
-              startSeconds: 0.9,
-              durationSeconds: 0.5,
-            },
-          ],
-        },
-        input,
-      ),
-    /超出/,
-  );
-});
-
-test("exported MIDI and MusicXML retain the inferred note and tempo", () => {
-  const { score } = audioModelResultToScore(
-    modelResult,
-    validateAudioSpectrum(audioInput()),
-  );
-  for (const imported of [
-    importMidi(exportMidi(score)).score,
-    importMusicXML(exportMusicXML(score)).score,
-  ]) {
-    assert.equal(imported.tempo, 120);
-    assert.ok(
-      imported.notes.some(
-        (note) =>
-          note.midi === 69 &&
-          Math.abs(note.beat - 0.25) < 0.01 &&
-          Math.abs(note.duration - 1) < 0.01,
-      ),
-    );
-  }
-});
-
-test("public media fetch never follows targets resolving to a private network", async () => {
-  await assert.rejects(
-    safeFetch("http://127.0.0.1/test.mp3", { allowPublicRedirects: true }),
-    (error) => error.code === "UNSAFE_URL",
-  );
-  await assert.rejects(
-    safeFetch("https://audio.example.test/test.mp3", {
-      allowPublicRedirects: true,
-      lookupImpl: async () => [{ address: "10.0.0.4", family: 4 }],
-    }),
-    (error) => error.code === "UNSAFE_URL",
-  );
-});
-
-test("Pi agent receives actual spectrum and its request is pinned to gpt-6.1-sol high", async () => {
-  const input = audioInput();
-  let optionsSeen,
-    promptSeen,
-    verified = false;
+test("Pi receives the original share text and its request remains pinned to Sol high", async () => {
+  let promptSeen, sourceSeen, modelOptions;
   const modelsImpl = {
-    getModel: (_provider, model) => ({ id: model }),
-    streamSimple(model, context, options) {
-      optionsSeen = options;
+    getModel: (_provider, id) => ({ id }),
+    streamSimple(model, _context, options) {
+      modelOptions = options;
       options.onPayload({
         model: model.id,
         reasoning: { effort: options.reasoning },
       });
     },
   };
-  const transcribe = createPiAudioTranscriber({
+  const inspect = createPiMediaInspector({
     modelsImpl,
     credentialReader: async () => {},
-    verified: () => {
-      verified = true;
+    verified: () => {},
+    sourceInspector: async (share) => {
+      sourceSeen = share;
+      return {
+        kind: "netease",
+        found: true,
+        songId: "1857099391",
+        message: "来源已找到。",
+      };
     },
     agentFactory: (options) => ({
-      state: { messages: [] },
       abort() {},
       async prompt(message) {
         promptSeen = message;
         options.streamFn(options.initialState.model, {}, {});
-        await options.initialState.tools[0].execute("fixture", modelResult);
+        await options.initialState.tools[0].execute();
       },
     }),
   });
-  const result = await transcribe(input);
-  assert.equal(optionsSeen.reasoning, "high");
-  assert.equal(result.model, "gpt-6.1-sol");
+  const result = await inspect({ share: shared });
+  assert.equal(promptSeen.content[0].text, shared);
+  assert.equal(sourceSeen, shared);
+  assert.equal(modelOptions.reasoning, "high");
+  assert.equal(result.source.songId, "1857099391");
   assert.deepEqual(result.requestAudit, [
     { model: "gpt-6.1-sol", reasoningEffort: "high" },
   ]);
-  assert.ok(promptSeen.content[0].text.includes('"frames"'));
-  assert.ok(
-    !promptSeen.content[0].text.includes(input.title),
-    "title is not evidence of notes",
-  );
-  assert.equal(verified, true);
+  assert.equal(result.supported, false);
+  assert.match(result.message, /无法识别音符/);
+  assert.equal(result.score, undefined);
 });
 
-test("unverified model response is never used", async () => {
-  const transcribe = createPiAudioTranscriber({
+test("NetEase lookup uses only the normal playback API and never exposes cookies or signed URLs", async () => {
+  let request;
+  const result = await inspectMediaSource(shared, {
+    neteaseSession: {
+      read: async () => ({ cookie: { MUSIC_U: "private-cookie" } }),
+    },
+    neteaseSdk: async (method, input) => {
+      request = { method, input };
+      return {
+        body: {
+          data: [
+            {
+              id: 1857099391,
+              url: "https://audio.example.com/song.mp3?signature=private",
+              freeTrialInfo: null,
+            },
+          ],
+        },
+      };
+    },
+  });
+  assert.equal(request.method, "song_url_v1");
+  assert.equal(request.input.level, "standard");
+  assert.equal(request.input.unblock, undefined);
+  assert.equal(request.input.cookie.MUSIC_U, "private-cookie");
+  assert.equal(result.kind, "netease");
+  assert.equal(result.found, true);
+  assert.ok(!JSON.stringify(result).includes("private"));
+  assert.ok(!JSON.stringify(result).includes("audio.example.com"));
+});
+
+test("NetEase availability does not disguise a preview or a missing URL as a full song", async () => {
+  const inspect = (track) =>
+    inspectMediaSource(shared, {
+      neteaseSession: { read: async () => ({}) },
+      neteaseSdk: async () => ({ body: { data: [track] } }),
+    });
+  const preview = await inspect({
+    id: 1857099391,
+    url: "https://audio.example.com/sample.mp3",
+    freeTrialInfo: { start: 0, end: 30 },
+  });
+  assert.equal(preview.previewOnly, true);
+  assert.match(preview.message, /试听/);
+  const unavailable = await inspect({ id: 1857099391, url: null });
+  assert.equal(unavailable.found, false);
+  assert.match(unavailable.message, /没有返回/);
+});
+
+test("NetEase short links resolve with headers only and retain the song fragment", async () => {
+  let method;
+  const result = await inspectMediaSource("https://163cn.tv/example", {
+    fetcher: async (_url, options) => {
+      method = options.method;
+      options.onRedirect("https://music.163.com/#/song?id=1857099391");
+      return {
+        url: "https://music.163.com/",
+        headers: {},
+        buffer: Buffer.alloc(0),
+      };
+    },
+    neteaseSession: { read: async () => ({}) },
+    neteaseSdk: async () => ({
+      body: {
+        data: [{ id: 1857099391, url: "https://audio.example.com/a.mp3" }],
+      },
+    }),
+  });
+  assert.equal(method, "HEAD");
+  assert.equal(result.songId, "1857099391");
+  assert.equal(result.found, true);
+});
+
+test("direct media lookup reads only HTTP headers and refuses private URLs", async () => {
+  const calls = [];
+  const source = await inspectMediaSource("https://example.com/file.mp3", {
+    fetcher: async (url, options) => {
+      calls.push({ url, method: options.method });
+      return {
+        url,
+        headers: { "content-type": "audio/mpeg", "content-length": "30000000" },
+        buffer: Buffer.alloc(0),
+      };
+    },
+  });
+  assert.deepEqual(
+    calls.map((item) => item.method),
+    ["HEAD"],
+  );
+  assert.equal(source.found, true);
+  assert.throws(
+    () => normalizeMediaShare("http://127.0.0.1/test.mp3"),
+    (error) => error.code === "UNSAFE_URL",
+  );
+});
+
+test("audio parts are not supported by the current Pi transport and are not submitted as images", () => {
+  const model = models.getModel(provider, "gpt-6.1-sol");
+  assert.deepEqual(model.input, ["text", "image"]);
+  // Verify the actual SDK behavior: an unsupported audio part is incorrectly
+  // encoded as an image, so sending it would not test native audio recognition.
+  const payload = convertResponsesMessages(
+    model,
+    {
+      messages: [
+        {
+          role: "user",
+          content: [{ type: "audio", mimeType: "audio/wav", data: "UklGRg==" }],
+          timestamp: 1,
+        },
+      ],
+    },
+    new Set([provider]),
+  );
+  assert.equal(payload[0].content[0].type, "input_image");
+  const capability = directMediaCapability();
+  assert.equal(capability.supported, false);
+  assert.match(capability.message, /文件未上传/);
+});
+
+test("Pi lookup cannot return an unaudited result or ignore a cancellation", async () => {
+  const inspect = createPiMediaInspector({
     modelsImpl: { getModel: () => ({ id: "gpt-6.1-sol" }) },
     credentialReader: async () => {},
+    sourceInspector: async () => ({ found: true }),
     agentFactory: (options) => ({
-      state: { messages: [] },
       abort() {},
       async prompt() {
-        await options.initialState.tools[0].execute("fixture", modelResult);
+        await options.initialState.tools[0].execute();
       },
     }),
   });
   await assert.rejects(
-    transcribe(audioInput()),
+    inspect({ share: shared }),
     (error) => error.code === "AUDIO_MODEL_UNVERIFIED",
+  );
+  const controller = new AbortController();
+  controller.abort();
+  await assert.rejects(
+    inspect({ share: shared }, { signal: controller.signal }),
+    { name: "AbortError" },
   );
 });
 
-test(
-  "video audio track is decoded locally for browser processing",
-  { skip: spawnSync("ffmpeg", ["-version"], { stdio: "ignore" }).status !== 0 },
-  async (t) => {
-    const dir = await mkdtemp(join(tmpdir(), "qinban-video-test-"));
-    t.after(() => rm(dir, { recursive: true, force: true }));
-    const path = join(dir, "test.mp4");
-    execFileSync("ffmpeg", [
-      "-v",
-      "error",
-      "-f",
-      "lavfi",
-      "-i",
-      "color=c=black:s=64x64:r=10",
-      "-f",
-      "lavfi",
-      "-i",
-      "sine=frequency=440",
-      "-t",
-      "1",
-      "-c:v",
-      "mpeg4",
-      "-c:a",
-      "aac",
-      path,
-    ]);
-    const wav = await decodeMedia({
-      data: (await readFile(path)).toString("base64"),
-    });
-    assert.equal(wav.toString("ascii", 0, 4), "RIFF");
-    assert.equal(wav.toString("ascii", 8, 12), "WAVE");
-    assert.ok(wav.length > 40000);
-    await assert.rejects(
-      decodeMedia({ data: Buffer.from("not media").toString("base64") }),
-      /无法读取/,
-    );
-  },
-);
-
-test("local audio routes require a session and CSRF, pass cancellation and reject web pages", async (t) => {
-  let transcribeInput, sourceOptions;
+test("local routes guard access and reject the old spectral-transcription path", async (t) => {
+  let seen;
   const server = createAppServer({
     statusReader: async () => ({ available: true }),
-    audioTranscriber: async (input, { signal }) => {
-      transcribeInput = input;
-      assert.equal(signal.aborted, false);
-      return { provider: "pi", model: "gpt-6.1-sol", reasoningEffort: "high" };
-    },
-    audioSourceFetcher: async (_url, options) => {
-      sourceOptions = options;
-      return {
-        headers: { "content-type": "text/html" },
-        buffer: Buffer.from("<html></html>"),
-      };
+    mediaInspector: async (input) => {
+      seen = input.share;
+      return { source: { found: false }, provider: "pi" };
     },
   });
   server.listen(0, "127.0.0.1");
@@ -283,7 +235,7 @@ test("local audio routes require a session and CSRF, pass cancellation and rejec
   };
   assert.equal(
     (
-      await fetch(url + "/api/audio/transcribe", {
+      await fetch(url + "/api/audio/inspect-link", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: "{}",
@@ -291,36 +243,58 @@ test("local audio routes require a session and CSRF, pass cancellation and rejec
     ).status,
     403,
   );
-  const response = await fetch(url + "/api/audio/transcribe", {
+  const response = await fetch(url + "/api/audio/inspect-link", {
     method: "POST",
     headers,
-    body: JSON.stringify({ spectrum: "test" }),
+    body: JSON.stringify({ share: shared }),
   });
   assert.equal(response.status, 200);
-  assert.equal(transcribeInput.spectrum, "test");
-  const page = await fetch(url + "/api/audio/source", {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ url: "https://example.com/video" }),
-  });
-  assert.equal(page.status, 422);
-  assert.equal((await page.json()).code, "AUDIO_LINK_NOT_MEDIA");
-  assert.equal(sourceOptions.allowPublicRedirects, true);
-  assert.equal(sourceOptions.maxBytes, 50 * 1024 * 1024);
+  assert.equal(seen, shared);
+  for (const path of ["source", "decode", "transcribe"]) {
+    const old = await fetch(url + "/api/audio/" + path, {
+      method: "POST",
+      headers,
+      body: "{}",
+    });
+    assert.equal(old.status, 410);
+    assert.equal((await old.json()).code, "AUDIO_SPECTRUM_DISABLED");
+  }
 });
 
-test("audio workspace exposes Pi, video and link input with honest static-site behavior", async (t) => {
-  const { doc } = await boot(t);
+test("audio workspace lets users paste a link and file check sends metadata only", async (t) => {
+  const { w, doc } = await boot(t);
   doc.querySelector('[data-nav="audio"]').click();
-  assert.match(
-    doc.querySelector(".audio-page").textContent,
-    /GPT-6.1 Sol high/,
-  );
-  assert.match(
-    doc.querySelector(".audio-page").textContent,
-    /模型不直接接收声音/,
-  );
   assert.ok(doc.querySelector("#audio-link"));
-  assert.match(doc.querySelector("#audio-input").accept, /video/);
-  assert.equal(doc.querySelector("#start-transcription").disabled, true);
+  assert.match(
+    doc.querySelector(".audio-page").textContent,
+    /不会提取或发送频谱/,
+  );
+  const input = doc.querySelector("#audio-input");
+  Object.defineProperty(input, "files", {
+    value: [
+      new w.File(["private-audio-bytes"], "example.mp3", {
+        type: "audio/mpeg",
+      }),
+    ],
+  });
+  input.dispatchEvent(new w.Event("change"));
+  let requestBody;
+  w.fetch = async (path, options) => {
+    if (String(path).endsWith("/api/audio/direct-capability")) {
+      requestBody = JSON.parse(options.body);
+      return Response.json(directMediaCapability());
+    }
+    return Response.json({ records: [], warnings: [] });
+  };
+  doc.querySelector("#check-direct-media").click();
+  await until(() => requestBody, "direct capability request");
+  await until(
+    () =>
+      doc
+        .querySelector(".audio-output-empty")
+        ?.textContent.includes("文件未上传"),
+    "clear direct-input limitation",
+  );
+  assert.deepEqual(Object.keys(requestBody).sort(), ["name", "size", "type"]);
+  assert.ok(!JSON.stringify(requestBody).includes("private-audio-bytes"));
 });

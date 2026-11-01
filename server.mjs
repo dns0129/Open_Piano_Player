@@ -19,9 +19,10 @@ import {
 } from "./lib/public-library.mjs";
 import { createFullScoreJobStore } from "./lib/full-score-jobs.mjs";
 import { SCORE_RECOGNITION } from "./lib/recognition-policy.mjs";
-import { transcribePiAudio } from "./lib/pi-audio-transcription.mjs";
-import { decodeMedia } from "./lib/audio-media.mjs";
-import { safeFetch } from "./lib/safe-network.mjs";
+import {
+  inspectPiMedia,
+  directMediaCapability,
+} from "./lib/pi-media-source.mjs";
 import { createNeteaseScoreProvider } from "./lib/netease-scores.mjs";
 import {
   createRouter,
@@ -84,9 +85,8 @@ export function createAppServer({
   distDir = resolve("dist"),
   settingsStore = createSettingsStore(),
   generate = generateScore,
-  audioTranscriber = transcribePiAudio,
-  audioDecoder = decodeMedia,
-  audioSourceFetcher = safeFetch,
+  mediaInspector = inspectPiMedia,
+  mediaCapability = directMediaCapability,
   statusReader = authStatus,
   publicDownloader = downloadPublicScore,
   scoreSearch = createScoreSearch(),
@@ -255,56 +255,15 @@ export function createAppServer({
   const routes = createRouter();
 
   routes
-    .add("POST", "/api/audio/source", async (c) => {
-      limitSearch(c.current, "音视频链接请求过于频繁，请稍后重试。");
+    .add("POST", "/api/audio/inspect-link", async (c) => {
       const input = await c.body(10000);
-      const signal = c.deadline(120000);
-      const result = await audioSourceFetcher(input.url, {
-        signal,
-        maxBytes: 50 * MB,
-        allowPublicRedirects: true,
-        headers: {
-          accept: "audio/*, video/*, application/octet-stream",
-          "accept-encoding": "identity",
-        },
-      });
-      const type = String(result.headers["content-type"] || "")
-        .split(";")[0]
-        .trim()
-        .toLowerCase();
-      if (
-        !/^(audio|video)\//.test(type) &&
-        !["application/octet-stream", "application/ogg"].includes(type)
-      )
-        throw userError(
-          "链接不是可直接下载的音视频文件。视频平台页面请先下载文件再上传。",
-          "AUDIO_LINK_NOT_MEDIA",
-          422,
-        );
-      send(c.res, result.buffer, {
-        "content-type": type || "application/octet-stream",
-      });
-    })
-    .add("POST", "/api/audio/decode", async (c) => {
-      const input = await c.body(68 * MB);
-      const signal = c.deadline(120000);
-      send(c.res, await audioDecoder(input, { signal }), {
-        "content-type": "audio/wav",
-      });
-    })
-    .add("POST", "/api/audio/transcribe", async (c) => {
-      const input = await c.body(4 * MB);
       const current = c.current;
       if (current.running || activeGenerations >= 2)
         throw userError("已有识别任务正在进行，请稍后重试。", "BUSY", 429);
       const now = Date.now();
       current.calls = current.calls.filter((t) => now - t < 60000);
       if (current.calls.length >= 6)
-        throw userError(
-          "生成请求过于频繁，请一分钟后重试。",
-          "RATE_LIMIT",
-          429,
-        );
+        throw userError("请求过于频繁，请一分钟后重试。", "RATE_LIMIT", 429);
       current.running = true;
       activeGenerations++;
       current.calls.push(now);
@@ -313,11 +272,22 @@ export function createAppServer({
           timeout: () => new Error("timeout"),
           closed: () => new Error("client aborted"),
         });
-        json(c.res, 200, await audioTranscriber(input, { signal }));
+        json(c.res, 200, await mediaInspector(input, { signal }));
       } finally {
         current.running = false;
         activeGenerations--;
       }
+    })
+    .add("POST", "/api/audio/direct-capability", async (c) => {
+      await c.body(4000);
+      json(c.res, 200, mediaCapability());
+    })
+    .add("POST", /^\/api\/audio\/(source|decode|transcribe)$/, () => {
+      throw userError(
+        "旧版频谱转谱已停用，请刷新页面查看 Pi 直传状态。",
+        "AUDIO_SPECTRUM_DISABLED",
+        410,
+      );
     });
 
   routes
