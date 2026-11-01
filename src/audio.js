@@ -196,9 +196,9 @@ export class PianoPlayer {
   async play() {
     if (!this._score || !this._duration || this._state === "playing") return;
     const generation = (this._playGeneration = (this._playGeneration || 0) + 1);
-    await this._ensureAudio();
-    // A stop/pause while the browser's audio permission promise is pending wins.
-    await this._context.resume();
+    // Start/resume synchronously in the tap/click handler, before awaiting
+    // sample loading: iOS Safari requires the user gesture for Web Audio.
+    await this._startAudio();
     await this._prepareInstrument();
     if (generation !== this._playGeneration) return;
     let position = this._beat >= this._duration - EPSILON ? 0 : this._beat;
@@ -306,8 +306,7 @@ export class PianoPlayer {
 
   async notePreview(midi, velocity = 0.7) {
     const generation = this._playGeneration || 0;
-    await this._ensureAudio();
-    await this._context.resume();
+    await this._startAudio();
     await this._prepareInstrument();
     if (generation !== (this._playGeneration || 0)) return;
     this._piano(
@@ -322,8 +321,7 @@ export class PianoPlayer {
     this.pause();
     this._cancelVoices();
     const generation = this._playGeneration;
-    await this._ensureAudio();
-    await this._context.resume();
+    await this._startAudio();
     await this._prepareInstrument();
     if (generation !== this._playGeneration) return;
     const start = this._context.currentTime + 0.015;
@@ -357,8 +355,7 @@ export class PianoPlayer {
     const request = (this._previewGeneration =
         (this._previewGeneration || 0) + 1),
       generation = this._playGeneration || 0;
-    await this._ensureAudio();
-    await this._context.resume();
+    await this._startAudio();
     await this._prepareInstrument();
     if (
       request !== this._previewGeneration ||
@@ -548,7 +545,7 @@ export class PianoPlayer {
     this._context = null;
   }
 
-  async _ensureAudio() {
+  _ensureAudio() {
     if (this._disposed) throw new DOMException("播放器已关闭。", "AbortError");
     if (this._context) return;
     this._context = this._contextFactory();
@@ -562,6 +559,19 @@ export class PianoPlayer {
     compressor.release.value = 0.18;
     this._master.connect(compressor);
     compressor.connect(this._context.destination);
+  }
+
+  _startAudio() {
+    // On supported iPhones this selects music playback rather than ambient
+    // effects, which can be silenced by the device's Ring/Silent switch.
+    try {
+      const session = globalThis.navigator?.audioSession;
+      if (session && session.type !== "playback") session.type = "playback";
+    } catch {
+      // Unsupported or locked audio sessions still use the normal Web Audio path.
+    }
+    this._ensureAudio();
+    return this._context.resume();
   }
 
   _loopBounds() {

@@ -196,6 +196,81 @@ const sampleOptions = (overrides = {}) => ({
   ...overrides,
 });
 
+test("play and each preview resume audio within the initiating user gesture", async () => {
+  const score = makeScore([
+    { id: "gesture", beat: 0, duration: 1, midi: 60, hand: "right" },
+  ]);
+  const actions = [
+    (player) => player.play(),
+    (player) => player.notePreview(60),
+    (player) => player.previewInstrument(),
+    (player) => player.previewNotes(player._score, "gesture"),
+  ];
+  for (const action of actions) {
+    const h = harness(score);
+    let inGesture = true,
+      calls = 0;
+    h.context.resume = () => {
+      calls++;
+      assert.equal(inGesture, true, "resume must occur before the first await");
+      return Promise.resolve();
+    };
+    const result = action(h.player);
+    inGesture = false;
+    await result;
+    assert.equal(calls, 1);
+    assert.ok(h.context.oscillators.length > 0);
+    await h.player.dispose();
+  }
+});
+
+test("music playback requests the iPhone audio session and tolerates unsupported sessions", async () => {
+  const previous = Object.getOwnPropertyDescriptor(globalThis, "navigator");
+  const values = [];
+  const session = {
+    get type() {
+      return values.at(-1) || "auto";
+    },
+    set type(value) {
+      values.push(value);
+    },
+  };
+  const score = makeScore([
+    { id: "session", beat: 0, duration: 1, midi: 60, hand: "right" },
+  ]);
+  try {
+    Object.defineProperty(globalThis, "navigator", {
+      configurable: true,
+      value: { audioSession: session },
+    });
+    const h = harness(score);
+    assert.deepEqual(
+      values,
+      [],
+      "loading a score must not interrupt other audio",
+    );
+    await h.player.play();
+    assert.deepEqual(values, ["playback"]);
+    await h.player.dispose();
+
+    Object.defineProperty(globalThis, "navigator", {
+      configurable: true,
+      value: {
+        get audioSession() {
+          throw new Error("not supported");
+        },
+      },
+    });
+    const fallback = harness(score);
+    await fallback.player.play();
+    assert.ok(fallback.context.oscillators.length > 0);
+    await fallback.player.dispose();
+  } finally {
+    if (previous) Object.defineProperty(globalThis, "navigator", previous);
+    else delete globalThis.navigator;
+  }
+});
+
 test("performed effects drive real piano scheduling, and typed 300 BPM keeps the audio clock in sync", async () => {
   const h = harness(
     makeScore(
