@@ -376,6 +376,32 @@ export function renderNotation(container, score, options = {}) {
         String(info.index + 1),
       ),
     );
+    const directions = (score.directions || []).filter(
+      (mark) => mark.beat >= info.start && mark.beat < info.end,
+    );
+    if (directions.length) {
+      const revised = score.measureMap?.[info.index]?.revision;
+      const x = info.x + (revised ? 100 : 32);
+      const width = Math.max(16, info.width - (x - info.x) - 8);
+      const fullText = directions.map((mark) => mark.text).join(" · ");
+      const chars = Math.max(1, Math.floor(width / 11));
+      const text =
+        fullText.length > chars ? fullText.slice(0, chars - 1) + "…" : fullText;
+      const label = svgElement(
+        "text",
+        {
+          x,
+          y: 14,
+          class: "notation-direction",
+          "font-size": 11,
+          "aria-label": fullText,
+          "data-beat": directions[0].beat,
+        },
+        text,
+      );
+      label.append(svgElement("title", {}, fullText));
+      group.append(label);
+    }
     const revision = score.measureMap?.[info.index]?.revision;
     if (
       revision &&

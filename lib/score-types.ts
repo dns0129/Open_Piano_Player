@@ -120,6 +120,12 @@ export interface PracticeScore {
   measureMap?: Measure[];
   tempoMap?: Array<{ beat: number; bpm: number; curve: "step" | "linear" }>;
   fermatas?: Array<{ beat: number; holdBeats: number }>;
+  directions?: Array<{
+    type: "words" | "rehearsal";
+    text: string;
+    beat: number;
+    staff: number;
+  }>;
   rests?: ScoreRest[];
   sourceNotation?: SourceNotation;
   lineage?: Lineage;

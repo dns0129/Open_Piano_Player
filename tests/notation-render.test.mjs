@@ -740,3 +740,69 @@ test("numbered rendering uses fixed do and repeats key and chromatic accidentals
     dom.window.close();
   }
 });
+
+test("rehearsal and words render as safe measure headers in staff, numbered and roll views", async () => {
+  await fontsReady;
+  const dom = new JSDOM('<div id="host"></div>');
+  const previous = {
+    document: globalThis.document,
+    window: globalThis.window,
+    cancelAnimationFrame: globalThis.cancelAnimationFrame,
+  };
+  const canvas = Element.getTextMeasurementCanvas();
+  try {
+    globalThis.document = dom.window.document;
+    globalThis.window = dom.window;
+    globalThis.cancelAnimationFrame = () => {};
+    dom.window.HTMLCanvasElement.prototype.getContext = () => ({
+      font: "",
+      measureText: (text) => ({
+        width: String(text).length * 8,
+        actualBoundingBoxAscent: 8,
+        actualBoundingBoxDescent: 2,
+      }),
+    });
+    Element.setTextMeasurementCanvas(document.createElement("canvas"));
+    const host = document.querySelector("#host");
+    Object.defineProperty(host, "clientWidth", { value: 800 });
+    const score = {
+      tempo: 61,
+      timeSignature: [4, 4],
+      keySignature: 2,
+      durationBeats: 8,
+      notes: [{ id: "r", midi: 69, beat: 0, duration: 8, hand: "right" }],
+      directions: [
+        { type: "words", text: "自由速度 <script>", beat: 0, staff: 1 },
+        { type: "rehearsal", text: "副歌", beat: 4, staff: 1 },
+      ],
+    };
+    for (const mode of ["staff", "numbered", "roll"]) {
+      const renderer = renderNotation(host, score, { mode, autoScroll: false });
+      try {
+        assert.equal(host.querySelectorAll(".notation-error").length, 0);
+        assert.equal(host.querySelectorAll(".notation-direction").length, 2);
+        assert.equal(
+          host.querySelector(".notation-direction").getAttribute("aria-label"),
+          "自由速度 <script>",
+        );
+        assert.equal(host.querySelectorAll("script").length, 0);
+        assert.equal(
+          host
+            .querySelector('[data-measure="1"] .notation-direction')
+            .getAttribute("data-beat"),
+          "4",
+        );
+      } finally {
+        renderer.destroy();
+        host.replaceChildren();
+      }
+    }
+  } finally {
+    Element.setTextMeasurementCanvas(canvas);
+    for (const [k, v] of Object.entries(previous)) {
+      if (v === undefined) delete globalThis[k];
+      else globalThis[k] = v;
+    }
+    dom.window.close();
+  }
+});
