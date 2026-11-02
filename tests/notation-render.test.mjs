@@ -314,7 +314,7 @@ test("both written formats follow a mid-system key change and repeat the active 
         assert.match(
           host.querySelector('[data-measure="1"] .notation-key-label')
             .textContent,
-          /1 = E/,
+          /1 = C/,
         );
       renderer.destroy();
     }
@@ -636,6 +636,103 @@ test("revision markers identify changed and uncertain bars in all three notation
   } finally {
     renderer?.destroy();
     Element.setTextMeasurementCanvas(measurementCanvas);
+    for (const [key, value] of Object.entries(saved)) {
+      if (value === undefined) delete globalThis[key];
+      else globalThis[key] = value;
+    }
+    dom.window.close();
+  }
+});
+
+test("numbered rendering uses fixed do and repeats key and chromatic accidentals on every note", () => {
+  const dom = new JSDOM('<div id="host"></div>');
+  const saved = {
+    document: globalThis.document,
+    window: globalThis.window,
+    cancelAnimationFrame: globalThis.cancelAnimationFrame,
+  };
+  let renderer;
+  try {
+    globalThis.document = dom.window.document;
+    globalThis.window = dom.window;
+    globalThis.cancelAnimationFrame = () => {};
+    const host = document.querySelector("#host");
+    Object.defineProperty(host, "clientWidth", { value: 800 });
+    for (const fixture of [
+      {
+        keySignature: 1,
+        mode: "major",
+        pitches: [
+          ["G", 0, 67],
+          ["F", 1, 66],
+          ["F", 1, 66],
+          ["F", 0, 65],
+        ],
+        expected: ["5", "4", "♯", "4", "♯", "4"],
+      },
+      {
+        keySignature: -1,
+        mode: "minor",
+        pitches: [
+          ["B", -1, 70],
+          ["B", -1, 70],
+          ["C", 1, 61],
+          ["D", -1, 61],
+        ],
+        expected: ["7", "♭", "7", "♭", "1", "♯", "2", "♭"],
+      },
+      {
+        keySignature: 0,
+        mode: "minor",
+        pitches: [
+          ["G", 1, 68],
+          ["F", 2, 67],
+          ["B", -2, 69],
+          ["A", 0, 69],
+        ],
+        expected: ["5", "♯", "4", "𝄪", "7", "𝄫", "6"],
+      },
+    ]) {
+      const score = {
+        tempo: 90,
+        timeSignature: [4, 4],
+        durationBeats: 4,
+        keySignature: fixture.keySignature,
+        mode: fixture.mode,
+        notes: fixture.pitches.map(([step, alter, midi], beat) => ({
+          id: `n${beat}`,
+          beat,
+          midi,
+          duration: 1,
+          hand: "right",
+          pitch: { step, alter, octave: 4, provenance: "source" },
+        })),
+      };
+      renderer = renderNotation(host, score, {
+        mode: "numbered",
+        autoScroll: false,
+        showFingering: false,
+      });
+      assert.deepEqual(
+        [...host.querySelectorAll(".notation-pitch:not(.notation-rest)")]
+          .map((el) => el.textContent)
+          .filter((text) => text !== "—"),
+        fixture.expected,
+      );
+      assert.match(
+        host.querySelector(".notation-help").textContent,
+        /固定唱名/,
+      );
+      assert.doesNotMatch(host.textContent, /以 6 为小调主音/);
+      assert.ok(
+        [...host.querySelectorAll(".notation-key-label")].every(
+          (el) => el.textContent === "1 = C",
+        ),
+      );
+      renderer.destroy();
+    }
+  } finally {
+    renderer?.destroy();
     for (const [key, value] of Object.entries(saved)) {
       if (value === undefined) delete globalThis[key];
       else globalThis[key] = value;

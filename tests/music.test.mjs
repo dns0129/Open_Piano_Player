@@ -150,7 +150,7 @@ test("transposition changes all pitches and key signature consistently and respe
   );
 });
 
-test("key spelling and numbered pitches respect sharp/flat key signatures and octaves", () => {
+test("key spelling and fixed-do numbered pitches preserve accidentals and octaves", () => {
   const { letter, accidental, octave } = spellMidi(65, 6);
   assert.deepEqual(
     { letter, accidental, octave },
@@ -158,14 +158,14 @@ test("key spelling and numbered pitches respect sharp/flat key signatures and oc
   );
   assert.equal(spellMidi(61, -5).letter, "D");
   assert.deepEqual(numberedPitch(67, 1), {
-    degree: 1,
+    degree: 5,
     octave: 0,
     accidental: 0,
   });
   assert.deepEqual(numberedPitch(66, 1), {
-    degree: 7,
-    octave: -1,
-    accidental: 0,
+    degree: 4,
+    octave: 0,
+    accidental: 1,
   });
   assert.deepEqual(numberedPitch(72, 0), {
     degree: 1,
@@ -176,6 +176,34 @@ test("key spelling and numbered pitches respect sharp/flat key signatures and oc
     degree: 1,
     octave: 0,
     accidental: 1,
+  });
+});
+
+test("fixed-do numbering keeps written enharmonics and every key alteration", () => {
+  for (let key = -7; key <= 7; key++) {
+    for (const [index, step] of ["C", "D", "E", "F", "G", "A", "B"].entries()) {
+      for (const alter of [-2, -1, 0, 1, 2]) {
+        for (const octave of [3, 4, 5]) {
+          const midi =
+            (octave + 1) * 12 + [0, 2, 4, 5, 7, 9, 11][index] + alter;
+          assert.deepEqual(numberedPitch(midi, key, { step, alter, octave }), {
+            degree: index + 1,
+            octave: octave - 4,
+            accidental: alter,
+          });
+        }
+      }
+    }
+  }
+  assert.deepEqual(numberedPitch(70, -1), {
+    degree: 7,
+    octave: 0,
+    accidental: -1,
+  });
+  assert.deepEqual(numberedPitch(60, 1), {
+    degree: 1,
+    octave: 0,
+    accidental: 0,
   });
 });
 
