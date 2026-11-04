@@ -22,7 +22,9 @@ export function practiceLayout(
   const layout = {
     topbar: true,
     sidebar: roomy,
-    keyboard: roomy && !short,
+    // Tablet practice starts with paper filling the space below the controls.
+    // Explicit keyboard choices are still restored from preferences below.
+    keyboard: presentation === "desktop" && !short,
     focus: presentation === "portrait" || presentation === "phone-landscape",
   };
   for (const panel of panels) {

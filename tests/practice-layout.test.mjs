@@ -64,6 +64,38 @@ test("short desktop windows fold the keyboard by default but keep a saved choice
   assert.equal(practiceLayout("desktop").keyboard, true);
 });
 
+test("iPad landscape starts with the keyboard folded and remembers an explicit choice", () => {
+  for (const [width, height] of [
+    [1024, 768],
+    [1194, 834],
+    [1366, 1024],
+  ]) {
+    const t = setup(width, height);
+    try {
+      assert.ok(t.shell.classList.contains("keyboard-hidden"));
+      assert.equal(
+        t.shell
+          .querySelector('[data-layout="keyboard"]')
+          .getAttribute("aria-expanded"),
+        "false",
+      );
+      t.click("keyboard");
+      assert.ok(!t.shell.classList.contains("keyboard-hidden"));
+      t.remount();
+      assert.ok(!t.shell.classList.contains("keyboard-hidden"));
+      t.resize(height, width);
+      assert.ok(t.shell.classList.contains("keyboard-hidden"));
+      t.resize(width, height);
+      assert.ok(!t.shell.classList.contains("keyboard-hidden"));
+      t.click("keyboard");
+      t.remount();
+      assert.ok(t.shell.classList.contains("keyboard-hidden"));
+    } finally {
+      t.close();
+    }
+  }
+});
+
 test("folding panels and rotating keep the same player, score DOM and current beat", () => {
   const t = setup();
   try {
@@ -72,6 +104,7 @@ test("folding panels and rotating keep the same player, score DOM and current be
       seek = t.shell.querySelector("#seek");
     let played = 0;
     play.onclick = () => played++;
+    t.click("keyboard");
     t.click("topbar");
     t.click("sidebar");
     t.click("keyboard");
@@ -108,7 +141,7 @@ test("leaving portrait focus is reversible and does not change the landscape lay
     assert.ok(!t.shell.classList.contains("is-focus"));
     t.click("keyboard");
     t.resize(1194, 834);
-    assert.ok(!t.shell.classList.contains("keyboard-hidden"));
+    assert.ok(t.shell.classList.contains("keyboard-hidden"));
     t.click("keyboard");
     t.resize(834, 1194);
     assert.ok(!t.shell.classList.contains("is-focus"));
