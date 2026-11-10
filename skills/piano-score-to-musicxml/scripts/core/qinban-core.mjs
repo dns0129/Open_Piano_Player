@@ -1159,6 +1159,9 @@ var { Midi } = MidiPackage;
 var { parseMidi, writeMidi } = MidiFilePackage;
 var MUSICXML_DIVISIONS = 15360 * 27 * 7 * 11 * 13;
 var DIVISIONS = MUSICXML_DIVISIONS;
+var MUSICXML_MAX_DIVISIONS = 40320;
+var tickGrid = 1;
+var forReaders = false;
 var escapeXML = (value) => String(value ?? "").replace(
   /[<>&"']/g,
   (char) => ({
@@ -1170,8 +1173,27 @@ var escapeXML = (value) => String(value ?? "").replace(
   })[char]
 );
 var limit = (value, min, max) => Math.max(min, Math.min(max, Number(value) || 0));
-var tick = (beat) => Math.round(beat * DIVISIONS);
+var tick = (beat) => Math.round(beat * DIVISIONS / tickGrid) * tickGrid;
 var gcd = (a, b) => b ? gcd(b, a % b) : a;
+var TIMED_VALUE = /<(duration|offset)>(-?\d+)<\/\1>/g;
+function requiredDivisions(xml) {
+  let common = DIVISIONS;
+  for (const match of xml.matchAll(TIMED_VALUE)) {
+    common = gcd(common, Math.abs(Number(match[2])));
+    if (common === 1) break;
+  }
+  return DIVISIONS / common;
+}
+function compactDivisions(xml) {
+  const divisions = requiredDivisions(xml), unit = DIVISIONS / divisions;
+  return xml.replace(
+    TIMED_VALUE,
+    (_, tag, value) => `<${tag}>${Number(value) / unit}</${tag}>`
+  ).replace(
+    `<divisions>${DIVISIONS}</divisions>`,
+    `<divisions>${divisions}</divisions>`
+  );
+}
 function normalizedNotes(score) {
   return (score.notes || []).filter(
     (note) => Number.isFinite(note.midi) && Number.isFinite(note.beat) && Number.isFinite(note.duration) && note.duration > 0 && note.beat >= 0
@@ -1179,14 +1201,15 @@ function normalizedNotes(score) {
     ...note,
     midi: Math.round(limit(note.midi, 0, 127)),
     start: tick(note.beat),
-    ticks: Math.max(1, tick(note.duration)),
+    ticks: Math.max(tickGrid, tick(note.duration)),
     hand: note.hand === "left" ? "left" : "right"
   })).sort((a, b) => a.start - b.start || a.midi - b.midi);
 }
-function rhythmXML(ticks, rhythm) {
-  if (rhythm && Math.abs(writtenBeats(rhythm) * DIVISIONS - ticks) < 0.1) {
+function rhythmXML(ticks, rhythm, accidental = "") {
+  const slack = tickGrid > 1 ? tickGrid / 2 : 0;
+  if (rhythm && Math.abs(writtenBeats(rhythm) * DIVISIONS - ticks) < 0.1 + slack) {
     const ts = rhythm.tuplets || [], actual = ts.reduce((n, t) => n * t.actual, 1), normal = ts.reduce((n, t) => n * t.normal, 1);
-    return `<type>${rhythm.type}</type>${"<dot/>".repeat(rhythm.dots)}` + (ts.length ? `<time-modification><actual-notes>${actual}</actual-notes><normal-notes>${normal}</normal-notes></time-modification>` : "");
+    return `<type>${rhythm.type}</type>${"<dot/>".repeat(rhythm.dots)}${accidental}` + (ts.length ? `<time-modification><actual-notes>${actual}</actual-notes><normal-notes>${normal}</normal-notes></time-modification>` : "");
   }
   const types = [
     ["long", 16],
@@ -1204,8 +1227,8 @@ function rhythmXML(ticks, rhythm) {
   for (const [name2, beats2] of types) {
     for (let dots = 0; dots <= 2; dots++) {
       const value = beats2 * (2 - 1 / 2 ** dots) * DIVISIONS;
-      if (Math.abs(ticks - value) < 0.01)
-        return `<type>${name2}</type>${"<dot/>".repeat(dots)}`;
+      if (Math.abs(ticks - value) < 0.01 + slack)
+        return `<type>${name2}</type>${"<dot/>".repeat(dots)}${accidental}`;
     }
   }
   const [, beats] = types.reduce(
@@ -1215,7 +1238,9 @@ function rhythmXML(ticks, rhythm) {
   const name = types.find((entry) => entry[1] === beats)[0];
   const baseTicks = Math.round(beats * DIVISIONS);
   const divisor = gcd(baseTicks, ticks);
-  return `<type>${name}</type><time-modification><actual-notes>${baseTicks / divisor}</actual-notes><normal-notes>${ticks / divisor}</normal-notes></time-modification>`;
+  if (forReaders && Math.max(baseTicks, ticks) / divisor > 999)
+    return `<type>${name}</type>${accidental}`;
+  return `<type>${name}</type>${accidental}<time-modification><actual-notes>${baseTicks / divisor}</actual-notes><normal-notes>${ticks / divisor}</normal-notes></time-modification>`;
 }
 function pitchXML(midi, useFlats, written) {
   if (written)
@@ -1290,7 +1315,22 @@ function assignVoices(notes, rests = []) {
   }
   return voices.length ? voices : [{ id: "1", end: 0, groups: [] }];
 }
-function exportMusicXML(score, { noteIds = false } = {}) {
+function exportMusicXML(score, options2 = {}) {
+  if (options2.compact === false || options2.noteIds && !options2.compact)
+    return writeMusicXML(score, options2);
+  forReaders = true;
+  try {
+    const exact = writeMusicXML(score, options2);
+    if (requiredDivisions(exact) <= MUSICXML_MAX_DIVISIONS)
+      return compactDivisions(exact);
+    tickGrid = DIVISIONS / MUSICXML_MAX_DIVISIONS;
+    return compactDivisions(writeMusicXML(score, options2));
+  } finally {
+    tickGrid = 1;
+    forReaders = false;
+  }
+}
+function writeMusicXML(score, { noteIds = false } = {}) {
   score = createDisplayRepresentation(score).score;
   const notes = normalizedNotes(score);
   const incoming = new Set(notes.filter((n) => n.tieTo).map((n) => n.tieTo));
@@ -1304,7 +1344,7 @@ function exportMusicXML(score, { noteIds = false } = {}) {
   const durationTicks = Math.max(
     tick(Number(score.durationBeats) || 0),
     ...notes.map((note) => note.start + note.ticks),
-    1
+    tickGrid
   );
   const measureCount = score.measureMap?.length || Math.max(1, Math.ceil(durationTicks / measureTicks));
   const fifths = Math.round(limit(score.keySignature || 0, -7, 7));
@@ -1454,7 +1494,7 @@ function exportMusicXML(score, { noteIds = false } = {}) {
                   `<note><grace slash="${note.grace.slash ? "yes" : "no"}"/>${pitchXML(g.midi, currentKey < 0, g.pitch)}<voice>${escapeXML(voiceId)}</voice><type>16th</type><staff>${staffIndex + 1}</staff></note>`
                 );
             content.push(
-              `<note${noteIds ? ` id="note-${escapeXML(note.id)}-m${index + 1}"` : ""}${expressive ? ` dynamics="${((note.velocity ?? 0.7) * 127 / 90 * 100).toFixed(4)}"` : ""}>${chordIndex ? "<chord/>" : ""}${pitchXML(note.midi, currentKey < 0, note.pitch)}<duration>${stop - start}</duration>${ties}<voice>${escapeXML(voiceId)}</voice>${rhythmXML(stop - start, note.rhythm)}${note.accidental ? "<accidental>" + escapeXML(note.accidental) + "</accidental>" : ""}<staff>${staffIndex + 1}</staff>${notations}${play}</note>`
+              `<note${noteIds ? ` id="note-${escapeXML(note.id)}-m${index + 1}"` : ""}${expressive ? ` dynamics="${((note.velocity ?? 0.7) * 127 / 90 * 100).toFixed(4)}"` : ""}>${chordIndex ? "<chord/>" : ""}${pitchXML(note.midi, currentKey < 0, note.pitch)}<duration>${stop - start}</duration>${ties}<voice>${escapeXML(voiceId)}</voice>${rhythmXML(stop - start, note.rhythm, note.accidental ? "<accidental>" + escapeXML(note.accidental) + "</accidental>" : "")}<staff>${staffIndex + 1}</staff>${notations}${play}</note>`
             );
           });
           cursor = stop;
@@ -1471,7 +1511,7 @@ function exportMusicXML(score, { noteIds = false } = {}) {
     );
   }
   return `<?xml version="1.0" encoding="UTF-8"?>
-<score-partwise version="4.0"><work><work-title>${escapeXML(score.title || "钢琴练习")}</work-title></work><identification><creator type="composer">${escapeXML(score.composer || "")}</creator>${source ? `<source>${escapeXML(source)}</source>` : ""}${score.recognitionEvidence ? '<miscellaneous><miscellaneous-field name="qinban-recognition-evidence">' + escapeXML(JSON.stringify(score.recognitionEvidence)) + "</miscellaneous-field></miscellaneous>" : ""}</identification><credit><credit-words>${escapeXML(source)}</credit-words></credit><part-list><score-part id="P1"><part-name>${guitar ? "Guitar" : "Piano"}</part-name><part-abbreviation>${guitar ? "Gtr." : "Pno."}</part-abbreviation><score-instrument id="P1-I1"><instrument-name>${guitar ? "Guitar" : "Piano"}</instrument-name></score-instrument><midi-instrument id="P1-I1"><midi-channel>1</midi-channel><midi-program>${guitar ? 25 : 1}</midi-program></midi-instrument></score-part></part-list><part id="P1">${measures.join("")}</part></score-partwise>`;
+<score-partwise version="4.0"><work><work-title>${escapeXML(score.title || "钢琴练习")}</work-title></work><identification>${score.composer ? `<creator type="composer">${escapeXML(score.composer)}</creator>` : ""}<encoding><software>琴伴 Qinban</software></encoding>${source ? `<source>${escapeXML(source)}</source>` : ""}${score.recognitionEvidence ? '<miscellaneous><miscellaneous-field name="qinban-recognition-evidence">' + escapeXML(JSON.stringify(score.recognitionEvidence)) + "</miscellaneous-field></miscellaneous>" : ""}</identification>${source ? `<credit page="1"><credit-words>${escapeXML(source)}</credit-words></credit>` : ""}<part-list><score-part id="P1"><part-name>${guitar ? "Guitar" : "Piano"}</part-name><part-abbreviation>${guitar ? "Gtr." : "Pno."}</part-abbreviation><score-instrument id="P1-I1"><instrument-name>${guitar ? "Guitar" : "Piano"}</instrument-name></score-instrument><midi-instrument id="P1-I1"><midi-channel>1</midi-channel><midi-program>${guitar ? 25 : 1}</midi-program></midi-instrument></score-part></part-list><part id="P1">${measures.join("")}</part></score-partwise>`;
 }
 function exportMidi(score) {
   const performance = createPerformanceTimeline(score);

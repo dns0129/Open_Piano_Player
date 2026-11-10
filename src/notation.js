@@ -48,6 +48,15 @@ import {
 } from "../lib/note-effects.mjs";
 
 const NS = "http://www.w3.org/2000/svg";
+// Score size presets. 1 keeps VexFlow's 10 px staff space, close to printed size.
+export const NOTATION_ZOOM_STEPS = [0.7, 0.85, 1, 1.15, 1.3, 1.5, 1.75, 2];
+const ZOOM_MIN = 0.6,
+  ZOOM_MAX = 2.4;
+// A system may shrink this far to fit its row. Past that it keeps its size and
+// the row scrolls sideways, so a dense bar never becomes too small to read.
+const MIN_FIT = 0.8;
+export const clampNotationZoom = (value) =>
+  Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, Number(value) || 1));
 let fontsLoaded = false;
 // Await the music font faces before measuring glyphs.
 export const fontsReady = musicFontsReady.then(() => {
@@ -124,16 +133,21 @@ class PianoFingerMark extends FretHandFinger {
   }
 }
 const css = `
-.notation-root{width:100%;min-width:0;color:#273235;--score-accent:#2b796b}
+.notation-root{width:100%;min-width:0;color:#273235;--score-accent:#2b796b;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .notation-systems{display:flex;flex-direction:column;gap:16px;width:100%;min-width:0}
 .notation-system{position:relative;width:100%;min-width:0;margin:0;background:transparent}
 .notation-system>svg{display:block;width:100%;height:auto;overflow:visible}
+.notation-row{width:100%;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;scrollbar-width:thin;scrollbar-color:#cfdcc6 transparent;background:linear-gradient(to right,#fffefb 40%,#fffefb00) left center/26px 100% no-repeat local,linear-gradient(to left,#fffefb 40%,#fffefb00) right center/26px 100% no-repeat local,linear-gradient(to right,#2d4a3a24,#2d4a3a00) left center/11px 100% no-repeat scroll,linear-gradient(to left,#2d4a3a24,#2d4a3a00) right center/11px 100% no-repeat scroll}
+.notation-row>.notation-system{max-width:none}
+.notation-row>.notation-system>svg{max-width:none}
+.notation-systems.is-pinching{will-change:transform}
 .notation-measure{cursor:pointer}
 .notation-measure-shade{fill:transparent;stroke:none;pointer-events:all;transition:fill .12s}
 .notation-measure.is-current>.notation-measure-shade{fill:#e8f1e5;fill-opacity:.52}
 .notation-measure-label{font:10px system-ui;fill:#8d978e;pointer-events:none}
-.notation-hit{fill:transparent;cursor:pointer;outline:none;stroke:none;pointer-events:all}
-.notation-hit:hover,.notation-hit:focus{fill:#dbeee6;fill-opacity:.7;stroke:#659c89;stroke-width:1}
+.notation-hit{fill:transparent;cursor:pointer;outline:none;stroke:none;pointer-events:all;-webkit-tap-highlight-color:transparent}
+.notation-hit:focus-visible{fill:#dbeee6;fill-opacity:.7;stroke:#659c89;stroke-width:1}
+@media (hover:hover){.notation-hit:hover{fill:#dbeee6;fill-opacity:.7;stroke:#659c89;stroke-width:1}}
 .notation-hit.is-active{fill:#a9d5bf;fill-opacity:.55}
 .notation-roll-note.is-active{stroke:#244e3b;stroke-width:2;filter:brightness(1.12)}
 .notation-cursor{stroke:#2b796b;stroke-width:1.65;pointer-events:none;opacity:0}
@@ -141,8 +155,13 @@ const css = `
 .notation-fingering{pointer-events:none;fill:#263b35;font:10px Arial,sans-serif}
 .notation-rest{fill:#8d9891}.notation-barline{stroke:#657064;stroke-width:1;pointer-events:none}
 .notation-help{font:11px/1.6 system-ui;color:#87918b;margin:8px 0 17px}
+.notation-help-toggle>summary{display:inline-flex;align-items:center;gap:4px;min-height:32px;padding:0 2px;font:11px/1.6 system-ui;color:#87918b;cursor:pointer;list-style:none}
+.notation-help-toggle>summary::-webkit-details-marker{display:none}
+.notation-help-toggle>summary::before{content:"ⓘ";font-size:12px}
+.notation-help-toggle[open]>summary{color:#52714e}
+.notation-help-toggle>.notation-help{margin-top:0}
 .notation-error{padding:24px;color:#96563d;font:13px/1.6 system-ui}
-@media print{.notation-system{break-inside:avoid;page-break-inside:avoid}.notation-measure-shade,.notation-hit{fill:transparent!important;stroke:none!important}.notation-cursor{display:none!important}.notation-help{color:#666}.notation-systems{gap:14px}}
+@media print{.notation-row{overflow:visible;background:none}.notation-row>.notation-system{width:100%!important}.notation-help-toggle>summary{display:none}.notation-system{break-inside:avoid;page-break-inside:avoid}.notation-measure-shade,.notation-hit{fill:transparent!important;stroke:none!important}.notation-cursor{display:none!important}.notation-help{color:#666}.notation-systems{gap:14px}}
 `;
 function installStyles() {
   let style = document.getElementById("pianola-notation-styles");
@@ -159,6 +178,10 @@ export function renderNotation(container, score, options = {}) {
   score = createDisplayRepresentation(score).score;
   installStyles();
   const { mode = "staff", onSeek = () => {}, showNoteNames = false } = options;
+  // "scroll": keep notes at a readable size and let a too-wide system scroll
+  // sideways. "fit" (previews, editors, print): always shrink to the host width.
+  const scrollable = options.overflow === "scroll";
+  let zoom = scrollable ? clampNotationZoom(options.zoom ?? 1) : 1;
   const chains = tieChains(score.notes),
     chain = (n) => chains.get(n.id);
   const showFingering =
@@ -240,7 +263,16 @@ export function renderNotation(container, score, options = {}) {
       "。";
   const systemsHost = document.createElement("div");
   systemsHost.className = "notation-systems";
-  root.append(help, systemsHost);
+  if (scrollable) {
+    // On a phone the explanation would push the first system off screen.
+    const toggle = document.createElement("details");
+    toggle.className = "notation-help-toggle";
+    toggle.open = (container.clientWidth || 800) >= 700;
+    const summary = document.createElement("summary");
+    summary.textContent = "读谱提示";
+    toggle.append(summary, help);
+    root.append(toggle, systemsHost);
+  } else root.append(help, systemsHost);
   container.replaceChildren(root);
   let systems = [],
     measures = [],
@@ -248,9 +280,22 @@ export function renderNotation(container, score, options = {}) {
     currentIndex = -1,
     destroyed = false,
     layoutWidth = 0,
+    measuredWidth = 0,
     resizeFrame = 0,
     scrollFrame = 0,
+    paintFrame = 0,
+    followIndex = -1,
+    followHold = 0,
+    pinch = null,
     visibilityObserver;
+  const paintQueue = new Set();
+  const now = () => globalThis.performance?.now?.() ?? Date.now();
+  // A reader who scrolls by hand keeps their place for a moment, instead of
+  // being pulled back to the playing bar.
+  const holdFollow = (ms) => {
+    followHold = Math.max(followHold, now() + ms);
+  };
+  const followHeld = () => now() < followHold;
   const cache = new Map();
   const segments = (index, hand) => {
     const key = `${index}:${hand}`;
@@ -1435,8 +1480,80 @@ export function renderNotation(container, score, options = {}) {
           x = a.x + (b.x - a.x) * ratio;
         system.cursor.setAttribute("x1", x);
         system.cursor.setAttribute("x2", x);
+        if (system.row && options.autoScroll !== false) followRow(system, x);
       }
     }
+    if (system.row && !activeInfo && system.rowTarget && !followHeld()) {
+      // Left behind by playback: start from the first beat on the next reading.
+      system.rowTarget = 0;
+      system.row.scrollTo({ left: 0, behavior: "auto" });
+    }
+  }
+  function followRow(system, x) {
+    if (followHeld()) return;
+    const view = system.viewWidth,
+      px = (x / system.width) * system.displayWidth,
+      left = system.row.scrollLeft;
+    if (px <= left + view * 0.72 && px >= left + view * 0.06) return;
+    const target = Math.max(
+      0,
+      Math.min(system.displayWidth - view, px - view * 0.22),
+    );
+    // A smooth scroll is still on its way; only a clearly new target restarts it.
+    if (Math.abs(target - (system.rowTarget ?? -1e9)) < view * 0.2) return;
+    system.rowTarget = target;
+    system.row.scrollTo({ left: target, behavior: scrollBehavior() });
+  }
+  // Engrave at most one system per frame, so a fast swipe never waits on a
+  // batch of systems entering the viewport together.
+  function queuePaint(system) {
+    if (!system || system.drawn) return;
+    if (typeof requestAnimationFrame !== "function") return paint(system);
+    paintQueue.add(system);
+    if (!paintFrame) paintFrame = requestAnimationFrame(drainPaint);
+  }
+  function drainPaint() {
+    paintFrame = 0;
+    if (destroyed) return;
+    const next = paintQueue.values().next().value;
+    if (!next) return;
+    paintQueue.delete(next);
+    paint(next);
+    if (paintQueue.size) paintFrame = requestAnimationFrame(drainPaint);
+  }
+  function contentWidth() {
+    let padding = 0;
+    try {
+      const style = getComputedStyle(container);
+      padding =
+        (parseFloat(style.paddingLeft) || 0) +
+        (parseFloat(style.paddingRight) || 0);
+    } catch {
+      /* Without computed styles the host width is the content width. */
+    }
+    return Math.max(240, Math.floor((container.clientWidth || 800) - padding));
+  }
+  // The first visible system and how far it has been scrolled past, so a new
+  // layout (rotation, size change) reopens at the same bar.
+  function captureAnchor() {
+    if (!systems.length || !container.getBoundingClientRect) return null;
+    const top = container.getBoundingClientRect().top;
+    for (const system of systems) {
+      const box = system.host.getBoundingClientRect();
+      if (box.bottom > top + 1)
+        return {
+          measure: system.firstMeasure,
+          ratio: box.height ? (top - box.top) / box.height : 0,
+        };
+    }
+    return null;
+  }
+  function restoreAnchor(anchor) {
+    const system = anchor && measures[anchor.measure]?.system;
+    if (!system) return;
+    const box = system.host.getBoundingClientRect(),
+      top = container.getBoundingClientRect().top;
+    container.scrollTop += box.top - top + anchor.ratio * box.height;
   }
   function paint(system) {
     if (!system || system.drawn || destroyed) return;
@@ -1466,8 +1583,18 @@ export function renderNotation(container, score, options = {}) {
   function rebuild() {
     if (destroyed) return;
     visibilityObserver?.disconnect();
-    layoutWidth = Math.max(240, Math.floor(container.clientWidth || 800));
-    systems = planSystems(score, layoutWidth, mode);
+    paintQueue.clear();
+    measuredWidth = container.clientWidth || 0;
+    const available = scrollable
+      ? contentWidth()
+      : Math.max(240, Math.floor(container.clientWidth || 800));
+    // Zoom changes how much music fits a row, not only how large it is drawn.
+    layoutWidth = scrollable
+      ? Math.max(240, Math.floor(available / zoom))
+      : available;
+    systems = planSystems(score, layoutWidth, mode, {
+      compact: scrollable && layoutWidth < 560,
+    });
     measures = [];
     systemsHost.replaceChildren();
     visibilityObserver =
@@ -1477,11 +1604,11 @@ export function renderNotation(container, score, options = {}) {
               for (const entry of entries)
                 if (entry.isIntersecting) {
                   const system = systems[Number(entry.target.dataset.system)];
-                  if (system?.host === entry.target) paint(system);
+                  if (system?.host === entry.target) queuePaint(system);
                   visibilityObserver.unobserve(entry.target);
                 }
             },
-            { rootMargin: "700px" },
+            { rootMargin: scrollable ? "1400px" : "700px" },
           )
         : null;
     for (const system of systems) {
@@ -1502,7 +1629,18 @@ export function renderNotation(container, score, options = {}) {
       system.host = host;
       system.drawn = false;
       system.cursor = null;
-      systemsHost.append(host);
+      system.row = null;
+      system.rowTarget = 0;
+      if (scrollable && layoutWidth / system.width < MIN_FIT) {
+        system.displayWidth = Math.round(system.width * MIN_FIT * zoom);
+        system.viewWidth = available;
+        host.style.width = `${system.displayWidth}px`;
+        const row = document.createElement("div");
+        row.className = "notation-row";
+        row.append(host);
+        system.row = row;
+        systemsHost.append(row);
+      } else systemsHost.append(host);
       for (const info of system.bars) {
         info.system = system;
         info.group = null;
@@ -1519,13 +1657,22 @@ export function renderNotation(container, score, options = {}) {
     update(measures[index]?.system);
     // A scrollbar or window resize can rebuild the layout after the first seek.
     // Follow the new system, rather than retaining a target in the removed DOM.
-    if (currentIndex >= 0 && options.autoScroll !== false)
+    // A readable-size layout restores the reader's own place instead.
+    if (!scrollable && currentIndex >= 0 && options.autoScroll !== false)
       follow(measures[index]);
+  }
+  function relayout() {
+    const anchor = scrollable ? captureAnchor() : null;
+    rebuild();
+    restoreAnchor(anchor);
   }
   function follow(info) {
     cancelAnimationFrame(scrollFrame);
+    followIndex = info.index;
     scrollFrame = requestAnimationFrame(() => {
-      if (destroyed) return;
+      // Look the bar up again: a rebuild may have replaced its system.
+      const info = measures[followIndex];
+      if (destroyed || !info || followHeld()) return;
       const bounds = info.system.host.getBoundingClientRect(),
         viewport = container.getBoundingClientRect();
       if (
@@ -1562,19 +1709,104 @@ export function renderNotation(container, score, options = {}) {
   const resizeObserver =
     typeof ResizeObserver !== "undefined"
       ? new ResizeObserver(() => {
-          if (destroyed || Math.abs(container.clientWidth - layoutWidth) < 8)
+          if (destroyed || Math.abs(container.clientWidth - measuredWidth) < 8)
             return;
           cancelAnimationFrame(resizeFrame);
-          resizeFrame = requestAnimationFrame(rebuild);
+          resizeFrame = requestAnimationFrame(relayout);
         })
       : null;
   resizeObserver?.observe(container);
   const beforePrint = () => {
-    if (Math.abs(container.clientWidth - layoutWidth) >= 8) rebuild();
+    if (Math.abs(container.clientWidth - measuredWidth) >= 8) rebuild();
     for (const system of systems) paint(system);
   };
   window.addEventListener("beforeprint", beforePrint);
+  function setZoom(value, notify = false) {
+    const next = Math.round(clampNotationZoom(value) * 100) / 100;
+    if (destroyed || !scrollable || Math.abs(next - zoom) < 0.001) return zoom;
+    const anchor = captureAnchor();
+    zoom = next;
+    rebuild();
+    restoreAnchor(anchor);
+    if (notify) options.onZoom?.(zoom);
+    return zoom;
+  }
+  // Touch handling. The browser keeps one-finger panning (touch-action); two
+  // fingers resize the score itself instead of zooming the whole page.
+  const span = (touches) =>
+    Math.hypot(
+      touches[0].clientX - touches[1].clientX,
+      touches[0].clientY - touches[1].clientY,
+    );
+  const endPinch = (commit) => {
+    if (!pinch) return;
+    const target = pinch.zoom * pinch.ratio;
+    pinch = null;
+    systemsHost.classList.remove("is-pinching");
+    systemsHost.style.transform = "";
+    systemsHost.style.transformOrigin = "";
+    if (commit) setZoom(Math.round(target * 20) / 20, true);
+  };
+  // Holds are timed, never a "finger is down" flag: a touch that ends on an
+  // element a new layout has removed sends no touchend this far up.
+  const onTouchStart = (event) => {
+    holdFollow(3500);
+    if (pinch?.done) endPinch(true);
+    if (event.touches.length === 2) {
+      const box = systemsHost.getBoundingClientRect();
+      pinch = { zoom, start: span(event.touches) || 1, ratio: 1 };
+      systemsHost.classList.add("is-pinching");
+      systemsHost.style.transformOrigin = `${(event.touches[0].clientX + event.touches[1].clientX) / 2 - box.left}px ${(event.touches[0].clientY + event.touches[1].clientY) / 2 - box.top}px`;
+    } else if (event.touches.length > 2) endPinch(false);
+  };
+  const onTouchMove = (event) => {
+    holdFollow(3500);
+    if (!pinch || pinch.done || event.touches.length !== 2) return;
+    if (event.cancelable) event.preventDefault();
+    pinch.ratio = Math.max(
+      ZOOM_MIN / pinch.zoom,
+      Math.min(ZOOM_MAX / pinch.zoom, span(event.touches) / pinch.start),
+    );
+    systemsHost.style.transform = `scale(${pinch.ratio})`;
+  };
+  const onTouchEnd = (event) => {
+    holdFollow(2500);
+    if (!pinch) return;
+    // The new layout replaces the touched elements, so it waits for the last
+    // finger; until then the preview stays at the size the pinch reached.
+    if (event.touches.length) pinch.done = true;
+    else endPinch(event.type !== "touchcancel" || pinch.done);
+  };
+  const onWheel = () => holdFollow(2500);
+  // Safari's own pinch events would zoom the page under the score.
+  const onGesture = (event) => event.preventDefault();
+  const listeners = scrollable
+    ? [
+        ["touchstart", onTouchStart, { passive: true }],
+        ["touchmove", onTouchMove, { passive: false }],
+        ["touchend", onTouchEnd, { passive: true }],
+        ["touchcancel", onTouchEnd, { passive: true }],
+        ["wheel", onWheel, { passive: true }],
+        ["gesturestart", onGesture, { passive: false }],
+        ["gesturechange", onGesture, { passive: false }],
+      ]
+    : [];
+  for (const [type, handler, config] of listeners)
+    container.addEventListener(type, handler, config);
   return {
+    setZoom,
+    get zoom() {
+      return zoom;
+    },
+    /** Scroll one screen of music, as a page-turn pedal or key expects. */
+    turnPage(direction) {
+      if (destroyed) return;
+      holdFollow(4000);
+      container.scrollBy({
+        top: direction * Math.max(120, container.clientHeight * 0.82),
+        behavior: scrollBehavior(),
+      });
+    },
     getEditLayout() {
       return systems
         .filter((system) => system.svg && system.editBars)
@@ -1605,6 +1837,10 @@ export function renderNotation(container, score, options = {}) {
       destroyed = true;
       cancelAnimationFrame(resizeFrame);
       cancelAnimationFrame(scrollFrame);
+      if (paintFrame) cancelAnimationFrame(paintFrame);
+      paintQueue.clear();
+      for (const [type, handler, config] of listeners)
+        container.removeEventListener(type, handler, config);
       visibilityObserver?.disconnect();
       resizeObserver?.disconnect();
       window.removeEventListener("beforeprint", beforePrint);

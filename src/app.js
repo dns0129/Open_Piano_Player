@@ -15,7 +15,14 @@ import { starterScore } from "../lib/starter-score.mjs";
 import { STATIC_SITE } from "../lib/asset-url.mjs";
 import { transposeScore } from "../lib/score.mjs";
 import { parseTempoInput } from "../lib/tempo.mjs";
-import { renderNotation } from "./notation.js";
+import {
+  renderNotation,
+  NOTATION_ZOOM_STEPS,
+  clampNotationZoom,
+} from "./notation.js";
+import { createPracticeMemory } from "./practice-memory.js";
+import { createPracticeSession } from "./practice-session.js";
+import { deliverFile, toFile } from "./file-delivery.js";
 import { tonalityLabel } from "../lib/score-arrangement.mjs";
 import { renderSourceNotation } from "./source-notation.js";
 import { createModal } from "./modal.js";
@@ -68,6 +75,8 @@ const state = {
   loopStart: 0,
   loopEnd: 16,
   follow: true,
+  zoom: clampNotationZoom(read("qinban-score-zoom", 1)),
+  keepAwake: read("qinban-keep-awake", true) !== false,
   showFingering: read("qinban-show-fingering", true) !== false,
   warnings: [],
   renderer: null,
@@ -233,6 +242,7 @@ let sourceLoadEpoch = 0;
 function setScore(score, warnings = [], sourceRecord = null) {
   const epoch = ++sourceLoadEpoch;
   if ($("#modal-root")?.childElementCount) closeModal();
+  rememberPractice();
   player.stop();
   if (state.score?.id !== score.id) {
     releasePracticeSource(state.score.id);
@@ -266,12 +276,26 @@ function setScore(score, warnings = [], sourceRecord = null) {
   state.loopEnabled = false;
   state.loopStart = 0;
   state.loopEnd = measureEnd(Math.min(3, measureCount() - 1));
+  // A returning player gets their practice tempo, loop and place back.
+  const remembered = practiceMemory.recall(state.score);
+  if (remembered) {
+    state.tempo = remembered.tempo;
+    if (remembered.loopEnd > remembered.loopStart) {
+      state.loopStart = remembered.loopStart;
+      state.loopEnd = remembered.loopEnd;
+    }
+  }
   const initialLoopEnd = state.loopEnd;
   player.setScore(state.score);
   player.configure(configuration());
+  if (remembered?.beat > 0) player.seek(remembered.beat);
   state.view = "practice";
   render();
   window.scrollTo({ top: 0, behavior: "instant" });
+  if (remembered?.beat > 0 && remembered.announce)
+    toast(
+      `已回到上次练到的第 ${measureIndexAtBeat(remembered.beat) + 1} 小节，按「回到开头」可从头开始。`,
+    );
   if (!originalNotation(state.score))
     loadAvailablePracticeSource(state.score)
       .then((record) => {
@@ -369,7 +393,7 @@ function render() {
 }
 function practiceView() {
   const s = state.score;
-  return `<div class="practice-layout-bar" aria-label="练习界面布局"><div class="practice-current"><span class="eyebrow">PRACTICE ROOM</span><span>${esc(s.title)}</span></div><div class="layout-buttons">
+  return `<div class="practice-layout-bar" aria-label="练习界面布局"><div class="practice-current"><span class="eyebrow">PRACTICE ROOM</span><span>${esc(s.title)}</span></div>${zoomControl()}<div class="layout-buttons">
 <button data-layout="topbar" aria-controls="app-header" aria-label="显示或收起顶栏" title="显示或收起顶栏">${icon("panel-top")}<span>顶栏</span></button>
 <button data-layout="sidebar" aria-controls="practice-sidebar" aria-label="显示或收起练习设置" title="显示或收起练习设置">${icon("panel-left")}<span>侧栏</span></button>
 <button data-layout="keyboard" aria-controls="practice-keyboard" aria-label="显示或收起${state.section === "guitar" ? "指板" : "键盘"}" title="显示或收起键盘">${icon(state.section === "guitar" ? "guitar" : "piano")}<span>${state.section === "guitar" ? "指板" : "键盘"}</span></button>
@@ -377,15 +401,51 @@ function practiceView() {
 <button class="sidebar-scrim" data-layout-close aria-label="关闭练习设置"></button>
 <aside id="practice-sidebar" class="practice-sidebar" aria-label="练习设置"><div class="sidebar-heading"><h2>练习设置</h2><button class="icon-button" data-layout-close aria-label="收起练习设置">${icon("panel-left-close")}</button></div>
 <button class="sidebar-piece" data-nav="library">${icon("file-music")}<span><strong>${esc(s.title)}</strong><small>${esc(s.composer || sectionLabel() + "练习曲")}</small></span>${icon("chevron-down")}</button>
-<div class="sidebar-section"><h3>演奏速度</h3><div class="tempo-control"><label class="tempo-value"><input id="tempo-number" aria-label="输入练习速度 BPM" type="number" inputmode="numeric" min="20" max="300" step="1" value="${state.tempo}"><small>BPM</small></label><button class="original-speed" data-speed="1" title="恢复原速">原速</button></div><input id="tempo" aria-label="练习速度" type="range" min="20" max="300" step="1" value="${state.tempo}"></div>
+<div class="sidebar-section"><h3>演奏速度</h3><div class="tempo-control"><label class="tempo-value"><input id="tempo-number" aria-label="输入练习速度 BPM" type="number" inputmode="numeric" min="20" max="300" step="1" value="${state.tempo}"><small>BPM</small></label><button class="original-speed" data-speed="1" title="恢复原速">原速</button></div><input id="tempo" aria-label="练习速度" type="range" min="20" max="300" step="1" value="${state.tempo}"><div class="speed-presets" role="group" aria-label="按原速比例练习">${[0.5, 0.6, 0.75, 0.9].map((ratio) => `<button data-speed="${ratio}" aria-label="原速的 ${Math.round(ratio * 100)}%">${Math.round(ratio * 100)}%</button>`).join("")}</div></div>
 <div class="sidebar-section"><h3>${state.section === "guitar" ? "播放设置" : "分手练习"}</h3><div class="hand-buttons" ${state.section === "guitar" ? "hidden" : ""}><button id="right-hand" aria-pressed="${state.rightEnabled}" class="hand-button right ${state.rightEnabled ? "enabled" : ""}">右手 ${icon("check")}</button><button id="left-hand" aria-pressed="${state.leftEnabled}" class="hand-button left ${state.leftEnabled ? "enabled" : ""}">左手 ${icon("check")}</button></div><label class="compact-toggle" for="metronome"><input id="metronome" type="checkbox" ${state.metronome ? "checked" : ""}>节拍器</label></div>
 <div class="sidebar-section"><div class="sidebar-section-title"><h3>片段循环</h3><label class="compact-toggle" for="loop"><input id="loop" type="checkbox" ${state.loopEnabled ? "checked" : ""}>开启循环</label></div><div class="loop-controls"><input id="loop-start" aria-label="循环起始小节" type="number" min="1" max="${measureCount()}" value="${measureIndexAtBeat(state.loopStart) + 1}"><span>至</span><input id="loop-end" aria-label="循环结束小节" type="number" min="1" max="${measureCount()}" value="${measureIndexAtBeat(Math.max(0, state.loopEnd - 0.00001)) + 1}"><small>小节</small></div></div>
-<div class="sidebar-section"><h3>乐谱显示</h3><div class="notation-switch">${originalNotation(s) ? `<button data-mode="source" class="${state.mode === "source" ? "selected" : ""}">原图参考</button>` : ""}${state.section === "guitar" ? `<button data-mode="tab" class="${state.mode === "tab" ? "selected" : ""}">六线谱</button>` : `<button data-mode="staff" class="${state.mode === "staff" ? "selected" : ""}">五线谱</button><button data-mode="numbered" class="${state.mode === "numbered" ? "selected" : ""}">简谱</button>`}<button data-mode="roll" class="${state.mode === "roll" ? "selected" : ""}">${state.section === "guitar" ? "音高卷帘" : "钢琴卷帘"}</button></div><label class="compact-toggle" for="follow"><input id="follow" type="checkbox" ${state.follow ? "checked" : ""}>播放时自动跟随</label>${state.section === "guitar" ? "" : `<label class="compact-toggle" for="show-fingering"><input id="show-fingering" type="checkbox" ${state.showFingering ? "checked" : ""}>显示指法数字</label>`}<div class="transpose-control"><span>移调</span><button id="transpose-down" aria-label="降低半音">−</button><span>${esc(s.mode ? tonalityLabel(s) : keyName(s.keySignature) + " 调")}</span><button id="transpose-up" aria-label="升高半音">＋</button></div></div>
+<div class="sidebar-section"><h3>乐谱显示</h3><div class="notation-switch">${originalNotation(s) ? `<button data-mode="source" class="${state.mode === "source" ? "selected" : ""}">原图参考</button>` : ""}${state.section === "guitar" ? `<button data-mode="tab" class="${state.mode === "tab" ? "selected" : ""}">六线谱</button>` : `<button data-mode="staff" class="${state.mode === "staff" ? "selected" : ""}">五线谱</button><button data-mode="numbered" class="${state.mode === "numbered" ? "selected" : ""}">简谱</button>`}<button data-mode="roll" class="${state.mode === "roll" ? "selected" : ""}">${state.section === "guitar" ? "音高卷帘" : "钢琴卷帘"}</button></div><div class="sidebar-zoom-row"><span>谱面大小</span>${zoomControl()}</div><label class="compact-toggle" for="follow"><input id="follow" type="checkbox" ${state.follow ? "checked" : ""}>播放时自动跟随</label>${practiceSession.canKeepAwake ? `<label class="compact-toggle" for="keep-awake"><input id="keep-awake" type="checkbox" ${state.keepAwake ? "checked" : ""}>练习时保持屏幕常亮</label>` : ""}${state.section === "guitar" ? "" : `<label class="compact-toggle" for="show-fingering"><input id="show-fingering" type="checkbox" ${state.showFingering ? "checked" : ""}>显示指法数字</label>`}<div class="transpose-control"><span>移调</span><button id="transpose-down" aria-label="降低半音">−</button><span>${esc(s.mode ? tonalityLabel(s) : keyName(s.keySignature) + " 调")}</span><button id="transpose-up" aria-label="升高半音">＋</button></div></div>
 <div class="sidebar-section sidebar-instrument"><h3>${sectionLabel()}音色</h3>${instrumentControls()}<div class="volume-control">${icon("volume-2")}<input id="volume" aria-label="音量" type="range" min="0" max="1" step="0.01" value="${state.volume}"></div></div>
 <div class="sidebar-footer"><button class="button secondary" data-edit-notes>编辑与改编</button><button class="icon-button" data-export aria-label="导出乐谱" title="导出乐谱">${icon("download")}</button></div></aside>
 <section class="score-stage" aria-label="乐谱练习区域"><div class="score-document-heading"><div><h1>${esc(s.title)}</h1><p>${esc(s.composer || sectionLabel() + "谱")}<span>♩ = <b id="paper-tempo">${state.tempo}</b></span><span>${s.timeSignature.join("/")} 拍</span><span>${s.mode ? esc(tonalityLabel(s)) : keyName(s.keySignature) + " 调号"}</span></p></div><div class="score-provenance"><button class="button secondary" data-print-score>${icon("printer")}打印乐谱</button><span class="arrangement-tag">${provenanceTag(s)}</span><div class="source-line"><span>${esc(sourceLabel(s))}</span>${safeLink(s.source?.url, "来源")}${state.warnings.length ? `<button id="show-warnings">${state.warnings.length} 条提示</button>` : ""}</div></div></div><div id="notation" class="notation-area" aria-label="可点击定位的${sectionLabel()}乐谱"></div><div class="score-status"><span>${icon("music-2")} ${measureCount()} 小节 · 点击音符定位</span><span>${state.section === "guitar" ? "标准调弦 · 自动建议指法" : "左右手同步播放"} · ${capabilities.mode === "hosted" ? (scoreLibrary.records.some((r) => r.id === s.id) ? "乐谱保存到账号" : "公开示例") : "乐谱本地保存"}</span></div></section>
 <section class="playback-dock" aria-label="播放控制"><div class="transport-group"><button id="restart" class="icon-button" aria-label="回到开头" title="回到开头">${icon("rotate-ccw")}</button><button id="prev-measure" class="icon-button" aria-label="上一小节" title="上一小节">${icon("skip-back")}</button><button id="play" class="play-button" aria-label="播放">${icon("play")}</button><div class="playback-status"><strong id="playback-label">准备练习</strong><span id="transport-position">第 1 / ${measureCount()} 小节</span></div></div><div class="progress-row"><span id="elapsed">0:00</span><input id="seek" type="range" aria-label="播放进度" min="0" max="${s.durationBeats}" step="0.01" value="${state.beat}"><span id="total-time">${durationText(s.durationBeats)}</span></div><div class="dock-tempo"><button class="icon-button" data-tempo-step="-4" aria-label="减慢速度">−</button><span><b data-tempo-display>${state.tempo}</b> BPM</span><button class="icon-button" data-tempo-step="4" aria-label="加快速度">＋</button></div><div class="dock-shortcuts"><button ${state.section === "guitar" ? "hidden" : ""} data-quick-hand="right" aria-pressed="${state.rightEnabled}">右手</button><button ${state.section === "guitar" ? "hidden" : ""} data-quick-hand="left" aria-pressed="${state.leftEnabled}">左手</button><button data-quick-loop aria-pressed="${state.loopEnabled}">${icon("repeat-2")}循环</button><button data-layout="sidebar" aria-controls="practice-sidebar" aria-label="打开练习设置">${icon("sliders-horizontal")}设置</button></div></section>
 ${state.section === "guitar" ? guitarFretboard() : practiceKeyboard()}<button class="layout-restore icon-button" data-layout="focus" aria-label="退出专注模式" title="退出专注模式">${icon("minimize-2")}</button>`;
+}
+function zoomControl() {
+  return `<div class="score-zoom" role="group" aria-label="谱面大小"><button data-zoom-step="-1" aria-label="缩小谱面" title="缩小谱面">A</button><output data-zoom-value aria-live="polite">${Math.round(state.zoom * 100)}%</output><button data-zoom-step="1" aria-label="放大谱面" title="放大谱面">A</button></div>`;
+}
+function refreshZoomUI() {
+  const adjustable = Boolean(state.renderer?.setZoom);
+  $$("[data-zoom-value]").forEach(
+    (output) => (output.textContent = `${Math.round(state.zoom * 100)}%`),
+  );
+  $$("[data-zoom-step]").forEach((button) => {
+    const up = button.dataset.zoomStep === "1";
+    button.disabled =
+      !adjustable ||
+      (up
+        ? state.zoom >= NOTATION_ZOOM_STEPS.at(-1) - 0.001
+        : state.zoom <= NOTATION_ZOOM_STEPS[0] + 0.001);
+  });
+}
+// `applied` is set when the renderer has already resized itself (a pinch).
+function setZoom(value, applied = false) {
+  state.zoom = clampNotationZoom(value);
+  if (!applied)
+    state.zoom = state.renderer?.setZoom?.(state.zoom) ?? state.zoom;
+  try {
+    localStorage.setItem("qinban-score-zoom", JSON.stringify(state.zoom));
+  } catch {
+    /* The size still applies for this visit. */
+  }
+  refreshZoomUI();
+}
+function stepZoom(direction) {
+  const next =
+    direction > 0
+      ? NOTATION_ZOOM_STEPS.find((step) => step > state.zoom + 0.01)
+      : NOTATION_ZOOM_STEPS.findLast((step) => step < state.zoom - 0.01);
+  if (next) setZoom(next);
 }
 function keyName(fifths = 0) {
   return (
@@ -564,6 +624,23 @@ function bindPractice() {
       }),
   );
   $("#play").onclick = togglePlay;
+  $$("[data-zoom-step]").forEach(
+    (button) =>
+      (button.onclick = () => stepZoom(Number(button.dataset.zoomStep))),
+  );
+  if ($("#keep-awake"))
+    $("#keep-awake").onchange = (e) => {
+      state.keepAwake = e.target.checked;
+      try {
+        localStorage.setItem(
+          "qinban-keep-awake",
+          JSON.stringify(state.keepAwake),
+        );
+      } catch {
+        /* Preferences are optional. */
+      }
+      syncPracticeSession();
+    };
   $$("[data-tempo-step]").forEach(
     (button) =>
       (button.onclick = () =>
@@ -578,16 +655,8 @@ function bindPractice() {
     $("#loop").checked = !state.loopEnabled;
     $("#loop").dispatchEvent(new Event("change"));
   };
-  $("#restart").onclick = () => {
-    player.stop();
-    updateFrame(0, []);
-    $("#notation").scrollTo({ top: 0, behavior: "instant" });
-  };
-  $("#prev-measure").onclick = () => {
-    const index = measureIndexAtBeat(state.beat),
-      atStart = Math.abs(state.beat - measureStart(index)) < 0.0001;
-    player.seek(measureStart(Math.max(0, index - (atStart ? 1 : 0))));
-  };
+  $("#restart").onclick = restartPractice;
+  $("#prev-measure").onclick = () => seekMeasure(-1);
   $("#seek").oninput = (e) => player.seek(+e.target.value);
   $("#volume").oninput = (e) => {
     state.volume = +e.target.value;
@@ -690,6 +759,40 @@ function bindPractice() {
     ),
   );
 }
+function restartPractice() {
+  player.stop();
+  updateFrame(0, []);
+  $("#notation")?.scrollTo({ top: 0, behavior: "instant" });
+  rememberPractice();
+}
+function seekMeasure(step) {
+  const index = measureIndexAtBeat(state.beat),
+    atStart = Math.abs(state.beat - measureStart(index)) < 0.0001;
+  player.seek(
+    measureStart(
+      step > 0
+        ? Math.min(measureCount() - 1, index + 1)
+        : Math.max(0, index - (atStart ? 1 : 0)),
+    ),
+  );
+}
+function rememberPractice() {
+  practiceMemory.remember(state.score, {
+    tempo: state.tempo,
+    beat: state.beat,
+    loopStart: state.loopStart,
+    loopEnd: state.loopEnd,
+  });
+}
+function syncPracticeSession() {
+  practiceSession.update({
+    active: state.view === "practice",
+    playing: player.state === "playing",
+    keepAwake: state.keepAwake,
+    title: state.score.title,
+    artist: state.score.composer || "琴伴",
+  });
+}
 function applyLoop() {
   let start = Math.max(
       1,
@@ -704,6 +807,7 @@ function applyLoop() {
   state.loopStart = measureStart(start - 1);
   state.loopEnd = measureEnd(end - 1);
   player.configure(configuration());
+  rememberPractice();
 }
 function setTempo(tempo) {
   if (!Number.isFinite(tempo)) return;
@@ -722,6 +826,7 @@ function setTempo(tempo) {
       Math.round(state.score.tempo * +b.dataset.speed) === state.tempo,
     ),
   );
+  rememberPractice();
 }
 function transpose(amount) {
   try {
@@ -737,10 +842,36 @@ async function togglePlay() {
     if (player.state === "playing") player.pause();
     else await player.play();
   } catch (e) {
+    if (await playWithLightVoice(e)) return;
     toast(e.message || "音频播放失败", true);
   }
 }
+// Recorded samples can fail to load on a weak mobile connection. The built-in
+// voice needs no download, so the score is never left silent.
+async function playWithLightVoice(cause) {
+  const light = sectionInstruments(state.section).find(
+    (preset) => preset.engine !== "samples",
+  );
+  if (
+    !light ||
+    state.instrumentInfo.status !== "error" ||
+    cause?.name === "AbortError"
+  )
+    return false;
+  try {
+    state.instrument = light.id;
+    await player.setInstrument(light.id);
+    refreshInstrumentUI();
+    await player.play();
+    toast(`采样音色暂时无法加载，已改用「${light.label}」播放。`);
+    return true;
+  } catch {
+    return false;
+  }
+}
 function updatePlayback(playState) {
+  syncPracticeSession();
+  if (playState !== "playing") rememberPractice();
   if (!$("#play")) return;
   const active = playState === "playing";
   const loading = state.instrumentInfo.status === "loading" && !active;
@@ -807,8 +938,13 @@ function drawNotation() {
       rightEnabled: state.rightEnabled,
       leftEnabled: state.leftEnabled,
       onSeek: (beat) => player.seek(beat),
+      // Keep every note at a readable size; a pinch resizes the score.
+      overflow: "scroll",
+      zoom: state.zoom,
+      onZoom: (zoom) => setZoom(zoom, true),
     });
     state.renderer.setBeat(state.beat);
+    refreshZoomUI();
   } catch (e) {
     $("#notation").innerHTML =
       `<div class="empty-state">谱面暂时无法排版：${esc(e.message)}<p>可以切换简谱或导出 MusicXML 查看。</p></div>`;
@@ -864,6 +1000,16 @@ async function openNoteEditor() {
 }
 const { modal, closeModal, requestCloseModal, modalEpoch, setModalCleanup } =
   createModal({ state, player });
+// Private scores in the hosted app may be opened on a shared device, so their
+// practice state stays in memory there instead of in localStorage.
+const practiceMemory = createPracticeMemory({
+  persist: capabilities.mode !== "hosted",
+});
+const practiceSession = createPracticeSession({
+  onPlay: () => void togglePlay(),
+  onPause: () => player.pause(),
+  onRestart: () => restartPractice(),
+});
 const apiClient = createApiClient({
   capabilities,
   onStatus: (value) => {
@@ -1016,13 +1162,9 @@ async function refreshStatus() {
     return null;
   }
 }
+// Desktop browsers download; phones and tablets get the system share sheet.
 function download(content, name, type) {
-  const url = URL.createObjectURL(new Blob([content], { type }));
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = name;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  return deliverFile(toFile(content, name, type));
 }
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
@@ -1040,6 +1182,26 @@ document.addEventListener("keydown", (e) => {
   ) {
     e.preventDefault();
     if (state.view === "practice") togglePlay();
+    return;
+  }
+  // Page-turn pedals and keyboards: up/down turn the page, left/right step a bar.
+  if (
+    state.view !== "practice" ||
+    $(".modal") ||
+    e.altKey ||
+    e.ctrlKey ||
+    e.metaKey ||
+    ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName)
+  )
+    return;
+  const turn = { PageDown: 1, ArrowDown: 1, PageUp: -1, ArrowUp: -1 }[e.key];
+  const step = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+  if (turn && state.renderer?.turnPage) {
+    e.preventDefault();
+    state.renderer.turnPage(turn);
+  } else if (step) {
+    e.preventDefault();
+    seekMeasure(step);
   }
 });
 const startupActiveId =
@@ -1074,6 +1236,13 @@ void Promise.all([syncLocalLibrary(), taskVault.initialize()])
   })
   .catch((error) => toast(error.message, true));
 window.addEventListener("focus", () => void syncLocalLibrary().catch(() => {}));
+window.addEventListener("pagehide", rememberPractice);
+// Load the instrument samples while the page is idle, so the first tap on
+// Play sounds at once. Data-saver connections wait for that tap.
+if (!navigator.connection?.saveData)
+  (window.requestIdleCallback || ((run) => setTimeout(run, 1200)))(
+    () => void player.warmUp(),
+  );
 if (STATIC_SITE) toast(STATIC_NOTICE);
 if (accountClient)
   window.addEventListener(

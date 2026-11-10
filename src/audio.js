@@ -20,6 +20,39 @@ const clamp = (value, min, max) =>
   Math.max(min, Math.min(max, Number(value) || 0));
 const EPSILON = 1e-7;
 
+// iPhone and iPad (iPadOS reports itself as a Mac with a touch screen).
+const isAppleTouchDevice = () => {
+  const nav = globalThis.navigator;
+  return (
+    /iP(hone|ad|od)/.test(nav?.userAgent || "") ||
+    (nav?.platform === "MacIntel" && nav?.maxTouchPoints > 1)
+  );
+};
+
+/** Half a second of silence as a WAV object URL (8 kHz, mono, 8-bit). */
+function silentClipURL() {
+  const samples = 4000,
+    bytes = new Uint8Array(44 + samples).fill(128),
+    view = new DataView(bytes.buffer);
+  const text = (offset, value) =>
+    [...value].forEach((char, i) =>
+      view.setUint8(offset + i, char.charCodeAt(0)),
+    );
+  text(0, "RIFF");
+  view.setUint32(4, 36 + samples, true);
+  text(8, "WAVEfmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, 8000, true);
+  view.setUint32(28, 8000, true);
+  view.setUint16(32, 1, true);
+  view.setUint16(34, 8, true);
+  text(36, "data");
+  view.setUint32(40, samples, true);
+  return URL.createObjectURL(new Blob([bytes], { type: "audio/wav" }));
+}
+
 /** Web Audio score transport. Beats are always quarter notes, including in 6/8. */
 export class PianoPlayer {
   constructor(options = {}) {
@@ -92,7 +125,11 @@ export class PianoPlayer {
     this._raf = null;
     this._lastHiddenFrameTime = -Infinity;
     this._visibilityHandler = () => {
+      if (globalThis.document?.hidden) this._mediaKeeper?.pause();
       if (this._state === "playing") {
+        // A phone suspends audio in the background. Coming back, restart the
+        // audio clock or hold the transport; never keep "playing" in silence.
+        if (!globalThis.document?.hidden) void this._recoverAudio();
         this._schedule();
         this._emitFrame();
       }
@@ -540,6 +577,13 @@ export class PianoPlayer {
       "visibilitychange",
       this._visibilityHandler,
     );
+    globalThis.clearTimeout(this._stateTimer);
+    if (this._mediaKeeper) {
+      this._mediaKeeper.pause();
+      URL.revokeObjectURL(this._mediaKeeper.src);
+      this._mediaKeeper = null;
+    }
+    if (this._context) this._context.onstatechange = null;
     if (this._context && this._context.state !== "closed")
       await this._context.close();
     this._context = null;
@@ -559,19 +603,110 @@ export class PianoPlayer {
     compressor.release.value = 0.18;
     this._master.connect(compressor);
     compressor.connect(this._context.destination);
+    // iOS reports "interrupted" for a call, Siri or another app's audio, and
+    // any phone suspends a background page. The audio clock stops with it.
+    this._context.onstatechange = () => {
+      const state = this._context?.state;
+      globalThis.clearTimeout(this._stateTimer);
+      if (this._state !== "playing" || state === "closed") return;
+      if (state === "running") {
+        this._schedule();
+        return;
+      }
+      if (globalThis.document?.hidden) return;
+      this._stateTimer = globalThis.setTimeout(
+        () => void this._recoverAudio(),
+        400,
+      );
+    };
   }
 
+  /** Must run synchronously inside the tap/click handler: phones only start audio from a user gesture. */
   _startAudio() {
     // On supported iPhones this selects music playback rather than ambient
     // effects, which can be silenced by the device's Ring/Silent switch.
+    let session;
     try {
-      const session = globalThis.navigator?.audioSession;
+      session = globalThis.navigator?.audioSession;
       if (session && session.type !== "playback") session.type = "playback";
     } catch {
       // Unsupported or locked audio sessions still use the normal Web Audio path.
     }
+    if (!session) this._keepMediaChannel();
     this._ensureAudio();
-    return this._context.resume();
+    return this._resume();
+  }
+
+  /**
+   * Older iOS (and in-app browsers without navigator.audioSession) route Web
+   * Audio through the ringer channel, so the silent switch mutes the whole
+   * score. A looping silent media element moves the page to the media channel.
+   */
+  _keepMediaChannel() {
+    try {
+      if (!this._mediaKeeper) {
+        if (!isAppleTouchDevice() || !globalThis.document?.createElement)
+          return;
+        const audio = globalThis.document.createElement("audio");
+        audio.loop = true;
+        audio.preload = "auto";
+        audio.setAttribute("playsinline", "");
+        audio.setAttribute("x-webkit-airplay", "deny");
+        audio.src = silentClipURL();
+        this._mediaKeeper = audio;
+      }
+      void this._mediaKeeper.play()?.catch?.(() => {});
+    } catch {
+      // Sound still follows the ringer switch; playback itself is unaffected.
+    }
+  }
+
+  _resume() {
+    const context = this._context;
+    const pending = Promise.resolve(context.resume?.());
+    if (context.state === undefined || context.state === "running")
+      return pending;
+    // Outside a user gesture resume() can stay pending for ever. Give it a
+    // moment, then report what the listener has to do.
+    let timer;
+    return Promise.race([
+      pending.catch(() => {}),
+      new Promise((resolve) => {
+        timer = globalThis.setTimeout(resolve, 1500);
+      }),
+    ]).then(() => {
+      globalThis.clearTimeout(timer);
+      if (context.state !== "running" && context.state !== undefined)
+        throw new Error("浏览器还没有允许播放声音，请再点一次播放键。");
+    });
+  }
+
+  async _recoverAudio() {
+    const context = this._context;
+    if (
+      !context ||
+      this._state !== "playing" ||
+      context.state === "running" ||
+      context.state === undefined
+    )
+      return;
+    try {
+      await this._resume();
+      if (this._state === "playing") this._schedule();
+    } catch {
+      // Resuming needs a tap. Stop at the heard position so Play restarts there.
+      if (this._state === "playing" && this._context === context) this.pause();
+    }
+  }
+
+  /**
+   * Fetch and decode the selected sample bank before the first tap on Play, so
+   * a phone does not sit silent for seconds after it. Decoding needs no gesture.
+   */
+  warmUp() {
+    if (this._disposed || this._instrumentState.status !== "idle")
+      return Promise.resolve();
+    return this.setInstrument(this._instrumentId).catch(() => {});
   }
 
   _loopBounds() {

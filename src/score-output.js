@@ -1,5 +1,6 @@
 import { $, $$, esc, icon, read } from "./ui.js";
 import { readScoreDocument } from "../lib/score-document.ts";
+import { deliverFile, sharesFiles, toFile } from "./file-delivery.js";
 import {
   normalizePrintStyle,
   printStylePreferences,
@@ -13,7 +14,6 @@ export function createScoreOutput({
   modal,
   closeModal,
   originalNotation,
-  download,
   toast,
 }) {
   function openPrintScore() {
@@ -49,7 +49,7 @@ ${input("作谱人署名", "credit", 120)}
 ${field("作谱人位置", "creditPosition", { right: "右侧", left: "左侧", center: "居中", "under-title": "标题下方", hidden: "隐藏署名" })}
 ${number("页边距（mm）", "marginMM", 10, 24)}${number("谱面大小（%）", "scoreScale", 80, 120)}
 <label class="compact-toggle"><input type="checkbox" data-print-setting="showDetails">显示拍号与速度</label><label class="compact-toggle"><input type="checkbox" data-print-setting="showPageNumbers">显示页码</label>
-</div><p id="print-source-note" class="form-note" hidden>原图参考会保留图片内的音符、文字和署名；字体与抬头设置用于新页眉，符号字体用于五线谱，谱面大小用于数字谱。</p><p class="form-note">外观选项会记住；标题和署名仅用于本次导出。文字字体使用设备字体，缺少时采用同类回退。${score.source?.reviewRequired || /draft|^audio-transcription$|^image-ai$|^full-score-model-reviewed$/.test(score.source?.kind || "") ? " 当前乐谱为待校对草稿，请核对后使用。" : ""}</p><button type="button" class="text-button" id="print-reset">恢复默认外观</button></div><div class="score-print-preview"><div class="print-preview-caption"><strong>首页预览</strong><span id="print-preview-status" role="status" aria-live="polite">正在排版…</span></div><div id="print-preview-paper" aria-label="乐谱打印首页预览"></div><p class="form-note">完整 PDF 会自动分页，保持每个谱行完整。</p></div></div><div class="print-score-actions"><button class="button primary" data-score-output="pdf">${icon("download")}下载 PDF</button><button class="button secondary" data-score-output="print">${icon("printer")}打印乐谱</button></div><p id="print-score-status" class="form-note" role="status" aria-live="polite"></p>`,
+</div><p id="print-source-note" class="form-note" hidden>原图参考会保留图片内的音符、文字和署名；字体与抬头设置用于新页眉，符号字体用于五线谱，谱面大小用于数字谱。</p><p class="form-note">外观选项会记住；标题和署名仅用于本次导出。文字字体使用设备字体，缺少时采用同类回退。${score.source?.reviewRequired || /draft|^audio-transcription$|^image-ai$|^full-score-model-reviewed$/.test(score.source?.kind || "") ? " 当前乐谱为待校对草稿，请核对后使用。" : ""}</p><button type="button" class="text-button" id="print-reset">恢复默认外观</button></div><div class="score-print-preview"><div class="print-preview-caption"><strong>首页预览</strong><span id="print-preview-status" role="status" aria-live="polite">正在排版…</span></div><div id="print-preview-paper" aria-label="乐谱打印首页预览"></div><p class="form-note">完整 PDF 会自动分页，保持每个谱行完整。</p></div></div><div class="print-score-actions"><button class="button primary" data-score-output="pdf">${icon("download")}下载 PDF</button><button class="button secondary" data-score-output="print">${icon("printer")}打印乐谱</button><button class="button primary" id="print-handoff" hidden>${icon("arrow-up-right")}<span>保存或发送 PDF</span></button></div><p id="print-score-status" class="form-note" role="status" aria-live="polite"></p>`,
     );
     const select = $("#print-score-mode"),
       status = $("#print-score-status"),
@@ -123,8 +123,8 @@ ${number("页边距（mm）", "marginMM", 10, 24)}${number("谱面大小（%）"
       const epoch = revision;
       previewStatus.textContent = "正在排版…";
       try {
-        const { createScorePages } = await import("./score-print.js");
-        const pages = await createScorePages(score, {
+        const { layoutScorePages } = await import("./score-print.js");
+        const layout = await layoutScorePages(score, {
           mode: select.value,
           sourceNotation,
           appearance: settings(),
@@ -132,7 +132,7 @@ ${number("页边距（mm）", "marginMM", 10, 24)}${number("谱面大小（%）"
           showFingering: state.showFingering,
         });
         if (!status.isConnected || epoch !== revision || busy) return;
-        const canvas = pages[0];
+        const canvas = await layout.render(0);
         canvas.setAttribute("role", "img");
         canvas.setAttribute("aria-label", "自定义乐谱首页");
         paper.replaceChildren(canvas);
@@ -188,43 +188,85 @@ ${number("页边距（mm）", "marginMM", 10, 24)}${number("谱面大小（%）"
       changed();
     };
     void updatePreview();
+    // On a phone or tablet the finished PDF goes to the system share sheet,
+    // which is also where printing lives there. A share must start from a tap,
+    // and building the PDF outlasts the tap that asked for it, so the result
+    // waits behind one more button.
+    const handoff = $("#print-handoff");
+    let ready = null;
+    const forget = () => {
+      ready = null;
+      handoff.hidden = true;
+    };
+    async function hand(file, pages, print) {
+      const outcome = await deliverFile(file);
+      if (!status.isConnected) return;
+      if (outcome === "needs-tap") {
+        ready = { file, pages, print };
+        handoff.hidden = false;
+        handoff.lastElementChild.textContent = print
+          ? "打开分享面板打印"
+          : "保存或发送 PDF";
+        status.textContent = `PDF 已生成，共 ${pages} 页。点下方按钮${print ? "，在分享面板里选择「打印」" : "保存到手机或发送"}。`;
+        return;
+      }
+      forget();
+      status.textContent =
+        outcome === "cancelled"
+          ? `PDF 已生成，共 ${pages} 页；已取消分享。`
+          : outcome === "shared"
+            ? `PDF 共 ${pages} 页，已交给系统分享面板${print ? "，可在其中选择「打印」" : ""}。`
+            : `PDF 已生成，共 ${pages} 页。`;
+      if (outcome === "cancelled") {
+        ready = { file, pages, print };
+        handoff.hidden = false;
+      }
+    }
+    handoff.onclick = () => ready && hand(ready.file, ready.pages, ready.print);
     buttons.forEach(
       (button) =>
         (button.onclick = async () => {
           busy = true;
           revision++;
           clearTimeout(timer);
+          forget();
           [...buttons, ...controls, select, reset].forEach(
             (control) => (control.disabled = true),
           );
           status.textContent = "正在排版整首乐谱，请稍候…";
           const appearance = settings();
+          const print = button.dataset.scoreOutput === "print";
           try {
-            const { createScorePages, scorePagesPDF, printScorePages } =
+            const { layoutScorePages, scorePagesPDF, printScorePages } =
               await import("./score-print.js");
-            const pages = await createScorePages(score, {
+            const layout = await layoutScorePages(score, {
               mode: select.value,
               sourceNotation,
               appearance,
               showFingering: state.showFingering,
             });
             if (!status.isConnected) return;
-            pages[0].setAttribute("role", "img");
-            pages[0].setAttribute("aria-label", "自定义乐谱首页");
-            paper.replaceChildren(pages[0]);
-            previewStatus.textContent = "已更新";
-            if (button.dataset.scoreOutput === "pdf") {
-              const bytes = await scorePagesPDF(pages, appearance.title);
-              if (!status.isConnected) return;
-              download(
-                bytes,
-                appearance.title.replace(/[\\/:*?"<>|]/g, "_") + ".pdf",
-                "application/pdf",
-              );
-              status.textContent = `PDF 已生成，共 ${pages.length} 页。`;
+            if (print && !sharesFiles()) {
+              await printScorePages(layout, appearance.title);
+              status.textContent = `已打开打印窗口，共 ${layout.count} 页。`;
             } else {
-              await printScorePages(pages, appearance.title);
-              status.textContent = `已打开打印窗口，共 ${pages.length} 页。`;
+              const bytes = await scorePagesPDF(
+                layout,
+                appearance.title,
+                (done, total) => {
+                  status.textContent = `正在生成第 ${done} / ${total} 页…`;
+                },
+              );
+              if (!status.isConnected) return;
+              await hand(
+                toFile(
+                  bytes,
+                  appearance.title.replace(/[\\/:*?"<>|]/g, "_") + ".pdf",
+                  "application/pdf",
+                ),
+                layout.count,
+                print,
+              );
             }
           } catch (error) {
             status.textContent = `导出失败：${error.message || "请重试"}`;
@@ -248,34 +290,53 @@ ${number("页边距（mm）", "marginMM", 10, 24)}${number("谱面大小（%）"
       "带走你的练习谱",
       `<p class="form-note">导出当前调式与编配。MusicXML 可在 MuseScore 等软件继续编辑。</p><div class="export-options"><button data-format="xml">${icon("file-music")}<span>MusicXML<small>${state.section === "guitar" ? "吉他五线谱 · 实际音高" : "双手五线谱 · 可编辑"}</small></span>${icon("download")}</button><button data-format="midi">${icon("piano")}<span>MIDI<small>${state.section === "guitar" ? "吉他音轨 · 原谱速度" : "钢琴音轨 · 原谱速度"}</small></span>${icon("download")}</button><button data-format="json">${icon("book-open")}<span>琴伴乐谱 JSON<small>完整备份 · 可重新导入</small></span>${icon("download")}</button><button data-format="print">${icon("download")}<span>打印 / 保存 PDF<small>${state.section === "guitar" ? "A4 分页 · 吉他六线谱" : "A4 分页 · 五线谱 / 简谱 / 原谱"}</small></span>${icon("arrow-up-right")}</button></div>`,
     );
+    // Exporters bring the MIDI and MusicXML libraries. Fetch them while the
+    // dialog is read: a share sheet only opens shortly after the tap.
+    const exporters = import("../lib/exporters.mjs");
+    exporters.catch(() => {});
+    // Files a share sheet refused for want of a fresh tap, by format.
+    const prepared = new Map();
     $$("[data-format]").forEach(
       (b) =>
         (b.onclick = async () => {
+          const format = b.dataset.format;
+          if (format === "print") return openPrintScore();
           try {
-            // Exporters bring the MIDI and MusicXML libraries; load them on first export.
-            const { exportMusicXML, exportMidi } =
-              b.dataset.format === "xml" || b.dataset.format === "midi"
-                ? await import("../lib/exporters.mjs")
-                : {};
-            const name = state.score.title.replace(/[\\/:*?"<>|]/g, "_"),
-              format = b.dataset.format;
-            if (format === "xml")
-              download(
-                exportMusicXML(state.score),
-                name + ".musicxml",
-                "application/vnd.recordare.musicxml+xml",
-              );
-            if (format === "midi")
-              download(exportMidi(state.score), name + ".mid", "audio/midi");
-            if (format === "json")
-              download(
-                JSON.stringify(readScoreDocument(state.score), null, 2),
-                name + ".json",
-                "application/json",
-              );
-            if (format === "print") {
-              openPrintScore();
-            } else toast("已导出乐谱");
+            let file = prepared.get(format);
+            if (!file) {
+              const name = state.score.title.replace(/[\\/:*?"<>|]/g, "_");
+              if (format === "json")
+                file = toFile(
+                  JSON.stringify(readScoreDocument(state.score), null, 2),
+                  name + ".json",
+                  "application/json",
+                );
+              else {
+                const { exportMusicXML, exportMidi } = await exporters;
+                file =
+                  format === "xml"
+                    ? toFile(
+                        exportMusicXML(state.score),
+                        name + ".musicxml",
+                        "application/vnd.recordare.musicxml+xml",
+                      )
+                    : toFile(
+                        exportMidi(state.score),
+                        name + ".mid",
+                        "audio/midi",
+                      );
+              }
+            }
+            const outcome = await deliverFile(file);
+            if (outcome === "needs-tap") {
+              prepared.set(format, file);
+              if (b.isConnected)
+                b.querySelector("small").textContent =
+                  "已准备好 · 再点一次保存";
+            } else if (outcome !== "cancelled") {
+              prepared.delete(format);
+              toast(outcome === "shared" ? "已交给系统分享面板" : "已导出乐谱");
+            }
           } catch (e) {
             toast(e.message, true);
           }

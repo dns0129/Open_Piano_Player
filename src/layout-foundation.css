@@ -39,3 +39,42 @@
   width: 100%;
   overflow-wrap: anywhere;
 }
+
+/* Touch behaviour shared by every page.
+   - No double-tap zoom or tap delay; a page can still be pinch-zoomed unless it
+     opts out (the practice room does, and resizes the score itself).
+   - iOS zooms the page when a focused field's text is under 16px. */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  touch-action: manipulation;
+}
+body {
+  -webkit-tap-highlight-color: transparent;
+}
+:where(button, summary, label, nav, [role="button"], [role="tab"]) {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+@media (pointer: coarse) {
+  :where(
+      .app-shell,
+      .modal,
+      .commerce-shell,
+      .account-shell,
+      .full-score-import
+    )
+    :is(
+      input:not(
+        [type="range"],
+        [type="checkbox"],
+        [type="radio"],
+        [type="file"]
+      ),
+      select,
+      textarea
+    ) {
+    font-size: max(16px, 1em);
+  }
+}

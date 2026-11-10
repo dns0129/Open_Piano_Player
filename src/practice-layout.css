@@ -1531,3 +1531,174 @@
     margin: 6px 14px;
   }
 }
+
+/* Practice room on touch screens: dragging scrolls the score and nothing else.
+   Long-press must not select glyphs (VexFlow draws notes as text) and two
+   fingers must not zoom the page; the notation area turns a pinch into a score
+   size change instead. */
+@media screen {
+  .app-shell.has-practice {
+    touch-action: pan-x pan-y;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+  .app-shell.has-practice :is(input, textarea, [contenteditable="true"]) {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+  .has-practice .notation-area {
+    touch-action: pan-x pan-y;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    /* A new layout keeps the reader's bar; the browser must not also adjust. */
+    overflow-anchor: none;
+  }
+  .has-practice .notation-area svg text {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .score-zoom {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: var(--surface-0);
+    overflow: hidden;
+  }
+  .score-zoom button {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    color: var(--text-2);
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .score-zoom button:first-child {
+    font-size: 11px;
+  }
+  .score-zoom button:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+  .score-zoom button:not(:disabled):active {
+    background: var(--surface-3);
+  }
+  .score-zoom output {
+    min-width: 44px;
+    padding: 0 2px;
+    text-align: center;
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-3);
+    border-inline: 1px solid var(--border);
+    line-height: 34px;
+  }
+  .speed-presets {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .speed-presets button {
+    min-width: 0;
+    padding: 0;
+    min-height: 34px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--text-2);
+    background: var(--surface-0);
+  }
+  .speed-presets button.active {
+    border-color: var(--moss-light);
+    background: var(--surface-3);
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .sidebar-zoom-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px 10px;
+    white-space: nowrap;
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--text-2);
+  }
+}
+@media screen and (pointer: coarse) {
+  .score-zoom button {
+    width: 40px;
+    height: 40px;
+  }
+  .score-zoom output {
+    line-height: 40px;
+  }
+  .speed-presets button {
+    min-height: 40px;
+  }
+}
+/* Phones: the bar above already names the piece, so the paper starts with the
+   music. Title, print button and source line return in focus mode and print. */
+@media screen and (max-width: 699px),
+  screen and (max-height: 499px) and (max-width: 999px) {
+  .has-practice .practice-layout-bar {
+    flex-wrap: nowrap;
+  }
+  .has-practice .practice-current {
+    flex: 1 1 0;
+  }
+  .has-practice:not(.is-focus) .score-document-heading {
+    padding: 8px 14px 6px;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 10px;
+  }
+  .has-practice:not(.is-focus) .score-document-heading > div:first-child {
+    min-width: 0;
+  }
+  .has-practice:not(.is-focus) .score-document-heading p {
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .has-practice:not(.is-focus) .arrangement-tag {
+    white-space: nowrap;
+  }
+  .has-practice:not(.is-focus) .score-document-heading h1,
+  .has-practice:not(.is-focus) .score-document-heading [data-print-score],
+  .has-practice:not(.is-focus) .score-document-heading .source-line > span {
+    display: none;
+  }
+  .has-practice:not(.is-focus) .score-document-heading p {
+    margin-top: 0;
+  }
+  .has-practice:not(.is-focus) .score-provenance {
+    max-width: 55%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .has-practice:not(.is-focus) .source-line {
+    margin-top: 0;
+  }
+  .has-practice .notation-area {
+    padding: 0 8px 20px;
+  }
+  .practice-layout-bar .score-zoom button {
+    width: 34px;
+  }
+  .practice-layout-bar .score-zoom output {
+    display: none;
+  }
+  .practice-layout-bar .score-zoom button + output + button {
+    border-left: 1px solid var(--border);
+  }
+  .dock-tempo .icon-button {
+    width: 40px;
+  }
+}
