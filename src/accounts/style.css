@@ -58,7 +58,7 @@ body {
   display: block;
   margin: 14px 0;
 }
-.account-card input:not([type="checkbox"]),
+.account-card input:not([type="checkbox"]):not([type="radio"]),
 .account-card select {
   display: block;
   box-sizing: border-box;
@@ -68,6 +68,7 @@ body {
   border: 1px solid var(--border-strong);
   border-radius: 8px;
   font: inherit;
+  font-size: 16px;
   background: var(--surface-0);
 }
 .account-card button,
@@ -148,6 +149,40 @@ body {
 .account-card .danger {
   color: var(--danger);
   margin-top: 16px;
+}
+.account-device-date {
+  display: block;
+  margin-top: 5px;
+  color: var(--text-mid);
+  font-size: 12px;
+}
+.account-deletion {
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.account-deletion h3 {
+  color: var(--danger);
+}
+.account-deletion fieldset {
+  margin: 20px 0;
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.account-deletion label {
+  line-height: 1.65;
+}
+.account-deletion input[type="radio"],
+.account-deletion input[type="checkbox"] {
+  accent-color: var(--accent);
+  width: 18px;
+  height: 18px;
+  vertical-align: middle;
+}
+.account-card .account-deletion button.danger {
+  margin-top: 0;
+  background: var(--danger);
+  color: #fff;
 }
 .account-row {
   padding: 10px 0;

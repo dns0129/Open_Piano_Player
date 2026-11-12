@@ -47,9 +47,12 @@
     "precheck": "node scripts/require-node.mjs",
     "recognition:versions": "node scripts/check-recognition-versions.mjs",
     "recognition:regression": "node scripts/recognition-regression.mjs",
-    "recognition:release": "node scripts/check-recognition-release.mjs"
+    "recognition:release": "node scripts/check-recognition-release.mjs",
+    "ios:preflight": "node scripts/check-ios-release.mjs",
+    "ios:check": "bash ios/check.sh"
   },
   "dependencies": {
+    "@apple/app-store-server-library": "3.1.0",
     "@earendil-works/pi-agent-core": "1.1.0",
     "@earendil-works/pi-ai": "1.1.0",
     "@electric-sql/pglite": "0.5.10",

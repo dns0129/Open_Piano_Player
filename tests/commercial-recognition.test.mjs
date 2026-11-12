@@ -374,25 +374,56 @@ test("concurrent owners cannot oversubscribe global reservations", async (t) => 
       ),
       b = await f.recognition.create(f.B.session.userId, f.input(f.H), key());
     await f.recognition.start();
-    await until(
-      async () =>
-        p.calls.length === 1 &&
-        (await f.recognition.get(f.B.session.userId, b.jobId)).state ===
-          "failed",
+    // Cropping and file writes run concurrently, so either owner can reserve first.
+    // Check the budget invariant independently of which preparation finishes sooner.
+    const jobs = [
+      { owner: f.A.session.userId, jobId: a.jobId },
+      { owner: f.B.session.userId, jobId: b.jobId },
+    ];
+    const { admitted, rejected } = await until(async () => {
+      const states = await Promise.all(
+        jobs.map(async (job) => ({
+          ...job,
+          result: await f.recognition.get(job.owner, job.jobId),
+        })),
+      );
+      assert.ok(
+        p.calls.length <= 1,
+        "the global budget allows only one provider call",
+      );
+      const admitted = states.find((job) => job.result.state === "running"),
+        rejected = states.find((job) => job.result.state === "failed");
+      return (
+        p.calls.length === 1 && admitted && rejected && { admitted, rejected }
+      );
+    });
+    assert.deepEqual(
+      rejected.result.regions.map((region) => region.errorCode),
+      ["GLOBAL_BUDGET"],
     );
     assert.equal(
       (await f.operations.overview(f.O.session)).budget.dayCommitted,
       1000,
     );
+    const rejectedQuota = await f.recognition.budget.quota(rejected.owner);
+    assert.equal(rejectedQuota.remaining, 30);
+    assert.equal(rejectedQuota.held, 0, "all rejected-job points are released");
+    const admittedQuota = await f.recognition.budget.quota(admitted.owner);
+    assert.equal(admittedQuota.remaining, 25);
     assert.equal(
-      (await f.recognition.budget.quota(f.B.session.userId)).remaining,
-      30,
+      admittedQuota.held,
+      5,
+      "the admitted request remains in flight",
     );
     release();
     await until(
       async () =>
-        (await f.recognition.get(f.A.session.userId, a.jobId)).state ===
+        (await f.recognition.get(admitted.owner, admitted.jobId)).state ===
         "needs_review",
+    );
+    assert.equal(
+      (await f.recognition.get(rejected.owner, rejected.jobId)).state,
+      "failed",
     );
     assert.equal(p.calls.length, 1);
   } finally {

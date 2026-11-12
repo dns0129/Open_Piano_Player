@@ -1,0 +1,30 @@
+name: iOS simulator build
+on:
+  pull_request:
+    paths: ["ios/**", ".github/workflows/ios.yml"]
+  push:
+    branches: [main]
+    paths: ["ios/**", ".github/workflows/ios.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  simulator:
+    runs-on: macos-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - name: Check the native bridge and bundled configuration
+        run: |
+          node --test ios/bridge.test.mjs
+          python3 ios/validate-structure.py
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Build and test without a signing identity
+        run: bash ios/check.sh --test

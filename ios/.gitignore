@@ -1,0 +1,7 @@
+Configuration/Local.xcconfig
+Qinban.xcodeproj/
+DerivedData/
+build/
+*.xcuserstate
+xcuserdata/
+StoreKit/Qinban.local.storekit

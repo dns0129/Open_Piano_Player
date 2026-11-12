@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleDevelopmentRegion</key><string>zh-Hans</string>
+  <key>CFBundleDisplayName</key><string>琴伴</string>
+  <key>CFBundleExecutable</key><string>$(EXECUTABLE_NAME)</string>
+  <key>CFBundleIdentifier</key><string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+  <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+  <key>CFBundleName</key><string>$(PRODUCT_NAME)</string>
+  <key>CFBundlePackageType</key><string>APPL</string>
+  <key>CFBundleShortVersionString</key><string>$(MARKETING_VERSION)</string>
+  <key>CFBundleVersion</key><string>$(CURRENT_PROJECT_VERSION)</string>
+  <key>LSRequiresIPhoneOS</key><true/>
+  <key>UILaunchScreen</key><dict/>
+  <key>UIApplicationSceneManifest</key><dict><key>UIApplicationSupportsMultipleScenes</key><false/></dict>
+  <key>UISupportedInterfaceOrientations</key>
+  <array><string>UIInterfaceOrientationPortrait</string><string>UIInterfaceOrientationLandscapeLeft</string><string>UIInterfaceOrientationLandscapeRight</string></array>
+  <key>UISupportedInterfaceOrientations~ipad</key>
+  <array><string>UIInterfaceOrientationPortrait</string><string>UIInterfaceOrientationPortraitUpsideDown</string><string>UIInterfaceOrientationLandscapeLeft</string><string>UIInterfaceOrientationLandscapeRight</string></array>
+  <key>NSCameraUsageDescription</key><string>拍摄你选择的纸质乐谱，并上传到琴伴用于识谱和保存原谱。</string>
+  <key>NSPhotoLibraryUsageDescription</key><string>选择你希望导入的乐谱图片，用于识谱和保存原谱。</string>
+  <key>QinbanServerOrigin</key><string>https://$(QINBAN_SERVER_HOST)</string>
+  <key>QinbanSandboxOrigin</key><string>https://$(QINBAN_SANDBOX_HOST)</string>
+  <key>QinbanProducts</key>
+  <dict>
+    <key>light</key><string>$(QINBAN_PRODUCT_LIGHT)</string>
+    <key>standard</key><string>$(QINBAN_PRODUCT_STANDARD)</string>
+    <key>professional</key><string>$(QINBAN_PRODUCT_PROFESSIONAL)</string>
+    <key>topup</key><string>$(QINBAN_PRODUCT_TOPUP)</string>
+  </dict>
+  <key>QinbanExternalHosts</key><array><string>support.apple.com</string><string>www.apple.com</string></array>
+</dict>
+</plist>
