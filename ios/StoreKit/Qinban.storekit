@@ -1,0 +1,111 @@
+{
+  "identifier": "9EA0DD6B-2A77-4AB3-88DF-EAF6C36AF867",
+  "nonRenewingSubscriptions": [],
+  "products": [
+    {
+      "displayPrice": "19.00",
+      "familyShareable": false,
+      "internalID": "10000004",
+      "localizations": [
+        {
+          "description": "150 识谱积分，购买后不设有效期；不自动续订。",
+          "displayName": "补充积分包",
+          "locale": "zh_CN"
+        }
+      ],
+      "productID": "com.example.qinban.topup",
+      "referenceName": "Qinban 150 credits",
+      "type": "Consumable"
+    }
+  ],
+  "settings": {
+    "_applicationInternalID": "0",
+    "_developerTeamID": "",
+    "_failTransactionsEnabled": false,
+    "_locale": "zh_CN",
+    "_storefront": "CHN",
+    "_timeRate": 0
+  },
+  "subscriptionGroups": [
+    {
+      "id": "B9CD37CF-0DB9-49F7-BC9B-1BA10F72D45E",
+      "localizations": [
+        {
+          "description": "选择适合练琴节奏的识谱额度。",
+          "displayName": "琴伴会员",
+          "locale": "zh_CN"
+        }
+      ],
+      "name": "Qinban Membership",
+      "subscriptions": [
+        {
+          "adHocOffers": [],
+          "codeOffers": [],
+          "displayPrice": "29.00",
+          "familyShareable": false,
+          "groupNumber": 3,
+          "internalID": "10000001",
+          "introductoryOffer": null,
+          "localizations": [
+            {
+              "description": "月度会员，每次成功续订发放 300 识谱积分。Apple 购买积分不设有效期。",
+              "displayName": "轻享版",
+              "locale": "zh_CN"
+            }
+          ],
+          "productID": "com.example.qinban.light.monthly",
+          "recurringSubscriptionPeriod": "P1M",
+          "referenceName": "Qinban light monthly",
+          "subscriptionGroupID": "B9CD37CF-0DB9-49F7-BC9B-1BA10F72D45E",
+          "type": "RecurringSubscription"
+        },
+        {
+          "adHocOffers": [],
+          "codeOffers": [],
+          "displayPrice": "59.00",
+          "familyShareable": false,
+          "groupNumber": 2,
+          "internalID": "10000002",
+          "introductoryOffer": null,
+          "localizations": [
+            {
+              "description": "月度会员，每次成功续订发放 800 识谱积分。Apple 购买积分不设有效期。",
+              "displayName": "标准版",
+              "locale": "zh_CN"
+            }
+          ],
+          "productID": "com.example.qinban.standard.monthly",
+          "recurringSubscriptionPeriod": "P1M",
+          "referenceName": "Qinban standard monthly",
+          "subscriptionGroupID": "B9CD37CF-0DB9-49F7-BC9B-1BA10F72D45E",
+          "type": "RecurringSubscription"
+        },
+        {
+          "adHocOffers": [],
+          "codeOffers": [],
+          "displayPrice": "129.00",
+          "familyShareable": false,
+          "groupNumber": 1,
+          "internalID": "10000003",
+          "introductoryOffer": null,
+          "localizations": [
+            {
+              "description": "月度会员，每次成功续订发放 2000 识谱积分。Apple 购买积分不设有效期。",
+              "displayName": "专业版",
+              "locale": "zh_CN"
+            }
+          ],
+          "productID": "com.example.qinban.professional.monthly",
+          "recurringSubscriptionPeriod": "P1M",
+          "referenceName": "Qinban professional monthly",
+          "subscriptionGroupID": "B9CD37CF-0DB9-49F7-BC9B-1BA10F72D45E",
+          "type": "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version": {
+    "major": 3,
+    "minor": 0
+  }
+}

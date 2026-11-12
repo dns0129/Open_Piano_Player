@@ -1,3 +1,5 @@
+import { isIOSApp, nativeBridge } from "../ios/native.js";
+
 export function createAccountClient({
   fetchImpl = (...a) => fetch(...a),
   onIdentityChange = () => {},
@@ -14,7 +16,9 @@ export function createAccountClient({
       });
   };
   function update(value) {
-    const changed = session?.user.id !== value?.user.id;
+    const changed =
+      session?.user.id !== value?.user.id ||
+      session?.user.state !== value?.user.state;
     session = value;
     if (changed) {
       epoch++;
@@ -85,9 +89,11 @@ export function createAccountClient({
   }
   const api = {
     checkEpoch,
-    clearLocal() {
+    clearLocal({ broadcast = false } = {}) {
       context = null;
+      expired = false;
       update(null);
+      if (broadcast) announce();
     },
     get session() {
       return session;
@@ -139,14 +145,33 @@ export function createAccountClient({
       announce();
       return { session: s, isNewAccount, invite };
     },
+    async clearDeviceSession() {
+      api.clearLocal({ broadcast: true });
+      if (!isIOSApp()) return { deviceCleared: true, warning: "" };
+      try {
+        await nativeBridge().clearSession();
+        return { deviceCleared: true, warning: "" };
+      } catch {
+        return {
+          deviceCleared: false,
+          warning: "服务器会话已失效，本机登录数据清理尚未完成，请重试清理。",
+        };
+      }
+    },
     async logout() {
-      if (session)
-        await api.json("/sessions/" + session.sessionId, {
-          method: "DELETE",
-          body: {},
-        });
-      update(null);
-      announce();
+      if (session) {
+        try {
+          await api.json("/sessions/" + session.sessionId, {
+            method: "DELETE",
+            body: {},
+          });
+        } catch (error) {
+          // An already-expired server session is also a successful sign-out.
+          // Network errors still surface: do not pretend the server revoked it.
+          if (error.status !== 401) throw error;
+        }
+      }
+      return api.clearDeviceSession();
     },
     async upload(
       file,

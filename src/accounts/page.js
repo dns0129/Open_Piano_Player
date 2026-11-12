@@ -1,6 +1,8 @@
 import { authLayout, authForm } from "./auth-view.js";
 import { navigation } from "../commercial/shared.js";
 import { createAccountClient } from "./client.js";
+import { accountSecurity, canDeleteAccount } from "./security-view.js";
+import { attachNativePurchases } from "../ios/transaction-sync.js";
 import {
   createSignInFlow,
   normalizeCode,
@@ -38,12 +40,20 @@ const account = createAccountClient(),
     newInvite: null,
     context: null,
     devices: [],
+    reauthChallenge: null,
+    reauthCodeDraft: "",
+    deletionOpen: false,
+    deletionMode: "immediate",
+    deletionEmail: "",
+    deletionAccepted: false,
+    deviceCleanupPending: false,
     preview: null,
     localRecords: [],
     group: null,
     groups: [],
     pendingImages: [],
   };
+attachNativePurchases(account);
 let sessionStore = null;
 try {
   sessionStore = window.sessionStorage;
@@ -75,7 +85,9 @@ async function run(fn) {
   }
 }
 async function load() {
-  if (!account.session) return;
+  // Recovery sessions can only restore the account, not read private data.
+  // A library request here would return 401 and erase the recovery session.
+  if (account.session?.user.state !== "active") return;
   state.records = (
     await account.json("/library/entries?limit=100&deleted=" + state.trash)
   ).records;
@@ -91,7 +103,11 @@ function render() {
   document.body.classList.toggle("is-signing-in", !s);
   if (!s) {
     root.innerHTML = authLayout({
-      content: login(),
+      content:
+        login() +
+        (state.deviceCleanupPending
+          ? '<section class="account-card" role="status"><p>服务器会话已失效，本机登录数据清理尚未完成。</p><button type="button" data-retry-device-cleanup>重试清理登录数据</button></section>'
+          : ""),
       error: state.error,
       message: state.message,
       busy: state.busy,
@@ -132,6 +148,7 @@ async function afterSignIn({ session, isNewAccount, invite }) {
   state.passwordConfirmDraft = "";
   state.inviteDraft = "";
   state.inviteCheck = null;
+  state.deviceCleanupPending = false;
   if (next && session.user.state !== "deletion_pending") {
     state.message = "已登录，正在返回…";
     location.replace(next);
@@ -277,7 +294,16 @@ function bindSignIn() {
     button.addEventListener("click", () => {
       const [title, content] = info[button.dataset.authInfo];
       $("#auth-dialog-title").textContent = title;
-      $("[data-auth-info-body]").textContent = content;
+      const body = $("[data-auth-info-body]");
+      body.textContent = content;
+      if (["privacy", "terms"].includes(button.dataset.authInfo)) {
+        const link = document.createElement("a"),
+          paragraph = document.createElement("p");
+        link.href = "/" + button.dataset.authInfo + ".html";
+        link.textContent = "查看完整" + title;
+        paragraph.append(link);
+        body.append(paragraph);
+      }
       $(".auth-dialog").showModal();
     }),
   );
@@ -453,7 +479,7 @@ function bindInvites() {
   });
 }
 function dashboard(s) {
-  return `<section class="account-card"><div class="account-row"><div><h1>我的私有曲库</h1><p>${esc(s.user.email)} · ${state.records.length} 首${state.trash ? "已回收" : ""}曲目</p></div><button data-logout>退出账号</button></div><div class="account-actions"><label class="account-file">导入数字乐谱<input data-digital type="file" accept=".json,.mid,.midi,.xml,.musicxml,.mxl" hidden></label><label class="account-file">保存原始图片<input data-images type="file" accept="image/png,image/jpeg,image/webp" multiple hidden></label><label class="account-file">保存原始 PDF<input data-pdf type="file" accept="application/pdf,.pdf" hidden></label><button data-export>下载完整备份</button><label class="account-file">恢复备份<input data-backup type="file" accept=".json" hidden></label><button data-local>选择导入本机曲库</button><button data-trash>${state.trash ? "返回曲库" : "回收站"}</button></div>${state.group ? `<p class="account-notice">原始资料已私有保存：${state.group.pages.length} 页，来源组 ${esc(state.group.sourceGroupId)}。本页面不调用识谱模型。</p>` : ""}<div class="account-list">${state.records.length ? state.records.map((r) => `<article class="account-record"><div><strong>${esc(r.title)}</strong><small>修订 ${r.revision} · ${esc(new Date(r.updatedAt).toLocaleString())} · 私有</small></div><div>${state.trash ? `<button data-restore="${r.entryId}">恢复</button>` : `<a href="/practice.html?entry=${r.entryId}">打开练习</a><button data-history="${r.entryId}">历史</button><button data-delete="${r.entryId}">移到回收站</button>`}</div></article>`).join("") : '<p class="account-empty">曲库暂无内容。导入不会公开曲谱。</p>'}</div></section>${inviteCard()}${state.pendingImages.length ? imageOrder() : ""}${sourceGroups()}${state.preview ? preview() : ""}${state.localRecords.length ? localSelection() : ""}<section class="account-card"><h2>设备与账号</h2>${state.devices.map((d) => `<div class="account-row"><span>${esc(d.device)} ${d.current ? "（当前设备）" : ""}</span><button data-revoke="${d.id}">退出此设备</button></div>`).join("")}<form data-reauth><p>备份、退出所有设备和注销需要近期邮箱验证。</p><button type="submit">重新发送验证邮件</button>${state.reauthChallenge ? '<input name="code" placeholder="8 位验证码" inputmode="numeric" pattern="[0-9]{8}"><button data-reauth-verify type="button">完成再次验证</button>' : ""}</form><button data-logout-all>退出所有设备</button><button data-delete-account class="danger">申请注销账号</button></section>`;
+  return `<section class="account-card"><div class="account-row"><div><h1>我的私有曲库</h1><p>${esc(s.user.email)} · ${state.records.length} 首${state.trash ? "已回收" : ""}曲目</p></div><button data-logout>退出账号</button></div><div class="account-actions"><label class="account-file">导入数字乐谱<input data-digital type="file" accept=".json,.mid,.midi,.xml,.musicxml,.mxl" hidden></label><label class="account-file">保存原始图片<input data-images type="file" accept="image/png,image/jpeg,image/webp" multiple hidden></label><label class="account-file">保存原始 PDF<input data-pdf type="file" accept="application/pdf,.pdf" hidden></label><button data-export>下载完整备份</button><label class="account-file">恢复备份<input data-backup type="file" accept=".json" hidden></label><button data-local>选择导入本机曲库</button><button data-trash>${state.trash ? "返回曲库" : "回收站"}</button></div>${state.group ? `<p class="account-notice">原始资料已私有保存：${state.group.pages.length} 页，来源组 ${esc(state.group.sourceGroupId)}。本页面不调用识谱模型。</p>` : ""}<div class="account-list">${state.records.length ? state.records.map((r) => `<article class="account-record"><div><strong>${esc(r.title)}</strong><small>修订 ${r.revision} · ${esc(new Date(r.updatedAt).toLocaleString())} · 私有</small></div><div>${state.trash ? `<button data-restore="${r.entryId}">恢复</button>` : `<a href="/practice.html?entry=${r.entryId}">打开练习</a><button data-history="${r.entryId}">历史</button><button data-delete="${r.entryId}">移到回收站</button>`}</div></article>`).join("") : '<p class="account-empty">曲库暂无内容。导入不会公开曲谱。</p>'}</div></section>${inviteCard()}${state.pendingImages.length ? imageOrder() : ""}${sourceGroups()}${state.preview ? preview() : ""}${state.localRecords.length ? localSelection() : ""}${accountSecurity({ session: s, state, nativeSubscriptions: !!window.QinbanNative?.manageSubscriptions })}`;
 }
 function imageOrder() {
   return `<section class="account-card"><h2>核对原图页序</h2><p>原文件保持不变。请按谱面顺序调整后保存。</p>${state.pendingImages.map((f, i) => `<div class="account-row"><span>第 ${i + 1} 页 · ${esc(f.name)} · ${(f.size / 1048576).toFixed(2)} MiB</span><div><button data-image-move="-1" data-index="${i}" ${i === 0 ? "disabled" : ""}>上移</button><button data-image-move="1" data-index="${i}" ${i === state.pendingImages.length - 1 ? "disabled" : ""}>下移</button></div></div>`).join("")}<button data-save-images>按此页序保存到账号</button><button data-cancel-images>取消</button></section>`;
@@ -471,6 +497,14 @@ function localSelection() {
 function bind() {
   bindSignIn();
   bindInvites();
+  $("[data-retry-device-cleanup]")?.addEventListener("click", () =>
+    run(async () => {
+      const cleanup = await account.clearDeviceSession();
+      state.deviceCleanupPending = !cleanup.deviceCleared;
+      state.message = cleanup.warning || "本机登录数据已清理。";
+      state.context = await account.loginContext();
+    }),
+  );
   $("[data-recover]")?.addEventListener("click", () =>
     run(async () => {
       await account.json("/account/recover", { method: "POST", body: {} });
@@ -485,12 +519,13 @@ function bind() {
   );
   $("[data-logout]")?.addEventListener("click", () =>
     run(async () => {
-      await account.logout();
+      const cleanup = await account.logout();
+      state.deviceCleanupPending = !cleanup.deviceCleared;
       state.records = [];
       state.preview = null;
       state.localRecords = [];
       state.context = await account.loginContext();
-      state.message = "已退出当前账号。";
+      state.message = "已退出当前账号。" + cleanup.warning;
     }),
   );
   $("[data-trash]")?.addEventListener("click", () =>
@@ -751,53 +786,108 @@ function bind() {
             body: {},
           });
           if (own) {
-            await account.initialize();
+            const cleanup = await account.clearDeviceSession();
+            state.deviceCleanupPending = !cleanup.deviceCleared;
             state.records = [];
+            state.context = await account.loginContext();
+            state.message = "已退出当前设备。" + cleanup.warning;
           } else await load();
         })),
   );
-  $("[data-reauth]")?.addEventListener("submit", (e) => {
-    e.preventDefault();
+  $("[data-reauth-send]")?.addEventListener("click", () => {
     run(async () => {
       state.reauthChallenge = await account.code({
         email: account.session.user.email,
         purpose: "reauth",
       });
+      state.reauthCodeDraft = "";
       state.message = "再次验证的验证码已投递。";
     });
   });
-  $("[data-reauth-verify]")?.addEventListener("click", () => {
-    const code = $("[data-reauth] input").value;
+  $("[data-reauth] input[name=code]")?.addEventListener("input", (e) => {
+    state.reauthCodeDraft = normalizeCode(e.target.value);
+    e.target.value = state.reauthCodeDraft;
+  });
+  $("[data-reauth]")?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (!state.reauthChallenge) return;
+    const code = normalizeCode($("[data-reauth] input").value);
     run(async () => {
+      if (code.length !== CODE_LENGTH)
+        throw new Error("请输入邮件中的 8 位验证码。");
       await account.verify({
         challengeId: state.reauthChallenge.challengeId,
         code,
       });
       state.reauthChallenge = null;
+      state.reauthCodeDraft = "";
+      await load();
       state.message = "再次验证完成。";
     });
   });
   $("[data-logout-all]")?.addEventListener("click", () =>
     run(async () => {
       await account.json("/auth/logout-all", { method: "POST", body: {} });
-      await account.initialize();
+      const cleanup = await account.clearDeviceSession();
+      state.deviceCleanupPending = !cleanup.deviceCleared;
       state.records = [];
       state.context = await account.loginContext();
+      state.message = "所有设备均已退出。" + cleanup.warning;
     }),
   );
   $("[data-delete-account]")?.addEventListener("click", () => {
-    if (
-      window.confirm(
-        "申请注销后会退出全部设备，30 天内可用原邮箱恢复。是否继续？",
-      )
-    )
-      run(async () => {
-        await account.json("/account", { method: "DELETE", body: {} });
-        await account.initialize();
-        state.records = [];
-        state.context = await account.loginContext();
-        state.message = "已申请注销，30 天内可以恢复。";
+    state.deletionOpen = true;
+    render();
+    $("#account-deletion")?.scrollIntoView({ behavior: "smooth" });
+    $("[name=confirmationEmail]")?.focus();
+  });
+  $("[data-cancel-deletion]")?.addEventListener("click", () => {
+    state.deletionOpen = false;
+    state.deletionEmail = "";
+    state.deletionAccepted = false;
+    render();
+    $("[data-delete-account]")?.focus();
+  });
+  $$("[name=deletionMode]").forEach((input) =>
+    input.addEventListener("change", () => {
+      state.deletionMode = input.value;
+      render();
+    }),
+  );
+  const updateDeleteButton = () => {
+    const button = $("[data-delete-account-form] button[type=submit]");
+    if (button) button.disabled = !canDeleteAccount(account.session, state);
+  };
+  $("[name=confirmationEmail]")?.addEventListener("input", (e) => {
+    state.deletionEmail = e.target.value;
+    updateDeleteButton();
+  });
+  $("[name=deletionAccepted]")?.addEventListener("change", (e) => {
+    state.deletionAccepted = e.target.checked;
+    updateDeleteButton();
+  });
+  $("[data-manage-apple-subscriptions]")?.addEventListener("click", () =>
+    run(() => window.QinbanNative.manageSubscriptions()),
+  );
+  $("[data-delete-account-form]")?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (!canDeleteAccount(account.session, state)) return;
+    const mode = state.deletionMode,
+      confirmationEmail = state.deletionEmail;
+    run(async () => {
+      const result = await account.json("/account", {
+        method: "DELETE",
+        body: { mode, confirmationEmail },
       });
+      const cleanup = await account.clearDeviceSession();
+      state.deviceCleanupPending = !cleanup.deviceCleared;
+      state.context = await account.loginContext();
+      state.message =
+        (result.state === "deleting"
+          ? "永久删除已开始，所有设备已退出。账号和私有资料正在清理，无法恢复。"
+          : `已申请删除，所有设备已退出。${new Date(result.recoverUntil).toLocaleDateString()}前可用原邮箱恢复；期满永久删除。`) +
+        cleanup.warning;
+    });
   });
 }
 account.subscribe(() => {
@@ -811,6 +901,15 @@ account.subscribe(() => {
   state.group = null;
   state.groups = [];
   state.pendingImages = [];
+  state.reauthChallenge = null;
+  state.reauthCodeDraft = "";
+  state.deletionOpen = false;
+  state.deletionMode = "immediate";
+  state.deletionEmail = "";
+  state.deletionAccepted = false;
+  state.passwordDraft = "";
+  state.passwordConfirmDraft = "";
+  state.passwordVisible = false;
   render();
 });
 run(async () => {

@@ -1,0 +1,9 @@
+// Copy this file to Local.xcconfig and replace each value with your own settings.
+PRODUCT_BUNDLE_IDENTIFIER = com.yourcompany.qinban
+DEVELOPMENT_TEAM = YOURTEAMID
+QINBAN_SERVER_HOST = app.yourcompany.example
+QINBAN_SANDBOX_HOST = staging.yourcompany.example
+QINBAN_PRODUCT_LIGHT = com.yourcompany.qinban.light.monthly
+QINBAN_PRODUCT_STANDARD = com.yourcompany.qinban.standard.monthly
+QINBAN_PRODUCT_PROFESSIONAL = com.yourcompany.qinban.professional.monthly
+QINBAN_PRODUCT_TOPUP = com.yourcompany.qinban.topup

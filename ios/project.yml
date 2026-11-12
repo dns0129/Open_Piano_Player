@@ -1,0 +1,87 @@
+name: Qinban
+options:
+  minimumXcodeGenVersion: 2.40.0
+  developmentLanguage: zh-Hans
+  deploymentTarget:
+    iOS: "16.0"
+configs:
+  Debug: debug
+  Release: release
+fileGroups:
+  - Configuration
+  - StoreKit
+  - README.md
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    SWIFT_STRICT_CONCURRENCY: targeted
+    ENABLE_USER_SCRIPT_SANDBOXING: "NO"
+    IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+    TARGETED_DEVICE_FAMILY: "1,2"
+    SUPPORTS_MACCATALYST: "NO"
+    SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: "NO"
+targets:
+  Qinban:
+    type: application
+    platform: iOS
+    sources:
+      - path: Qinban
+        excludes:
+          - Info.plist
+          - NativeBridge.js
+          - PrivacyInfo.xcprivacy
+          - Assets.xcassets
+      - path: Qinban/NativeBridge.js
+        buildPhase: resources
+      - path: Qinban/PrivacyInfo.xcprivacy
+        buildPhase: resources
+      - path: Qinban/Assets.xcassets
+        buildPhase: resources
+    configFiles:
+      Debug: Configuration/App.xcconfig
+      Release: Configuration/App.xcconfig
+    settings:
+      base:
+        PRODUCT_NAME: Qinban
+        PRODUCT_MODULE_NAME: Qinban
+        INFOPLIST_FILE: Qinban/Info.plist
+        GENERATE_INFOPLIST_FILE: "NO"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+    preBuildScripts:
+      - name: Validate App Store release configuration
+        script: bash "$SRCROOT/validate-release.sh"
+        basedOnDependencyAnalysis: false
+  QinbanTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - QinbanTests
+    dependencies:
+      - target: Qinban
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.qinban.tests
+        GENERATE_INFOPLIST_FILE: "YES"
+        CODE_SIGNING_ALLOWED: "NO"
+schemes:
+  Qinban:
+    build:
+      targets:
+        Qinban: all
+        QinbanTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - QinbanTests
+    archive:
+      config: Release
+  Qinban-StoreKit-Local:
+    build:
+      targets:
+        Qinban: all
+    run:
+      config: Debug
+      storeKitConfiguration: StoreKit/Qinban.local.storekit

@@ -1,0 +1,19 @@
+// Public application settings. Credentials and Apple private keys never belong here.
+PRODUCT_BUNDLE_IDENTIFIER = com.example.qinban
+DEVELOPMENT_TEAM =
+CODE_SIGN_STYLE = Automatic
+MARKETING_VERSION = 0.1.0
+CURRENT_PROJECT_VERSION = 1
+
+// Host, optionally followed by a port. HTTPS is mandatory; do not include a path.
+QINBAN_SERVER_HOST = qinban.example.invalid
+QINBAN_SANDBOX_HOST = sandbox.qinban.example.invalid
+
+// Match the four product IDs configured on the server and in App Store Connect.
+QINBAN_PRODUCT_LIGHT = com.example.qinban.light.monthly
+QINBAN_PRODUCT_STANDARD = com.example.qinban.standard.monthly
+QINBAN_PRODUCT_PROFESSIONAL = com.example.qinban.professional.monthly
+QINBAN_PRODUCT_TOPUP = com.example.qinban.topup
+
+// The local override is intentionally excluded from Git.
+#include? "Local.xcconfig"

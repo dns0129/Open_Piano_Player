@@ -17,6 +17,8 @@ export default defineConfig({
               "recognition.html",
               "operations.html",
               "subscription.html",
+              "privacy.html",
+              "terms.html",
             ],
           },
         }
