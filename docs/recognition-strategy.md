@@ -63,7 +63,7 @@ node scripts/benchmark-recognition-p1.mjs BENCHMARK_ROOT NEW_OUTPUT --with-conte
 
 当前组件版本来自 `lib/recognition-versions.mjs`；`recognition:versions` 检查 README、本策略、Skill 接入说明的当前标记，以及 Skill 元数据、包/锁文件与 Node/CI 配置。历史报告的版本不回写，也不把升降规则版本等同于整体提示词版本。
 
-`npm run check` 同时执行 `recognition:release`，核对当前识别实现、模型输入文本/图像预处理指纹、固定来源/参考范围及已通过的回归证据。修改实现后重新回归；模型输入变化不能用旧响应的离线重放证明新视觉效果。回归集版本绑定来源、事件单位、参考层级、对齐方式、分母和运行范围，不能缩小分母后继续沿用同一版本。
+`npm run check` 同时执行 `recognition:release`。已核验的发布证据必须对上当前识别实现、模型输入文本/图像预处理指纹、固定来源/参考范围，以及已通过的回归比较。没有私有语料和真实读取产物时，公开记录可以明确写成 `status: "unverified"`：只绑定实现与模型输入指纹，`evaluation` 必须为空，门禁返回 `regressionPassed: false`，不能用来声称准确率。修改实现或模型输入后都要更新证据；未核验记录用 `node scripts/check-recognition-release.mjs --bind-unverified` 重绑指纹，已核验记录必须重新回归。模型输入变化不能用旧响应的离线重放证明新视觉效果。回归集版本绑定来源、事件单位、参考层级、对齐方式、分母和运行范围，不能缩小分母后继续沿用同一版本。
 
 固定语料和命令见 [P2 实施记录](reports/recognition-p2-implementation-20261028.md) 与 [语料登记](recognition-regression-corpus.json)。prepare/evaluate 均离线，既有失败、不完整和未知用量保留。真实读取须另选 `live` 并声明总调用预算；完整固定 PDF 范围目前需要至少 16 次预算，每行一次，不自动修复或复读。原图和参考不随源码发布，只有汇总、指纹与门禁结论进入 Git。
 
