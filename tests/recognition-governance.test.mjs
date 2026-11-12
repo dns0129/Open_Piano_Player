@@ -248,6 +248,48 @@ test("release gate rejects changed implementation and offline evidence for a cha
     /离线重放不能证明/,
   );
 });
+test("unverified release evidence binds fingerprints and rejects attached accuracy results", async (t) => {
+  const current = await checkRecognitionRelease(root);
+  assert.equal(current.status, "unverified");
+  assert.equal(current.mode, "unverified");
+  assert.equal(current.runs, 0);
+  assert.equal(current.regressionPassed, false);
+  assert.equal(current.newVisualAccuracyClaim, false);
+  const evidence = JSON.parse(
+    await readFile(
+      join(root, "docs/recognition-release-evidence.json"),
+      "utf8",
+    ),
+  );
+  assert.equal(evidence.evaluation, null);
+  assert.equal(evidence.corpus.scopeSha256, null);
+  const dir = await mkdtemp(join(tmpdir(), "p2-unverified-"));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const impl = await recognitionReleaseFingerprint(root);
+  for (const file of impl.files.map((f) => f.path)) {
+    await mkdir(dirname(join(dir, file)), { recursive: true });
+    await copyFile(join(root, file), join(dir, file));
+  }
+  await mkdir(dirname(join(dir, "docs/recognition-release-evidence.json")), {
+    recursive: true,
+  });
+  const forged = {
+    ...evidence,
+    evaluation: { mode: "offline-frozen-responses", before: [], after: [] },
+  };
+  await writeFile(
+    join(dir, "docs/recognition-release-evidence.json"),
+    JSON.stringify(forged),
+  );
+  await assert.rejects(checkRecognitionRelease(dir), /不能附带准确率/);
+  forged.evaluation = null;
+  forged.prompt = { ...forged.prompt, digest: "stale-prompt" };
+  await writeFile(
+    join(dir, "docs/recognition-release-evidence.json"),
+    JSON.stringify(forged),
+  );
+  await assert.rejects(checkRecognitionRelease(dir), /模型输入文本变化/);
+});
 test("release fingerprint binds every module of the full-PDF review dialog", async () => {
   const bound = new Set(
     (await recognitionReleaseFingerprint(root)).files.map((f) => f.path),

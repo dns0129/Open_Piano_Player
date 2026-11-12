@@ -40,4 +40,4 @@
 
 ## 发布门禁
 
-上述所有 `src/full-score-import*.js` 都在 `recognitionReleaseFingerprint`（`lib/recognition-governance.mjs`）的固定清单中；修改任何一个都需要重新执行固定回归并更新 `docs/recognition-release-evidence.json`。
+上述所有 `src/full-score-import*.js` 都在 `recognitionReleaseFingerprint`（`lib/recognition-governance.mjs`）的固定清单中。修改任何一个都会使 `recognition:release` 失败，直到 `docs/recognition-release-evidence.json` 里的指纹更新。当前公开记录若是未核验绑定，更新指纹只说明代码对得上，并不表示固定回归已经通过；准确率结论仍要等真实评测替换这份记录。

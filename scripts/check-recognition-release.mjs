@@ -103,6 +103,79 @@ export async function recordRecognitionRelease(root, evaluationFile) {
   );
   return evidence;
 }
+const unverifiedLimitations = [
+  "Unverified binding only: implementation and prompt fingerprints match this tree.",
+  "No fixed regression, independent scorer, or live first-read was executed for this release when this file was written.",
+  "scopeSha256 is null because the private frozen suite is not in the repository.",
+  "This record must not be cited as visual accuracy, offline equivalence, or providerCalls.",
+  "Replace it with recordRecognitionRelease output after a real evaluation before claiming accuracy.",
+];
+export async function bindUnverifiedRecognitionRelease(
+  root,
+  now = () => new Date(),
+) {
+  const path = join(root, "docs/recognition-release-evidence.json");
+  let prior = null;
+  try {
+    const existing = JSON.parse(await readFile(path, "utf8"));
+    if (existing.status === "unverified") prior = existing.priorPublicEvidence;
+    else if (existing?.release)
+      prior = {
+        release: existing.release,
+        recordedAt: existing.recordedAt ?? null,
+        mode: existing.evaluation?.mode ?? null,
+        note: "上一份公开证据的发布号或模型输入已经不能代表当前代码。本记录不复制其回归数字。",
+      };
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+  }
+  const evidence = {
+    schema: "recognition-release-evidence/v1",
+    status: "unverified",
+    release: RECOGNITION_VERSIONS.release,
+    recordedAt: now().toISOString(),
+    reason:
+      "当前环境没有私有冻结语料、独立评分原件或本次发布的真实首读产物，不能诚实重跑固定回归。本记录只绑定实现与模型输入指纹。",
+    implementation: await recognitionReleaseFingerprint(root),
+    prompt: await recognitionPromptFingerprint(root),
+    corpus: {
+      version: RECOGNITION_VERSIONS.corpus,
+      scopeSha256: null,
+    },
+    evaluation: null,
+    ...(prior ? { priorPublicEvidence: prior } : {}),
+    limitations: unverifiedLimitations,
+  };
+  await writeFile(path, JSON.stringify(evidence, null, 2) + "\n");
+  return evidence;
+}
+function checkUnverifiedRelease(evidence, implementation, prompt) {
+  if (evidence.evaluation != null)
+    throw Error("未核验发布记录不能附带准确率或回归结果");
+  if (
+    evidence.corpus?.version !== RECOGNITION_VERSIONS.corpus ||
+    evidence.corpus.scopeSha256 != null
+  )
+    throw Error("未核验发布记录不能声明尚未重测的范围指纹");
+  if (evidence.implementation?.digest !== implementation.digest)
+    throw Error("识别实现已变化：先重跑固定回归，再更新发布证据");
+  if (evidence.prompt?.digest !== prompt.digest)
+    throw Error("模型输入文本变化不能沿用旧识别证据，需要真实新读取");
+  if (
+    !Array.isArray(evidence.limitations) ||
+    evidence.limitations.length !== unverifiedLimitations.length ||
+    evidence.limitations.some((line, i) => line !== unverifiedLimitations[i])
+  )
+    throw Error("未核验发布记录必须写明不能声称准确率");
+  return {
+    release: evidence.release,
+    status: "unverified",
+    mode: "unverified",
+    runs: 0,
+    regressionPassed: false,
+    newVisualAccuracyClaim: false,
+  };
+}
 export async function checkRecognitionRelease(root) {
   const evidence = JSON.parse(
     await readFile(
@@ -117,6 +190,8 @@ export async function checkRecognitionRelease(root) {
     evidence.release !== RECOGNITION_VERSIONS.release
   )
     throw Error("识别发布证据缺失或版本过期");
+  if (evidence.status === "unverified")
+    return checkUnverifiedRelease(evidence, implementation, prompt);
   if (
     evidence.corpus?.version !== RECOGNITION_VERSIONS.corpus ||
     !evidence.corpus.scopeSha256
@@ -150,8 +225,11 @@ if (
   try {
     const root = fileURLToPath(new URL("..", import.meta.url));
     const i = process.argv.indexOf("--attest");
+    const bind = process.argv.includes("--bind-unverified");
+    if (bind && i >= 0) throw Error("未核验绑定不能和真实评测登记一起执行");
     if (i >= 0)
       await recordRecognitionRelease(root, resolve(process.argv[i + 1]));
+    if (bind) await bindUnverifiedRecognitionRelease(root);
     console.log(JSON.stringify(await checkRecognitionRelease(root)));
   } catch (e) {
     console.error(e.message);
