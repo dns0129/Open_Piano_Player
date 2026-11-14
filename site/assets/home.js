@@ -293,6 +293,10 @@ function updateArrangement({ flash = false } = {}) {
   arrangeView.setScore(arrangementScore());
   arrangeView.selectNote(mainNote.id, { corrected: arranged });
   printView.setScore(arrangementScore({ full: true }));
+  // Editing also replaces an old audition's ended state and beat clock.
+  // Later actions in another panel must not revive that obsolete preview.
+  if (audio.getSnapshot().scoreId?.startsWith("arrangement-"))
+    audio.setScore(arrangementScore());
   $("#undo-arrange").disabled = !arranged;
   $("#hear-after").disabled = !arranged;
   $("#make-chord").disabled = arranged;

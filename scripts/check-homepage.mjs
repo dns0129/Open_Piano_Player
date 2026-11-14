@@ -711,8 +711,40 @@ async function scenario({ name, width, height, mobile }) {
       printBackground: true,
     });
     await page.emulateMedia({ media: "screen" });
+    // Follow the public flow through a real natural end before undoing. A
+    // later review action must not revive the completed arrangement's state.
+    await page.locator("#hear-after").click();
+    await page.waitForFunction(
+      async () => {
+        const audio = (await import("/assets/home.js")).getHomeSnapshot().audio;
+        return (
+          audio.scoreId === "arrangement-after" && audio.ended && !audio.playing
+        );
+      },
+      undefined,
+      { timeout: 6000, polling: 50 },
+    );
     await page.locator("#undo-arrange").click();
-    assert.equal((await snapshot(page)).arranged, false);
+    const undone = await snapshot(page);
+    assert.equal(undone.arranged, false);
+    assert.equal(
+      undone.audio.ended,
+      false,
+      `${name}: undo clears the completed arrangement state`,
+    );
+    assert.equal(
+      undone.audio.beat,
+      0,
+      `${name}: undo resets the arrangement clock`,
+    );
+    assert(
+      (await page.locator("#arrange-status").innerText()).includes("已撤销"),
+    );
+    await page.locator("#review-reset").click();
+    assert(
+      (await page.locator("#arrange-status").innerText()).includes("已撤销"),
+      `${name}: resetting review must preserve the undo status`,
+    );
     assert(
       await page
         .locator("#print-edition")
@@ -720,6 +752,9 @@ async function scenario({ name, width, height, mobile }) {
         .then((s) => s.includes("原始版本")),
     );
     record(`${name}: real triad change, A4 preview and undo`);
+    record(
+      `${name}: natural arrangement end, undo and review reset keep consistent state`,
+    );
     const smallButtons = await page
       .locator("button:not([disabled]),summary")
       .evaluateAll((elements) =>
