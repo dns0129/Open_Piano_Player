@@ -6,7 +6,8 @@ import {
   SOURCE_INFO,
   BACH_CORRECTION,
 } from "./practice-data.js";
-import { initPencilTrail } from "./pencil-trail.js";
+import { initPencilTrail } from "./pencil-trail.js?v=flow-20261114";
+import { initPageMotion } from "./page-motion.js?v=flow-20261114";
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -525,6 +526,9 @@ function onAudioState(state) {
 }
 
 async function initialize() {
+  // Begin the visual entrance without waiting for score engraving or samples.
+  initPageMotion();
+  initPencilTrail();
   createKeyboard();
   if (window.matchMedia("(max-width:700px)").matches)
     $("#practice-settings").open = false;
@@ -756,7 +760,6 @@ async function initialize() {
     window.print();
   });
   window.addEventListener("beforeprint", () => audio.pause());
-  initPencilTrail();
   document.documentElement.dataset.homeReady = "true";
 }
 

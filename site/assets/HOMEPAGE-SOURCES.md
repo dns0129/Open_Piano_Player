@@ -30,6 +30,7 @@
 
 - 钢琴：Salamander Grand Piano，Alexander Holm，Yamaha C5 录音，[CC BY 3.0](https://creativecommons.org/licenses/by/3.0/)。使用项目 `assets/audio/piano/` 中已随库分发的 MP3；原始分发版本、作者和处理说明保留于 [ATTRIBUTION.txt](audio/piano/ATTRIBUTION.txt)。按最近采样根音移调和包络播放。未声称其他型号钢琴的实录。
 - 记谱：项目已有 VexFlow 5（MIT）和 Bravura（SIL Open Font License 1.1）；字体授权见 [OFL.txt](fonts/OFL.txt)。
+- 首页展示字体：Ma Shan Zheng Regular，Copyright 2018 The Ma Shan Zheng Project Authors，SIL Open Font License 1.1。按首页文案制作本地 WOFF2 字符子集，衍生字体重命名为 Qinban Brush，仅用于手写标题与批注。完整许可见 [MaShanZheng-OFL.txt](fonts/MaShanZheng-OFL.txt)，原始项目、分发地址及修改记录见 [字体来源](fonts/HOMEPAGE-FONT-SOURCES.md)。正文和按钮使用系统中文无衬线字体；谱号与音符继续使用 Bravura。
 - 产品截图优先复用项目 `assets/shots/` 的真实琴伴界面，包括五线谱、简谱、原谱对照与导出窗口。首页的可交互乐谱由实际数据渲染。
 
 ## 重建

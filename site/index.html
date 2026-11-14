@@ -15,14 +15,26 @@
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
     <link
       rel="preload"
+      href="assets/fonts/QinbanBrush-home.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
       href="assets/fonts/Bravura.woff2"
       as="font"
       type="font/woff2"
       crossorigin
     />
-    <link rel="stylesheet" href="assets/home.css" />
+    <link rel="stylesheet" href="assets/home.css?v=flow-20261114" />
+    <link rel="stylesheet" href="assets/dynamic-home.css?v=flow-20261114" />
     <script defer src="assets/vendor/vexflow-core.js"></script>
-    <script type="module" src="assets/home.js"></script>
+    <script
+      type="module"
+      src="assets/home.js?v=flow-20261114"
+      data-home-entry
+    ></script>
   </head>
   <body>
     <a class="skip-link" href="#practice">跳到互动乐谱</a>
@@ -46,12 +58,14 @@
     </header>
     <main>
       <section class="hero section-width" id="top" aria-labelledby="hero-title">
+        <div class="hero-flow-art" aria-hidden="true"></div>
         <div class="hero-copy">
           <p class="eyebrow">
             <span class="tiny-rule"></span>你的下一遍，可以更从容
           </p>
           <h1 id="hero-title">
-            <span>拍下一页谱，</span><span>从这一小节开始练。</span>
+            <span>拍下一页谱，</span
+            ><span>从这一小节<em class="title-brush">开始练。</em></span>
           </h1>
           <p class="hero-description">
             把照片或 PDF
@@ -67,6 +81,9 @@
           <p class="hero-caption">
             <span class="small-spark" aria-hidden="true">✳</span>
             不用注册。先在这张谱上，练一小段。
+          </p>
+          <p class="motion-cue">
+            <i aria-hidden="true"></i>移动鼠标，让墨迹流起来
           </p>
           <div class="margin-note">
             <span>一遍听旋律，<br />下一遍，只练左手。</span

@@ -1,0 +1,995 @@
+/* Qinban's kinetic paper layer. Score geometry is deliberately left untouched. */
+@font-face {
+  font-family: "Qinban Brush";
+  src: url("fonts/QinbanBrush-home.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+:root {
+  --brush: "Qinban Brush", "STKaiti", "KaiTi", var(--serif);
+  --folio: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+body {
+  font-size: 15.5px;
+  -webkit-font-smoothing: antialiased;
+}
+
+.site-header {
+  position: relative;
+  z-index: 3;
+}
+
+.brand > span {
+  font: 400 36px/1 var(--brush);
+  letter-spacing: 1px;
+}
+
+.brand small {
+  font-size: 12px;
+  letter-spacing: 1.1px;
+}
+
+.site-header nav a {
+  position: relative;
+  font-size: 14px;
+}
+
+.site-header nav a::after {
+  position: absolute;
+  bottom: 4px;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: var(--green);
+  content: "";
+  transform: scaleX(0);
+  transform-origin: right center;
+  transition: transform 380ms var(--motion-ease);
+}
+
+.site-header nav a:hover::after,
+.site-header nav a:focus-visible::after {
+  transform: scaleX(1);
+  transform-origin: left center;
+}
+
+.header-open {
+  font-size: 14px;
+  transition:
+    background 220ms ease,
+    border-color 220ms ease;
+}
+
+.header-open > span,
+.real-entry .button > span,
+.closing .button > span {
+  display: inline-block;
+  transition: transform 320ms var(--motion-ease);
+}
+
+.header-open:hover > span,
+.real-entry .button:hover > span,
+.closing .button:hover > span {
+  transform: translate(3px, -3px);
+}
+
+.hero {
+  position: relative;
+  isolation: isolate;
+  padding-top: 66px;
+  gap: 48px;
+}
+
+.hero-copy,
+.practice-paper {
+  z-index: 1;
+}
+
+.hero-copy {
+  padding-top: 3px;
+}
+
+.hero-copy .eyebrow {
+  font-size: 12px;
+  letter-spacing: 2px;
+}
+
+#hero-title {
+  font-size: clamp(38px, 3.25vw, 48px);
+  font-weight: 500;
+  line-height: 1.48;
+  letter-spacing: -1.7px;
+  margin-top: 26px;
+  margin-bottom: 25px;
+}
+
+#hero-title > span {
+  text-wrap: nowrap;
+}
+
+#hero-title > span + span {
+  margin-top: 3px;
+}
+
+.title-brush {
+  position: relative;
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  color: var(--green);
+  font: 400 clamp(66px, 6.4vw, 92px)/1.08 var(--brush);
+  letter-spacing: -3px;
+  margin-top: 9px;
+  margin-left: -4px;
+  padding-bottom: 10px;
+  white-space: nowrap;
+}
+
+.title-brush::after {
+  content: "";
+  position: absolute;
+  left: 5px;
+  right: 10px;
+  bottom: 0;
+  height: 8px;
+  background: var(--copper);
+  opacity: 0.53;
+  clip-path: polygon(
+    0 42%,
+    32% 4%,
+    72% 21%,
+    100% 70%,
+    74% 55%,
+    30% 48%,
+    1% 88%
+  );
+  transform-origin: left center;
+}
+
+.hero-description {
+  max-width: 350px;
+  font-size: 15.5px;
+  line-height: 1.95;
+  color: #505c51;
+}
+
+.hero-actions {
+  gap: 13px;
+  margin-top: 27px;
+}
+
+.button {
+  font-size: 14px;
+  position: relative;
+  transition:
+    background 240ms ease,
+    border-color 240ms ease,
+    box-shadow 300ms ease;
+}
+
+.button.primary {
+  background-image: linear-gradient(115deg, #ffffff08, transparent 55%);
+  box-shadow: 0 4px 0 #19392d10;
+}
+
+.button.primary:hover {
+  box-shadow:
+    0 6px 18px #234f3e20,
+    inset 0 0 0 1px #ffffff1a;
+}
+
+.button.primary:active {
+  box-shadow: inset 0 2px 7px #122b2466;
+}
+
+.hero-actions .primary {
+  min-height: 56px;
+  min-width: 176px;
+  font-size: 15px;
+  letter-spacing: 0.6px;
+}
+
+.click-note,
+.hero-caption {
+  font-size: 12px;
+}
+
+.margin-note {
+  margin-top: 32px;
+  font: 400 22px/1.45 var(--brush);
+  padding-right: 2px;
+}
+
+.margin-note svg {
+  stroke-width: 1.4;
+}
+
+.motion-cue {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #687360;
+  font-size: 11px;
+  letter-spacing: 1px;
+  margin-top: 23px;
+}
+
+.motion-cue::before {
+  content: "";
+  width: 29px;
+  height: 12px;
+  border-bottom: 1px solid var(--copper);
+  border-radius: 0 0 50% 50%;
+  transform: rotate(-15deg);
+  animation: cue-breathe 3.6s ease-in-out infinite;
+}
+
+.hero-flow-art {
+  position: absolute;
+  z-index: 0;
+  top: -35px;
+  right: -5%;
+  bottom: -55px;
+  left: -12%;
+  overflow: hidden;
+  pointer-events: none;
+  contain: strict;
+  opacity: 0.9;
+}
+
+.hero-flow-art svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.hero-flow-art .flow-ribbon {
+  fill: none;
+  stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
+}
+
+.hero-flow-art .flow-ribbon-2,
+.hero-flow-art .flow-ribbon-4 {
+  stroke-width: 0.75;
+}
+
+.hero-flow-art .flow-sweep {
+  fill: none;
+  stroke-width: 21;
+  stroke-linecap: round;
+  opacity: 0.13;
+}
+
+.hero-flow-art .flow-bead {
+  fill: var(--copper);
+  opacity: 0.57;
+}
+
+.practice-paper {
+  box-shadow:
+    0 4px 7px #2c321c04,
+    0 22px 55px #60563912;
+}
+
+.paper-topline {
+  font-size: 12px;
+}
+
+.folio,
+.score-kicker,
+.format-tags span,
+.edition-state {
+  font-family: var(--folio);
+  font-variant-numeric: tabular-nums;
+}
+
+.folio {
+  font-size: 11px;
+  letter-spacing: 0.4px;
+}
+
+.score-kicker {
+  font-size: 10px;
+  letter-spacing: 2.5px;
+}
+
+.score-heading h2 {
+  font-size: 31px;
+  font-weight: 500;
+  letter-spacing: 4px;
+}
+
+.score-heading > p,
+.score-heading > p span,
+.touch-hint,
+.control-label {
+  font-size: 11px;
+}
+
+.tabs button,
+.segmented button,
+.transport-play,
+.loop-button,
+.review-actions .button,
+.correction-button,
+.arrange-actions .text-button,
+.print-note .button,
+.real-entry .button {
+  font-size: 13px;
+}
+
+.tabs button {
+  transition:
+    color 180ms ease,
+    background 220ms ease,
+    border-color 220ms ease;
+}
+
+.tabs button:hover {
+  color: var(--green);
+  background: #234f3e05;
+}
+
+.segmented button,
+.loop-button {
+  transition:
+    background 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease;
+}
+
+.settings-content {
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.segmented button {
+  padding-inline: 10px;
+}
+
+.transport-position {
+  font-size: 11px;
+}
+
+.audio-feedback {
+  font-size: 10px;
+}
+
+.music-meter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 25px;
+  height: 16px;
+  margin-left: 3px;
+  color: var(--green);
+}
+
+.music-meter i {
+  display: block;
+  width: 2px;
+  height: 3px;
+  border-radius: 3px;
+  background: currentColor;
+  transform-origin: center;
+  transition: height 280ms ease;
+}
+
+.practice-paper.is-playing .music-meter i {
+  height: 13px;
+  animation: meter-dance 840ms ease-in-out infinite alternate;
+  animation-delay: calc(var(--bar-index) * -145ms);
+}
+
+.practice-paper.is-playing .live-dot {
+  animation: live-pulse 1.8s ease-in-out infinite;
+}
+
+.practice-footnote {
+  font-size: 12px;
+}
+
+.practice-footnote > span {
+  font: 400 24px/1.4 var(--brush);
+}
+
+.practice-footnote > a {
+  font-size: 12px;
+}
+
+.section-heading {
+  position: relative;
+  padding-top: 12px;
+}
+
+.section-heading .eyebrow {
+  font-size: 12px;
+  letter-spacing: 2.1px;
+}
+
+.section-heading h2 {
+  font: 400 45px/1.35 var(--brush);
+  letter-spacing: 1px;
+  color: var(--green);
+  margin-top: 17px;
+}
+
+.section-heading > p {
+  font-size: 14px;
+  line-height: 1.85;
+  color: #65705f;
+}
+
+.workflow-steps button b {
+  font-size: 14px;
+}
+
+.workflow-steps button small {
+  font-size: 12px;
+}
+
+.workflow-steps button > span {
+  font: 400 20px/1 var(--folio);
+  letter-spacing: -1px;
+}
+
+.workflow-steps button {
+  transition: background 240ms ease;
+}
+
+.workflow-steps button:hover {
+  background: #234f3e04;
+}
+
+.workflow-steps button[aria-pressed="true"]::after {
+  animation: line-arrive 400ms var(--motion-ease) both;
+  transform-origin: left center;
+}
+
+.panel-caption {
+  font-size: 12px;
+}
+
+.pencil-caption {
+  font: 400 19px/1.3 var(--brush);
+}
+
+.arrangement-instruction,
+.change-chord {
+  font-size: 14px;
+}
+
+.real-entry strong {
+  font-size: 15px;
+}
+
+.real-entry p,
+.print-note p {
+  font-size: 13px;
+}
+
+.print-note h3 {
+  font-size: 25px;
+}
+
+.print-note .print-help,
+.panel-status {
+  font-size: 11px;
+}
+
+.closing {
+  overflow: hidden;
+  padding-top: 62px;
+  padding-bottom: 73px;
+}
+
+.closing::before,
+.closing::after {
+  position: absolute;
+  content: "";
+  width: 350px;
+  height: 110px;
+  top: 115px;
+  border-block: 1px solid #a4735e2b;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.closing::before {
+  left: -90px;
+  transform: rotate(-18deg);
+}
+
+.closing::after {
+  right: -90px;
+  transform: rotate(18deg);
+}
+
+.closing h2 {
+  font: 400 45px/1.5 var(--brush);
+  color: var(--green);
+  letter-spacing: 1px;
+}
+
+.closing .button {
+  min-height: 54px;
+  font-size: 15px;
+}
+
+.closing > p:last-child {
+  font-size: 12px;
+}
+
+/* Motion uses decoration and copy. Musical notes keep their real layout. */
+.motion-entered .hero-copy > .eyebrow {
+  animation: copy-enter 650ms var(--motion-ease) both;
+}
+
+.motion-entered #hero-title > span:first-child {
+  animation: copy-enter 850ms 80ms var(--motion-ease) both;
+}
+
+.motion-entered #hero-title > span:last-child {
+  animation: copy-enter 900ms 180ms var(--motion-ease) both;
+}
+
+.motion-entered .title-brush::after {
+  animation: line-arrive 850ms 450ms var(--motion-ease) both;
+}
+
+.motion-entered .hero-description {
+  animation: copy-enter 850ms 280ms var(--motion-ease) both;
+}
+
+.motion-entered .hero-actions,
+.motion-entered .hero-caption,
+.motion-entered .motion-cue,
+.motion-entered .margin-note {
+  animation: ink-appear 800ms 380ms ease both;
+}
+
+.motion-entered .practice-paper {
+  animation: paper-appear 1050ms 120ms var(--motion-ease) both;
+}
+
+.motion-settled.motion-entered .hero-copy > .eyebrow,
+.motion-settled.motion-entered #hero-title > span,
+.motion-settled.motion-entered .title-brush::after,
+.motion-settled.motion-entered .hero-description,
+.motion-settled.motion-entered .hero-actions,
+.motion-settled.motion-entered .hero-caption,
+.motion-settled.motion-entered .motion-cue,
+.motion-settled.motion-entered .margin-note,
+.motion-settled.motion-entered .practice-paper {
+  animation: none;
+}
+
+.motion-ready .motion-reveal {
+  opacity: 0;
+  transition: opacity 820ms var(--motion-ease);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+.motion-ready .motion-reveal.motion-copy {
+  transform: translateY(25px);
+  transition:
+    opacity 850ms var(--motion-ease),
+    transform 850ms var(--motion-ease);
+}
+
+.motion-ready .motion-reveal.motion-visible {
+  opacity: 1;
+  transform: none;
+}
+
+.motion-paused *,
+.motion-paused *::before,
+.motion-paused *::after {
+  animation-play-state: paused !important;
+}
+
+@keyframes copy-enter {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+    filter: blur(3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+@keyframes paper-appear {
+  from {
+    opacity: 0;
+    box-shadow: 0 0 0 #60563900;
+  }
+  to {
+    opacity: 1;
+    box-shadow: 0 22px 55px #60563912;
+  }
+}
+
+@keyframes ink-appear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes line-arrive {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes cue-breathe {
+  0%,
+  100% {
+    transform: rotate(-15deg) scaleX(0.8);
+  }
+  50% {
+    transform: rotate(7deg) scaleX(1.12);
+  }
+}
+
+@keyframes meter-dance {
+  0% {
+    transform: scaleY(0.24);
+  }
+  45% {
+    transform: scaleY(0.82);
+  }
+  100% {
+    transform: scaleY(0.45);
+  }
+}
+
+@keyframes live-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px #234f3e0a;
+  }
+  50% {
+    box-shadow: 0 0 0 5px #234f3e1f;
+  }
+}
+
+@media (min-width: 1450px) {
+  .hero {
+    grid-template-columns: 375px minmax(0, 1fr);
+    gap: 65px;
+  }
+}
+
+@media (max-width: 1200px) and (min-width: 1001px) {
+  .hero {
+    grid-template-columns: 290px minmax(0, 1fr);
+    gap: 32px;
+  }
+
+  #hero-title {
+    font-size: 39px;
+  }
+  .title-brush {
+    font-size: 75px;
+  }
+  .hero-actions {
+    gap: 9px;
+  }
+  .click-note {
+    font-size: 11px;
+  }
+  .settings-content {
+    gap: 7px;
+  }
+  .segmented button {
+    padding-inline: 7px;
+  }
+  .loop-button {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 1000px) {
+  .hero {
+    padding-top: 42px;
+  }
+  #hero-title {
+    font-size: 37px;
+    margin-top: 20px;
+  }
+  .title-brush {
+    font-size: 76px;
+  }
+  .hero-description {
+    font-size: 15.5px;
+  }
+  .motion-cue {
+    grid-column: 2;
+    margin-top: 3px;
+  }
+  .hero-flow-art {
+    inset: -25px -3% auto -10%;
+    height: 460px;
+  }
+  .section-heading h2 {
+    font-size: 39px;
+  }
+  .section-heading > p {
+    font-size: 13px;
+  }
+  .closing::before,
+  .closing::after {
+    width: 230px;
+  }
+}
+
+@media (max-width: 700px) {
+  body {
+    font-size: 15px;
+  }
+  .brand > span {
+    font-size: 31px;
+  }
+  .site-header {
+    height: 67px;
+  }
+  .header-open {
+    font-size: 12px;
+    gap: 12px;
+  }
+  .hero {
+    padding-top: 24px;
+    padding-bottom: 27px;
+    gap: 27px;
+  }
+  .hero-copy {
+    padding-top: 0;
+  }
+  .hero-copy .eyebrow {
+    font-size: 10px;
+    letter-spacing: 1.2px;
+  }
+  #hero-title {
+    font-size: 31px;
+    line-height: 1.48;
+    letter-spacing: -0.8px;
+    margin: 14px 0 14px;
+  }
+  #hero-title > span + span {
+    margin-top: 0;
+  }
+  .title-brush {
+    display: inline;
+    width: auto;
+    margin: 0 0 0 -1px;
+    padding-bottom: 5px;
+    font-size: 37px;
+    line-height: 1;
+    letter-spacing: -1.2px;
+  }
+  .title-brush::after {
+    height: 5px;
+    left: 2px;
+    right: 5px;
+    bottom: -2px;
+  }
+  .hero-description {
+    font-size: 15px;
+    line-height: 1.8;
+    margin: 0;
+    max-width: 470px;
+  }
+  .hero-actions {
+    margin-top: 18px;
+    gap: 12px;
+  }
+  .hero-actions .primary {
+    min-height: 49px;
+    min-width: 149px;
+    font-size: 14px;
+    padding-inline: 17px;
+  }
+  .click-note {
+    font-size: 11px;
+  }
+  .motion-cue {
+    display: none;
+  }
+  .hero-flow-art {
+    top: -15px;
+    right: -5%;
+    left: -15%;
+    height: 370px;
+    opacity: 0.65;
+  }
+  .paper-topline {
+    font-size: 10px;
+    padding-bottom: 10px;
+  }
+  .folio {
+    font-size: 9px;
+  }
+  .music-meter {
+    width: 21px;
+    gap: 2px;
+    margin-left: 0;
+  }
+  .music-meter i {
+    width: 1.5px;
+  }
+  .score-heading h2 {
+    font-size: 26px;
+  }
+  .score-kicker {
+    font-size: 9px;
+    letter-spacing: 1.9px;
+  }
+  .score-heading > p,
+  .score-heading > p span {
+    font-size: 9px;
+  }
+  .tabs button {
+    font-size: 13px;
+  }
+  .transport-play {
+    font-size: 12px;
+  }
+  .transport-position {
+    font-size: 10px;
+  }
+  .control-label {
+    font-size: 11px;
+  }
+  .practice-settings summary {
+    font-size: 13px;
+  }
+  .settings-content {
+    gap: 12px;
+  }
+  .segmented button {
+    font-size: 13px;
+    padding-inline: 10px;
+  }
+  .loop-button {
+    font-size: 12px;
+  }
+  .audio-feedback {
+    font-size: 10px;
+  }
+  .practice-footnote > span {
+    font-size: 23px;
+  }
+  .practice-footnote > a {
+    font-size: 12px;
+  }
+  .section-heading {
+    padding-top: 7px;
+  }
+  .section-heading .eyebrow {
+    font-size: 10px;
+    letter-spacing: 1.4px;
+  }
+  .section-heading h2 {
+    font-size: 35px;
+    line-height: 1.45;
+    margin-top: 13px;
+  }
+  .section-heading > p {
+    font-size: 14px;
+    margin-top: 12px;
+    line-height: 1.85;
+  }
+  .workflow-steps button b {
+    font-size: 12px;
+  }
+  .workflow-steps button small {
+    font-size: 10px;
+  }
+  .workflow-steps button > span {
+    font-size: 17px;
+  }
+  .panel-caption {
+    font-size: 11px;
+  }
+  .pencil-caption {
+    font-size: 17px;
+  }
+  .arrangement-instruction {
+    font-size: 13px;
+  }
+  .review-actions .button,
+  .correction-button,
+  .arrange-actions .text-button {
+    font-size: 12px;
+  }
+  .real-entry strong {
+    font-size: 14px;
+  }
+  .real-entry p {
+    font-size: 12px;
+  }
+  .print-note h3 {
+    font-size: 24px;
+  }
+  .closing {
+    padding-top: 37px;
+    padding-bottom: 45px;
+  }
+  .closing h2 {
+    font-size: 33px;
+    line-height: 1.5;
+  }
+  .closing::before,
+  .closing::after {
+    width: 150px;
+    height: 60px;
+    top: 130px;
+    opacity: 0.65;
+  }
+  .closing::before {
+    left: -110px;
+  }
+  .closing::after {
+    right: -110px;
+  }
+  .closing > p:last-child {
+    font-size: 11px;
+  }
+  .motion-ready .motion-reveal.motion-copy {
+    transform: translateY(16px);
+  }
+  .motion-ready .motion-reveal.motion-visible {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-flow-art,
+  .motion-cue {
+    display: none;
+  }
+  .motion-ready .motion-reveal,
+  .motion-ready .motion-reveal.motion-copy,
+  .motion-entered .hero-copy > *,
+  .motion-entered #hero-title > span,
+  .motion-entered .practice-paper {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+    animation: none !important;
+    transition: none !important;
+  }
+  .practice-paper.is-playing .music-meter i {
+    height: 10px;
+    transform: none;
+  }
+}
+
+@media print {
+  .hero-flow-art,
+  .motion-cue,
+  .music-meter {
+    display: none !important;
+  }
+  .motion-ready .motion-reveal,
+  .motion-ready .motion-reveal.motion-copy {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}

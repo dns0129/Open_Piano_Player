@@ -8,6 +8,7 @@ import { tmpdir } from "node:os";
 import { resolve, extname, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
+import sharp from "sharp";
 
 const root = fileURLToPath(new URL("../site/", import.meta.url));
 const output = resolve("output/homepage");
@@ -57,7 +58,9 @@ const browser = await chromium.launch({
 });
 const snapshot = (page) =>
   page.evaluate(async () =>
-    (await import("/assets/home.js")).getHomeSnapshot(),
+    (
+      await import(document.querySelector("script[data-home-entry]").src)
+    ).getHomeSnapshot(),
   );
 const record = (name, result = {}) => {
   report.checks.push({ name, ...result, passed: true });
@@ -76,7 +79,9 @@ const assertNoOverflow = async (page, name) => {
 };
 async function parity(page, name) {
   const result = await page.evaluate(async () => {
-    const s = (await import("/assets/home.js")).getHomeSnapshot();
+    const s = (
+      await import(document.querySelector("script[data-home-entry]").src)
+    ).getHomeSnapshot();
     const expected = s.audio.activeNotes.map((n) => n.id).sort();
     const shown = [
       ...new Set(
@@ -198,6 +203,306 @@ async function assertPrintPreviewFits(page, name) {
   record(`${name}: live A4 preview contains all four measures`, geometry);
 }
 
+async function pixelDifference(before, after) {
+  const [a, b] = await Promise.all(
+    [before, after].map((png) =>
+      sharp(png).removeAlpha().raw().toBuffer({ resolveWithObject: true }),
+    ),
+  );
+  assert.deepEqual(
+    a.info,
+    b.info,
+    "comparison images must have equal dimensions",
+  );
+  let changedPixels = 0;
+  let totalDifference = 0;
+  for (let i = 0; i < a.data.length; i += a.info.channels) {
+    let maximum = 0;
+    for (let channel = 0; channel < a.info.channels; channel++) {
+      const difference = Math.abs(a.data[i + channel] - b.data[i + channel]);
+      maximum = Math.max(maximum, difference);
+      totalDifference += difference;
+    }
+    if (maximum > 5) changedPixels++;
+  }
+  return {
+    changedPixels,
+    totalPixels: a.info.width * a.info.height,
+    meanChannelDifference: totalDifference / a.data.length,
+  };
+}
+
+async function assertTypography(page, name) {
+  await page.waitForFunction(
+    () => document.documentElement.dataset.pageMotion === "ready",
+  );
+  await page.evaluate(() => document.fonts.ready);
+  await page.waitForFunction(() =>
+    document.documentElement.classList.contains("motion-settled"),
+  );
+  const type = await page.evaluate(() => {
+    const describe = (selector) => {
+      const style = getComputedStyle(document.querySelector(selector));
+      return { family: style.fontFamily, pixels: parseFloat(style.fontSize) };
+    };
+    return {
+      body: describe("body"),
+      heading: describe("#hero-title"),
+      brush: describe("#hero-title .title-brush"),
+      description: describe(".hero-description"),
+      control: describe("#hero-play"),
+      brushLoaded: document.fonts.check('32px "Qinban Brush"', "开始练。"),
+      brushFace: [...document.fonts].some(
+        (face) =>
+          face.family.replaceAll('"', "") === "Qinban Brush" &&
+          face.status === "loaded",
+      ),
+    };
+  });
+  assert(
+    type.brush.family.includes("Qinban Brush"),
+    `${name}: calligraphic heading face`,
+  );
+  assert(
+    type.brushLoaded && type.brushFace,
+    `${name}: the bundled brush font must actually load`,
+  );
+  assert.notEqual(
+    type.heading.family,
+    type.control.family,
+    `${name}: title and controls have distinct typography`,
+  );
+  assert(type.body.pixels >= 15, `${name}: body text is at least 15px`);
+  assert(
+    type.description.pixels >= 15,
+    `${name}: hero explanation is at least 15px`,
+  );
+  record(`${name}: loaded brush, Song-style title and readable controls`, type);
+}
+
+async function verifyFluidInk(page, name) {
+  const canvas = page.locator(".pencil-trail");
+  assert.equal(
+    await canvas.evaluate((el) => getComputedStyle(el).pointerEvents),
+    "none",
+  );
+  assert.equal(await canvas.getAttribute("hidden"), null);
+  // Capture actual browser-composited pixels. Hiding only the surrounding page
+  // for this capture isolates liquid from the independently moving hero art.
+  // No animation is disabled, no drawing context is requested, and the same
+  // canvas/renderer keeps advancing throughout these screenshots.
+  const layerShot = (filename) =>
+    page.screenshot({
+      path: resolve(output, filename),
+      fullPage: false,
+      animations: "allow",
+      style: `html, body { background: #F3EEE1 !important; background-image: none !important; }
+      body * { visibility: hidden !important; }
+      body::before, body::after { visibility: hidden !important; }
+      .pencil-trail { visibility: visible !important; }`,
+    });
+  const blank = await layerShot(`${name}-fluid-empty.png`);
+  await page.mouse.move(320, 185);
+  await page.mouse.down();
+  for (let i = 0; i <= 46; i++) {
+    const angle = (i / 46) * Math.PI * 2;
+    await page.mouse.move(
+      320 + Math.sin(angle) * 180,
+      185 + Math.sin(angle * 2) * 65,
+    );
+    await page.waitForTimeout(18);
+  }
+  await page.mouse.up();
+  const renderer = await canvas.getAttribute("data-renderer");
+  assert(
+    ["webgl2", "canvas2d"].includes(renderer),
+    `unexpected fluid renderer: ${renderer}`,
+  );
+  assert.equal(await canvas.getAttribute("data-ink-state"), "flowing");
+  const flowing = await layerShot(`${name}-fluid-flowing.png`);
+  const visible = await pixelDifference(blank, flowing);
+  assert(
+    visible.changedPixels > 1500,
+    `liquid must visibly cover an area, got ${JSON.stringify(visible)}`,
+  );
+  await page.screenshot({
+    path: resolve(output, `${name}-fluid-on-page.png`),
+    fullPage: false,
+  });
+  await page.waitForTimeout(420);
+  const released = await layerShot(`${name}-fluid-released.png`);
+  const inertia = await pixelDifference(flowing, released);
+  assert(
+    inertia.changedPixels > 500,
+    `released liquid must keep moving, got ${JSON.stringify(inertia)}`,
+  );
+  await page.waitForFunction(
+    () => document.querySelector(".pencil-trail").dataset.inkState === "idle",
+    null,
+    { timeout: 8000 },
+  );
+  const faded = await layerShot(`${name}-fluid-faded.png`);
+  const residue = await pixelDifference(blank, faded);
+  assert(
+    residue.changedPixels < 40,
+    `liquid must clear after its lifetime, got ${JSON.stringify(residue)}`,
+  );
+  await page.evaluate(() => getSelection()?.removeAllRanges());
+  record(
+    `${name}: visible fluid moves after release, clears and never catches input`,
+    {
+      renderer,
+      visible,
+      inertia,
+      residue,
+    },
+  );
+}
+
+function runEncoder(args) {
+  return new Promise((done, fail) => {
+    const process = spawn("ffmpeg", [
+      "-hide_banner",
+      "-loglevel",
+      "error",
+      "-y",
+      ...args,
+    ]);
+    let stderr = "";
+    process.stderr.on("data", (chunk) => {
+      stderr += chunk.toString();
+    });
+    process.once("error", fail);
+    process.once("exit", (code) =>
+      code === 0 ? done() : fail(new Error(`ffmpeg exited ${code}: ${stderr}`)),
+    );
+  });
+}
+
+async function captureMotionEvidence() {
+  const context = await browser.newContext({
+    viewport: { width: 1280, height: 900 },
+    deviceScaleFactor: 1,
+    recordVideo: {
+      dir: resolve(output, "motion-raw"),
+      size: { width: 1280, height: 900 },
+    },
+  });
+  const page = await context.newPage();
+  const video = page.video();
+  const started = Date.now();
+  try {
+    await page.goto(base, { waitUntil: "domcontentloaded" });
+    await page.waitForFunction(
+      () =>
+        document.documentElement.dataset.homeReady === "true" &&
+        document.documentElement.dataset.pageMotion === "ready",
+    );
+    await page.waitForTimeout(350);
+    // Move first, then press in the clear upper margin for a denser curling
+    // gesture. These are ordinary browser inputs on the unmodified live page.
+    await page.mouse.move(170, 150);
+    for (let i = 0; i <= 30; i++) {
+      const angle = (i / 30) * Math.PI * 2;
+      await page.mouse.move(
+        310 + Math.sin(angle) * 155,
+        210 + Math.sin(angle * 2) * 90,
+      );
+      await page.waitForTimeout(24);
+    }
+    await page.mouse.move(510, 115);
+    await page.mouse.down();
+    for (let i = 0; i <= 35; i++) {
+      const angle = (i / 35) * Math.PI * 2;
+      await page.mouse.move(
+        510 + Math.sin(angle) * 125,
+        115 + Math.sin(angle * 2) * 32,
+      );
+      await page.waitForTimeout(24);
+    }
+    await page.mouse.up();
+    await page.evaluate(() => getSelection()?.removeAllRanges());
+    await page.waitForTimeout(550);
+    await page.screenshot({
+      path: resolve(output, "motion-desktop-flow.png"),
+      fullPage: false,
+    });
+    await page.locator("#hero-play").click();
+    await page.waitForTimeout(1100);
+    await page.locator("#transport-play").click();
+    await page.mouse.wheel(0, 650);
+    await page.waitForTimeout(700);
+    await page.mouse.wheel(0, 480);
+    await page.waitForTimeout(800);
+    await page.screenshot({
+      path: resolve(output, "motion-scroll-reveal.png"),
+      fullPage: false,
+    });
+    const invisibleInView = await page
+      .locator(".motion-reveal")
+      .evaluateAll((elements) =>
+        elements
+          .filter((el) => {
+            const rect = el.getBoundingClientRect();
+            return (
+              rect.top < innerHeight - 50 &&
+              rect.bottom > 50 &&
+              Number(getComputedStyle(el).opacity) < 0.95
+            );
+          })
+          .map((el) => el.className),
+      );
+    assert.deepEqual(
+      invisibleInView,
+      [],
+      "scroll-revealed content must be readable in the viewport",
+    );
+    await page.waitForTimeout(Math.max(0, 8500 - (Date.now() - started)));
+  } finally {
+    await context.close();
+    await video.saveAs(resolve(output, "homepage-motion.webm"));
+  }
+  await runEncoder([
+    "-i",
+    resolve(output, "homepage-motion.webm"),
+    "-an",
+    "-c:v",
+    "libx264",
+    "-preset",
+    "fast",
+    "-crf",
+    "23",
+    "-pix_fmt",
+    "yuv420p",
+    "-movflags",
+    "+faststart",
+    resolve(output, "homepage-motion.mp4"),
+  ]);
+  await runEncoder([
+    "-i",
+    resolve(output, "homepage-motion.webm"),
+    "-t",
+    "9",
+    "-an",
+    "-filter_complex",
+    "[0:v]fps=14,scale=600:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=128[p];[b][p]paletteuse=dither=bayer:bayer_scale=3",
+    "-loop",
+    "0",
+    resolve(output, "homepage-motion.gif"),
+  ]);
+  record(
+    "real browser motion film: entrance, liquid gesture, piano and scroll reveal",
+    {
+      viewport: "1280×900",
+      files: [
+        "homepage-motion.webm",
+        "homepage-motion.mp4",
+        "homepage-motion.gif",
+      ],
+    },
+  );
+}
+
 async function verifyRealBackgroundTabs() {
   // Public ConnectOverCDPOptions.noDefaults suppresses focus emulation only
   // for the existing default context. Launch stock Chromium, then attach;
@@ -307,8 +612,11 @@ async function verifyRealBackgroundTabs() {
         await page.locator("#hero-play").click();
         await page.waitForFunction(
           async () => {
-            const state = (await import("/assets/home.js")).getHomeSnapshot()
-              .audio;
+            const state = (
+              await import(
+                document.querySelector("script[data-home-entry]").src
+              )
+            ).getHomeSnapshot().audio;
             return state.playing && state.activeNotes.length > 0;
           },
           undefined,
@@ -472,6 +780,7 @@ async function scenario({ name, width, height, mobile }) {
       () => document.documentElement.dataset.homeReady === "true",
       { timeout: 20000 },
     );
+    await assertTypography(page, name);
     await assertNoOverflow(page, `${name}: no horizontal page overflow`);
     await page.screenshot({
       path: resolve(output, `${name}-initial.png`),
@@ -506,32 +815,14 @@ async function scenario({ name, width, height, mobile }) {
       `${name}: transparent hit targets must not have visible borders`,
     );
     if (!mobile) {
-      await page.mouse.move(120, 190);
-      for (let i = 0; i < 14; i++)
-        await page.mouse.move(120 + i * 9, 190 + Math.sin(i * 0.32) * 22, {
-          steps: 2,
-        });
-      const ink = await page.locator(".pencil-trail").evaluate((canvas) =>
-        canvas
-          .getContext("2d")
-          .getImageData(0, 0, canvas.width, canvas.height)
-          .data.some((v, i) => i % 4 === 3 && v > 0),
+      await verifyFluidInk(page, name);
+    } else {
+      assert(
+        (await page.locator(".pencil-trail").getAttribute("hidden")) !== null,
       );
-      assert(ink, "mouse movement should leave a visible pencil trace");
-      await page.screenshot({
-        path: resolve(output, `${name}-pencil-trail.png`),
-        fullPage: false,
-      });
-      await page.waitForTimeout(1150);
-      const clear = await page.locator(".pencil-trail").evaluate(
-        (canvas) =>
-          !canvas
-            .getContext("2d")
-            .getImageData(0, 0, canvas.width, canvas.height)
-            .data.some((v, i) => i % 4 === 3 && v > 0),
+      record(
+        `${name}: coarse touch input leaves the score clear of pointer ink`,
       );
-      assert(clear, "pencil trace should fade completely");
-      record(`${name}: pencil trail appears, fades and never catches input`);
     }
     const initial = await snapshot(page);
     assert.equal(initial.audio.playing, false);
@@ -587,7 +878,9 @@ async function scenario({ name, width, height, mobile }) {
     state = await snapshot(page);
     assert.deepEqual(state.audio.loop, { start: 4, end: 12 });
     const samples = await page.evaluate(async () => {
-      const app = await import("/assets/home.js");
+      const app = await import(
+        document.querySelector("script[data-home-entry]").src
+      );
       const snapshots = [];
       const start = performance.now();
       while (performance.now() - start < 14200) {
@@ -716,7 +1009,9 @@ async function scenario({ name, width, height, mobile }) {
     await page.locator("#hear-after").click();
     await page.waitForFunction(
       async () => {
-        const audio = (await import("/assets/home.js")).getHomeSnapshot().audio;
+        const audio = (
+          await import(document.querySelector("script[data-home-entry]").src)
+        ).getHomeSnapshot().audio;
         return (
           audio.scoreId === "arrangement-after" && audio.ended && !audio.playing
         );
@@ -806,6 +1101,12 @@ async function scenario({ name, width, height, mobile }) {
 try {
   await scenario({ name: "desktop", width: 1440, height: 1000, mobile: false });
   await scenario({ name: "mobile", width: 375, height: 812, mobile: true });
+  try {
+    await captureMotionEvidence();
+  } catch (error) {
+    report.errors.push({ name: "motion evidence", message: error.stack });
+    console.error(error);
+  }
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
   for (const name of ["desktop", "mobile"]) {
     const loadingTask = pdfjs.getDocument({
@@ -849,11 +1150,45 @@ try {
     () => document.documentElement.dataset.homeReady === "true",
   );
   assert((await page.locator(".pencil-trail").getAttribute("hidden")) !== null);
+  await page.waitForFunction(
+    () => document.documentElement.dataset.pageMotion === "ready",
+  );
+  const reducedContent = await page
+    .locator(".motion-reveal, #hero-title, .hero-description, #hero-play")
+    .evaluateAll((elements) =>
+      elements.map((el) => {
+        const style = getComputedStyle(el);
+        return {
+          element: el.id || el.className,
+          opacity: Number(style.opacity),
+          transform: style.transform,
+          visibility: style.visibility,
+        };
+      }),
+    );
+  assert(
+    reducedContent.length > 5,
+    "reduced motion must include below-fold reveal content",
+  );
+  assert(
+    reducedContent.every(
+      (el) =>
+        el.opacity === 1 &&
+        el.transform === "none" &&
+        el.visibility === "visible",
+    ),
+    `reduced-motion content cannot wait for entrance or scroll animations: ${JSON.stringify(reducedContent)}`,
+  );
+  await page.screenshot({
+    path: resolve(output, "reduced-motion-full.png"),
+    fullPage: true,
+  });
   await page.getByRole("tab", { name: "简谱", exact: true }).click();
   await page.locator('[data-measure="2"]').click();
   assert.equal((await snapshot(page)).audio.beat, 8);
   record(
-    "reduced motion: trail disabled and manual position updates immediately",
+    "reduced motion: ink disabled, all content visible and manual position updates immediately",
+    { visibleContent: reducedContent.length },
   );
   await context.close();
   const failureContext = await browser.newContext();
