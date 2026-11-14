@@ -1,0 +1,45 @@
+name: Homepage experience
+on:
+  push:
+    paths:
+      - "site/**"
+      - "scripts/check-homepage*.mjs"
+      - "tests/site-*.test.mjs"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/homepage.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: homepage-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: sudo apt-get install -y fonts-noto-cjk
+      - name: Verify the shared beat clock
+        run: node --test tests/site-*.test.mjs
+      - name: Exercise desktop and mobile homepage
+        run: node scripts/check-homepage.mjs
+      - name: Render and measure real piano audio
+        if: always()
+        run: node scripts/check-homepage-audio.mjs
+      - name: Keep screenshots, printable scores and audio evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: homepage-acceptance
+          path: |
+            output/homepage/
+            output/homepage-audio/
+          retention-days: 14
