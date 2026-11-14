@@ -287,6 +287,20 @@ async function verifyFluidInk(page, name) {
     "none",
   );
   assert.equal(await canvas.getAttribute("hidden"), null);
+  // Chromium can send its initial pointer-enter at (0, 0) while loading. Let
+  // that genuine first drop finish before defining an empty-paper baseline.
+  await page.mouse.move(-20, -20);
+  await page.waitForFunction(
+    () => document.querySelector(".pencil-trail").dataset.inkState === "idle",
+    null,
+    { timeout: 8000 },
+  );
+  await page.evaluate(
+    () =>
+      new Promise((done) =>
+        requestAnimationFrame(() => requestAnimationFrame(done)),
+      ),
+  );
   // Capture actual browser-composited pixels. Hiding only the surrounding page
   // for this capture isolates liquid from the independently moving hero art.
   // No animation is disabled, no drawing context is requested, and the same
@@ -302,6 +316,16 @@ async function verifyFluidInk(page, name) {
       .pencil-trail { visibility: visible !important; }`,
     });
   const blank = await layerShot(`${name}-fluid-empty.png`);
+  const emptyPaper = await sharp({
+    create: { ...page.viewportSize(), channels: 3, background: "#F3EEE1" },
+  })
+    .png()
+    .toBuffer();
+  const baseline = await pixelDifference(emptyPaper, blank);
+  assert(
+    baseline.changedPixels < 40,
+    `the baseline must be genuinely empty paper: ${JSON.stringify(baseline)}`,
+  );
   await page.mouse.move(320, 185);
   await page.mouse.down();
   for (let i = 0; i <= 46; i++) {
@@ -352,6 +376,7 @@ async function verifyFluidInk(page, name) {
     `${name}: visible fluid moves after release, clears and never catches input`,
     {
       renderer,
+      baseline,
       visible,
       inertia,
       residue,
