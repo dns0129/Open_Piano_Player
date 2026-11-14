@@ -36,6 +36,10 @@ import {
   AudioLines,
   FileAudio,
   Printer,
+  Gauge,
+  Hand,
+  ListMusic,
+  Pencil,
 } from "lucide";
 const icons = {
   Music2,
@@ -74,6 +78,10 @@ const icons = {
   AudioLines,
   FileAudio,
   Printer,
+  Gauge,
+  Hand,
+  ListMusic,
+  Pencil,
 };
 export const $ = (selector, root = document) => root.querySelector(selector);
 // Playback follow-scrolling jumps instead of gliding when the viewer asks for less motion.

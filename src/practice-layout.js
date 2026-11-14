@@ -10,21 +10,12 @@ export function practicePresentation(width, height) {
   return width <= 1400 ? "tablet" : "desktop";
 }
 
-// Below this window height the keyboard starts folded so the score keeps at least two systems.
-export const SHORT_VIEWPORT_HEIGHT = 720;
-
-export function practiceLayout(
-  presentation,
-  preferences = {},
-  { short = false } = {},
-) {
+export function practiceLayout(presentation, preferences = {}) {
   const roomy = presentation === "tablet" || presentation === "desktop";
   const layout = {
     topbar: true,
     sidebar: roomy,
-    // Tablet practice starts with paper filling the space below the controls.
-    // Explicit keyboard choices are still restored from preferences below.
-    keyboard: presentation === "desktop" && !short,
+    keyboard: false,
     focus: presentation === "portrait" || presentation === "phone-landscape",
   };
   for (const panel of panels) {
@@ -51,6 +42,9 @@ export function mountPracticeLayout(
   const doc = shell.ownerDocument;
   const sidebar = shell.querySelector("#practice-sidebar");
   const bar = shell.querySelector(".practice-layout-bar");
+  const header = shell.querySelector(".app-header");
+  const keyboard = shell.querySelector("#practice-keyboard");
+  const mobileNav = shell.querySelector(".mobile-nav");
   const score = shell.querySelector(".score-stage");
   const dock = shell.querySelector(".playback-dock");
   let drawerWasOpen = false,
@@ -61,62 +55,57 @@ export function mountPracticeLayout(
       viewport.innerWidth,
       viewport.innerHeight,
     );
-    layout = practiceLayout(presentation, preferences, {
-      short: viewport.innerHeight < SHORT_VIEWPORT_HEIGHT,
-    });
+    layout = practiceLayout(presentation, preferences);
+    const visible = {
+      topbar: layout.topbar,
+      sidebar: layout.sidebar && !layout.focus,
+      keyboard: layout.keyboard && !layout.focus,
+    };
+    const drawerOpen = presentation.startsWith("phone") && visible.sidebar;
+    const active = doc.activeElement;
     shell.dataset.presentation = presentation;
     shell.classList.toggle("is-focus", layout.focus);
-    for (const panel of panels.filter((panel) => panel !== "focus")) {
-      shell.classList.toggle(`${panel}-hidden`, !layout[panel] || layout.focus);
+    for (const [panel, shown] of Object.entries(visible)) {
+      shell.classList.toggle(`${panel}-hidden`, !shown);
     }
     shell.querySelectorAll("[data-layout]").forEach((button) => {
       const panel = button.dataset.layout;
-      button.setAttribute("aria-pressed", String(layout[panel]));
-      if (panel !== "focus")
-        button.setAttribute(
-          "aria-expanded",
-          String(layout[panel] && !layout.focus),
-        );
+      if (panel === "focus")
+        button.setAttribute("aria-pressed", String(layout.focus));
+      else button.setAttribute("aria-expanded", String(visible[panel]));
     });
-    const drawerOpen =
-      presentation.startsWith("phone") && layout.sidebar && !layout.focus;
     sidebar.setAttribute("role", drawerOpen ? "dialog" : "complementary");
     if (drawerOpen) sidebar.setAttribute("aria-modal", "true");
     else sidebar.removeAttribute("aria-modal");
-    for (const element of [
-      bar,
-      score,
-      dock,
-      shell.querySelector(".app-header"),
-      shell.querySelector(".mobile-nav"),
+    for (const [element, inert, panel] of [
+      [bar, drawerOpen],
+      [score, drawerOpen],
+      [dock, drawerOpen],
+      [sidebar, !visible.sidebar, "sidebar"],
+      [header, drawerOpen || !visible.topbar, "topbar"],
+      [keyboard, drawerOpen || !visible.keyboard, "keyboard"],
+      [mobileNav, drawerOpen || layout.focus, "focus"],
     ]) {
-      if (element) element.inert = drawerOpen;
+      if (!element) continue;
+      element.inert = inert;
+      if (!drawerOpen && inert && panel && element.contains(active))
+        bar?.querySelector(`[data-layout="${panel}"]`)?.focus();
     }
     if (drawerOpen && !drawerWasOpen) {
-      returnFocus = doc.activeElement;
+      returnFocus = active;
       sidebar.querySelector("[data-layout-close]").focus();
     } else if (!drawerOpen && drawerWasOpen) {
+      const trigger = bar?.querySelector('[data-layout="sidebar"]');
       if (returnFocus?.isConnected && returnFocus.getClientRects().length)
         returnFocus.focus();
+      else trigger?.focus();
     }
     drawerWasOpen = drawerOpen;
-    // Don't leave keyboard focus in a panel that just became hidden.
-    if (
-      !drawerOpen &&
-      doc.activeElement !== doc.body &&
-      !doc.activeElement.getClientRects().length
-    ) {
-      shell
-        .querySelector(
-          layout.focus ? ".layout-restore" : '[data-layout="sidebar"]',
-        )
-        ?.focus();
-    }
   }
-  function change(panel, value) {
+  function change(panels) {
     preferences[presentation] = {
       ...preferences[presentation],
-      [panel]: value,
+      ...panels,
     };
     try {
       storage.setItem(STORAGE_KEY, JSON.stringify(preferences));
@@ -128,8 +117,13 @@ export function mountPracticeLayout(
   const onClick = (event) => {
     const button = event.target.closest("[data-layout], [data-layout-close]");
     if (!button || !shell.contains(button)) return;
-    if (button.hasAttribute("data-layout-close")) change("sidebar", false);
-    else change(button.dataset.layout, !layout[button.dataset.layout]);
+    if (button.hasAttribute("data-layout-close")) change({ sidebar: false });
+    else {
+      const panel = button.dataset.layout;
+      if (panel === "focus") change({ focus: !layout.focus });
+      else if (panel === "topbar") change({ topbar: !layout.topbar });
+      else change({ [panel]: layout.focus || !layout[panel], focus: false });
+    }
   };
   const onResize = () => {
     viewport.cancelAnimationFrame(frame);
@@ -138,8 +132,8 @@ export function mountPracticeLayout(
   const onKey = (event) => {
     if (doc.querySelector(".modal")) return;
     if (event.key === "Escape") {
-      if (drawerWasOpen) change("sidebar", false);
-      else if (layout.focus) change("focus", false);
+      if (drawerWasOpen) change({ sidebar: false });
+      else if (layout.focus) change({ focus: false });
     }
     if (event.key !== "Tab" || !drawerWasOpen) return;
     const focusable = [

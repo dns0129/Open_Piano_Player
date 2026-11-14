@@ -9,7 +9,7 @@ import {
 
 function setup(width = 1194, height = 834, storage) {
   const dom = new JSDOM(
-    `<div class="app-shell has-practice"><header class="app-header"></header><main><div class="practice-layout-bar">${["topbar", "sidebar", "keyboard", "focus"].map((panel) => `<button data-layout="${panel}">${panel}</button>`).join("")}</div><aside id="practice-sidebar"><button data-layout-close>Close</button><input value="96"></aside><section class="score-stage"><div id="notation">score</div></section><section class="playback-dock"><button id="play">Pause</button><input id="seek" value="48"></section><button class="layout-restore" data-layout="focus">Restore</button></main><nav class="mobile-nav"></nav></div>`,
+    `<div class="app-shell has-practice"><header class="app-header"></header><main><div class="practice-layout-bar">${["topbar", "sidebar", "keyboard", "focus"].map((panel) => `<button data-layout="${panel}">${panel}</button>`).join("")}</div><aside id="practice-sidebar"><button data-layout-close>Close</button><input value="96"></aside><section class="score-stage"><div id="notation">score</div></section><section class="playback-dock"><button id="play">Pause</button><input id="seek" value="48"></section></main><nav class="mobile-nav"></nav></div>`,
     { url: "https://qinban.test", pretendToBeVisual: true },
   );
   const { window } = dom;
@@ -53,15 +53,13 @@ test("iPad portrait and iPhone landscape use the whole score; phones have no def
   assert.equal(practiceLayout("phone").keyboard, false);
 });
 
-test("short desktop windows fold the keyboard by default but keep a saved choice", () => {
-  assert.equal(practiceLayout("desktop", {}, { short: true }).keyboard, false);
-  assert.equal(practiceLayout("desktop", {}, { short: true }).sidebar, true);
+test("desktop starts with the keyboard folded and honors a saved choice", () => {
+  assert.equal(practiceLayout("desktop").keyboard, false);
+  assert.equal(practiceLayout("desktop").sidebar, true);
   assert.equal(
-    practiceLayout("desktop", { desktop: { keyboard: true } }, { short: true })
-      .keyboard,
+    practiceLayout("desktop", { desktop: { keyboard: true } }).keyboard,
     true,
   );
-  assert.equal(practiceLayout("desktop").keyboard, true);
 });
 
 test("iPad landscape starts with the keyboard folded and remembers an explicit choice", () => {
@@ -137,7 +135,7 @@ test("leaving portrait focus is reversible and does not change the landscape lay
   const t = setup(834, 1194);
   try {
     assert.ok(t.shell.classList.contains("is-focus"));
-    t.shell.querySelector(".layout-restore").click();
+    t.click("focus");
     assert.ok(!t.shell.classList.contains("is-focus"));
     t.click("keyboard");
     t.resize(1194, 834);

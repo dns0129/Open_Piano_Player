@@ -9,6 +9,16 @@ import {
   PRINT_MUSIC_FONTS,
   PRINT_PAGE_STYLES,
 } from "../lib/score-print-style.mjs";
+
+export function practiceTitle(title) {
+  return title
+    .replace(
+      /\s*·\s*(?:AI\s*草稿\s*(?:待校对|[（(]待校对[）)])|逐行人工确认)\s*$/u,
+      "",
+    )
+    .trim();
+}
+
 export function createScoreOutput({
   state,
   modal,
@@ -19,6 +29,7 @@ export function createScoreOutput({
   function openPrintScore() {
     const score = structuredClone(state.score),
       sourceNotation = originalNotation();
+    score.title = practiceTitle(score.title);
     const appearance = normalizePrintStyle(
       read("qinban-print-appearance-v1", {}),
       score,
@@ -49,7 +60,7 @@ ${input("作谱人署名", "credit", 120)}
 ${field("作谱人位置", "creditPosition", { right: "右侧", left: "左侧", center: "居中", "under-title": "标题下方", hidden: "隐藏署名" })}
 ${number("页边距（mm）", "marginMM", 10, 24)}${number("谱面大小（%）", "scoreScale", 80, 120)}
 <label class="compact-toggle"><input type="checkbox" data-print-setting="showDetails">显示拍号与速度</label><label class="compact-toggle"><input type="checkbox" data-print-setting="showPageNumbers">显示页码</label>
-</div><p id="print-source-note" class="form-note" hidden>原图参考会保留图片内的音符、文字和署名；字体与抬头设置用于新页眉，符号字体用于五线谱，谱面大小用于数字谱。</p><p class="form-note">外观选项会记住；标题和署名仅用于本次导出。文字字体使用设备字体，缺少时采用同类回退。${score.source?.reviewRequired || /draft|^audio-transcription$|^image-ai$|^full-score-model-reviewed$/.test(score.source?.kind || "") ? " 当前乐谱为待校对草稿，请核对后使用。" : ""}</p><button type="button" class="text-button" id="print-reset">恢复默认外观</button></div><div class="score-print-preview"><div class="print-preview-caption"><strong>首页预览</strong><span id="print-preview-status" role="status" aria-live="polite">正在排版…</span></div><div id="print-preview-paper" aria-label="乐谱打印首页预览"></div><p class="form-note">完整 PDF 会自动分页，保持每个谱行完整。</p></div></div><div class="print-score-actions"><button class="button primary" data-score-output="pdf">${icon("download")}下载 PDF</button><button class="button secondary" data-score-output="print">${icon("printer")}打印乐谱</button><button class="button primary" id="print-handoff" hidden>${icon("arrow-up-right")}<span>保存或发送 PDF</span></button></div><p id="print-score-status" class="form-note" role="status" aria-live="polite"></p>`,
+</div><p id="print-source-note" class="form-note" hidden>原图参考会保留图片内的音符、文字和署名；字体与抬头设置用于新页眉，符号字体用于五线谱，谱面大小用于数字谱。</p><p class="form-note">外观选项会记住；标题和署名仅用于本次导出。文字字体使用设备字体，缺少时采用同类回退。</p><button type="button" class="text-button" id="print-reset">恢复默认外观</button></div><div class="score-print-preview"><div class="print-preview-caption"><strong>首页预览</strong><span id="print-preview-status" role="status" aria-live="polite">正在排版…</span></div><div id="print-preview-paper" aria-label="乐谱打印首页预览"></div><p class="form-note">完整 PDF 会自动分页，保持每个谱行完整。</p></div></div><div class="print-score-actions"><button class="button primary" data-score-output="pdf">${icon("download")}下载 PDF</button><button class="button secondary" data-score-output="print">${icon("printer")}打印乐谱</button><button class="button primary" id="print-handoff" hidden>${icon("arrow-up-right")}<span>保存或发送 PDF</span></button></div><p id="print-score-status" class="form-note" role="status" aria-live="polite"></p>`,
     );
     const select = $("#print-score-mode"),
       status = $("#print-score-status"),

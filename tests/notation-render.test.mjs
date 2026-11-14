@@ -4,6 +4,55 @@ import { JSDOM } from "jsdom";
 import { Element, Articulation } from "vexflow";
 import { fontsReady, renderNotation } from "../src/notation.js";
 
+test("the numbered playhead crosses the glyph center at each triplet onset", () => {
+  const dom = new JSDOM('<div id="host"></div>');
+  const saved = {
+    document: globalThis.document,
+    window: globalThis.window,
+    cancelAnimationFrame: globalThis.cancelAnimationFrame,
+  };
+  let renderer;
+  try {
+    globalThis.document = dom.window.document;
+    globalThis.window = dom.window;
+    globalThis.cancelAnimationFrame = () => {};
+    const host = document.querySelector("#host");
+    Object.defineProperty(host, "clientWidth", { value: 800 });
+    renderer = renderNotation(
+      host,
+      {
+        tempo: 63,
+        timeSignature: [4, 4],
+        keySignature: 0,
+        durationBeats: 4,
+        notes: [0, 1, 2].map((i) => ({
+          id: `note-${i}`,
+          beat: i / 3,
+          duration: 1 / 3,
+          midi: 60 + i,
+          hand: "right",
+        })),
+      },
+      { mode: "numbered", autoScroll: false, showFingering: false },
+    );
+    const cursor = host.querySelector(".notation-cursor");
+    const note = host.querySelector('[data-note-ids="note-1"]');
+    const center = Number(note.nextElementSibling.getAttribute("x"));
+    renderer.setBeat(1 / 3 - 0.002);
+    assert.ok(!note.classList.contains("is-active"));
+    assert.ok(Number(cursor.getAttribute("x1")) < center);
+    renderer.setBeat(1 / 3);
+    assert.ok(note.classList.contains("is-active"));
+    assert.ok(Math.abs(Number(cursor.getAttribute("x1")) - center) < 0.01);
+    renderer.setBeat(2 / 3);
+    assert.ok(!note.classList.contains("is-active"));
+  } finally {
+    renderer?.destroy();
+    Object.assign(globalThis, saved);
+    dom.window.close();
+  }
+});
+
 test("multi-note chord ties at both system boundaries render without dropping either staff", async () => {
   await fontsReady;
   const dom = new JSDOM('<div id="host"></div>');

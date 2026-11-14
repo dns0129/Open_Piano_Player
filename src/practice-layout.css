@@ -29,45 +29,63 @@
   .app-shell.has-practice > main.view-practice {
     position: relative;
     display: grid;
-    grid-template: minmax(48px, auto) minmax(0, 1fr) auto auto / 244px minmax(
-        0,
-        1fr
-      );
+    --sidebar-width: 244px;
+    grid-template:
+      minmax(46px, auto) minmax(0, 1fr) auto auto / var(--sidebar-width)
+      minmax(0, 1fr);
     grid-template-areas: "tools tools" "sidebar score" "dock dock" "keyboard keyboard";
     background: var(--paper);
+    transition: grid-template-columns var(--practice-fold-duration)
+      var(--practice-fold-easing);
   }
-  .has-practice.topbar-hidden .app-header {
-    display: none;
+  .app-shell.has-practice {
+    --practice-fold-duration: 240ms;
+    --practice-fold-easing: cubic-bezier(0.22, 0.65, 0.32, 1);
+  }
+  .app-shell.has-practice.sidebar-hidden > main.view-practice {
+    grid-template-columns: 0px minmax(0, 1fr);
+  }
+  .practice-fold {
+    display: grid;
+    flex-shrink: 0;
+    grid-template-rows: 1fr;
+    transition:
+      grid-template-rows var(--practice-fold-duration)
+        var(--practice-fold-easing),
+      visibility 0s;
+  }
+  .practice-fold > div {
+    min-height: 0;
+    overflow: hidden;
+  }
+  .topbar-hidden .practice-header-panel,
+  .keyboard-hidden .practice-keyboard-panel,
+  .is-focus .practice-mobile-nav-panel {
+    grid-template-rows: 0fr;
+    visibility: hidden;
+    transition-delay: 0s, var(--practice-fold-duration);
+  }
+  .topbar-hidden .practice-layout-bar {
+    padding-top: env(safe-area-inset-top, 0px);
   }
   .practice-layout-bar {
     grid-area: tools;
     min-width: 0;
-    flex-wrap: wrap;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 0 24px;
+    gap: 10px;
+    padding: 0 16px;
     border-bottom: 1px solid var(--border);
     background: var(--surface-1);
   }
   .practice-current {
-    display: flex;
-    align-items: center;
-    gap: 15px;
+    flex: 1;
     min-width: 0;
-    font-size: 12px;
-    color: var(--text-mid);
-  }
-  .practice-current .eyebrow {
-    margin: 0;
-    font-size: 11px;
-    flex-shrink: 0;
-  }
-  .practice-current > span:last-child {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
+    font: 600 15px/1.4 var(--font-ui);
+    color: var(--text-1);
   }
   .layout-buttons {
     display: flex;
@@ -75,15 +93,24 @@
     flex-shrink: 0;
   }
   .layout-buttons button {
+    min-width: 40px;
     min-height: 40px;
-    padding: 0 12px;
+    padding: 0 10px;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 7px;
     font-size: 11px;
     border-radius: 7px;
-    color: var(--text-3);
+    color: var(--text-2);
   }
+  .layout-buttons button[data-layout="sidebar"] {
+    border: 1px solid var(--border);
+  }
+  .layout-buttons button[data-layout="sidebar"][aria-expanded="false"] svg {
+    transform: scaleX(-1);
+  }
+  .layout-buttons button[aria-expanded="true"],
   .layout-buttons button[aria-pressed="true"] {
     color: var(--green);
     background: var(--accent-soft);
@@ -91,19 +118,35 @@
   .layout-buttons button:hover {
     background: var(--surface-4);
   }
+  .layout-buttons
+    [data-layout="focus"]:not([aria-pressed="true"])
+    .focus-exit-icon,
+  .layout-buttons [data-layout="focus"][aria-pressed="true"] .focus-enter-icon {
+    display: none;
+  }
   .layout-buttons svg {
     width: 17px;
     height: 17px;
   }
   .practice-sidebar {
     grid-area: sidebar;
+    width: var(--sidebar-width);
     min-height: 0;
+    transform: translateX(0);
+    transition:
+      transform var(--practice-fold-duration) var(--practice-fold-easing),
+      visibility 0s;
     overflow: auto;
     overscroll-behavior: contain;
     padding: 16px 20px;
     background: var(--surface-2);
     border-right: 1px solid var(--border);
     scrollbar-width: thin;
+  }
+  .sidebar-hidden .practice-sidebar {
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition-delay: 0s, var(--practice-fold-duration);
   }
   .sidebar-heading {
     display: flex;
@@ -155,28 +198,33 @@
     width: 14px;
   }
   .sidebar-section {
-    padding: 18px 0;
+    padding: 12px 0;
     border-top: 1px solid var(--border);
   }
   .sidebar-section h3 {
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--text-3b);
-    margin-bottom: 12px;
-  }
-  .sidebar-section-title {
     display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 8px;
+    align-items: center;
+    gap: 7px;
+    color: var(--text-1);
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .sidebar-section h3 svg,
+  .practice-sidebar .original-speed svg,
+  .sidebar-footer .button svg {
+    width: 15px;
+    height: 15px;
+    color: var(--accent-2);
   }
   .practice-sidebar .tempo-control {
-    margin: 0 0 12px;
+    margin: 0 0 6px;
+    gap: 6px;
     justify-content: space-between;
   }
   .practice-sidebar #tempo-number {
-    width: 90px;
-    height: 44px;
+    width: clamp(52px, calc(var(--sidebar-width) - 105px), 82px);
+    height: 40px;
     font-size: 25px;
     background: var(--surface-0);
     border: 1px solid var(--border);
@@ -186,7 +234,8 @@
   }
   .practice-sidebar .tempo-value small {
     font-size: 11px;
-    margin-left: 4px;
+    margin-left: 2px;
+    color: var(--text-2);
   }
   .practice-sidebar #tempo {
     width: 100%;
@@ -196,11 +245,15 @@
     display: inline-flex;
     align-items: center;
     min-height: 36px;
-    padding: 6px 10px;
+    gap: 4px;
+    padding: 6px 7px;
+    white-space: nowrap;
+    color: var(--text-2);
+    border-radius: 7px;
     font-size: 11px;
   }
   .practice-sidebar .hand-buttons {
-    margin-bottom: 14px;
+    margin-bottom: 6px;
     gap: 8px;
   }
   .practice-sidebar .hand-button {
@@ -213,6 +266,12 @@
   .practice-sidebar .hand-button svg {
     width: 13px;
     height: 13px;
+  }
+  .practice-sidebar .hand-button.enabled {
+    color: var(--text-2);
+  }
+  .practice-sidebar .hand-button.left.enabled {
+    color: var(--text-1);
   }
   .practice-sidebar .compact-toggle {
     min-height: 36px;
@@ -228,12 +287,16 @@
     margin: 0;
     gap: 9px;
   }
-  .practice-sidebar .loop-controls input {
+  .practice-sidebar .loop-controls input[type="number"] {
     min-width: 0;
     width: 65px;
     height: 40px;
     font-size: 14px;
     padding: 6px 8px;
+    background: var(--surface-0);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    color: var(--accent-1);
   }
   .practice-sidebar .loop-controls small {
     display: inline;
@@ -318,32 +381,17 @@
     grid-area: score;
     min-width: 0;
   }
-  .score-document-heading {
-    padding: 26px 32px 20px;
-    gap: 16px;
-  }
-  .score-document-heading h1 {
-    font-size: 27px;
-    letter-spacing: 1px;
-  }
-  .score-document-heading p {
-    flex-wrap: wrap;
-    gap: 6px 14px;
-  }
   .notation-area {
-    padding: 0 24px 40px;
+    padding: 4px 10px 16px;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
-  }
-  .score-status {
-    padding: 0 24px;
   }
   .playback-dock {
     grid-area: dock;
     display: flex;
     align-items: center;
     gap: 22px;
-    padding: 14px max(24px, env(safe-area-inset-right, 0px)) 14px
+    padding: 7px max(24px, env(safe-area-inset-right, 0px)) 7px
       max(24px, env(safe-area-inset-left, 0px));
     border-top: 1px solid var(--border);
     background: var(--surface-2);
@@ -426,8 +474,10 @@
     width: 15px;
     height: 15px;
   }
-  .practice-keyboard {
+  .practice-keyboard-panel {
     grid-area: keyboard;
+  }
+  .practice-keyboard {
     min-width: 0;
     border-top: 1px solid var(--border-strong);
     background: var(--surface-3);
@@ -501,67 +551,8 @@
   .piano-key.active-left {
     background: var(--hand-left);
   }
-  .sidebar-hidden .practice-sidebar,
-  .keyboard-hidden .practice-keyboard {
+  .sidebar-scrim {
     display: none;
-  }
-  .app-shell.sidebar-hidden > main.view-practice {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: "tools" "score" "dock" "keyboard";
-  }
-  .sidebar-scrim,
-  .layout-restore {
-    display: none;
-  }
-  .has-practice.is-focus .app-header,
-  .has-practice.is-focus .mobile-nav,
-  .is-focus .practice-layout-bar,
-  .is-focus .practice-sidebar,
-  .is-focus .practice-keyboard,
-  .is-focus .score-status {
-    display: none;
-  }
-  .app-shell.has-practice.is-focus > main.view-practice {
-    grid-template: minmax(0, 1fr) auto / minmax(0, 1fr) auto;
-    grid-template-areas: "score score" "dock restore";
-  }
-  .is-focus .score-document-heading {
-    padding: max(26px, env(safe-area-inset-top, 0px)) 76px 20px 32px;
-  }
-  .is-focus .score-provenance {
-    display: none;
-  }
-  .is-focus .notation-area {
-    padding-bottom: 24px;
-  }
-  .is-focus .playback-dock {
-    position: static;
-    display: flex;
-    justify-content: center;
-    padding: 10px 16px;
-    border-top: 1px solid var(--border);
-    background: var(--surface-1);
-  }
-  .is-focus .playback-dock > :not(.transport-group),
-  .is-focus .transport-group > :not(#play) {
-    display: none;
-  }
-  .is-focus .playback-dock .play-button {
-    width: 56px;
-    height: 56px;
-  }
-  .is-focus .layout-restore {
-    grid-area: restore;
-    position: static;
-    align-self: center;
-    margin: 10px 16px;
-    width: 44px;
-    height: 44px;
-    display: grid;
-    place-items: center;
-    border: 1px solid var(--border);
-    border-radius: 50%;
-    background: #f7f9f0e6;
   }
   .continue-practice {
     display: flex;
@@ -659,25 +650,10 @@
     padding: 6px 8px;
   }
   .app-shell.has-practice > main.view-practice {
-    grid-template-columns: 226px minmax(0, 1fr);
-  }
-  .app-shell.has-practice.sidebar-hidden > main.view-practice {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .app-shell.has-practice.is-focus > main.view-practice {
-    grid-template-columns: minmax(0, 1fr) auto;
+    --sidebar-width: 226px;
   }
   .practice-sidebar {
     padding: 12px 16px;
-  }
-  .score-document-heading {
-    padding: 20px 24px 16px;
-  }
-  .score-document-heading h1 {
-    font-size: 25px;
-  }
-  .score-provenance {
-    max-width: 32%;
   }
   .notation-area {
     padding-left: 16px;
@@ -705,9 +681,6 @@
     font-size: 11px;
   }
   .header-actions [data-upload] span {
-    display: none;
-  }
-  .practice-current .eyebrow {
     display: none;
   }
   .dock-shortcuts [data-quick-hand],
@@ -793,11 +766,9 @@
     width: 20px;
     height: 20px;
   }
-  .app-shell.has-practice > main.view-practice,
-  .app-shell.has-practice.sidebar-hidden > main.view-practice {
-    grid-template-columns: minmax(0, 1fr);
+  .app-shell.has-practice > main.view-practice {
+    --sidebar-width: 0px;
     grid-template-rows: minmax(44px, auto) minmax(0, 1fr) auto auto;
-    grid-template-areas: "tools" "score" "dock" "keyboard";
   }
   .practice-layout-bar {
     padding: 0 max(8px, env(safe-area-inset-right, 0px)) 0
@@ -805,10 +776,7 @@
     gap: 5px;
   }
   .practice-current {
-    font-size: 12px;
-  }
-  .practice-current .eyebrow {
-    display: none;
+    font-size: 13px;
   }
   .layout-buttons {
     gap: 0;
@@ -823,55 +791,46 @@
   }
   .practice-sidebar {
     position: absolute;
+    grid-area: 2 / 1 / -1 / -1;
     inset: 0 auto 0 0;
     z-index: 6;
-    width: min(330px, calc(100% - 32px));
+    width: min(310px, calc(100% - 32px));
     padding: 14px 20px max(24px, env(safe-area-inset-bottom, 0px));
     box-shadow: 6px 0 24px #1e3e2c18;
   }
-  .has-practice:not(.sidebar-hidden):not(.is-focus) .sidebar-scrim {
+  .sidebar-scrim {
     position: absolute;
+    grid-area: 2 / 1 / -1 / -1;
     inset: 0;
     z-index: 5;
     display: block;
+    opacity: 1;
     background: #29382f45;
+    transition:
+      opacity var(--practice-fold-duration) var(--practice-fold-easing),
+      visibility 0s;
   }
-  .practice-sidebar .loop-controls input,
+  .sidebar-hidden .sidebar-scrim {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition-delay: 0s, var(--practice-fold-duration);
+  }
+  .practice-sidebar .loop-controls input[type="number"],
   .sidebar-instrument .instrument-control select {
     font-size: 16px;
   }
-  .score-document-heading {
-    padding: 18px 18px 14px;
-    gap: 8px;
-  }
-  .score-document-heading h1 {
-    font-size: 22px;
-  }
-  .score-document-heading p {
-    font-size: 11px;
-    gap: 5px 10px;
-  }
-  .score-document-heading p > span {
-    font-size: 11px;
-  }
-  .score-provenance {
-    max-width: 28%;
-  }
-  .arrangement-tag {
-    white-space: normal;
-    line-height: 1.6;
+  .practice-sidebar #tempo-number {
+    width: 82px;
   }
   .notation-area {
-    padding: 0 8px 26px;
-  }
-  .score-status {
-    display: none;
+    padding: 4px 6px 14px;
   }
   .playback-dock {
     display: grid;
-    grid-template: auto auto / auto minmax(0, 1fr) auto;
-    gap: 6px 8px;
-    padding: 8px max(12px, env(safe-area-inset-right, 0px)) 6px
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 4px 8px;
+    padding: 5px max(12px, env(safe-area-inset-right, 0px)) 4px
       max(12px, env(safe-area-inset-left, 0px));
   }
   .playback-dock .transport-group {
@@ -906,15 +865,11 @@
   .dock-tempo b {
     font-size: 12px;
   }
-  .dock-shortcuts {
-    grid-column: 1 / -1;
-    justify-content: space-between;
-    gap: 6px;
+  .playback-dock .dock-shortcuts {
+    display: none;
   }
-  .dock-shortcuts button {
-    flex: 1;
-    min-height: 38px;
-    font-size: 11px;
+  .is-focus.keyboard-hidden .playback-dock {
+    padding-bottom: max(4px, env(safe-area-inset-bottom, 0px));
   }
   .keyboard-caption {
     padding: 0 12px;
@@ -925,24 +880,6 @@
   }
   .piano-key.black {
     height: 46px;
-  }
-  .app-shell.has-practice.is-focus > main.view-practice {
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-rows: minmax(0, 1fr) auto;
-    grid-template-areas: "score score" "dock restore";
-  }
-  .is-focus .score-document-heading {
-    padding: max(18px, env(safe-area-inset-top, 0px)) 65px 14px 18px;
-  }
-  .is-focus .notation-area {
-    padding-left: max(8px, env(safe-area-inset-left, 0px));
-    padding-right: max(8px, env(safe-area-inset-right, 0px));
-  }
-  .is-focus .playback-dock {
-    display: flex;
-  }
-  .is-focus .layout-restore {
-    right: max(12px, env(safe-area-inset-right, 0px));
   }
   .content-page {
     padding: 24px max(18px, env(safe-area-inset-right, 0px)) 32px
@@ -1140,14 +1077,6 @@
   .app-shell.has-practice > main.view-practice {
     grid-template-rows: minmax(40px, auto) minmax(0, 1fr) auto auto;
   }
-  .score-document-heading {
-    padding-top: 14px;
-    padding-bottom: 10px;
-  }
-  .score-document-heading h1 {
-    font-size: 22px;
-    line-height: 1.35;
-  }
   .playback-dock {
     padding-top: 8px;
     padding-bottom: 8px;
@@ -1168,8 +1097,7 @@
   .practice-layout-bar,
   .practice-sidebar,
   .playback-dock,
-  .practice-keyboard,
-  .layout-restore,
+  .practice-fold,
   .sidebar-scrim,
   .mobile-nav,
   .continue-practice {
@@ -1193,28 +1121,8 @@
     flex-wrap: wrap;
     min-height: 44px;
   }
-  .practice-current {
-    flex: 1 1 140px;
-  }
-  .layout-buttons {
-    flex-wrap: wrap;
-  }
   .playback-dock {
     flex-wrap: wrap;
-  }
-  .score-document-heading {
-    flex-wrap: wrap;
-  }
-  .score-document-heading > div:first-child {
-    min-width: 0;
-    flex: 1 1 200px;
-  }
-  .score-provenance {
-    min-width: 0;
-    flex: 0 1 230px;
-  }
-  .source-line > span {
-    max-width: 100%;
   }
   .page-heading {
     flex-wrap: wrap;
@@ -1228,13 +1136,6 @@
   }
   .library-filter input {
     flex: 1 1 160px;
-  }
-  .score-status {
-    height: auto;
-    min-height: 28px;
-    flex-wrap: wrap;
-    gap: 6px;
-    padding-block: 6px;
   }
 }
 
@@ -1310,22 +1211,12 @@
     min-height: 34px;
   }
   .app-shell.has-practice > main.view-practice {
-    grid-template-columns: 172px minmax(0, 1fr);
+    --sidebar-width: 184px;
     grid-template-rows: minmax(36px, auto) minmax(0, 1fr) auto auto;
-  }
-  .app-shell.has-practice.is-focus > main.view-practice {
-    grid-template-rows: minmax(0, 1fr) auto;
   }
   .has-practice .practice-layout-bar {
     padding-inline: 10px;
     gap: 6px;
-  }
-  .has-practice .practice-current {
-    font-size: 11px;
-    gap: 10px;
-  }
-  .has-practice .practice-current .eyebrow {
-    font-size: 10px;
   }
   .has-practice .layout-buttons {
     gap: 2px;
@@ -1408,7 +1299,7 @@
   .has-practice .loop-controls {
     gap: 5px;
   }
-  .has-practice .loop-controls input {
+  .has-practice .loop-controls input[type="number"] {
     width: 46px;
     height: 36px;
     padding: 4px 6px;
@@ -1452,53 +1343,9 @@
     width: 36px;
     height: 36px;
   }
-  .has-practice .score-document-heading {
-    padding: 8px 12px 6px;
-    gap: 8px;
-  }
-  .has-practice .score-document-heading h1 {
-    font-size: 20px;
-    line-height: 1.35;
-    letter-spacing: 0.5px;
-  }
-  .has-practice .score-document-heading p {
-    margin-top: 4px;
-    gap: 4px 10px;
-  }
-  .has-practice .score-provenance {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 4px;
-  }
-  .has-practice .score-provenance .button {
-    min-height: 32px;
-    padding: 5px 7px;
-    font-size: 10px;
-  }
-  .has-practice .source-line {
-    flex-basis: 100%;
-    margin-top: 0;
-    flex-wrap: nowrap;
-  }
-  .has-practice .source-line > span {
-    min-width: 0;
-  }
-  .has-practice .source-line a {
-    flex-shrink: 0;
-  }
   .has-practice .notation-area {
     padding-inline: 8px;
     padding-bottom: 16px;
-  }
-  .has-practice .notation-help {
-    margin: 4px 0 8px;
-  }
-  .has-practice .score-status {
-    min-height: 20px;
-    padding: 2px 8px;
-    font-size: 10px;
   }
   .has-practice .playback-dock {
     gap: 8px;
@@ -1521,15 +1368,6 @@
   .has-practice .piano-key.black {
     height: 42px;
   }
-  .has-practice.is-focus .score-document-heading {
-    padding-top: max(10px, env(safe-area-inset-top, 0px));
-  }
-  .has-practice.is-focus .score-provenance {
-    display: none;
-  }
-  .has-practice.is-focus .layout-restore {
-    margin: 6px 14px;
-  }
 }
 
 /* Practice room on touch screens: dragging scrolls the score and nothing else.
@@ -1542,6 +1380,9 @@
     -webkit-user-select: none;
     user-select: none;
     -webkit-touch-callout: none;
+  }
+  .has-practice .notation-area .notation-systems {
+    gap: 8px;
   }
   .app-shell.has-practice :is(input, textarea, [contenteditable="true"]) {
     -webkit-user-select: text;
@@ -1596,28 +1437,6 @@
     border-inline: 1px solid var(--border);
     line-height: 34px;
   }
-  .speed-presets {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 6px;
-    margin-top: 10px;
-  }
-  .speed-presets button {
-    min-width: 0;
-    padding: 0;
-    min-height: 34px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    font-size: 12px;
-    color: var(--text-2);
-    background: var(--surface-0);
-  }
-  .speed-presets button.active {
-    border-color: var(--moss-light);
-    background: var(--surface-3);
-    color: var(--accent);
-    font-weight: 600;
-  }
   .sidebar-zoom-row {
     display: flex;
     flex-wrap: wrap;
@@ -1638,67 +1457,32 @@
   .score-zoom output {
     line-height: 40px;
   }
-  .speed-presets button {
-    min-height: 40px;
-  }
 }
-/* Phones: the bar above already names the piece, so the paper starts with the
-   music. Title, print button and source line return in focus mode and print. */
 @media screen and (max-width: 699px),
   screen and (max-height: 499px) and (max-width: 999px) {
-  .has-practice .practice-layout-bar {
-    flex-wrap: nowrap;
-  }
-  .has-practice .practice-current {
-    flex: 1 1 0;
-  }
-  .has-practice:not(.is-focus) .score-document-heading {
-    padding: 8px 14px 6px;
-    align-items: center;
-    flex-wrap: nowrap;
-    gap: 10px;
-  }
-  .has-practice:not(.is-focus) .score-document-heading > div:first-child {
-    min-width: 0;
-  }
-  .has-practice:not(.is-focus) .score-document-heading p {
-    flex-wrap: nowrap;
-    white-space: nowrap;
-    overflow: hidden;
-  }
-  .has-practice:not(.is-focus) .arrangement-tag {
-    white-space: nowrap;
-  }
-  .has-practice:not(.is-focus) .score-document-heading h1,
-  .has-practice:not(.is-focus) .score-document-heading [data-print-score],
-  .has-practice:not(.is-focus) .score-document-heading .source-line > span {
-    display: none;
-  }
-  .has-practice:not(.is-focus) .score-document-heading p {
-    margin-top: 0;
-  }
-  .has-practice:not(.is-focus) .score-provenance {
-    max-width: 55%;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .has-practice:not(.is-focus) .source-line {
-    margin-top: 0;
-  }
-  .has-practice .notation-area {
-    padding: 0 8px 20px;
-  }
-  .practice-layout-bar .score-zoom button {
-    width: 34px;
-  }
-  .practice-layout-bar .score-zoom output {
-    display: none;
-  }
-  .practice-layout-bar .score-zoom button + output + button {
-    border-left: 1px solid var(--border);
-  }
   .dock-tempo .icon-button {
     width: 40px;
+  }
+}
+
+@media screen and (prefers-reduced-motion: reduce) {
+  .app-shell.has-practice {
+    --practice-fold-duration: 0s;
+  }
+}
+
+@media screen and (max-width: 359px) {
+  .app-shell.has-practice .app-header {
+    gap: 6px;
+    padding-inline: 8px;
+  }
+  .has-practice .brand small {
+    display: none;
+  }
+  .has-practice .instrument-sections button {
+    padding-inline: 5px;
+  }
+  .has-practice .header-actions:not(:has(a)) {
+    flex-wrap: nowrap;
   }
 }

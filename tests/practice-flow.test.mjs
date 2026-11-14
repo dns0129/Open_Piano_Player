@@ -25,9 +25,7 @@ test("a MusicXML import reaches the practice room and exports as MusicXML and MI
   Object.defineProperty(input, "files", { value: [file], configurable: true });
   input.dispatchEvent(new w.Event("change"));
   await until(
-    () =>
-      doc.querySelector(".score-document-heading h1")?.textContent ===
-      "流程测试曲",
+    () => doc.querySelector(".practice-current")?.textContent === "流程测试曲",
     "导入后练习室应显示新曲",
   );
   assert.match(

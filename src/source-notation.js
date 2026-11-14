@@ -332,7 +332,7 @@ function installStyles() {
  * Display verified source-system crops as one continuous score with timed
  * overlays. Its lifecycle matches renderNotation: setBeat(beat), destroy().
  */
-function renderSourceReference(container, manifest) {
+function renderSourceReference(container, manifest, showHelp) {
   if (
     !manifest.systems?.length ||
     manifest.systems.some(
@@ -348,7 +348,7 @@ function renderSourceReference(container, manifest) {
   help.className = "source-notation-help";
   help.textContent =
     "此版本尚无逐音定位，原谱图片仅供对照；请使用数字乐谱跟随练习。";
-  root.append(help);
+  if (showHelp !== false) root.append(help);
   for (const system of manifest.systems) {
     const figure = document.createElement("figure");
     figure.className = "source-notation-system";
@@ -378,7 +378,7 @@ function renderSourceReference(container, manifest) {
 export function renderSourceNotation(container, score, options = {}) {
   const manifest = options.sourceNotation ?? score.sourceNotation;
   if (manifest?.notePositionsComplete === false && !manifest.notes?.length)
-    return renderSourceReference(container, manifest);
+    return renderSourceReference(container, manifest, options.showHelp);
   const layout = normalizeSourceNotation(
     score,
     options.sourceNotation ?? score.sourceNotation,
@@ -400,7 +400,8 @@ export function renderSourceNotation(container, score, options = {}) {
     "原始钢琴谱逐行连续显示，绿色为右手，蓝色为左手。点击音符定位，播放时沿原谱跟随。";
   const host = document.createElement("div");
   host.className = "source-notation-systems";
-  root.append(help, host);
+  if (options.showHelp !== false) root.append(help);
+  root.append(host);
   container.replaceChildren(root);
   let destroyed = false,
     beatNow = 0,

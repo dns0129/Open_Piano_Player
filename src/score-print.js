@@ -149,14 +149,10 @@ export async function layoutScorePages(
   const details = appearance.showDetails
     ? `${score.timeSignature.join("/")} · ♩ = ${score.tempo} · ${{ staff: "五线谱", numbered: "简谱", source: "原图参考", tab: "吉他六线谱 · 自动建议指法" }[mode]}`
     : "";
-  const draft =
-    score.source?.reviewRequired ||
-    /draft|^audio-transcription$|^image-ai$|^full-score-model-reviewed$/.test(
-      score.source?.kind || "",
-    );
   const provenance = [
-    draft ? "待校对草稿" : "",
-    score.source?.label,
+    /待校对|待人工确认|待核/.test(score.source?.label || "")
+      ? ""
+      : score.source?.label,
     score.source?.license,
   ]
     .filter(Boolean)
@@ -335,7 +331,14 @@ export async function layoutScorePages(
         renderer = (mode === "tab" ? renderGuitarTab : renderNotation)(
           host,
           score,
-          { mode, autoScroll: false, renderAll: true, showFingering },
+          {
+            mode,
+            autoScroll: false,
+            renderAll: true,
+            showFingering,
+            showHelp: false,
+            showReviewMarks: false,
+          },
         );
       } finally {
         VexFlow.setFonts(...previousFonts);

@@ -36,7 +36,6 @@ export function inspectFrontendLayout(doc) {
     ".app-shell",
     ".app-header",
     ".practice-layout-bar",
-    ".score-document-heading",
     ".playback-dock",
     ".modal",
     ".fsi-workspace",
@@ -85,7 +84,7 @@ export function inspectFrontendLayout(doc) {
       "practice-panels",
       [...practice.children].filter((el) =>
         el.matches(
-          ".practice-layout-bar,.practice-sidebar,.score-stage,.playback-dock,.practice-keyboard,.layout-restore",
+          ".practice-layout-bar,.practice-sidebar,.score-stage,.playback-dock,.practice-keyboard-panel",
         ),
       ),
     );

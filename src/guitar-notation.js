@@ -20,7 +20,8 @@ export function renderGuitarTab(container, score, options = {}) {
     "标准调弦 E A D G B E · 上方为1弦（高音E），数字为品位，0为空弦。横向按拍数排列，短横线表示持续时值。指法为自动建议；红色音名表示无法分配，请调整指法或编配。";
   const systems = document.createElement("div");
   systems.className = "notation-systems";
-  root.append(help, systems);
+  if (options.showHelp !== false) root.append(help);
+  root.append(systems);
   container.replaceChildren(root);
   const notes = guitarTabNotes(score),
     bars = [],

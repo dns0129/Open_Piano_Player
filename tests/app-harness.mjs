@@ -95,7 +95,7 @@ export async function boot(t, { staticSite = false } = {}) {
   await until(
     () =>
       staticSite
-        ? w.document.querySelector(".score-document-heading h1")
+        ? w.document.querySelector(".practice-current")
         : w.document.querySelector("[data-fullscore-jobs]") &&
           requests.some((p) => p.endsWith("/api/library")),
     "练习室应完成启动和曲库同步",

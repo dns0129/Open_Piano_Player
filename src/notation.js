@@ -263,7 +263,8 @@ export function renderNotation(container, score, options = {}) {
       "。";
   const systemsHost = document.createElement("div");
   systemsHost.className = "notation-systems";
-  if (scrollable) {
+  if (options.showHelp === false) root.append(systemsHost);
+  else if (scrollable) {
     // On a phone the explanation would push the first system off screen.
     const toggle = document.createElement("details");
     toggle.className = "notation-help-toggle";
@@ -281,7 +282,7 @@ export function renderNotation(container, score, options = {}) {
     destroyed = false,
     layoutWidth = 0,
     measuredWidth = 0,
-    resizeFrame = 0,
+    resizeTimer = 0,
     scrollFrame = 0,
     paintFrame = 0,
     followIndex = -1,
@@ -316,19 +317,30 @@ export function renderNotation(container, score, options = {}) {
       return { low, high, height: (high - low + 1) * 9 + 50 };
     }
     if (mode === "numbered") {
-      const maxChord = Math.max(
-        1,
-        ...system.bars.flatMap((i) =>
-          ["right", "left"].flatMap((h) =>
-            segments(i.index, h).map(
-              (s) => new Set(s.notes.map((n) => n.midi)).size,
-            ),
+      const rows = ["right", "left"].map((hand) => {
+        const events = system.bars.flatMap((bar) => segments(bar.index, hand));
+        const maxChord = Math.max(
+          1,
+          ...events.map(
+            (event) => new Set(event.notes.map((n) => n.midi)).size,
           ),
-        ),
-      );
-      const rowHeight =
-        Math.max(105, maxChord * 31 + 48) + (hasEffects ? 24 : 0);
-      return { maxChord, rowHeight, height: rowHeight * 2 + 20 };
+        );
+        const tupletLevels = Math.max(
+          1,
+          ...events.map(
+            (event) =>
+              descriptorTuplets(notationDuration(event.duration, event.rhythm))
+                .length,
+          ),
+        );
+        return {
+          chordHeight: (maxChord - 1) * 31,
+          clearance: (tupletLevels - 1) * 17 + (hasEffects ? 24 : 0),
+        };
+      });
+      const upper = 54 + rows[0].chordHeight + rows[0].clearance;
+      const lower = upper + 72 + rows[1].chordHeight + rows[1].clearance;
+      return { rows, baselines: [upper, lower], height: lower + 36 };
     }
     const upper = system.bars.flatMap((i) =>
         segments(i.index, "right").flatMap((s) => s.notes),
@@ -449,6 +461,7 @@ export function renderNotation(container, score, options = {}) {
     }
     const revision = score.measureMap?.[info.index]?.revision;
     if (
+      options.showReviewMarks !== false &&
       revision &&
       (revision.changed === true || revision.uncertain === true)
     ) {
@@ -929,8 +942,10 @@ export function renderNotation(container, score, options = {}) {
         );
       }
       if (attacks.some((n) => effectLabels(n).length)) svg.append(marks);
+      const headCenter =
+        (item.note.getNoteHeadBeginX() + item.note.getNoteHeadEndX()) / 2;
       const hit = svgElement("rect", {
-        x: x - 11,
+        x: headCenter - 14.5,
         y,
         width: 29,
         height: Math.max(43, Math.max(...ys) - y + 20),
@@ -940,11 +955,19 @@ export function renderNotation(container, score, options = {}) {
       item.info.hits.push(seekable(hit, item));
       const noteGroup = item.note.getSVGElement();
       if (noteGroup) noteGroup.style.pointerEvents = "none";
-      item.info.anchors.push({ beat: item.beat, x });
+      item.info.anchors.push({
+        beat: item.beat,
+        x: headCenter,
+        priority: item.pitches.length ? (item.hand === "right" ? 2 : 1) : 0,
+      });
     }
     for (const info of system.bars) {
       info.anchors = [
-        ...new Map(info.anchors.map((a) => [a.beat, a])).values(),
+        ...new Map(
+          info.anchors
+            .sort((a, b) => a.priority - b.priority)
+            .map((anchor) => [anchor.beat, anchor]),
+        ).values(),
       ].sort((a, b) => a.beat - b.beat);
       info.anchors.push({ beat: info.end, x: info.endX - 3 });
     }
@@ -1003,17 +1026,13 @@ export function renderNotation(container, score, options = {}) {
           arc(last.x + 8, p.y, system.width - 17, p.y);
   }
   function drawNumbered(system) {
-    const { maxChord, rowHeight, height } = system.dimensions;
+    const { rows, baselines, height } = system.dimensions;
     const svg = svgElement("svg", {
       viewBox: `0 0 ${system.width} ${height}`,
       "aria-label": `第 ${system.firstMeasure + 1} 至 ${system.lastMeasure + 1} 小节连续双手简谱`,
     });
     system.host.append(svg);
-    const events = { right: [], left: [] },
-      baselines = [
-        52 + (maxChord - 1) * 31 + (hasEffects ? 24 : 0),
-        52 + (maxChord - 1) * 31 + rowHeight + (hasEffects ? 24 : 0),
-      ];
+    const events = { right: [], left: [] };
     for (const [hand, row] of [
       ["right", 0],
       ["left", 1],
@@ -1055,20 +1074,20 @@ export function renderNotation(container, score, options = {}) {
       const musicStart = info.x + (position ? (keyChange ? 58 : 10) : 45),
         musicEnd = info.endX - 12,
         span = Math.max(20, musicEnd - musicStart - 17);
-      info.anchors = [
-        { beat: info.start, x: musicStart + 9 },
-        { beat: info.end, x: info.endX - 2 },
-      ];
+      const xAtBeat = (beat) =>
+        musicStart + 9 + ((beat - info.start) / info.length) * span;
+      const anchors = new Map([[info.start, xAtBeat(info.start)]]);
       for (const [hand, row] of [
         ["right", 0],
         ["left", 1],
       ]) {
-        const baseline = baselines[row];
+        const baseline = baselines[row],
+          { chordHeight } = rows[row];
         group.append(
           svgElement("line", {
             x1: info.endX,
             x2: info.endX,
-            y1: baseline - (maxChord - 1) * 31 - 34,
+            y1: baseline - chordHeight - 34,
             y2: baseline + 23,
             class: "notation-barline",
           }),
@@ -1076,10 +1095,7 @@ export function renderNotation(container, score, options = {}) {
         const measureEvents = [];
         for (const segment of segments(info.index, hand)) {
           const engraving = notationDuration(segment.duration, segment.rhythm);
-          const x =
-              musicStart +
-              9 +
-              ((segment.beat - info.start) / info.length) * span,
+          const x = xAtBeat(segment.beat),
             durationWidth = Math.max(
               24,
               (segment.duration / info.length) * span,
@@ -1111,11 +1127,13 @@ export function renderNotation(container, score, options = {}) {
                 labels.join(" "),
               ),
             );
+          // The transport reaches each glyph at its onset, including tuplets.
+          anchors.set(segment.beat, x);
           const hit = svgElement("rect", {
             x: x - 14,
             y: baseline - (pitches.length - 1) * 31 - 32,
             width: Math.max(27, durationWidth - 3),
-            height: Math.max(57, pitches.length * 31 + 22),
+            height: Math.max(57, (pitches.length - 1) * 31 + 57),
             rx: 4,
           });
           group.append(hit);
@@ -1280,7 +1298,7 @@ export function renderNotation(container, score, options = {}) {
             actual === 3 && normal === 2 ? "3" : `${actual}:${normal}`;
           const first = measureEvents[indices[0]],
             last = measureEvents[indices.at(-1)],
-            y = baseline - (maxChord - 1) * 31 - 39 - level * 17;
+            y = baseline - chordHeight - 39 - level * 17;
           const bracket = svgElement("g", {
             class: "notation-tuplet",
             "aria-label": `${actual}比${normal}连音，可含音符与休止符`,
@@ -1319,6 +1337,10 @@ export function renderNotation(container, score, options = {}) {
           group.append(bracket);
         }
       }
+      info.anchors = [...anchors]
+        .sort(([a], [b]) => a - b)
+        .map(([beat, x]) => ({ beat, x }));
+      info.anchors.push({ beat: info.end, x: info.endX - 2 });
     }
     drawNumberedTies(events.right, svg, system);
     drawNumberedTies(events.left, svg, system);
@@ -1709,10 +1731,11 @@ export function renderNotation(container, score, options = {}) {
   const resizeObserver =
     typeof ResizeObserver !== "undefined"
       ? new ResizeObserver(() => {
+          clearTimeout(resizeTimer);
           if (destroyed || Math.abs(container.clientWidth - measuredWidth) < 8)
             return;
-          cancelAnimationFrame(resizeFrame);
-          resizeFrame = requestAnimationFrame(relayout);
+          // Let the sidebar finish moving before re-engraving the paper.
+          resizeTimer = setTimeout(relayout, scrollable ? 80 : 0);
         })
       : null;
   resizeObserver?.observe(container);
@@ -1835,7 +1858,7 @@ export function renderNotation(container, score, options = {}) {
     },
     destroy() {
       destroyed = true;
-      cancelAnimationFrame(resizeFrame);
+      clearTimeout(resizeTimer);
       cancelAnimationFrame(scrollFrame);
       if (paintFrame) cancelAnimationFrame(paintFrame);
       paintQueue.clear();
