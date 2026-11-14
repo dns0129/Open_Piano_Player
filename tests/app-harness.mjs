@@ -13,7 +13,7 @@ export async function until(check, message) {
   }
 }
 
-export async function boot(t, { staticSite = false } = {}) {
+export async function boot(t, { staticSite = false, fetchResponse } = {}) {
   const bundle = await build({
     entryPoints: ["src/app.js"],
     bundle: true,
@@ -81,6 +81,8 @@ export async function boot(t, { staticSite = false } = {}) {
   const requests = [];
   w.fetch = async (path) => {
     requests.push(String(path));
+    const custom = await fetchResponse?.(String(path));
+    if (custom) return custom;
     return Response.json(
       String(path).endsWith("/api/status")
         ? {

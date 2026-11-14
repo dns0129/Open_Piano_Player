@@ -357,6 +357,7 @@ ${state.view === "practice" ? '<div class="practice-mobile-nav-panel practice-fo
   } else if (state.view === "library") bindLibrary();
   else if (state.view === "audio") bindAudio();
   else bindSearch();
+  updateLibraryLoading();
 }
 function practiceView() {
   const s = state.score;
@@ -462,13 +463,10 @@ function bindCommon() {
         state.view = b.dataset.nav;
         if (state.view === "library") state.libraryTab = "local";
         if (state.view === "search") state.searchScope = "catalogue";
-        render();
+        if (state.view === "library") void syncLocalLibrary().catch(() => {});
         if (state.view === "search" && !state.cloudLoaded)
           void syncCloudLibrary();
-        if (state.view === "library") {
-          void syncLocalLibrary().catch(() => {});
-          if (state.libraryTab === "cloud") void syncCloudLibrary();
-        }
+        render();
       }),
   );
   $$("[data-upload]").forEach((b) => (b.onclick = openImportChooser));
@@ -493,6 +491,7 @@ function bindCommon() {
   document.ondragover = (e) => e.preventDefault();
   document.ondrop = (e) => {
     e.preventDefault();
+    if (isLibraryLoading()) return;
     const f = e.dataTransfer.files[0];
     if (f) {
       if (isAudioFile(f) && state.section === "piano") receiveAudio(f);
@@ -1008,6 +1007,38 @@ const recognitionClient = createFullScoreClient({
   vault: taskVault,
   onComplete: () => syncLocalLibrary(),
 });
+const libraryLoading = document.createElement("div");
+libraryLoading.id = "library-loading";
+libraryLoading.hidden = true;
+libraryLoading.innerHTML = `<section class="library-loading-panel" role="dialog" aria-modal="true" aria-labelledby="library-loading-title" tabindex="-1">
+  <h2 id="library-loading-title">正在加载曲库</h2>
+  <div class="library-loading-track">
+    <progress aria-labelledby="library-loading-title"></progress>
+    <span aria-hidden="true"></span>
+  </div>
+</section>`;
+document.body.append(libraryLoading);
+let libraryReturnFocus;
+function updateLibraryLoading() {
+  const loading = isLibraryLoading();
+  if (loading === !libraryLoading.hidden) return;
+  const app = $("#app");
+  if (loading) libraryReturnFocus = document.activeElement;
+  app.inert = loading;
+  app.setAttribute("aria-busy", String(loading));
+  libraryLoading.hidden = !loading;
+  if (loading) {
+    $(".library-loading-panel", libraryLoading).focus({ preventScroll: true });
+  } else {
+    const previous = libraryReturnFocus;
+    const activeNav = $$(`.app-shell [data-nav="${state.view}"].active`).find(
+      (button) => button.getClientRects().length,
+    );
+    const target = previous?.isConnected ? previous : activeNav;
+    target?.focus({ preventScroll: true });
+    libraryReturnFocus = null;
+  }
+}
 const {
   libraryView,
   bindLibrary,
@@ -1016,6 +1047,7 @@ const {
   loadAvailablePracticeSource,
   syncLocalLibrary,
   syncCloudLibrary,
+  isLibraryLoading,
 } = createLibraryPanel({
   state,
   client: scoreLibrary,
@@ -1029,6 +1061,7 @@ const {
   download,
   modal,
   openOnlineSearch: (query) => openSearch(query),
+  onLoadingChange: updateLibraryLoading,
 });
 const { isAudioFile, audioView, receiveAudio, bindAudio } =
   createAudioWorkspace({
@@ -1124,6 +1157,10 @@ function download(content, name, type) {
   return deliverFile(toFile(content, name, type));
 }
 document.addEventListener("keydown", (e) => {
+  if (isLibraryLoading()) {
+    if (!e.ctrlKey && !e.metaKey && !e.altKey) e.preventDefault();
+    return;
+  }
   if (e.key === "Escape") {
     if (!$(".modal")) return;
     e.stopImmediatePropagation();

@@ -28,7 +28,8 @@ export function restoreBatches(records, limit = 24_000_000) {
 }
 export function createDiskLibrary(api, { restoreBatchChars } = {}) {
   return {
-    list: () => api.json("/api/library"),
+    list: () =>
+      api.json("/api/library", undefined, undefined, { timeoutMs: 30_000 }),
     get: (id) => api.json("/api/library/records/" + encodeURIComponent(id)),
     save: (record, options) => api.json("/api/library", { record, ...options }),
     remove: (id) =>

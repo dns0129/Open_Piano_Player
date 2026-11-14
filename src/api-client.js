@@ -19,7 +19,10 @@ export function createApiClient({
     available();
     if (refreshing) return refreshing;
     refreshing = (async () => {
-      const response = await fetchImpl("/api/status", { cache: "no-store" });
+      const response = await fetchImpl("/api/status", {
+        cache: "no-store",
+        signal: AbortSignal.timeout(30_000),
+      });
       const data = await response.json();
       if (!response.ok)
         throw Object.assign(new Error(data.error || "本机状态读取失败。"), {

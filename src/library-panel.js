@@ -19,6 +19,7 @@ export function createLibraryPanel({
   download,
   modal,
   openOnlineSearch,
+  onLoadingChange = () => {},
 }) {
   const HOSTED = capabilities.mode === "hosted";
   const STATIC_SITE = capabilities.mode !== "local",
@@ -55,15 +56,27 @@ export function createLibraryPanel({
       throw e;
     }
   }
-  async function cloudJSON(url) {
-    const response = await fetch(url, { cache: "no-store" });
+  async function cloudJSON(url, signal) {
+    const response = await fetch(url, { cache: "no-store", signal });
     if (!response.ok) throw new Error("云端曲库读取失败。");
     return response.json();
   }
-  let librarySync, initialization;
+  let librarySync,
+    initialization,
+    cloudLoading = false,
+    localError = "";
+  const isLocalView = () =>
+    state.view === "library" && state.libraryTab !== "cloud";
+  const isCloudView = () =>
+    (state.view === "search" && state.searchScope !== "online") ||
+    (state.view === "library" && state.libraryTab === "cloud");
+  const isLibraryLoading = () =>
+    Boolean(librarySync && isLocalView()) || (cloudLoading && isCloudView());
+
   function syncLocalLibrary() {
     if (librarySync) return librarySync;
-    librarySync = (async () => {
+    localError = "";
+    librarySync = Promise.resolve().then(async () => {
       try {
         // initialize() is memoized and already lists once; later syncs only need refresh().
         const pending = client.initialize();
@@ -73,41 +86,58 @@ export function createLibraryPanel({
         // The header count was rendered before the library finished loading.
         const count = $('.main-nav [data-nav="library"] small');
         if (count) count.textContent = availableScores().length;
-        if (state.view === "library" && !$("#modal-root")?.childElementCount) {
+      } catch (e) {
+        localError =
+          e.name === "TimeoutError"
+            ? "曲库加载超时，请重试。"
+            : e.message || "暂时无法读取曲库。";
+        if (!isLocalView()) toast("曲库读取失败：" + localError, true);
+        throw e;
+      } finally {
+        librarySync = null;
+        if (isLocalView() && !$("#modal-root")?.childElementCount) {
           const query = $("#library-query")?.value || "";
+          const scroll = $(".view-library")?.scrollTop || 0;
           render();
           if (query && $("#library-query")) {
             $("#library-query").value = query;
             $("#library-query").dispatchEvent(new Event("input"));
           }
+          $(".view-library").scrollTop = scroll;
         }
-      } catch (e) {
-        toast("曲库读取失败：" + e.message, true);
-        throw e;
-      } finally {
-        librarySync = null;
+        onLoadingChange();
       }
-    })();
+    });
+    onLoadingChange();
     return librarySync;
   }
   async function syncCloudLibrary() {
     if (state.cloudBusy) return;
     state.cloudBusy = true;
+    cloudLoading = true;
     state.cloudError = "";
-    if (["library", "search"].includes(state.view)) render();
+    onLoadingChange();
     try {
+      const signal = AbortSignal.timeout(30_000);
       const data = STATIC_SITE
-        ? await cloudJSON(assetURL("/cloud-library/index.json"))
-        : await api("/api/cloud-library");
+        ? await cloudJSON(assetURL("/cloud-library/index.json"), signal)
+        : await api("/api/cloud-library", undefined, signal);
       if (data.version !== 1 || !Array.isArray(data.scores))
         throw new Error("云端曲库目录格式无效。");
       state.cloudScores = data.scores;
       state.cloudLoaded = true;
     } catch (e) {
-      state.cloudError = e.message;
+      state.cloudError =
+        e.name === "TimeoutError" ? "曲库加载超时，请重试。" : e.message;
     } finally {
       state.cloudBusy = false;
-      if (["library", "search"].includes(state.view)) render();
+      cloudLoading = false;
+      if (isCloudView()) {
+        const scroll = $("main")?.scrollTop || 0;
+        render();
+        $("main").scrollTop = scroll;
+      }
+      onLoadingChange();
     }
   }
   async function cloudAction(action) {
@@ -131,9 +161,10 @@ export function createLibraryPanel({
       <div class="library-backup-actions"><button class="button secondary" data-library-backup>备份完整曲库</button><button class="button secondary" data-library-restore>恢复曲库</button></div>
       <button class="continue-practice" data-nav="practice"><span class="continue-icon">${icon("file-music")}</span><span><small>继续练习</small><strong>${esc(state.score.title)}</strong><span>${esc(state.score.composer || "练习曲")} · ${state.tempo} BPM</span></span><span class="continue-play">${icon("play")}</span></button>
       ${state.section === "guitar" ? `<div class="cloud-library-tabs"><button class="button secondary" data-guitar-example>${icon("guitar")}打开吉他示例</button><button class="button secondary" data-upload>导入吉他谱</button></div>` : ""}
+      ${localError ? `<div class="cloud-library-error" role="alert">${esc(localError)} <button class="button quiet" data-library-retry>重新加载</button></div>` : ""}
       ${client.warnings.length ? `<p class="cloud-library-error" role="alert">${client.warnings.map(esc).join(" ")}</p>` : ""}
       <div class="library-filter search-input">${icon("search")}<input id="library-query" aria-label="搜索曲库" placeholder="搜索歌名、作曲家…"><span>${scores.length} 份乐谱</span></div><div class="library-grid" id="library-grid">${scoreCards(scores)}</div>
-      ${!scores.length ? '<p class="cloud-library-empty">这里还没有乐谱。点击「搜索乐谱」下载，或导入自己的乐谱。</p>' : ""}</section>`;
+      ${!scores.length && !localError && !librarySync ? '<p class="cloud-library-empty">这里还没有乐谱。点击「搜索乐谱」下载，或导入自己的乐谱。</p>' : ""}</section>`;
   }
   function cloudRows(scores) {
     const localIds = new Set(availableScores().map((s) => s.id));
@@ -187,6 +218,9 @@ export function createLibraryPanel({
       .join("");
   }
   function bindLibrary() {
+    $("[data-library-retry]")?.addEventListener("click", () => {
+      void syncLocalLibrary().catch(() => {});
+    });
     $$("[data-cloud-open]").forEach(
       (button) =>
         (button.onclick = () => {
@@ -444,5 +478,6 @@ export function createLibraryPanel({
     loadAvailablePracticeSource,
     syncLocalLibrary,
     syncCloudLibrary,
+    isLibraryLoading,
   };
 }

@@ -28,6 +28,7 @@ export function createBrowserLibrary({
     if (!database)
       database = new Promise((resolve, reject) => {
         const req = indexedDB.open(name, 2);
+        let blocked = false;
         req.onupgradeneeded = () => {
           if (!req.result.objectStoreNames.contains("records"))
             req.result.createObjectStore("records", { keyPath: "id" });
@@ -36,18 +37,25 @@ export function createBrowserLibrary({
               req.result.createObjectStore(store);
         };
         req.onsuccess = () => {
+          if (blocked) {
+            req.result.close();
+            return;
+          }
           req.result.onversionchange = () => {
             req.result.close();
             database = null;
           };
           resolve(req.result);
         };
-        req.onblocked = () =>
+        req.onblocked = () => {
+          blocked = true;
+          database = null;
           reject(
             new Error("曲库升级正在等待其他窗口关闭，请关闭旧琴伴页面后重试。"),
           );
+        };
         req.onerror = () => {
-          database = null;
+          if (!blocked) database = null;
           reject(req.error || new Error("无法打开浏览器曲库。"));
         };
       });
