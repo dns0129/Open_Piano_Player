@@ -1,8 +1,10 @@
 // Real browser acceptance of the independent static homepage. No production data
 // or recognition service is touched. Run after `npx playwright install chromium`.
 import assert from "node:assert/strict";
+import { spawn } from "node:child_process";
 import { createServer } from "node:http";
-import { readFile, mkdir, writeFile } from "node:fs/promises";
+import { readFile, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { resolve, extname, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
@@ -197,35 +199,87 @@ async function assertPrintPreviewFits(page, name) {
 }
 
 async function verifyRealBackgroundTabs() {
-  // Headless Chromium can keep every page "visible". Run this requirement in
-  // a separate headed browser and require browser-generated visibility events.
+  // Public ConnectOverCDPOptions.noDefaults suppresses focus emulation only
+  // for the existing default context. Launch stock Chromium, then attach;
+  // browser.newContext() would enable the automation override again.
   // Linux runs need a display, e.g. xvfb-run -a node scripts/check-homepage.mjs.
-  const headed = await chromium.launch({
-    headless: false,
-    executablePath: process.env.QINBAN_CHROMIUM || undefined,
-    ignoreDefaultArgs: [
-      "--disable-background-timer-throttling",
-      "--disable-backgrounding-occluded-windows",
-      "--disable-renderer-backgrounding",
-    ],
-    args: [
+  const profile = await mkdtemp(resolve(tmpdir(), "qinban-visibility-"));
+  const nativeProcess = spawn(
+    process.env.QINBAN_CHROMIUM || chromium.executablePath(),
+    [
       "--no-sandbox",
       "--disable-dev-shm-usage",
+      "--no-first-run",
+      "--no-default-browser-check",
+      "--remote-debugging-address=127.0.0.1",
+      "--remote-debugging-port=0",
+      `--user-data-dir=${profile}`,
       "--window-size=1500,1100",
+      "about:blank",
     ],
+    { stdio: ["ignore", "ignore", "pipe"] },
+  );
+  let diagnostics = "";
+  let launchError;
+  let headed;
+  nativeProcess.stderr.on("data", (chunk) => {
+    diagnostics = (diagnostics + chunk.toString()).slice(-16000);
+  });
+  const exited = new Promise((done) => {
+    nativeProcess.once("exit", done);
+    nativeProcess.once("error", (error) => {
+      launchError = error;
+      done();
+    });
   });
   try {
+    let endpoint;
+    const deadline = Date.now() + 15000;
+    while (Date.now() < deadline) {
+      if (launchError) throw launchError;
+      assert(
+        nativeProcess.exitCode === null && nativeProcess.signalCode === null,
+        `native Chromium exited before CDP was ready: ${diagnostics}`,
+      );
+      const activePort = await readFile(
+        resolve(profile, "DevToolsActivePort"),
+        "utf8",
+      ).catch((error) => {
+        if (error.code === "ENOENT") return "";
+        throw error;
+      });
+      const [port, socketPath] = activePort.trim().split(/\r?\n/);
+      if (/^\d+$/.test(port) && socketPath?.startsWith("/devtools/browser/")) {
+        endpoint = `ws://127.0.0.1:${port}${socketPath}`;
+        break;
+      }
+      await new Promise((done) => setTimeout(done, 100));
+    }
+    assert(
+      endpoint,
+      `native Chromium did not expose a CDP endpoint: ${diagnostics}`,
+    );
+    headed = await chromium.connectOverCDP(endpoint, {
+      noDefaults: true,
+      timeout: 10000,
+    });
+    const context = headed.contexts()[0];
+    assert(context, "stock Chromium must expose its existing default context");
+    // Keep the initial about:blank tab alive when each test pair is closed.
+    if (!context.pages().length) await context.newPage();
     for (const config of [
       { name: "desktop", width: 1440, height: 1000, mobile: false },
       { name: "mobile", width: 375, height: 812, mobile: true },
     ]) {
-      const context = await headed.newContext({
-        viewport: { width: config.width, height: config.height },
-        isMobile: config.mobile,
-        hasTouch: config.mobile,
-      });
       const page = await context.newPage();
+      let other;
       try {
+        // This native-tab check covers both responsive viewport widths. Real
+        // touch/device emulation remains in the main mobile interaction suite.
+        await page.setViewportSize({
+          width: config.width,
+          height: config.height,
+        });
         await page.addInitScript(() => {
           window.__qinbanVisibilityEvidence = [];
           document.addEventListener("visibilitychange", (event) => {
@@ -238,15 +292,6 @@ async function verifyRealBackgroundTabs() {
           });
         });
         await page.goto(base, { waitUntil: "networkidle" });
-        // Playwright enables focus emulation for every Chromium main frame
-        // (playwright-core's crPage initialization). That keeps a real tab
-        // "visible" even in a headed browser. Disable the automation override
-        // after navigation so Chrome's actual tab selection controls visibility.
-        // CDP: Emulation.setFocusEmulationEnabled; no page state is fabricated.
-        const pageCDP = await context.newCDPSession(page);
-        await pageCDP.send("Emulation.setFocusEmulationEnabled", {
-          enabled: false,
-        });
         await page.bringToFront();
         await page.waitForFunction(
           () =>
@@ -271,12 +316,8 @@ async function verifyRealBackgroundTabs() {
         );
         const playing = await snapshot(page);
         assert.deepEqual(playing.audio.loop, { start: 4, end: 12 });
-        const other = await context.newPage();
+        other = await context.newPage();
         await other.goto("about:blank");
-        const otherCDP = await context.newCDPSession(other);
-        await otherCDP.send("Emulation.setFocusEmulationEnabled", {
-          enabled: false,
-        });
         await other.bringToFront();
         // Interval polling is deliberate: requestAnimationFrame stops in a
         // genuinely hidden tab. Do not override hidden or dispatch an event.
@@ -355,11 +396,12 @@ async function verifyRealBackgroundTabs() {
           {
             playingBeat: playing.audio.beat,
             pausedBeat: hidden.audio.beat,
-            focusEmulation: "disabled on both real tabs",
+            focusEmulation:
+              "never enabled: stock Chromium default context + connectOverCDP noDefaults",
+            viewport: { width: config.width, height: config.height },
             visibility,
           },
         );
-        await other.close();
       } catch (error) {
         const visibility = await page
           .evaluate(() => ({
@@ -375,11 +417,37 @@ async function verifyRealBackgroundTabs() {
         });
         console.error(`${config.name}: real background tab: ${error.stack}`);
       } finally {
-        await context.close();
+        if (other) await other.close().catch(() => {});
+        await page.close().catch(() => {});
       }
     }
   } finally {
-    await headed.close();
+    if (headed) await headed.close().catch(() => {});
+    if (
+      nativeProcess.pid &&
+      nativeProcess.exitCode === null &&
+      nativeProcess.signalCode === null
+    ) {
+      nativeProcess.kill("SIGTERM");
+      await Promise.race([
+        exited,
+        new Promise((done) => setTimeout(done, 2000)),
+      ]);
+      if (
+        nativeProcess.exitCode === null &&
+        nativeProcess.signalCode === null
+      ) {
+        nativeProcess.kill("SIGKILL");
+        await exited;
+      }
+    }
+    await writeFile(resolve(output, "native-browser.log"), diagnostics);
+    await rm(profile, {
+      recursive: true,
+      force: true,
+      maxRetries: 3,
+      retryDelay: 100,
+    });
   }
 }
 
