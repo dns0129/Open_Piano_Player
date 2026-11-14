@@ -238,6 +238,15 @@ async function verifyRealBackgroundTabs() {
           });
         });
         await page.goto(base, { waitUntil: "networkidle" });
+        // Playwright enables focus emulation for every Chromium main frame
+        // (playwright-core's crPage initialization). That keeps a real tab
+        // "visible" even in a headed browser. Disable the automation override
+        // after navigation so Chrome's actual tab selection controls visibility.
+        // CDP: Emulation.setFocusEmulationEnabled; no page state is fabricated.
+        const pageCDP = await context.newCDPSession(page);
+        await pageCDP.send("Emulation.setFocusEmulationEnabled", {
+          enabled: false,
+        });
         await page.bringToFront();
         await page.waitForFunction(
           () =>
@@ -264,6 +273,10 @@ async function verifyRealBackgroundTabs() {
         assert.deepEqual(playing.audio.loop, { start: 4, end: 12 });
         const other = await context.newPage();
         await other.goto("about:blank");
+        const otherCDP = await context.newCDPSession(other);
+        await otherCDP.send("Emulation.setFocusEmulationEnabled", {
+          enabled: false,
+        });
         await other.bringToFront();
         // Interval polling is deliberate: requestAnimationFrame stops in a
         // genuinely hidden tab. Do not override hidden or dispatch an event.
@@ -342,6 +355,7 @@ async function verifyRealBackgroundTabs() {
           {
             playingBeat: playing.audio.beat,
             pausedBeat: hidden.audio.beat,
+            focusEmulation: "disabled on both real tabs",
             visibility,
           },
         );
