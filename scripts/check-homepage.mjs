@@ -117,6 +117,258 @@ async function parity(page, name) {
   });
 }
 
+async function assertPrintPreviewFits(page, name) {
+  const geometry = await page.locator("#print-sheet").evaluate((sheet) => {
+    const rect = (element) => {
+      const r = element.getBoundingClientRect();
+      return {
+        left: r.left,
+        right: r.right,
+        top: r.top,
+        bottom: r.bottom,
+        width: r.width,
+        height: r.height,
+      };
+    };
+    const style = getComputedStyle(sheet);
+    const notation = sheet.querySelector("#print-notation");
+    return {
+      sheet: rect(sheet),
+      contentWidth:
+        sheet.clientWidth -
+        parseFloat(style.paddingLeft) -
+        parseFloat(style.paddingRight),
+      notationWidth: notation.clientWidth,
+      notation: rect(notation),
+      systems: [...notation.querySelectorAll(".score-system > svg")].map(
+        (svg) => ({
+          bounds: rect(svg),
+          labels: [...svg.querySelectorAll(".score-overlays > text")]
+            .filter((label) => /^[1-4]$/.test(label.textContent.trim()))
+            .map((label) => ({
+              number: Number(label.textContent),
+              bounds: rect(label),
+            })),
+        }),
+      ),
+    };
+  });
+  assert(geometry.systems.length > 0, `${name}: live A4 preview has no score`);
+  assert(
+    geometry.notationWidth <= geometry.contentWidth + 1,
+    `${name}: notation exceeds the A4 inner content width`,
+  );
+  const labels = geometry.systems.flatMap((system) => system.labels);
+  assert.deepEqual(
+    labels.map((label) => label.number).sort(),
+    [1, 2, 3, 4],
+    `${name}: all four measure labels must appear in the live preview`,
+  );
+  for (const system of geometry.systems) {
+    const box = system.bounds;
+    assert(
+      box.width > 0 && box.height > 0,
+      `${name}: live A4 score must have a rendered size`,
+    );
+    // Both rectangles include the same decorative page rotation. Comparing
+    // rendered bounds catches an unscaled 620px SVG hidden by the paper crop.
+    assert(
+      box.width <= geometry.notation.width + 2 &&
+        box.left >= geometry.notation.left - 2 &&
+        box.right <= geometry.notation.right + 2,
+      `${name}: live A4 SVG is horizontally clipped: ${JSON.stringify(geometry)}`,
+    );
+    assert(
+      box.left >= geometry.sheet.left - 2 &&
+        box.right <= geometry.sheet.right + 2 &&
+        box.bottom <= geometry.sheet.bottom + 2,
+      `${name}: live A4 score extends beyond the paper`,
+    );
+    for (const label of system.labels) {
+      assert(
+        label.bounds.left >= geometry.notation.left - 2 &&
+          label.bounds.right <= geometry.notation.right + 2 &&
+          label.bounds.bottom <= geometry.sheet.bottom + 2,
+        `${name}: measure ${label.number} is clipped in the live A4 preview`,
+      );
+    }
+  }
+  record(`${name}: live A4 preview contains all four measures`, geometry);
+}
+
+async function verifyRealBackgroundTabs() {
+  // Headless Chromium can keep every page "visible". Run this requirement in
+  // a separate headed browser and require browser-generated visibility events.
+  // Linux runs need a display, e.g. xvfb-run -a node scripts/check-homepage.mjs.
+  const headed = await chromium.launch({
+    headless: false,
+    executablePath: process.env.QINBAN_CHROMIUM || undefined,
+    ignoreDefaultArgs: [
+      "--disable-background-timer-throttling",
+      "--disable-backgrounding-occluded-windows",
+      "--disable-renderer-backgrounding",
+    ],
+    args: [
+      "--no-sandbox",
+      "--disable-dev-shm-usage",
+      "--window-size=1500,1100",
+    ],
+  });
+  try {
+    for (const config of [
+      { name: "desktop", width: 1440, height: 1000, mobile: false },
+      { name: "mobile", width: 375, height: 812, mobile: true },
+    ]) {
+      const context = await headed.newContext({
+        viewport: { width: config.width, height: config.height },
+        isMobile: config.mobile,
+        hasTouch: config.mobile,
+      });
+      const page = await context.newPage();
+      try {
+        await page.addInitScript(() => {
+          window.__qinbanVisibilityEvidence = [];
+          document.addEventListener("visibilitychange", (event) => {
+            window.__qinbanVisibilityEvidence.push({
+              state: document.visibilityState,
+              hidden: document.hidden,
+              trusted: event.isTrusted,
+              time: performance.now(),
+            });
+          });
+        });
+        await page.goto(base, { waitUntil: "networkidle" });
+        await page.bringToFront();
+        await page.waitForFunction(
+          () =>
+            document.documentElement.dataset.homeReady === "true" &&
+            document.visibilityState === "visible",
+          undefined,
+          { timeout: 15000 },
+        );
+        if (config.mobile)
+          await page.locator("#practice-settings summary").click();
+        // A looping excerpt cannot finish naturally and masquerade as a pause.
+        await page.locator("#loop-toggle").click();
+        await page.locator("#hero-play").click();
+        await page.waitForFunction(
+          async () => {
+            const state = (await import("/assets/home.js")).getHomeSnapshot()
+              .audio;
+            return state.playing && state.activeNotes.length > 0;
+          },
+          undefined,
+          { timeout: 10000 },
+        );
+        const playing = await snapshot(page);
+        assert.deepEqual(playing.audio.loop, { start: 4, end: 12 });
+        const other = await context.newPage();
+        await other.goto("about:blank");
+        await other.bringToFront();
+        // Interval polling is deliberate: requestAnimationFrame stops in a
+        // genuinely hidden tab. Do not override hidden or dispatch an event.
+        await page.waitForFunction(
+          () => document.hidden && document.visibilityState === "hidden",
+          undefined,
+          { polling: 100, timeout: 10000 },
+        );
+        const hidden = await snapshot(page);
+        assert.equal(
+          hidden.audio.playing,
+          false,
+          `${config.name}: a genuinely hidden tab must pause`,
+        );
+        assert.equal(
+          hidden.audio.loading,
+          false,
+          `${config.name}: backgrounding must cancel pending playback`,
+        );
+        assert.deepEqual(
+          hidden.audio.activeNotes,
+          [],
+          `${config.name}: backgrounding must clear sounding notes`,
+        );
+        assert.equal(
+          hidden.audio.ended,
+          false,
+          `${config.name}: background pause cannot be natural completion`,
+        );
+        await new Promise((done) => setTimeout(done, 350));
+        assert.equal(
+          (await snapshot(page)).audio.beat,
+          hidden.audio.beat,
+          `${config.name}: beat must stay frozen in the background`,
+        );
+        await page.bringToFront();
+        await page.waitForFunction(
+          () => !document.hidden && document.visibilityState === "visible",
+          undefined,
+          { polling: 100, timeout: 10000 },
+        );
+        await new Promise((done) => setTimeout(done, 350));
+        const restored = await snapshot(page);
+        assert.equal(
+          restored.audio.playing,
+          false,
+          `${config.name}: returning to the tab must not auto-resume`,
+        );
+        assert.deepEqual(restored.audio.activeNotes, []);
+        assert.equal(restored.audio.beat, hidden.audio.beat);
+        const visibility = await page.evaluate(
+          () => window.__qinbanVisibilityEvidence,
+        );
+        const hideEvent = visibility.find(
+          (event) => event.hidden && event.state === "hidden" && event.trusted,
+        );
+        assert(
+          hideEvent,
+          `${config.name}: browser must emit a trusted hidden event`,
+        );
+        assert(
+          visibility.some(
+            (event) =>
+              !event.hidden &&
+              event.state === "visible" &&
+              event.trusted &&
+              event.time >= hideEvent.time,
+          ),
+          `${config.name}: browser must emit a trusted visible event after returning`,
+        );
+        await page.screenshot({
+          path: resolve(output, `${config.name}-returned-paused.png`),
+        });
+        record(
+          `${config.name}: real background tab pauses and returns paused`,
+          {
+            playingBeat: playing.audio.beat,
+            pausedBeat: hidden.audio.beat,
+            visibility,
+          },
+        );
+        await other.close();
+      } catch (error) {
+        const visibility = await page
+          .evaluate(() => ({
+            hidden: document.hidden,
+            state: document.visibilityState,
+            events: window.__qinbanVisibilityEvidence,
+          }))
+          .catch(() => null);
+        report.errors.push({
+          name: `${config.name}: real background tab`,
+          message: error.stack,
+          visibility,
+        });
+        console.error(`${config.name}: real background tab: ${error.stack}`);
+      } finally {
+        await context.close();
+      }
+    }
+  } finally {
+    await headed.close();
+  }
+}
+
 async function scenario({ name, width, height, mobile }) {
   const context = await browser.newContext({
     viewport: { width, height },
@@ -370,6 +622,7 @@ async function scenario({ name, width, height, mobile }) {
       path: resolve(output, `${name}-arranged.png`),
       fullPage: false,
     });
+    await assertPrintPreviewFits(page, name);
     await page.pdf({
       path: resolve(output, `${name}-A4.pdf`),
       preferCSSPageSize: true,
@@ -411,17 +664,6 @@ async function scenario({ name, width, height, mobile }) {
       page,
       `${name}: layout remains contained after all actions`,
     );
-    await page.locator("#hero-play").click();
-    await page.waitForTimeout(100);
-    const other = await context.newPage();
-    await other.goto("about:blank");
-    await other.bringToFront();
-    await page.waitForTimeout(150);
-    state = await snapshot(page);
-    assert(!state.audio.playing, "background tab must pause");
-    await other.close();
-    await page.bringToFront();
-    record(`${name}: background tab pauses without auto-resuming`);
     await page.locator('[data-speed="100"]').click();
     await page.locator('[data-measure="0"]').click();
     await page.screenshot({
@@ -449,25 +691,36 @@ try {
   await scenario({ name: "mobile", width: 375, height: 812, mobile: true });
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
   for (const name of ["desktop", "mobile"]) {
-    const pdf = await pdfjs.getDocument({
+    const loadingTask = pdfjs.getDocument({
       data: new Uint8Array(await readFile(resolve(output, `${name}-A4.pdf`))),
       isEvalSupported: false,
-    }).promise;
-    assert.equal(pdf.numPages, 1, `${name}: A4 print must be one page`);
-    const printed = await pdf.getPage(1);
-    const viewport = printed.getViewport({ scale: 1 });
-    assert(
-      Math.abs(viewport.width - 595.28) < 1 &&
-        Math.abs(viewport.height - 841.89) < 1,
-      `${name}: exact A4 paper dimensions`,
-    );
-    const content = await printed.getTextContent();
-    assert(content.items.length > 10, `${name}: printed score cannot be blank`);
-    record(`${name}: one nonblank A4 page`, {
-      width: viewport.width,
-      height: viewport.height,
     });
-    await pdf.destroy();
+    try {
+      const pdf = await loadingTask.promise;
+      assert.equal(pdf.numPages, 1, `${name}: A4 print must be one page`);
+      const printed = await pdf.getPage(1);
+      const viewport = printed.getViewport({ scale: 1 });
+      assert(
+        Math.abs(viewport.width - 595.28) < 1 &&
+          Math.abs(viewport.height - 841.89) < 1,
+        `${name}: exact A4 paper dimensions`,
+      );
+      const content = await printed.getTextContent();
+      assert(
+        content.items.length > 10,
+        `${name}: printed score cannot be blank`,
+      );
+      record(`${name}: one nonblank A4 page`, {
+        width: viewport.width,
+        height: viewport.height,
+      });
+    } catch (error) {
+      report.errors.push({ name: `${name}: A4 PDF`, message: error.stack });
+      console.error(error);
+    } finally {
+      // PDF.js 6 exposes destroy() on PDFDocumentLoadingTask, not its proxy.
+      await loadingTask.destroy();
+    }
   }
   const context = await browser.newContext({
     viewport: { width: 1440, height: 1000 },
@@ -533,6 +786,7 @@ try {
   }
   record("all homepage links return valid destinations");
   await linkContext.close();
+  await verifyRealBackgroundTabs();
 } catch (error) {
   report.errors.push({ name: "additional checks", message: error.stack });
   console.error(error);

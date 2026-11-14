@@ -125,7 +125,7 @@ export function initPencilTrail() {
       born: now,
       life: pressed ? 1050 : 760,
       width: 0.85 + Math.min(0.7, speed * 0.17) + pressure * 0.8,
-      opacity: 0.055 + pressure * 0.12,
+      opacity: 0.16 + pressure * 0.22,
       copper: serial % 3 === 0,
       grain: serial % 2 === 0 && speed > 0.7,
       drift: Math.sin(serial * 1.717) * (2 + speed * 1.1),

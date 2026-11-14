@@ -26,11 +26,14 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - run: sudo apt-get install -y fonts-noto-cjk
+      - name: Install fonts and the real browser display
+        run: sudo apt-get install -y fonts-noto-cjk xvfb xauth openbox
       - name: Verify the shared beat clock
         run: node --test tests/site-*.test.mjs
       - name: Exercise desktop and mobile homepage
-        run: node scripts/check-homepage.mjs
+        run: |
+          xvfb-run -a --server-args="-screen 0 1600x1200x24" bash -c \
+            'openbox >/tmp/qinban-homepage-openbox.log 2>&1 & exec node scripts/check-homepage.mjs'
       - name: Render and measure real piano audio
         if: always()
         run: node scripts/check-homepage-audio.mjs

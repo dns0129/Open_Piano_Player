@@ -1350,6 +1350,17 @@ h1 span {
   width: 100%;
   height: auto;
 }
+/* VexFlow owns a 620-unit engraving canvas. The on-screen paper thumbnail
+   must scale that whole SVG, including browsers retaining inline dimensions. */
+@media screen {
+  #print-notation .score-system,
+  #print-notation .score-system > svg {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+  }
+}
 .print-credit {
   font-size: 6px;
   line-height: 1.8;
@@ -2091,6 +2102,34 @@ h1 span {
   #print-sheet,
   #print-sheet * {
     visibility: visible;
+    animation: none !important;
+    transition: none !important;
+  }
+  #print-sheet .note-hit,
+  #print-sheet .loop-mark,
+  #print-sheet .loop-tag,
+  #print-sheet .note-halo,
+  #print-sheet .measure-highlight,
+  #print-sheet .playhead {
+    display: none !important;
+  }
+  #print-sheet .score-note {
+    --print-note-ink: var(--ink);
+    filter: none !important;
+    opacity: 1 !important;
+  }
+  #print-sheet .score-note.hand-left {
+    --print-note-ink: var(--copper);
+  }
+  #print-sheet .score-note.is-active * {
+    fill: var(--print-note-ink) !important;
+    stroke: var(--print-note-ink) !important;
+  }
+  #print-sheet .score-note.is-active [fill="none"] {
+    fill: none !important;
+  }
+  #print-sheet .score-note.is-active [stroke="none"] {
+    stroke: none !important;
   }
   #print-sheet {
     position: absolute;

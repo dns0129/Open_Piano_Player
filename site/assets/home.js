@@ -343,6 +343,7 @@ async function playArrangement(which) {
 }
 
 function onAudioState(state) {
+  const previousState = lastState;
   lastState = state;
   const isHero = state.scoreId === heroId;
   if (isHero)
@@ -456,12 +457,31 @@ function onAudioState(state) {
     isBach && (state.playing || state.loading),
     corrected || selectedLine !== 0 ? "听校对后的片段" : "听当前片段",
   );
-  if (error && isBach) text("#review-status", error + " 再点试听即可重试。");
-  if (isBach && state.ended)
-    text(
-      "#review-status",
-      "这一行已听完。可以换一行，或回到示例疑点再试一次。",
-    );
+  if (isBach) {
+    if (error) text("#review-status", error + " 再点试听即可重试。");
+    else if (state.loading)
+      text(
+        "#review-status",
+        "正在准备钢琴采样…可以继续选行、校对，或点暂停取消。",
+      );
+    else if (state.playing)
+      text(
+        "#review-status",
+        selectedLine === 0 && !corrected
+          ? "正在试听含示例疑点的版本；修正后可以对比。"
+          : "正在试听与当前数字谱对应的片段。",
+      );
+    else if (state.ended)
+      text(
+        "#review-status",
+        "这一行已听完。可以换一行，或回到示例疑点再试一次。",
+      );
+    else if (
+      previousState.scoreId === state.scoreId &&
+      (previousState.playing || previousState.loading)
+    )
+      text("#review-status", "已暂停这一行。再点试听，从当前拍位继续。");
+  }
   const isArrangement = state.scoreId?.startsWith("arrangement-");
   arrangeView?.update(isArrangement ? state : silent);
   setPlayButton(
@@ -474,15 +494,30 @@ function onAudioState(state) {
     state.scoreId === "arrangement-after" && (state.playing || state.loading),
     "听修改后",
   );
-  if (error && isArrangement)
-    text("#arrange-status", error + " 再点试听即可重试。");
-  if (isArrangement && state.ended)
-    text(
-      "#arrange-status",
-      arrangementPreview === "before"
-        ? "修改前已听完。试试第一拍变成三和弦的效果。"
-        : "修改后已听完。A4 预览已同步这次改编。",
-    );
+  if (isArrangement) {
+    if (error) text("#arrange-status", error + " 再点试听即可重试。");
+    else if (state.loading)
+      text("#arrange-status", "正在准备钢琴采样…谱面和 A4 预览仍可查看。");
+    else if (state.playing)
+      text(
+        "#arrange-status",
+        arrangementPreview === "before"
+          ? "正在试听修改前：第一拍只有右手 E4。"
+          : "正在试听修改后：第一拍右手 C4、E4、G4 同时发声。",
+      );
+    else if (state.ended)
+      text(
+        "#arrange-status",
+        arrangementPreview === "before"
+          ? "修改前已听完。试试第一拍变成三和弦的效果。"
+          : "修改后已听完。A4 预览已同步这次改编。",
+      );
+    else if (
+      previousState.scoreId === state.scoreId &&
+      (previousState.playing || previousState.loading)
+    )
+      text("#arrange-status", "已暂停试听。可以继续比较、改编或撤销。");
+  }
 }
 
 async function initialize() {

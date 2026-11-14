@@ -16,14 +16,14 @@
 
 ## 首页实现与交互
 
-| 文件 | 职责 |
-| --- | --- |
-| `assets/home.js` | 连接首屏练习、原谱对照、改编、A4 预览及可访问的页面状态；所有片段共用一个播放器实例 |
-| `assets/practice-audio.js` | `PracticeAudio`：以同一拍位和 AudioContext 时钟调度钢琴采样、暂停、定位、变速、分手、循环与单音试听 |
-| `assets/practice-score.js` | `PracticeScore`：用 VexFlow / Bravura 绘制真实五线谱，并将同一音符数据映射到简谱、钢琴卷帘、音符高亮和播放线 |
-| `assets/practice-data.js` | 《欢乐颂》四小节及项目左手伴奏、BWV 846 前两行、原谱区域与可重置的示例疑点；由 `scripts/build-practice-data.mjs` 从项目素材生成 |
-| `assets/pencil-trail.js` | `initPencilTrail()`：鼠标或笔移动留下短暂的墨绿与铜色铅笔痕迹，拖动稍深，停下后淡去；返回清理函数 |
-| `assets/home.css` | 桌面与手机布局、谱面状态、键盘、练习设置和 A4 打印样式 |
+| 文件                       | 职责                                                                                                                            |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `assets/home.js`           | 连接首屏练习、原谱对照、改编、A4 预览及可访问的页面状态；所有片段共用一个播放器实例                                             |
+| `assets/practice-audio.js` | `PracticeAudio`：以同一拍位和 AudioContext 时钟调度钢琴采样、暂停、定位、变速、分手、循环与单音试听                             |
+| `assets/practice-score.js` | `PracticeScore`：用 VexFlow / Bravura 绘制真实五线谱，并将同一音符数据映射到简谱、钢琴卷帘、音符高亮和播放线                    |
+| `assets/practice-data.js`  | 《欢乐颂》四小节及项目左手伴奏、BWV 846 前两行、原谱区域与可重置的示例疑点；由 `scripts/build-practice-data.mjs` 从项目素材生成 |
+| `assets/pencil-trail.js`   | `initPencilTrail()`：鼠标或笔移动留下短暂的墨绿与铜色铅笔痕迹，拖动稍深，停下后淡去；返回清理函数                               |
+| `assets/home.css`          | 桌面与手机布局、谱面状态、键盘、练习设置和 A4 打印样式                                                                          |
 
 桌面端左侧是标题和播放入口，右侧是较大的互动谱面。手机端优先呈现标题、播放入口和第一行谱；声部、速度和循环放在「练习设置」中。点音符可试听，点小节编号可定位。切换读法和速度保留当前拍位；分手操作改变实际发声，并用文字和淡化状态标明另一只手。第 2–3 小节循环对应 `[4, 12)` 拍，选到循环外的小节会退出循环。
 
@@ -61,6 +61,12 @@ node --test tests/site-*.test.mjs
 npx playwright install chromium
 node scripts/check-homepage.mjs
 node scripts/check-homepage-audio.mjs
+```
+
+前后台暂停检查会另外打开有界面的 Chromium，并核对浏览器真实发出的可见性事件。在没有桌面的 Linux 环境中，请安装 `xvfb`、`xauth` 和 `openbox`，然后用下面的命令运行首页检查（音频检查仍可直接运行）：
+
+```sh
+xvfb-run -a --server-args="-screen 0 1600x1200x24" bash -c 'openbox >/tmp/qinban-homepage-openbox.log 2>&1 & exec node scripts/check-homepage.mjs'
 ```
 
 两个浏览器检查脚本会各自启动临时 HTTP 服务，无需另开上面的预览服务器。Linux CI 如缺少浏览器系统依赖，可使用 `npx playwright install --with-deps chromium`。需要指定已有浏览器时，两个脚本均接受 `QINBAN_CHROMIUM`。
