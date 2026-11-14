@@ -62,6 +62,72 @@ const snapshot = (page) =>
       await import(document.querySelector("script[data-home-entry]").src)
     ).getHomeSnapshot(),
   );
+
+async function clickWithBeatProbe(page, selector, control) {
+  await page.evaluate(async (selector) => {
+    const app = await import(
+      document.querySelector("script[data-home-entry]").src
+    );
+    const target = document.querySelector(selector);
+    const probe = { before: null, after: null, trusted: false };
+    const sample = () => {
+      const audio = app.getHomeSnapshot().audio;
+      return {
+        beat: audio.beat,
+        bpm: audio.bpm,
+        playing: audio.playing,
+        milliseconds: performance.now(),
+      };
+    };
+    const before = (event) => {
+      if (!target.contains(event.target)) return;
+      probe.trusted = event.isTrusted;
+      probe.before = sample();
+      window.removeEventListener("click", before, true);
+    };
+    const after = (event) => {
+      if (!target.contains(event.target)) return;
+      probe.after = sample();
+      window.removeEventListener("click", after);
+    };
+    window.__qinbanAcceptanceBeatProbe = probe;
+    // Both listeners observe the same real input. Capture reads before the
+    // product's target listener; window bubbling reads after it has finished.
+    // CDP dispatch/render waits never become a fictitious jump in the music.
+    window.addEventListener("click", before, true);
+    window.addEventListener("click", after);
+  }, selector);
+  await control.click();
+  const probe = await page.evaluate(() => {
+    const result = window.__qinbanAcceptanceBeatProbe;
+    delete window.__qinbanAcceptanceBeatProbe;
+    return result;
+  });
+  assert(
+    probe.trusted && probe.before && probe.after,
+    `${selector}: real click boundaries were observed`,
+  );
+  assert(
+    probe.before.playing && probe.after.playing,
+    `${selector}: playback must continue through the action`,
+  );
+  const elapsedSeconds =
+    (probe.after.milliseconds - probe.before.milliseconds) / 1000;
+  const advance = probe.after.beat - probe.before.beat;
+  // A tempo action can take effect anywhere inside this handler. Bound normal
+  // advancement by its old/new tempo and allow only 0.08 beat for audio-clock
+  // quantization, instead of allowing an arbitrary CDP round trip of one beat.
+  const minimum =
+    (elapsedSeconds * Math.min(probe.before.bpm, probe.after.bpm)) / 60;
+  const maximum =
+    (elapsedSeconds * Math.max(probe.before.bpm, probe.after.bpm)) / 60;
+  assert(
+    advance >= minimum - 0.08 && advance <= maximum + 0.08,
+    `${selector}: action changed the musical position beyond its elapsed time: ${JSON.stringify(probe)}`,
+  );
+  return { ...probe, elapsedMilliseconds: elapsedSeconds * 1000, advance };
+}
+
 const record = (name, result = {}) => {
   report.checks.push({ name, ...result, passed: true });
   console.log(`PASS ${name}`);
@@ -896,18 +962,17 @@ async function scenario({ name, width, height, mobile }) {
       milliseconds: Date.now() - clickAt,
     });
     await parity(page, `${name}: staff, keyboard and audio agree`);
-    const before = await snapshot(page);
-    await page.getByRole("tab", { name: "简谱", exact: true }).click();
+    const notationTransition = await clickWithBeatProbe(
+      page,
+      "#tab-numbered",
+      page.getByRole("tab", { name: "简谱", exact: true }),
+    );
     const after = await snapshot(page);
     assert.equal(after.view, "numbered");
     assert(after.audio.playing);
-    assert(
-      after.audio.beat >= before.audio.beat - 0.01 &&
-        after.audio.beat - before.audio.beat < 1,
-    );
     record(`${name}: notation switch retains beat`, {
-      before: before.audio.beat,
-      after: after.audio.beat,
+      input: notationTransition,
+      observedAfterDispatch: after.audio.beat,
     });
     if (mobile) await page.locator("#practice-settings summary").click();
     await page.locator('button[data-hand="left"]').click();
@@ -921,14 +986,13 @@ async function scenario({ name, width, height, mobile }) {
     assert(
       (await page.locator("#hero-score .hand-right.is-muted").count()) > 0,
     );
-    const speedBefore = state.audio.beat;
-    await page.locator('[data-speed="70"]').click();
+    const tempoTransition = await clickWithBeatProbe(
+      page,
+      '[data-speed="70"]',
+      page.locator('[data-speed="70"]'),
+    );
     state = await snapshot(page);
     assert.equal(state.audio.bpm, 70);
-    assert(
-      state.audio.beat >= speedBefore - 0.01 &&
-        state.audio.beat - speedBefore < 1,
-    );
     await page.locator("#loop-toggle").click();
     state = await snapshot(page);
     assert.deepEqual(state.audio.loop, { start: 4, end: 12 });
@@ -972,6 +1036,7 @@ async function scenario({ name, width, height, mobile }) {
     assert.equal(later.audio.activeNotes.length, 0);
     assert.equal(later.audio.beat, stopped.audio.beat);
     record(`${name}: slow loop twice then pause`, {
+      tempoInput: tempoTransition,
       wraps,
       pausedBeat: later.audio.beat,
     });

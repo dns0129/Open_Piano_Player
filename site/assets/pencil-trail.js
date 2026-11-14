@@ -583,6 +583,7 @@ export function initPencilTrail() {
   activeCleanup?.();
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
   const finePointer = matchMedia("(any-pointer: fine)");
+  const lowPower = (navigator.hardwareConcurrency || 4) <= 4;
   const removers = [];
   let canvas;
   let renderer;
@@ -668,11 +669,13 @@ export function initPencilTrail() {
     clear();
     width = Math.max(1, window.innerWidth);
     height = Math.max(1, window.innerHeight);
-    // Bound both texture memory and compositing cost on Retina screens.
+    // Keep the same fluid field, but spend fewer display pixels on modest CPUs
+    // and software GPUs. Text and the musical score retain their native DPI.
+    const pixelBudget = lowPower ? 800000 : 1800000;
     const ratio = Math.min(
       window.devicePixelRatio || 1,
-      1.25,
-      Math.sqrt(1800000 / (width * height)),
+      lowPower ? 1 : 1.25,
+      Math.sqrt(pixelBudget / (width * height)),
     );
     canvas.style.width = `${width}px`;
     canvas.style.height = `${height}px`;
