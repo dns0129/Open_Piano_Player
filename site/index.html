@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#F3EEE1" />
+    <meta
+      name="description"
+      content="拍下一页谱，从这一小节开始练。琴伴把照片或 PDF 里的钢琴谱变成可播放、可编辑的数字谱。先在这张乐谱上试听、分手、慢练。"
+    />
+    <title>琴伴 · 拍下一页谱，从这一小节开始练。</title>
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+    <link
+      rel="preload"
+      href="assets/fonts/QinbanBrush-home.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="assets/fonts/Bravura.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link rel="stylesheet" href="assets/home.css?v=flow-20261114" />
+    <link rel="stylesheet" href="assets/dynamic-home.css?v=flow-20261114" />
+    <script defer src="assets/vendor/vexflow-core.js"></script>
+    <script
+      type="module"
+      src="assets/home.js?v=flow-20261114"
+      data-home-entry
+    ></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#practice">跳到互动乐谱</a>
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="琴伴首页"
+        ><img src="assets/favicon.svg" width="32" height="32" alt="" /><span
+          >琴伴</span
+        ><small>与每一小节，慢慢熟悉。</small></a
+      >
+      <nav aria-label="页面导航">
+        <a href="#practice">开始练习</a><a href="#scan">纸谱变数字谱</a
+        ><a href="#arrange">改编与导出</a>
+      </nav>
+      <a
+        class="header-open"
+        href="https://dns0129.github.io/Open_Piano_Player/"
+        target="_blank"
+        rel="noopener"
+        >打开练习室 <span aria-hidden="true">↗</span></a
+      >
+    </header>
+    <main>
+      <section class="hero section-width" id="top" aria-labelledby="hero-title">
+        <div class="hero-flow-art" aria-hidden="true"></div>
+        <div class="hero-copy">
+          <p class="eyebrow">
+            <span class="tiny-rule"></span>你的下一遍，可以更从容
+          </p>
+          <h1 id="hero-title">
+            <span>拍下一页谱，</span
+            ><span>从这一小节<em class="title-brush">开始练。</em></span>
+          </h1>
+          <p class="hero-description">
+            把照片或 PDF
+            里的钢琴谱变成可播放、可编辑的数字谱。哪里卡住，就从哪里慢下来练。
+          </p>
+          <div class="hero-actions">
+            <button class="button primary" id="hero-play" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="m9 5 11 7-11 7Z" /></svg
+              ><span>听这段谱</span></button
+            ><span class="click-note">轻点一下，琴声就开始。</span>
+          </div>
+          <p class="hero-caption">
+            <span class="small-spark" aria-hidden="true">✳</span>
+            不用注册。先在这张谱上，练一小段。
+          </p>
+          <p class="motion-cue">
+            <i aria-hidden="true"></i>移动鼠标，让墨迹流起来
+          </p>
+          <div class="margin-note">
+            <span>一遍听旋律，<br />下一遍，只练左手。</span
+            ><svg viewBox="0 0 90 35" aria-hidden="true">
+              <path d="M3 8c27 26 45 19 77 2m-10-4 12 3-7 10" />
+            </svg>
+          </div>
+        </div>
+        <article
+          class="practice-paper"
+          id="practice"
+          aria-label="欢乐颂互动练习谱"
+        >
+          <div class="paper-topline">
+            <span
+              ><i class="live-dot" aria-hidden="true"></i>一张可以玩的乐谱</span
+            ><span class="folio">练习 001</span>
+          </div>
+          <header class="score-heading">
+            <div>
+              <p class="score-kicker">ODE TO JOY</p>
+              <h2>欢乐颂</h2>
+            </div>
+            <p>
+              贝多芬 · 主题前四小节<br /><span id="score-tempo"
+                >C 大调 · 4/4 · ♩ = 100</span
+              >
+            </p>
+          </header>
+          <div class="score-toolbar">
+            <div class="tabs" role="tablist" aria-label="乐谱读法">
+              <button
+                role="tab"
+                id="tab-staff"
+                data-view="staff"
+                aria-selected="true"
+                aria-controls="hero-score"
+                type="button"
+              >
+                五线谱</button
+              ><button
+                role="tab"
+                id="tab-numbered"
+                data-view="numbered"
+                aria-selected="false"
+                aria-controls="hero-score"
+                tabindex="-1"
+                type="button"
+              >
+                简谱</button
+              ><button
+                role="tab"
+                id="tab-roll"
+                data-view="roll"
+                aria-selected="false"
+                aria-controls="hero-score"
+                tabindex="-1"
+                type="button"
+              >
+                钢琴卷帘
+              </button>
+            </div>
+            <span class="touch-hint">点音符，听它的声音</span>
+          </div>
+          <div class="bar-navigation" aria-label="按小节定位">
+            <span>小节</span
+            ><button
+              type="button"
+              data-measure="0"
+              aria-label="跳到第 1 小节"
+              aria-current="true"
+            >
+              01</button
+            ><button type="button" data-measure="1" aria-label="跳到第 2 小节">
+              02</button
+            ><button type="button" data-measure="2" aria-label="跳到第 3 小节">
+              03</button
+            ><button type="button" data-measure="3" aria-label="跳到第 4 小节">
+              04</button
+            ><span class="bar-nav-note" id="loop-label"
+              >从哪一小节开始，都可以。</span
+            >
+          </div>
+          <div
+            id="hero-score"
+            class="score-surface"
+            role="tabpanel"
+            aria-labelledby="tab-staff"
+            tabindex="0"
+          >
+            <p class="render-loading">正在展开乐谱…</p>
+          </div>
+          <div class="score-legend">
+            <span class="hand-legend right"
+              ><i></i><span id="right-legend">右手 · 旋律</span></span
+            ><span class="hand-legend left"
+              ><i></i><span id="left-legend">左手 · 伴奏</span></span
+            ><span class="swipe-hint">左右滑动查看小节</span>
+          </div>
+          <div class="keyboard-frame">
+            <div
+              id="hero-keyboard"
+              class="piano-keyboard"
+              aria-label="随乐谱发声的琴键"
+            ></div>
+          </div>
+          <div class="transport">
+            <button
+              class="transport-play"
+              id="transport-play"
+              type="button"
+              aria-label="播放欢乐颂"
+            >
+              <svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="m9 5 11 7-11 7Z" /></svg
+              ><span>播放</span>
+            </button>
+            <div class="transport-position">
+              <span id="position-label">第 1 小节 · 第 1 拍</span>
+              <div class="track-progress" aria-hidden="true">
+                <i id="play-progress"></i>
+              </div>
+            </div>
+            <span class="tempo-readout" id="tempo-readout"
+              ><span class="tempo-value">100</span> <small>BPM</small></span
+            >
+          </div>
+          <details class="practice-settings" id="practice-settings" open>
+            <summary>
+              练习设置 <span id="settings-summary">双手 · 原速</span
+              ><span class="settings-chevron" aria-hidden="true">⌄</span>
+            </summary>
+            <div class="settings-content">
+              <div class="control-group">
+                <span class="control-label">只听一只手</span>
+                <div class="segmented" role="group" aria-label="播放声部">
+                  <button type="button" data-hand="both" aria-pressed="true">
+                    双手</button
+                  ><button type="button" data-hand="right" aria-pressed="false">
+                    右手</button
+                  ><button type="button" data-hand="left" aria-pressed="false">
+                    左手
+                  </button>
+                </div>
+              </div>
+              <div class="control-group">
+                <span class="control-label">留一点时间</span>
+                <div class="segmented" role="group" aria-label="练习速度">
+                  <button type="button" data-speed="70" aria-pressed="false">
+                    慢一点</button
+                  ><button type="button" data-speed="100" aria-pressed="true">
+                    原速
+                  </button>
+                </div>
+              </div>
+              <button
+                class="loop-button"
+                type="button"
+                id="loop-toggle"
+                aria-pressed="false"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="m17 2 4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4m14-1v2a3 3 0 0 1-3 3H3"
+                  /></svg
+                ><span>循环第 2–3 小节</span>
+              </button>
+            </div>
+          </details>
+          <div class="audio-feedback">
+            <span id="audio-status" role="status" aria-live="polite"
+              >点播放，听见真实钢琴采样。</span
+            ><button type="button" id="audio-retry" hidden>重试加载</button>
+          </div>
+        </article>
+      </section>
+      <div class="practice-footnote section-width">
+        <span>先听见，再练熟。</span>
+        <p>
+          换一种读法、少听一只手、放慢几拍。<br
+            class="mobile-break"
+          />练习的起点，就在你点下的地方。
+        </p>
+        <a href="#scan" aria-label="往下看纸谱变数字谱"
+          >往下看，纸谱怎么变得能练 <span aria-hidden="true">↓</span></a
+        >
+      </div>
+      <section
+        class="scan-section section-width"
+        id="scan"
+        aria-labelledby="scan-title"
+      >
+        <header class="section-heading">
+          <div>
+            <p class="eyebrow">01 / 纸谱变数字谱</p>
+            <h2 id="scan-title">纸上的这一行，<br />现在可以听见。</h2>
+          </div>
+          <p>识别之后，仍然由你把关。<br />对照原谱，修正一个音，再听一遍。</p>
+        </header>
+        <div class="workflow-label">
+          <span class="demo-badge">识谱流程演示</span
+          ><span>示例乐谱 · 巴赫《C 大调前奏曲》BWV 846</span>
+        </div>
+        <div class="workflow-steps" aria-label="识谱演示步骤">
+          <button type="button" data-step="source" aria-pressed="true">
+            <span>01</span><b>选中原谱的一行</b
+            ><small>点左边的谱行</small></button
+          ><button type="button" data-step="review" aria-pressed="false">
+            <span>02</span><b>对照数字谱校对</b
+            ><small>试着修正红色疑点</small></button
+          ><button type="button" data-step="listen" aria-pressed="false">
+            <span>03</span><b>听校对后的片段</b><small>让耳朵也确认一次</small>
+          </button>
+        </div>
+        <div class="comparison-desk">
+          <div class="original-panel">
+            <div class="panel-caption">
+              <span>原谱 · 选择一行</span
+              ><span class="pencil-caption">你的纸谱，仍在这里。</span>
+            </div>
+            <div class="original-window">
+              <div class="original-page" id="original-page">
+                <img
+                  id="bach-original"
+                  alt="巴赫 C 大调前奏曲 BWV 846 的 Mutopia 原谱第一页，可选择前两行"
+                  loading="lazy"
+                />
+                <div id="source-row-buttons"></div>
+              </div>
+            </div>
+            <div class="source-caption">
+              <span id="selected-source-caption">已选第 1 行</span
+              ><a id="original-pdf" target="_blank" rel="noopener"
+                >查看原版 PDF ↗</a
+              >
+            </div>
+          </div>
+          <div class="digital-panel">
+            <div class="panel-caption">
+              <span>数字谱 · <span id="digital-row-label">第 1 行</span></span
+              ><span id="review-state" class="review-state">1 处示例疑点</span>
+            </div>
+            <div class="digital-score-title">
+              <h3>C 大调前奏曲</h3>
+              <span>J. S. Bach · BWV 846</span>
+            </div>
+            <div
+              id="bach-score"
+              class="score-surface compact-score"
+              aria-label="对应谱行的数字谱"
+            ></div>
+            <p class="score-scroll-hint">可左右滑动查看这一行的各小节</p>
+            <div class="correction-card" id="correction-card">
+              <span class="correction-mark" aria-hidden="true">?</span>
+              <div>
+                <strong id="correction-title">这个音，好像差了一点。</strong>
+                <p id="correction-detail">
+                  这是特意设置的示例疑点，请对照原谱修正。
+                </p>
+              </div>
+              <button
+                class="button correction-button"
+                id="correct-note"
+                type="button"
+              >
+                修正这个音
+              </button>
+            </div>
+            <div class="review-actions">
+              <button class="button primary" id="bach-play" type="button">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="m9 5 11 7-11 7Z" /></svg
+                ><span>听当前片段</span></button
+              ><button class="text-button" id="review-reset" type="button">
+                重置演示
+              </button>
+            </div>
+            <p
+              class="panel-status"
+              id="review-status"
+              role="status"
+              aria-live="polite"
+            >
+              点原谱换行；这次先一起找出一个音的差别。
+            </p>
+          </div>
+        </div>
+        <div class="real-entry">
+          <div>
+            <strong>准备好，换成你自己的那首曲子。</strong>
+            <p>
+              照片 / PDF
+              识谱需在已配置识谱服务的琴伴完整版中完成。网页版可直接练习、编辑和导出。
+            </p>
+          </div>
+          <a class="button secondary" href="guide.html#scan"
+            >用自己的谱试试 <span aria-hidden="true">↗</span></a
+          >
+        </div>
+      </section>
+      <section
+        class="arrange-section section-width"
+        id="arrange"
+        aria-labelledby="arrange-title"
+      >
+        <header class="section-heading">
+          <div>
+            <p class="eyebrow">02 / 把它变成你的练习版本</p>
+            <h2 id="arrange-title">改一个音，<br />听见另一种可能。</h2>
+          </div>
+          <p>
+            还是刚才那段《欢乐颂》。<br />给第一拍加上和声，然后把这一页带走。
+          </p>
+        </header>
+        <div class="arrange-workspace">
+          <article class="arrange-editor">
+            <div class="panel-caption">
+              <span>小小改编 · 第 1 小节</span
+              ><span class="edition-state" id="edition-state">原始版本</span>
+            </div>
+            <p class="arrangement-instruction">
+              已选中第一拍的 <strong>E4</strong>。<br />把单音变成
+              <strong>C4 · E4 · G4</strong>，感受三和弦的厚度。
+            </p>
+            <div
+              id="arrange-score"
+              class="score-surface"
+              aria-label="欢乐颂第一小节改编预览"
+            ></div>
+            <button
+              class="button secondary change-chord"
+              id="make-chord"
+              type="button"
+            >
+              <span aria-hidden="true">＋</span
+              ><span>把 E4 改为 C 大三和弦</span>
+            </button>
+            <div class="arrange-actions">
+              <button class="text-button" type="button" id="hear-before">
+                <span>听修改前</span></button
+              ><button class="text-button" type="button" id="hear-after">
+                <span>听修改后</span></button
+              ><button
+                class="text-button"
+                type="button"
+                id="undo-arrange"
+                disabled
+              >
+                撤销
+              </button>
+            </div>
+            <p
+              class="panel-status"
+              id="arrange-status"
+              role="status"
+              aria-live="polite"
+            >
+              先听原来的旋律，再给第一拍加两个音。
+            </p>
+          </article>
+          <div class="print-workspace">
+            <div class="print-note">
+              <span class="eyebrow">真正能打印的这一页</span>
+              <h3>从屏幕，回到琴架上。</h3>
+              <p>
+                修改会同步到右边的 A4 预览。<br />琴伴支持 MusicXML、MIDI、JSON
+                导出和 PDF 打印。
+              </p>
+              <div class="format-tags" aria-label="支持的导出格式">
+                <span>MusicXML</span><span>MIDI</span><span>JSON</span
+                ><span>PDF</span>
+              </div>
+              <button type="button" class="button secondary" id="print-score">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M6 9V3h12v6M6 17H3V9h18v8h-3M6 14h12v7H6Z" /></svg
+                >打印 / 存为 PDF
+              </button>
+              <p class="print-help">使用浏览器打印，可保存为 PDF。</p>
+              <a
+                class="text-link"
+                href="https://dns0129.github.io/Open_Piano_Player/"
+                target="_blank"
+                rel="noopener"
+                >在练习室导出更多格式 ↗</a
+              >
+            </div>
+            <div class="a4-preview-wrap">
+              <div class="a4-meta">
+                <span>A4 · 210 × 297 mm</span><span>1 / 1</span>
+              </div>
+              <article class="a4-page" id="print-sheet">
+                <div class="print-brand">琴伴 / 个人练习谱</div>
+                <h3>欢乐颂</h3>
+                <p class="print-composer">Ludwig van Beethoven</p>
+                <p class="print-edition" id="print-edition">
+                  主题前四小节 · 原始版本
+                </p>
+                <div id="print-notation"></div>
+                <p class="print-credit">
+                  公共领域旋律 · 琴伴教学编配<br />这一次，就从这一小节开始。
+                </p>
+                <span class="print-page-number">1</span>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="closing section-width">
+        <span class="closing-number" aria-hidden="true">𝄐</span>
+        <p class="eyebrow">留给下一遍的，是一点点进步。</p>
+        <h2>你想练的那首曲子，<br />值得慢慢来。</h2>
+        <a
+          class="button primary"
+          href="https://dns0129.github.io/Open_Piano_Player/"
+          target="_blank"
+          rel="noopener"
+          >打开琴伴练习室 <span aria-hidden="true">↗</span></a
+        >
+        <p>从一小节开始。听、练、修改，再来一遍。</p>
+      </section>
+    </main>
+    <footer class="site-footer section-width">
+      <div class="footer-top">
+        <a class="brand" href="#top"
+          ><img src="assets/favicon.svg" width="26" height="26" alt="" /><span
+            >琴伴</span
+          ></a
+        ><span>陪你把纸上的音符，练成指尖的音乐。</span
+        ><a href="guide.html">使用指南 ↗</a
+        ><a
+          href="https://github.com/dns0129/Open_Piano_Player"
+          target="_blank"
+          rel="noopener"
+          >GitHub ↗</a
+        >
+      </div>
+      <div class="credits">
+        <p>
+          谱例：《欢乐颂》公共领域旋律与项目教学伴奏；巴赫 BWV 846 原谱由 Tobias
+          Erbsland 排版，Mutopia 公共领域版本。
+        </p>
+        <p>
+          钢琴采样：Salamander Grand Piano / Alexander Holm（CC BY
+          3.0）。乐谱渲染：VexFlow（MIT）· Bravura（SIL OFL 1.1）。<a
+            href="assets/HOMEPAGE-SOURCES.md"
+            >素材来源与许可</a
+          >
+        </p>
+      </div>
+    </footer>
+    <div
+      id="page-announcement"
+      class="sr-only"
+      role="status"
+      aria-live="polite"
+    ></div>
+    <noscript
+      ><p class="noscript-note">
+        互动乐谱需要 JavaScript。你仍可<a
+          href="https://dns0129.github.io/Open_Piano_Player/"
+          >打开琴伴练习室</a
+        >或阅读<a href="guide.html">使用指南</a>。
+      </p></noscript
+    >
+  </body>
+</html>
