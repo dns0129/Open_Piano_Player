@@ -71,7 +71,7 @@ node scripts/check-homepage-audio.mjs
 xvfb-run -a --server-args="-screen 0 1600x1200x24" bash -c 'openbox >/tmp/qinban-homepage-openbox.log 2>&1 & exec node scripts/check-homepage.mjs'
 ```
 
-两个浏览器检查脚本会各自启动临时 HTTP 服务，无需另开上面的预览服务器。Linux CI 如缺少浏览器系统依赖，可使用 `npx playwright install --with-deps chromium`。需要指定已有浏览器时，两个脚本均接受 `QINBAN_CHROMIUM`。
+两个浏览器检查脚本会各自启动临时 HTTP 服务，无需另开上面的预览服务器。Linux CI 如缺少浏览器系统依赖，可使用 `npx playwright install --with-deps chromium`。首页检查另需 PATH 中的 `ffmpeg`，用于把真实浏览器录屏转换为 MP4 与 GIF。需要指定已有浏览器时，两个脚本均接受 `QINBAN_CHROMIUM`。
 
 验收包括：
 
@@ -80,7 +80,7 @@ xvfb-run -a --server-args="-screen 0 1600x1200x24" bash -c 'openbox >/tmp/qinban
 3. 检查页面无整体横向溢出、触控尺寸、焦点、减少动态效果、字体实际加载和入口；核对液墨出现、松手后的持续变化及最终消散，并录制实际操作短片；打印产物需按真实 A4 内容复核。
 4. 用真实 Chromium 解码 MP3，并通过 OfflineAudioContext 渲染和实时 AudioContext / Analyser 检查钢琴声音；单元测试覆盖拍位连续、循环边界、声部分离及采样加载竞争。
 
-`scripts/check-homepage.mjs` 的截图、A4 PDF 与 `report.json` 写入 `output/homepage/`；`scripts/check-homepage-audio.mjs` 的 WAV 和测量报告写入 `output/homepage-audio/`。GitHub Actions 的 **Homepage experience** 工作流运行这些检查，并将上述目录作为 `homepage-acceptance` 产物保留。结果以对应提交的实际工作流日志与产物为准；本说明不代表浏览器验收已经通过。环境不能启动浏览器时，应记录检查受阻，不能用单测通过替代浏览器结果。
+`scripts/check-homepage.mjs` 的截图、A4 PDF、`homepage-motion.webm` / `.mp4` / `.gif` 与 `report.json` 写入 `output/homepage/`；`scripts/check-homepage-audio.mjs` 的 WAV 和测量报告写入 `output/homepage-audio/`。运动短片记录未经改造的页面入场、鼠标流墨、钢琴播放和原生滚动；另用独立截图核对墨流自身的变化。GitHub Actions 的 **Homepage experience** 工作流运行这些检查，并将上述目录作为 `homepage-acceptance` 产物保留。结果以对应提交的实际工作流日志与产物为准；本说明不代表浏览器验收已经通过。环境不能启动浏览器时，应记录检查受阻，不能用单测通过替代浏览器结果。
 
 ## 截图
 

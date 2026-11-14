@@ -359,25 +359,33 @@ async function verifyFluidInk(page, name) {
   );
 }
 
-function runEncoder(args) {
+function runMediaCommand(command, args) {
   return new Promise((done, fail) => {
-    const process = spawn("ffmpeg", [
-      "-hide_banner",
-      "-loglevel",
-      "error",
-      "-y",
-      ...args,
-    ]);
+    const child = spawn(command, args, { stdio: ["ignore", "pipe", "pipe"] });
+    let stdout = "";
     let stderr = "";
-    process.stderr.on("data", (chunk) => {
+    child.stdout.on("data", (chunk) => {
+      stdout += chunk.toString();
+    });
+    child.stderr.on("data", (chunk) => {
       stderr += chunk.toString();
     });
-    process.once("error", fail);
-    process.once("exit", (code) =>
-      code === 0 ? done() : fail(new Error(`ffmpeg exited ${code}: ${stderr}`)),
+    child.once("error", fail);
+    child.once("close", (code) =>
+      code === 0
+        ? done(stdout)
+        : fail(new Error(`${command} exited ${code}: ${stderr}`)),
     );
   });
 }
+const runEncoder = (args) =>
+  runMediaCommand("ffmpeg", [
+    "-hide_banner",
+    "-loglevel",
+    "error",
+    "-y",
+    ...args,
+  ]);
 
 async function captureMotionEvidence() {
   const context = await browser.newContext({
@@ -462,6 +470,22 @@ async function captureMotionEvidence() {
     await context.close();
     await video.saveAs(resolve(output, "homepage-motion.webm"));
   }
+  const videoInfo = JSON.parse(
+    await runMediaCommand("ffprobe", [
+      "-v",
+      "error",
+      "-show_entries",
+      "format=duration",
+      "-of",
+      "json",
+      resolve(output, "homepage-motion.webm"),
+    ]),
+  );
+  const recordedSeconds = Number(videoInfo.format.duration);
+  assert(
+    Number.isFinite(recordedSeconds) && recordedSeconds > 0,
+    "the real browser recording must have a measured duration",
+  );
   await runEncoder([
     "-i",
     resolve(output, "homepage-motion.webm"),
@@ -485,7 +509,10 @@ async function captureMotionEvidence() {
     "9",
     "-an",
     "-filter_complex",
-    "[0:v]fps=14,scale=600:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=128[p];[b][p]paletteuse=dither=bayer:bayer_scale=3",
+    // Software GPU runners may take longer to dispatch real input. Preserve the
+    // complete MP4 at its actual pace; the GIF compresses the whole sequence,
+    // including the final piano/scroll actions, instead of truncating its start.
+    `[0:v]setpts=${(9 / recordedSeconds).toFixed(8)}*(PTS-STARTPTS),fps=14,scale=600:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=64[p];[b][p]paletteuse=dither=bayer:bayer_scale=4:diff_mode=rectangle`,
     "-loop",
     "0",
     resolve(output, "homepage-motion.gif"),
@@ -494,6 +521,9 @@ async function captureMotionEvidence() {
     "real browser motion film: entrance, liquid gesture, piano and scroll reveal",
     {
       viewport: "1280×900",
+      recordedSeconds,
+      gifSeconds: 9,
+      mp4Playback: "original recording speed",
       files: [
         "homepage-motion.webm",
         "homepage-motion.mp4",
@@ -1109,11 +1139,12 @@ try {
   }
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
   for (const name of ["desktop", "mobile"]) {
-    const loadingTask = pdfjs.getDocument({
-      data: new Uint8Array(await readFile(resolve(output, `${name}-A4.pdf`))),
-      isEvalSupported: false,
-    });
+    let loadingTask;
     try {
+      loadingTask = pdfjs.getDocument({
+        data: new Uint8Array(await readFile(resolve(output, `${name}-A4.pdf`))),
+        isEvalSupported: false,
+      });
       const pdf = await loadingTask.promise;
       assert.equal(pdf.numPages, 1, `${name}: A4 print must be one page`);
       const printed = await pdf.getPage(1);
@@ -1137,7 +1168,7 @@ try {
       console.error(error);
     } finally {
       // PDF.js 6 exposes destroy() on PDFDocumentLoadingTask, not its proxy.
-      await loadingTask.destroy();
+      await loadingTask?.destroy();
     }
   }
   const context = await browser.newContext({
