@@ -548,18 +548,6 @@
   font-size: 12px;
   color: var(--text-mid);
 }
-.discovery-loading {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: var(--text-mid);
-  font-size: 13px;
-  padding: 28px 0;
-}
-.discovery-loading svg {
-  width: 20px;
-  height: 20px;
-}
 .search-back {
   margin-bottom: 20px;
 }

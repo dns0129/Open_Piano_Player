@@ -278,6 +278,11 @@ export class PracticeScore {
     const context = renderer.getContext();
     system.context = context;
     system.svg = system.element.querySelector("svg");
+    // VexFlow emits its music family as an SVG presentation attribute and its
+    // glyph <text> nodes inherit that family. A normal `.score-surface svg`
+    // CSS rule outranks the attribute and otherwise turns SMuFL into tofu.
+    // Keep the music face explicit; labels added later still choose their own.
+    system.svg.style.fontFamily = "Bravura, serif";
     const topY = this.height < 224 ? 0 : 7;
     const bassY = this.height < 224 ? 94 : 105;
     const firstExtra = firstBar === 0 ? 80 : 49;
@@ -463,6 +468,12 @@ export class PracticeScore {
       });
       system.anchors.push({ beat: start + 4, x: x + width - 5, priority: 0 });
       x += width;
+    }
+    for (const glyph of system.svg.querySelectorAll("text")) {
+      if (/[\uE000-\uF8FF]/u.test(glyph.textContent)) {
+        glyph.style.fontFamily = "Bravura";
+        glyph.classList.add("music-glyph");
+      }
     }
   }
 

@@ -349,6 +349,31 @@ test("engraving waits for Bravura and preserves selection made while the font lo
   }
 });
 
+test("music glyphs retain Bravura even when page CSS sets the SVG's font family", async () => {
+  const env = environment();
+  try {
+    const style = document.createElement("style");
+    style.textContent =
+      ".score-surface svg { font-family: Arial, sans-serif; }";
+    document.head.append(style);
+    const view = env.create({ score: ODE_SCORE });
+    await view.ready;
+    const svg = env.host.querySelector("svg");
+    assert.match(window.getComputedStyle(svg).fontFamily, /Bravura/);
+    const glyphs = [...env.host.querySelectorAll(".music-glyph")];
+    assert.ok(
+      glyphs.length >= 29,
+      "clefs, time digits and noteheads are real SMuFL glyphs",
+    );
+    for (const glyph of glyphs) {
+      assert.match(window.getComputedStyle(glyph).fontFamily, /Bravura/);
+      assert.match(glyph.textContent, /[\uE000-\uF8FF]/u);
+    }
+  } finally {
+    env.restore();
+  }
+});
+
 test("the A4 engraving has all four bars and the edited triad, with no interactive hit targets", async () => {
   const env = environment(220);
   try {

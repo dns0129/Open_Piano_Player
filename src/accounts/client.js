@@ -35,6 +35,7 @@ export function createAccountClient({
       binary = false,
       headers = {},
       expectedEpoch = epoch,
+      signal,
     } = {},
   ) {
     const generation = expectedEpoch;
@@ -44,6 +45,7 @@ export function createAccountClient({
       credentials: "same-origin",
       cache: "no-store",
       headers: { ...headers },
+      ...(signal ? { signal } : {}),
     };
     if (method !== "GET") {
       options.headers["X-CSRF-Token"] =
@@ -113,9 +115,9 @@ export function createAccountClient({
       return r.status === 204 ? null : r.json();
     },
     request,
-    async initialize() {
+    async initialize(options) {
       try {
-        const s = await api.json("/session");
+        const s = await api.json("/session", options);
         update(s);
         return s;
       } catch (e) {
@@ -290,10 +292,12 @@ export function createHostedLibrary(account) {
   });
   async function list() {
     if (!initialized)
-      initialized = account.initialize().catch((e) => {
-        initialized = null;
-        throw e;
-      });
+      initialized = account
+        .initialize({ signal: AbortSignal.timeout(30_000) })
+        .catch((e) => {
+          initialized = null;
+          throw e;
+        });
     await initialized;
     if (!account.session) return { records: [], warnings: [] };
     const generation = account.epoch;
@@ -302,7 +306,7 @@ export function createHostedLibrary(account) {
     do {
       const page = await account.json(
         "/library/entries?limit=100" + (cursor ? "&cursor=" + cursor : ""),
-        { expectedEpoch: generation },
+        { expectedEpoch: generation, signal: AbortSignal.timeout(30_000) },
       );
       all.push(...page.records);
       cursor = page.nextCursor;
@@ -314,6 +318,7 @@ export function createHostedLibrary(account) {
     for (const s of all) {
       const e = await account.json("/library/entries/" + s.entryId, {
         expectedEpoch: generation,
+        signal: AbortSignal.timeout(30_000),
       });
       records.push({
         id: s.documentId,

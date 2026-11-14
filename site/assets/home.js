@@ -386,7 +386,7 @@ function onAudioState(state) {
     "#settings-summary",
     `${hands[heroMemory.hand]} · ${heroMemory.bpm === ODE_SCORE.bpm ? "原速" : "慢练"}${heroMemory.loop ? " · 2–3 循环" : ""}`,
   );
-  $$("[data-hand]").forEach((button) =>
+  $$("button[data-hand]").forEach((button) =>
     button.setAttribute(
       "aria-pressed",
       String(button.dataset.hand === heroMemory.hand),
@@ -612,7 +612,7 @@ async function initialize() {
       tabs[next].focus();
     });
   });
-  $$("[data-hand]").forEach((button) =>
+  $$("button[data-hand]").forEach((button) =>
     button.addEventListener("click", () => {
       activateHero();
       audio.setHand(button.dataset.hand);

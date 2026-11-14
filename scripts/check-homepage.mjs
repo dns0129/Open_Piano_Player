@@ -154,6 +154,51 @@ async function scenario({ name, width, height, mobile }) {
       Math.abs(originalRatio - 1600 / 2263) < 0.005,
       "original score image aspect ratio",
     );
+    const musicFont = await page
+      .locator("#hero-score .music-glyph")
+      .first()
+      .evaluate((el) => getComputedStyle(el).fontFamily);
+    assert(
+      musicFont.includes("Bravura"),
+      `${name}: musical glyphs must retain Bravura, got ${musicFont}`,
+    );
+    const hitStroke = await page
+      .locator("#hero-score .note-hit")
+      .first()
+      .evaluate((el) => getComputedStyle(el).stroke);
+    assert.equal(
+      hitStroke,
+      "none",
+      `${name}: transparent hit targets must not have visible borders`,
+    );
+    if (!mobile) {
+      await page.mouse.move(120, 190);
+      for (let i = 0; i < 14; i++)
+        await page.mouse.move(120 + i * 9, 190 + Math.sin(i * 0.32) * 22, {
+          steps: 2,
+        });
+      const ink = await page.locator(".pencil-trail").evaluate((canvas) =>
+        canvas
+          .getContext("2d")
+          .getImageData(0, 0, canvas.width, canvas.height)
+          .data.some((v, i) => i % 4 === 3 && v > 0),
+      );
+      assert(ink, "mouse movement should leave a visible pencil trace");
+      await page.screenshot({
+        path: resolve(output, `${name}-pencil-trail.png`),
+        fullPage: false,
+      });
+      await page.waitForTimeout(1150);
+      const clear = await page.locator(".pencil-trail").evaluate(
+        (canvas) =>
+          !canvas
+            .getContext("2d")
+            .getImageData(0, 0, canvas.width, canvas.height)
+            .data.some((v, i) => i % 4 === 3 && v > 0),
+      );
+      assert(clear, "pencil trace should fade completely");
+      record(`${name}: pencil trail appears, fades and never catches input`);
+    }
     const initial = await snapshot(page);
     assert.equal(initial.audio.playing, false);
     assert.equal(initial.audio.activeNotes.length, 0);
@@ -185,7 +230,7 @@ async function scenario({ name, width, height, mobile }) {
       after: after.audio.beat,
     });
     if (mobile) await page.locator("#practice-settings summary").click();
-    await page.locator('[data-hand="left"]').click();
+    await page.locator('button[data-hand="left"]').click();
     let state = await snapshot(page);
     assert.equal(state.audio.hand, "left");
     assert(state.audio.activeNotes.every((n) => n.hand === "left"));
@@ -254,7 +299,7 @@ async function scenario({ name, width, height, mobile }) {
     assert.equal(state.audio.loop, null);
     await page.getByRole("tab", { name: "五线谱", exact: true }).click();
     await page.locator('[data-measure="0"]').click();
-    await page.locator('[data-hand="both"]').click();
+    await page.locator('button[data-hand="both"]').click();
     await page.locator('#hero-score .note-hit[data-note-ids~="ode-1"]').click();
     state = await snapshot(page);
     assert(!state.audio.playing);

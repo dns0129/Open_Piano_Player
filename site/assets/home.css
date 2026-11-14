@@ -217,6 +217,7 @@ h1 {
 }
 h1 span {
   display: block;
+  text-wrap: balance;
 }
 .hero-description {
   font-size: 15px;
@@ -471,9 +472,6 @@ h1 span {
   display: block;
   overflow: visible;
 }
-.score-surface svg {
-  font-family: var(--sans);
-}
 .score-surface .vf-stave {
   color: var(--ink);
 }
@@ -505,6 +503,7 @@ h1 span {
   filter: drop-shadow(0 0 4px #234f3e44);
 }
 .note-halo {
+  stroke: none;
   fill: var(--green);
   opacity: 0;
   pointer-events: none;
@@ -517,6 +516,7 @@ h1 span {
 }
 .note-hit {
   fill: transparent;
+  stroke: none;
   cursor: pointer;
   pointer-events: all;
   outline: none !important;
@@ -562,6 +562,7 @@ h1 span {
   clip-path: polygon(0 0, 100% 0, 50% 100%);
 }
 .measure-highlight {
+  stroke: none;
   fill: #234f3e04;
   opacity: 0;
   pointer-events: none;

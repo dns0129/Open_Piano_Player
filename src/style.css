@@ -233,6 +233,68 @@ input[type="checkbox"] {
   flex-direction: column;
   overflow: hidden;
 }
+#library-loading:not([hidden]) {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgb(32 40 32 / 24%);
+  touch-action: none;
+}
+.library-loading-panel {
+  display: grid;
+  gap: 14px;
+  width: min(100%, 320px);
+  padding: 22px 24px 24px;
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  background: var(--paper);
+  color: var(--text-1);
+  box-shadow: 0 12px 36px rgb(32 40 32 / 16%);
+  outline: none;
+}
+.library-loading-panel h2 {
+  font-size: 15px;
+  font-weight: 600;
+}
+.library-loading-track {
+  position: relative;
+  width: 100%;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--surface-4);
+}
+.library-loading-track progress {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  clip-path: inset(50%);
+}
+.library-loading-track span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 36%;
+  border-radius: inherit;
+  background: var(--green);
+  animation: library-loading-slide 1.35s ease-in-out infinite;
+}
+@keyframes library-loading-slide {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(278%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .library-loading-track span {
+    animation: none;
+    inset-inline-start: 32%;
+  }
+}
 .practice-console {
   background: var(--surface-2);
   border-bottom: 1px solid var(--border);

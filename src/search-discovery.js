@@ -99,7 +99,6 @@ export function createSearchDiscovery({
       <div class="discovery-seeds"><span>找谱灵感</span>${seeds.map((q) => queryButton(q)).join("")}</div></div>
       <div id="discovery-history">${historyMarkup()}</div>
       ${state.cloudError ? `<div class="cloud-library-error" role="alert">${esc(state.cloudError)} <button class="button quiet" data-cloud-refresh>重新加载</button></div>` : ""}
-      ${!state.cloudLoaded && state.cloudBusy ? `<div class="discovery-loading" role="status">${icon("loader-circle", "spin")}正在加载乐谱与榜单…</div>` : ""}
       ${showBoards && state.cloudLoaded ? `<div class="discovery-section-heading"><div><h2>榜单精选</h2><p>按曲库推荐顺序整理，帮你发现值得练的旋律。</p></div><span>精选推荐 · 非播放量排名</span></div><div class="discovery-boards">${board("featured", "精选推荐榜", "熟悉的旋律，新的练习灵感", 0)}${board("beginner", "入门练习榜", "从简单旋律开始，慢慢积累", 1)}${board("intermediate", "进阶挑战榜", "多一点变化，多一点成就", 2)}</div>` : ""}
       <div class="discovery-content"><section class="discovery-results" id="discovery-results">${resultsMarkup()}</section><aside class="discovery-aside"><div class="discovery-section-heading"><h2>搜索热榜</h2><span>我的热搜</span></div><p>仅按本浏览器搜索次数排序</p><ol class="discovery-hot">${hot.map((item, i) => `<li><span>${String(i + 1).padStart(2, "0")}</span>${queryButton(item.query)}<small>${item.count} 次</small></li>`).join("") || '<li class="discovery-muted">还没有搜索记录。<br>你常找的曲目会出现在这里。</li>'}</ol><div class="discovery-tip">${icon("file-music")}<strong>找到曲谱，就开始练习</strong><p>已下载的乐谱可直接打开；带有原谱图片的版本，方便边练边核对。</p></div></aside></div></section>`;
   }
