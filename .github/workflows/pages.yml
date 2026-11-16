@@ -49,10 +49,18 @@ jobs:
       - run: npm ci
       - run: npm run build:pages
         env:
-          PAGES_BASE: /${{ github.event.repository.name }}/
-      - name: Add the promo site at /site/
-        run: cp -R site dist-pages/site
-      - run: touch dist-pages/.nojekyll
+          PAGES_BASE: /${{ github.event.repository.name }}/app/
+      - name: Confirm the landing page, web app, and guide
+        run: |
+          set -euo pipefail
+          test -f dist-pages/index.html
+          test -f dist-pages/css/style.css
+          test -f dist-pages/js/main.js
+          test -f dist-pages/app/index.html
+          test -f dist-pages/site/index.html
+          test -f dist-pages/.nojekyll
+          grep -q "/${GITHUB_REPOSITORY#*/}/app/" dist-pages/app/index.html
+          test ! -e dist-pages/preview
       - name: Publish dist-pages to gh-pages
         run: |
           sha=$(git rev-parse HEAD)
