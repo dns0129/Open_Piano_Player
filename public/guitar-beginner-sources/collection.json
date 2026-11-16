@@ -12,7 +12,7 @@
       "kind": "original",
       "tempo": 72,
       "focus": "六根空弦 · 稳定四分音符",
-      "sourceUrl": "https://dns0129.github.io/Open_Piano_Player/guitar-beginner-sources/README.txt",
+      "sourceUrl": "https://dns0129.github.io/Open_Piano_Player/app/guitar-beginner-sources/README.txt",
       "credit": "琴伴原创，CC0-1.0",
       "bars": ["E2 A2 D3 G3", "B3 E4 B3 G3", "D3 A2 E2 A2", "D3 G3 A2 E2"]
     },
@@ -23,7 +23,7 @@
       "kind": "original",
       "tempo": 72,
       "focus": "1弦0、1、3品 · 左手按弦",
-      "sourceUrl": "https://dns0129.github.io/Open_Piano_Player/guitar-beginner-sources/README.txt",
+      "sourceUrl": "https://dns0129.github.io/Open_Piano_Player/app/guitar-beginner-sources/README.txt",
       "credit": "琴伴原创，CC0-1.0",
       "bars": ["E4 F4 G4 F4", "E4 E4 E4:2", "G4 F4 E4 F4", "G4:2 E4:2"]
     },
@@ -34,7 +34,7 @@
       "kind": "original",
       "tempo": 76,
       "focus": "1、2弦换弦 · 0–3品",
-      "sourceUrl": "https://dns0129.github.io/Open_Piano_Player/guitar-beginner-sources/README.txt",
+      "sourceUrl": "https://dns0129.github.io/Open_Piano_Player/app/guitar-beginner-sources/README.txt",
       "credit": "琴伴原创，CC0-1.0",
       "bars": ["B3 C4 D4 E4", "G4 E4 D4 C4", "B3 D4 E4 G4", "E4 D4 C4:2"]
     },
@@ -89,7 +89,7 @@
       "kind": "original",
       "tempo": 72,
       "focus": "C、Am开放和弦分解 · 八分音符 · 无横按",
-      "sourceUrl": "https://dns0129.github.io/Open_Piano_Player/guitar-beginner-sources/README.txt",
+      "sourceUrl": "https://dns0129.github.io/Open_Piano_Player/app/guitar-beginner-sources/README.txt",
       "credit": "琴伴原创，CC0-1.0；逐音按弦练习，无需同时按完整和弦。",
       "bars": ["C3:0.5 G3:0.5 C4:0.5 E4:0.5 C4:0.5 G3:0.5 C4:0.5 E4:0.5", "A2:0.5 E3:0.5 A3:0.5 C4:0.5 A3:0.5 E3:0.5 A3:0.5 C4:0.5", "C3:0.5 G3:0.5 C4:0.5 E4:0.5 C4:0.5 G3:0.5 C4:0.5 E4:0.5", "A2:0.5 E3:0.5 A3:0.5 C4:0.5 A3:0.5 E3:0.5 A3:0.5 A2:0.5"]
     }
