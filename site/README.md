@@ -61,9 +61,12 @@ python -m http.server 8817 --directory site
 ```sh
 node --test tests/site-*.test.mjs
 npx playwright install chromium
+npm run build:pages
 node scripts/check-homepage.mjs
 node scripts/check-homepage-audio.mjs
 ```
+
+首页里指向 `https://dns0129.github.io/Open_Piano_Player/` 的链接按刚构建的 `dist-pages/` 核对，因此 `/app/` 这类尚未发布的路径也能通过。本机页面资源和 GitHub 等已经在线的外链仍按实际地址请求。
 
 前后台暂停检查会另外打开有界面的 Chromium，并核对浏览器真实发出的可见性事件。在没有桌面的 Linux 环境中，请安装 `xvfb`、`xauth` 和 `openbox`，然后用下面的命令运行首页检查（音频检查仍可直接运行）：
 

@@ -9,8 +9,13 @@ import { resolve, extname, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 import sharp from "sharp";
+import {
+  publishedPagesFile,
+  readPublishedPagesFile,
+} from "../lib/pages-links.mjs";
 
 const root = fileURLToPath(new URL("../site/", import.meta.url));
+const pagesRoot = fileURLToPath(new URL("../dist-pages/", import.meta.url));
 const output = resolve("output/homepage");
 await mkdir(output, { recursive: true });
 const types = {
@@ -1348,8 +1353,31 @@ try {
       report.links.push({ href, status: "anchor exists" });
       continue;
     }
-    const url = new URL(href, base).href;
-    const response = await linkContext.request.get(url, { timeout: 20000 });
+    const url = new URL(href, base);
+    const published = publishedPagesFile(url, pagesRoot);
+    if (published) {
+      let bytes;
+      try {
+        bytes = await readPublishedPagesFile(published);
+      } catch (error) {
+        assert.fail(
+          `link ${href} is missing from the Pages build (${published}). Run npm run build:pages. ${error.code || error.message}`,
+        );
+      }
+      assert(bytes.length > 0, `link ${href} publishes an empty file`);
+      if (published.endsWith(".html")) {
+        const head = bytes.toString("utf8").slice(0, 300).toLowerCase();
+        assert(
+          head.includes("<!doctype html") || head.includes("<html"),
+          `link ${href} does not publish an HTML page`,
+        );
+      }
+      report.links.push({ href, status: "pages build", final: published });
+      continue;
+    }
+    const response = await linkContext.request.get(url.href, {
+      timeout: 20000,
+    });
     assert(response.ok(), `link ${href} returned ${response.status()}`);
     report.links.push({
       href,
