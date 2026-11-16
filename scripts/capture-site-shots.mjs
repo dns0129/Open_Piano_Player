@@ -1,6 +1,6 @@
 // Captures the real app screenshots used by the promo site (site/assets/shots/*.webp).
 // Drives a headless Google Chrome over the DevTools protocol with a throwaway profile:
-//   - the public web app: 《致爱丽丝》 playing (staff, jianpu, export dialog, phone) and the recognised BWV 846 over its original page;
+//   - the public web app at /app/: 《致爱丽丝》 playing (staff, jianpu, export dialog, phone) and the recognised BWV 846 over its original page;
 //   - the local app (QINBAN_URL, default http://127.0.0.1:8792): the PDF import preview for Chopin Op.28 No.7.
 //     It only opens the preview, which runs in the browser; it never starts recognition, so nothing is written to .local/.
 // Needs Chrome and Node ≥ 21 (on 21 it reruns itself with --experimental-websocket).
@@ -31,7 +31,8 @@ if (typeof WebSocket === "undefined") {
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const WEB =
-  process.env.QINBAN_WEB_URL || "https://dns0129.github.io/Open_Piano_Player/";
+  process.env.QINBAN_WEB_URL ||
+  "https://dns0129.github.io/Open_Piano_Player/app/";
 const LOCAL = process.env.QINBAN_URL || "http://127.0.0.1:8792/";
 const CHROME =
   process.env.CHROME ||

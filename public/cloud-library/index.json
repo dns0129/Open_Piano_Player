@@ -541,7 +541,7 @@
       "notes": 32,
       "hasOriginal": false,
       "sourceLabel": "吉他入门 · 第1批 · C、Am开放和弦分解 · 八分音符 · 无横按",
-      "sourceUrl": "https://dns0129.github.io/Open_Piano_Player/guitar-beginner-sources/README.txt",
+      "sourceUrl": "https://dns0129.github.io/Open_Piano_Player/app/guitar-beginner-sources/README.txt",
       "license": "琴伴原创，CC0-1.0；逐音按弦练习，无需同时按完整和弦。",
       "reviewRequired": false,
       "file": "scores/guitar-beginner-c-am-arpeggio.json"
@@ -560,7 +560,7 @@
       "notes": 13,
       "hasOriginal": false,
       "sourceLabel": "吉他入门 · 第1批 · 1弦0、1、3品 · 左手按弦",
-      "sourceUrl": "https://dns0129.github.io/Open_Piano_Player/guitar-beginner-sources/README.txt",
+      "sourceUrl": "https://dns0129.github.io/Open_Piano_Player/app/guitar-beginner-sources/README.txt",
       "license": "琴伴原创，CC0-1.0",
       "reviewRequired": false,
       "file": "scores/guitar-beginner-first-string.json"
@@ -636,7 +636,7 @@
       "notes": 16,
       "hasOriginal": false,
       "sourceLabel": "吉他入门 · 第1批 · 六根空弦 · 稳定四分音符",
-      "sourceUrl": "https://dns0129.github.io/Open_Piano_Player/guitar-beginner-sources/README.txt",
+      "sourceUrl": "https://dns0129.github.io/Open_Piano_Player/app/guitar-beginner-sources/README.txt",
       "license": "琴伴原创，CC0-1.0",
       "reviewRequired": false,
       "file": "scores/guitar-beginner-open-strings.json"
@@ -674,7 +674,7 @@
       "notes": 15,
       "hasOriginal": false,
       "sourceLabel": "吉他入门 · 第1批 · 1、2弦换弦 · 0–3品",
-      "sourceUrl": "https://dns0129.github.io/Open_Piano_Player/guitar-beginner-sources/README.txt",
+      "sourceUrl": "https://dns0129.github.io/Open_Piano_Player/app/guitar-beginner-sources/README.txt",
       "license": "琴伴原创，CC0-1.0",
       "reviewRequired": false,
       "file": "scores/guitar-beginner-two-strings.json"
