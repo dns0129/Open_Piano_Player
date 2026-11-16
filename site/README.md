@@ -1,6 +1,6 @@
 # 琴伴 · 互动产品首页与使用指南
 
-独立的静态网站，不参与 App 的 Vite 构建。首页让访客直接听谱、练习和校对；使用指南保留具体操作说明。发布时整个 `site/` 目录会原样复制到 App 网页版的 `/site/` 下。
+独立的静态网站，不参与 App 的 Vite 构建。首页让访客直接听谱、练习和校对；使用指南保留具体操作说明。发布时整个 `site/` 目录会原样复制到 Pages 站点的 `/site/`，与根目录宣传页和 `/app/` 网页版并列。
 
 - **首页 `index.html`**：标题为「拍下一页谱，从这一小节开始练。」首屏是《欢乐颂》前四小节双手谱。点「听这段谱」后，音符、小节、播放线和下方琴键一起回应；同一张谱可切换五线谱、简谱和钢琴卷帘，选择双手、右手或左手，切换慢速与原速，并循环第 2–3 小节。下方用 BWV 846 原谱演示选行、校对、试听，再用《欢乐颂》演示将第一拍 E4 改为 C4 · E4 · G4 三和弦、比较修改前后、撤销及打印 A4 练习谱。旧版功能卡片、案例瀑布流和「玩一下」已由这条连续体验替换。
 - **使用指南 `guide.html`（对内，讲怎么用）**：按步骤讲三件事，配图都是琴伴本身的截图——
@@ -39,7 +39,7 @@
 
 ## 入口与能力边界
 
-- 公开练习室：<https://dns0129.github.io/Open_Piano_Player/>。静态网页版提供曲库练习、数字谱导入、编辑和导出。
+- 公开练习室：<https://dns0129.github.io/Open_Piano_Player/app/>。静态网页版提供曲库练习、数字谱导入、编辑和导出。宣传首页在 <https://dns0129.github.io/Open_Piano_Player/>。
 - 使用自己的照片 / PDF：首页链接到 `guide.html#scan`。先启动已配置识谱服务的琴伴本机完整版，再选择「导入乐谱 → 上传本地乐谱」，检查谱行后开始识别；已部署的账号版使用其「上传识谱」入口。
 - 静态首页和 GitHub Pages 练习室不执行照片 / PDF 识别。源码中存在商业账号版不代表已有正式托管服务，首页不构造未经核验的商业版网址。
 
@@ -61,9 +61,12 @@ python -m http.server 8817 --directory site
 ```sh
 node --test tests/site-*.test.mjs
 npx playwright install chromium
+npm run build:pages
 node scripts/check-homepage.mjs
 node scripts/check-homepage-audio.mjs
 ```
+
+首页里指向 `https://dns0129.github.io/Open_Piano_Player/` 的链接按刚构建的 `dist-pages/` 核对，因此 `/app/` 这类尚未发布的路径也能通过。本机页面资源和 GitHub 等已经在线的外链仍按实际地址请求。
 
 前后台暂停检查会另外打开有界面的 Chromium，并核对浏览器真实发出的可见性事件。在没有桌面的 Linux 环境中，请安装 `xvfb`、`xauth` 和 `openbox`，然后用下面的命令运行首页检查（音频检查仍可直接运行）：
 
@@ -127,4 +130,4 @@ FFMPEG=/path/to/ffmpeg node scripts/render-promo-video.mjs
 
 ## 部署
 
-推送到 `main` 并通过 **Engineering checks** 后，`.github/workflows/pages.yml` 在构建 App 网页版之后把本目录原样复制到 `dist-pages/site/`，首页发布在 <https://dns0129.github.io/Open_Piano_Player/site/>，使用指南在 <https://dns0129.github.io/Open_Piano_Player/site/guide.html>。整个目录也可直接放到其他静态托管；保持相对资源路径即可。
+推送到 `main` 并通过 **Engineering checks** 后，`.github/workflows/pages.yml` 把宣传站 `landing/` 放到站点根目录，把网页版构建到 `dist-pages/app/`，再把本目录原样复制到 `dist-pages/site/`。宣传首页在 <https://dns0129.github.io/Open_Piano_Player/>，网页版在 <https://dns0129.github.io/Open_Piano_Player/app/>，本目录首页在 <https://dns0129.github.io/Open_Piano_Player/site/>，使用指南在 <https://dns0129.github.io/Open_Piano_Player/site/guide.html>。整个目录也可直接放到其他静态托管；保持相对资源路径即可。

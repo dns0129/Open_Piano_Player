@@ -31,7 +31,8 @@ if (typeof WebSocket === "undefined") {
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const WEB =
-  process.env.QINBAN_WEB_URL || "https://dns0129.github.io/Open_Piano_Player/";
+  process.env.QINBAN_WEB_URL ||
+  "https://dns0129.github.io/Open_Piano_Player/app/";
 const LOCAL = process.env.QINBAN_URL || "http://127.0.0.1:8792/";
 const CHROME =
   process.env.CHROME ||

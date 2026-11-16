@@ -1,0 +1,6 @@
+Bundled fonts (subsets):
+- Bravura (SMuFL music font) — SIL Open Font License 1.1 (see OFL.txt)
+- Noto Serif CJK SC (as "Noto Serif SC") — SIL Open Font License 1.1, Google / Adobe
+- Cormorant Garamond — SIL Open Font License 1.1, Christian Thalmann
+- Jost — SIL Open Font License 1.1, Owen Earl / indestructible type*
+Chinese glyphs are subset to the characters used on the page; unlisted characters fall back to the system serif font.

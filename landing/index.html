@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>琴伴 · 钢琴练习室 — 拍下一页谱，马上听它、练它、改它</title>
+<meta name="description" content="琴伴：钢琴乐谱与练习 App（Open Piano Player）。图片 / PDF 识谱，五线谱、简谱、钢琴卷帘同步播放，20–300 BPM 变速、左右手分开、按小节循环，导出 MusicXML、MIDI、PDF。">
+<meta name="theme-color" content="#f3ecdc">
+<link rel="icon" href="img/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/style.css">
+<script>document.documentElement.className+=' js'; if(/[?&]nointro/.test(location.search)) document.documentElement.className+=' nointro';</script>
+</head>
+<body class="is-loading">
+
+<!-- ============ 开场：五线谱描线 · 音符落墨 · 翻页 ============ -->
+<div id="intro" aria-hidden="true">
+  <div class="intro-sheet">
+    <svg id="intro-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div class="intro-title"><span>琴</span><span>伴</span></div>
+    <div class="intro-sub">Qinban · Piano Practice Room</div>
+    <div class="intro-skip">点击跳过</div>
+  </div>
+</div>
+
+<div class="grain" aria-hidden="true"></div>
+<div class="progress" aria-hidden="true"><i></i></div>
+<div class="measure-counter" aria-hidden="true"><span class="mc-label">measure</span><b id="mc-num">1</b><i></i></div>
+
+<!-- ============ 顶栏 ============ -->
+<header class="top" id="top-bar">
+  <a class="brand" href="#prelude" aria-label="琴伴 · 回到开头">
+    <img src="img/logo.svg" alt="" width="34" height="34">
+    <span class="brand-cn">琴伴</span><span class="brand-en">Qinban</span>
+  </a>
+  <nav class="nav" aria-label="页面导航">
+    <a href="#recognize">识谱</a>
+    <a href="#find">找谱</a>
+    <a href="#practice">练习</a>
+    <a href="#keys">键盘</a>
+    <a href="#edit">改编</a>
+    <a href="#library">曲库</a>
+    <a href="#editions">版本</a>
+  </nav>
+  <button class="sound" id="sound" type="button" aria-pressed="false" title="开启后，键盘与示例播放会发出钢琴声（Salamander Grand Piano 采样）">
+    <span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+    <span class="sound-text">声音 <b>关</b></span>
+  </button>
+  <a class="btn btn-solid btn-sm" href="https://dns0129.github.io/Open_Piano_Player/app/" target="_blank" rel="noopener">在线打开</a>
+</header>
+
+<main>
+
+<!-- ============ m.1  序 · 首屏 ============ -->
+<section class="hero" id="prelude">
+  <div class="hero-main wrap">
+    <div class="hero-copy">
+      <p class="label"><span class="m">m. 1</span><i class="rule"></i><span>序 · Prelude</span></p>
+      <h1 class="hero-title" aria-label="琴伴"><span class="ch" style="--i:0">琴</span><span class="ch" style="--i:1">伴</span></h1>
+      <p class="hero-sub"><span class="cn">钢琴练习室</span><em>Piano Practice Room</em></p>
+      <p class="hero-lead">拍下一页谱，<br class="br-m">马上听它、练它、改它。</p>
+      <p class="hero-desc">钢琴乐谱与练习 App。图片 / PDF 识谱成数字谱；五线谱、简谱、钢琴卷帘同步播放；20–300&nbsp;BPM 变速，左右手分开，按小节循环。</p>
+      <div class="hero-cta">
+        <a class="btn btn-solid" href="https://dns0129.github.io/Open_Piano_Player/app/" target="_blank" rel="noopener">在线打开网页版 <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10h10m-4-4 4 4-4 4"/></svg></a>
+        <a class="btn btn-line" href="https://github.com/dns0129/Open_Piano_Player" target="_blank" rel="noopener">GitHub · Open Piano Player</a>
+      </div>
+      <p class="hero-note">网页版为基础版 · 图片 / PDF 识谱与联网找谱需本机服务</p>
+    </div>
+
+    <div class="hero-stage" aria-hidden="false">
+      <figure class="dev dev-win hero-shot">
+        <div class="dev-bar"><i></i><i></i><i></i><span>琴伴 · 练习室</span></div>
+        <img src="img/shot-practice-staff.webp" width="1600" height="1000" alt="琴伴练习室实机截图：贝多芬《致爱丽丝》五线谱播放跟随，底部为钢琴键盘">
+      </figure>
+      <figure class="dev dev-phone hero-phone">
+        <span class="notch"></span>
+        <img src="img/phone-practice2.webp" width="390" height="844" alt="琴伴手机端：C 大调前奏曲 BWV846 五线谱">
+      </figure>
+      <p class="hero-cap">实机截图 · 《致爱丽丝》WoO 59 / 手机端 BWV 846</p>
+    </div>
+  </div>
+
+  <!-- 谱带：音符沿五线谱行进，播放头划过，键盘随之点亮 -->
+  <div class="band" id="band" aria-hidden="true">
+    <div class="band-meta"><span>Allegretto</span><span>♩ = 72</span><span class="band-sound">示意 · 页面内排版</span></div>
+    <div class="band-view" id="band-view">
+      <div class="band-clef" id="band-clef"></div>
+      <div class="band-track" id="band-track"></div>
+      <div class="band-head" id="band-head"><i></i></div>
+    </div>
+    <div class="keys-strip" id="hero-keys"></div>
+  </div>
+</section>
+
+<!-- ============ 数字 ============ -->
+<section class="facts wrap" aria-label="关键事实">
+  <div class="fact" data-reveal>
+    <b><span class="num" data-count="20">20</span><span class="dash">–</span><span class="num" data-count="300">300</span><small>BPM</small></b>
+    <p>变速范围。播放中改速保留当前拍位，只改练习速度，不改写曲谱原速。</p>
+  </div>
+  <div class="fact" data-reveal>
+    <b><span class="num" data-count="3">3</span><small>种视图</small></b>
+    <p>五线谱、简谱、钢琴卷帘，共享音高、时间轴与左右手数据。</p>
+  </div>
+  <div class="fact" data-reveal>
+    <b><span class="num" data-count="7">7</span><small>个渠道</small></b>
+    <p>联网找谱并行查询 IMSLP、Mutopia、GitHub 公开 MIDI、DuckDuckGo、搜狗、Internet Archive、Bing。</p>
+  </div>
+  <div class="fact" data-reveal>
+    <b><span class="num" data-count="1313" data-sep="1">1,313</span><small>个音符</small></b>
+    <p>《野蜂飞舞》7 页全谱，直接读取原矢量 PDF 转写，第二套独立脚本复算全部音高。</p>
+  </div>
+</section>
+
+<div class="strip wrap" aria-hidden="true" data-strip>
+  <img src="img/ink-bach.webp" alt="" width="2400" height="439">
+  <i class="strip-head"></i>
+  <span class="strip-credit">巴赫《二部创意曲》· Mutopia 公有领域排版</span>
+</div>
+
+<!-- ============ m.5 识谱 ============ -->
+<section class="section" id="recognize">
+  <div class="wrap">
+    <header class="sec-head">
+      <p class="label" data-reveal><span class="m">m. 5</span><i class="rule"></i><span>识谱 · Recognition</span></p>
+      <h2 class="h2"><span class="line"><span>拍下一页谱，</span></span><span class="line"><span>读成一份能练的谱。</span></span></h2>
+      <p class="en" data-reveal>From a page of paper to a score you can practise.</p>
+    </header>
+
+    <div class="split">
+      <ol class="steps">
+        <li data-reveal>
+          <span class="no">01</span>
+          <div><h3>导入</h3>
+          <p>右上角「导入乐谱 → 上传本地乐谱」，图片或 PDF（最大 50&nbsp;MB、200 页）。已经是数字谱的，直接导入 MusicXML、MXL、MIDI 或琴伴 JSON。</p></div>
+        </li>
+        <li data-reveal>
+          <span class="no">02</span>
+          <div><h3>检查范围</h3>
+          <p>逐页检测谱行并显示全部页面缩略图；可补框漏检的行、调整裁切，并明确排除封面或空白页。</p></div>
+        </li>
+        <li data-reveal>
+          <span class="no">03</span>
+          <div><h3>逐行识别</h3>
+          <p>两条五线谱组成一个双手系统，两手共用小节边界与时间轴；缺手或裁切关系不明时，停止完整提交。</p></div>
+        </li>
+        <li data-reveal>
+          <span class="no">04</span>
+          <div><h3>逐行校对</h3>
+          <p>校对界面并排显示原谱与识别结果，可改音高、起拍、时值、左右手与声部。全部谱行人工确认后，才导入曲库播放、跟谱。</p></div>
+        </li>
+      </ol>
+      <div class="split-vis" data-reveal>
+        <figure class="dev dev-win tilt">
+          <div class="dev-bar"><i></i><i></i><i></i><span>选择识谱范围 · 野蜂飞舞 7 页 PDF</span></div>
+          <img src="img/shot-recognize-bee.webp" width="1280" height="720" alt="选择识谱范围对话框：按谱行选择，检测到双谱表" loading="lazy">
+        </figure>
+        <figure class="dev dev-win dev-sm inset">
+          <img src="img/shot-scan-rows.webp" width="1400" height="541" alt="逐页检查谱行的界面" loading="lazy">
+        </figure>
+      </div>
+    </div>
+
+    <aside class="note" data-reveal>
+      <b>说明</b>
+      <p>AI 识谱仍需对照原谱与试听校对，不保证任意扫描件自动零错。图片 / PDF 识谱需要本机服务，静态网页版暂不提供。</p>
+    </aside>
+  </div>
+</section>
+
+<!-- ============ m.13 找谱 ============ -->
+<section class="section section-alt" id="find">
+  <div class="wrap">
+    <header class="sec-head">
+      <p class="label" data-reveal><span class="m">m. 13</span><i class="rule"></i><span>找谱 · Find the Score</span></p>
+      <h2 class="h2"><span class="line"><span>输入歌名，</span></span><span class="line"><span>找到它的乐谱。</span></span></h2>
+      <p class="en" data-reveal>Seven public sources, searched side by side.</p>
+    </header>
+
+    <div class="split split-rev">
+      <div class="split-vis" data-reveal>
+        <div class="search-demo" id="search-demo">
+          <div class="sd-box"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="5.5"/><path d="m13.5 13.5 4 4"/></svg><span class="sd-text" id="sd-text">野蜂飞舞</span><i class="sd-caret"></i></div>
+          <div class="sd-hit" id="sd-hit">
+            <span class="sd-k">作品名</span>
+            <b>Flight of the Bumblebee</b>
+            <em>Rimsky-Korsakov</em>
+          </div>
+          <p class="sd-alias">Hummelflug · Le vol du bourdon · Полёт шмеля</p>
+          <p class="sd-cap">示意：输入中文曲名，同时检索原名与别名。别名只用于查真实谱源，不生成音乐。</p>
+        </div>
+        <figure class="dev dev-win">
+          <div class="dev-bar"><i></i><i></i><i></i><span>AI 找谱</span></div>
+          <img src="img/shot-find.webp" width="1280" height="720" alt="AI 找谱页面：搜索「卡农」，各渠道返回结果并可直接导入练习" loading="lazy">
+        </figure>
+      </div>
+      <div class="split-copy">
+        <ul class="sources" data-reveal>
+          <li><span>I</span><b>IMSLP</b><em>国外钢琴谱</em></li>
+          <li><span>II</span><b>Mutopia</b><em>钢琴目录</em></li>
+          <li><span>III</span><b>GitHub</b><em>公开 MIDI 目录</em></li>
+          <li><span>IV</span><b>DuckDuckGo</b><em>HTML / Lite</em></li>
+          <li><span>V</span><b>搜狗</b><em>现代歌曲谱源</em></li>
+          <li><span>VI</span><b>Internet Archive</b><em>乐谱档案</em></li>
+          <li><span>VII</span><b>Bing</b><em>HTML</em></li>
+        </ul>
+        <p class="body" data-reveal>「可直接导入的乐谱」排在前面；已解析验证的 MIDI 会显示音符数。点「直接导入练习」，就能打开五线谱、简谱并播放。版本浏览器可按格式、来源渠道筛选，并保留原站链接。</p>
+        <p class="body" data-reveal>支持常见古典作品的中外文曲名对照；各渠道分别显示有结果、受限、无匹配或连接错误，某个渠道失败不会阻断其他渠道。</p>
+        <aside class="note" data-reveal>
+          <b>边界</b>
+          <p>不保证每首歌都有免费、完整、可自动导入的谱面。需要验证码、登录或付费的来源会显示原因，琴伴不会绕过；也不会作曲、凭记忆写谱或补缺页。</p>
+        </aside>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ m.21 练习 ============ -->
+<section class="section" id="practice">
+  <div class="wrap">
+    <header class="sec-head">
+      <p class="label" data-reveal><span class="m">m. 21</span><i class="rule"></i><span>练习 · Practice</span></p>
+      <h2 class="h2"><span class="line"><span>一份谱，</span></span><span class="line"><span>三种读法。</span></span></h2>
+      <p class="en" data-reveal>Staff · Jianpu · Piano roll — one timeline.</p>
+      <p class="lead" data-reveal>五线谱、简谱与钢琴卷帘共享同一条音符时间线，播放位置、高亮与点击定位始终落在同一个音上。下面是页面内排版的小示范，可以真的播放。</p>
+    </header>
+
+    <div class="demo" id="demo" data-reveal>
+      <div class="demo-top">
+        <div class="demo-title"><b>欢乐颂</b><span>主题前 4 小节 · 1 = C · 4/4 · 示意演示，非 App 截图</span></div>
+        <div class="seg" role="tablist" aria-label="视图">
+          <button type="button" data-view="staff" class="on" role="tab">五线谱</button>
+          <button type="button" data-view="jianpu" role="tab">简谱</button>
+          <button type="button" data-view="roll" role="tab">钢琴卷帘</button>
+        </div>
+      </div>
+      <div class="demo-scroll" id="demo-scroll"><div class="demo-canvas" id="demo-canvas"></div></div>
+      <div class="demo-ctl">
+        <button class="play" id="demo-play" type="button" aria-label="播放 / 暂停"><svg class="i-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><svg class="i-pause" viewBox="0 0 24 24"><path d="M7 5h4v14H7zm6 0h4v14h-4z"/></svg></button>
+        <label class="bpm"><span>速度</span><input id="demo-bpm" type="range" min="20" max="300" value="84" aria-label="速度 BPM"><output id="demo-bpm-out">84</output><small>BPM</small></label>
+        <div class="tog">
+          <button type="button" class="on" data-hand="r">右手</button>
+          <button type="button" class="on lh" data-hand="l">左手</button>
+          <button type="button" data-loop>循环</button>
+        </div>
+        <span class="demo-hint">点谱面任意位置，从那里开始播放</span>
+      </div>
+    </div>
+
+    <ul class="feat-index">
+      <li data-reveal><span>i</span><b>20–300 BPM 变速</b><p>拖动或直接输入整数，回车生效。</p></li>
+      <li data-reveal><span>ii</span><b>左右手分开</b><p>任一只手单独静音，分手练习。</p></li>
+      <li data-reveal><span>iii</span><b>按小节循环</b><p>选定起止小节，反复播放这一段。</p></li>
+      <li data-reveal><span>iv</span><b>节拍器 · 半音移调</b><p>按半音升降，播放与五线谱位置同步改变。</p></li>
+      <li data-reveal><span>v</span><b>指法数字</b><p>1 拇指 … 5 小指，可开关，打印沿用。</p></li>
+      <li data-reveal><span>vi</span><b>专注模式</b><p>只保留乐谱与播放键；iPad 竖屏默认专注。</p></li>
+    </ul>
+
+    <!-- 翻页：真实截图 -->
+    <div class="folio-wrap" data-reveal>
+      <div class="folio-copy">
+        <p class="label"><span class="m">fol.</span><i class="rule"></i><span>实机截图 · Real screens</span></p>
+        <h3 class="h3" id="folio-title">五线谱，连续分行</h3>
+        <p class="body" id="folio-text">一行内多个小节首尾相接，每行起点才出现谱号、调号；点哪个音就从哪里播，播放时谱面自动跟随。</p>
+        <div class="folio-nav">
+          <button type="button" id="folio-prev" aria-label="上一页">‹</button>
+          <span class="dots" id="folio-dots"></span>
+          <button type="button" id="folio-next" aria-label="下一页">›</button>
+          <span class="folio-count"><b id="folio-i">1</b> / 4</span>
+        </div>
+      </div>
+      <div class="folio" id="folio" tabindex="0" aria-label="实机截图，点击翻页">
+        <div class="leaf" data-title="五线谱，连续分行" data-text="一行内多个小节首尾相接，每行起点才出现谱号、调号；点哪个音就从哪里播，播放时谱面自动跟随。">
+          <div class="face front"><figure class="dev dev-win"><div class="dev-bar"><i></i><i></i><i></i><span>五线谱 · 致爱丽丝 WoO 59</span></div><img src="img/shot-practice-staff.webp" width="1600" height="1000" alt="五线谱练习室" loading="lazy"></figure></div>
+          <div class="face back"></div>
+        </div>
+        <div class="leaf" data-title="简谱，同一条时间线" data-text="简谱同样连续分行，每行共用右手 / 左手标签，以小节线分隔；切换视图不打断播放。">
+          <div class="face front"><figure class="dev dev-win"><div class="dev-bar"><i></i><i></i><i></i><span>简谱 · 致爱丽丝 WoO 59</span></div><img src="img/shot-practice-jianpu.webp" width="1400" height="684" alt="简谱视图" loading="lazy"></figure></div>
+          <div class="face back"></div>
+        </div>
+        <div class="leaf" data-title="iPad：横屏与专注" data-text="顶栏、侧栏和钢琴键盘均可独立收起；「专注」只保留乐谱、播放按钮和右上角退出入口，横竖屏分别记住布局。">
+          <div class="face front"><figure class="dev dev-pad"><img src="img/ipad-landscape.webp" width="1194" height="834" alt="iPad 横屏练习室" loading="lazy"></figure></div>
+          <div class="face back"></div>
+        </div>
+        <div class="leaf" data-title="iPhone：底部导航与曲库" data-text="iPhone 使用底部导航、列表曲库与「继续练习」入口；练习设置以抽屉展开，键盘按需显示并可横向滑动。">
+          <div class="face front phones">
+            <figure class="dev dev-phone"><span class="notch"></span><img src="img/phone-library.webp" width="390" height="844" alt="手机端曲库" loading="lazy"></figure>
+            <figure class="dev dev-phone"><span class="notch"></span><img src="img/phone-practice2.webp" width="390" height="844" alt="手机端练习" loading="lazy"></figure>
+            <figure class="dev dev-phone"><span class="notch"></span><img src="img/phone-jianpu.webp" width="390" height="844" alt="手机端简谱" loading="lazy"></figure>
+          </div>
+          <div class="face back"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ m.29 键盘 ============ -->
+<section class="section section-alt" id="keys">
+  <div class="wrap">
+    <header class="sec-head">
+      <p class="label" data-reveal><span class="m">m. 29</span><i class="rule"></i><span>键盘 · Keys</span></p>
+      <h2 class="h2"><span class="line"><span>指尖落下，</span></span><span class="line"><span>音符落墨。</span></span></h2>
+      <p class="en" data-reveal>Touch a key and it is written on the staff.</p>
+      <p class="lead" data-reveal>练习室底部是 C2–C7 的钢琴键盘，点击试听，播放时当前音会在键盘上亮起。琴伴默认使用「醇厚三角钢琴」音色，基于 Salamander Grand Piano 的真实录音采样。</p>
+    </header>
+
+    <div class="keys-stage" data-reveal>
+      <div class="keys-staff" id="keys-staff"></div>
+      <div class="keys-read"><span id="kr-name">C4</span><span id="kr-sub">中央 C · 简谱 1 · 261.6 Hz</span></div>
+      <div class="kb-scroll" id="kb-scroll"><div class="kb" id="kb"></div></div>
+      <p class="keys-hint" id="keys-hint">鼠标滑过琴键，音符会写在谱上；点击琴键发声（同时开启声音）。</p>
+    </div>
+
+    <ul class="timbres" data-reveal>
+      <li class="on"><b>醇厚三角钢琴</b><em>默认</em></li>
+      <li><b>标准 · 柔和 · 明亮钢琴</b></li>
+      <li><b>A3 参考三角钢琴</b></li>
+      <li><b>KAWAI GX-2 / SK-2</b></li>
+      <li><b>YAMAHA GC1</b></li>
+      <li><b>Steinway Model 40</b></li>
+      <li><b>温暖小提琴</b></li>
+      <li><b>柔和弦乐合奏</b></li>
+      <li><b>轻量合成</b></li>
+    </ul>
+    <p class="fine" data-reveal>钢琴使用 Salamander Grand Piano 的 30 个真实 MP3 录音采样（A0–C8，约 2.01&nbsp;MB），最近根音移调覆盖 88 键；小提琴、弦乐来自 VSCO 2 Community Edition（CC0）。各型号预设是基于同一采样的方向调音，不是对应型号原琴采样，也不承诺精确复刻。</p>
+  </div>
+</section>
+
+<!-- ============ m.37 改编 · 导出 ============ -->
+<section class="section" id="edit">
+  <div class="wrap">
+    <header class="sec-head">
+      <p class="label" data-reveal><span class="m">m. 37</span><i class="rule"></i><span>改编与导出 · Edit &amp; Export</span></p>
+      <h2 class="h2"><span class="line"><span>改一个音，</span></span><span class="line"><span>也改一首曲。</span></span></h2>
+      <p class="en" data-reveal>Rewrite it, print it, take it with you.</p>
+    </header>
+
+    <div class="cards">
+      <article class="card" data-reveal>
+        <span class="no">I</span>
+        <h3>编辑与改编</h3>
+        <p>修改单音的音高、时值、落点与演奏手，或把所选音符替换为同一时刻、同一只手的和弦。所有改动可撤销、重做，首次保存另存为修改版，原乐谱保留。</p>
+        <p class="chips"><span>大三</span><span>小三</span><span>属七</span><span>大七</span><span>小七</span><span>减三</span><span>挂四</span></p>
+      </article>
+      <article class="card" data-reveal>
+        <span class="no">II</span>
+        <h3>演奏效果</h3>
+        <p>pp–ff 力度与 0–100% 自定义力度；重音、强重音，断奏、保持音，颤音，上下波音，上下行琶音。力度与重音改变实际发声力度，不额外调用识谱模型。</p>
+        <p class="chips"><span>pp–ff</span><span>重音</span><span>断奏</span><span>颤音</span><span>波音</span><span>琶音</span></p>
+      </article>
+      <article class="card" data-reveal>
+        <span class="no">III</span>
+        <h3>指法与调式</h3>
+        <p>音符旁可显示小指法数字：1 拇指、2 食指、3 中指、4 无名指、5 小指；已有指法优先，其余为规则建议。整首可按同主音大调 / 自然小调转换，视图转换与规则改编均不调用 AI。</p>
+      </article>
+      <article class="card" data-reveal>
+        <span class="no">IV</span>
+        <h3>打印乐谱与 PDF</h3>
+        <p>A4 纵向分页，PDF 在浏览器本地生成，不依赖服务器。标题与署名可自定义，字体可选宋体 / 黑体 / 楷体；五线谱符号可选 Bravura、Gonville、Petaluma；谱面可选经典黑白、现代简约、暖色手稿。</p>
+      </article>
+    </div>
+
+    <div class="export" data-reveal>
+      <div class="export-copy">
+        <p class="label"><span class="m">♯</span><i class="rule"></i><span>导出 · Export</span></p>
+        <h3 class="h3">带走你的练习谱</h3>
+        <p class="body">导出 MusicXML、双轨 MIDI、琴伴 JSON，或打印为 PDF。MusicXML 与 JSON 可保留保存的指法和逐音演奏设置；MIDI 不携带指法。</p>
+        <ul class="formats"><li>MusicXML</li><li>MIDI · 双轨</li><li>JSON</li><li>PDF · A4</li></ul>
+      </div>
+      <figure class="dev dev-win dev-export">
+        <img src="img/shot-export.webp" width="900" height="841" alt="导出窗口：MusicXML、MIDI、琴伴 JSON、打印 / 保存 PDF" loading="lazy">
+      </figure>
+    </div>
+  </div>
+</section>
+
+<div class="strip wrap" aria-hidden="true" data-strip>
+  <img src="img/ink-chopin.webp" alt="" width="2400" height="482">
+  <i class="strip-head"></i>
+  <span class="strip-credit">肖邦 Op.28 No.7 · Mutopia 公有领域排版</span>
+</div>
+
+<!-- ============ m.45 曲库 ============ -->
+<section class="section" id="library">
+  <div class="wrap">
+    <header class="sec-head">
+      <p class="label" data-reveal><span class="m">m. 45</span><i class="rule"></i><span>曲库 · Library</span></p>
+      <h2 class="h2"><span class="line"><span>你的谱，</span></span><span class="line"><span>留在你自己手里。</span></span></h2>
+      <p class="en" data-reveal>A private library, with backups and revision history.</p>
+      <p class="lead" data-reveal>「我的曲库」统一本机磁盘与网页 IndexedDB 两种存储，支持完整备份、恢复和修订历史；备份包含已保存的原文件与原谱图片。首次打开默认进入内置的「C 大调练习示例」，更多曲目从云端曲库搜索下载。</p>
+    </header>
+
+    <div class="program">
+      <article class="piece" data-reveal>
+        <div class="piece-fig"><img src="img/bee-page.webp" width="760" height="1076" alt="《野蜂飞舞》钢琴独奏版原谱首页缩略图" loading="lazy"><span>Kevin W. K. Yeung 编配 · CC BY-SA 3.0</span></div>
+        <div class="piece-body">
+          <span class="no">I</span>
+          <h3>野蜂飞舞 <em>Flight of the Bumblebee</em></h3>
+          <p>Yeung 钢琴独奏版，7 页全谱。转写直接读取原 PDF 的矢量音头、谱线、符杆与记号，不使用其他版本 MIDI 补曲；第二套独立脚本复算全部音高，核对 488 个临时升降号、7 次换谱号、4 处 8va。</p>
+          <dl class="spec"><div><dt>页</dt><dd>7</dd></div><div><dt>行</dt><dd>27</dd></div><div><dt>小节</dt><dd>105</dd></div><div><dt>音符</dt><dd>1,313</dd></div><div><dt>原速</dt><dd>185<small>BPM</small></dd></div></dl>
+        </div>
+      </article>
+
+      <article class="piece piece-b" data-reveal>
+        <div class="piece-body">
+          <span class="no">II</span>
+          <h3>云端曲库 <em>score-repo</em></h3>
+          <p>两批共 20 首 Mutopia 初级至初级进阶曲目，另有 20 首进阶曲目：巴赫二部创意曲 8 首、贝多芬作品或奏鸣曲乐章 8 首、肖邦前奏曲 4 首，附原始 PDF / MIDI / LilyPond 与逐曲授权。搜索关键词即可查看；吉他分区另有 8 首入门曲目。</p>
+          <dl class="spec"><div><dt>初级</dt><dd>20</dd></div><div><dt>进阶</dt><dd>20</dd></div><div><dt>吉他入门</dt><dd>8</dd></div></dl>
+        </div>
+      </article>
+
+      <article class="piece piece-b" data-reveal>
+        <div class="piece-body">
+          <span class="no">III</span>
+          <h3>真实验证 <em>Verified</em></h3>
+          <p>巴赫 BWV 846 两页 PDF：全部 12 行、35 小节、617 颗书写音头，合并为 549 个播放事件；逐行校对后的结果与发布者同版本 MIDI 的音高、起点、时值逐个一致。此证据说明流程可用，不代表任意 PDF 都能自动零错。</p>
+          <dl class="spec"><div><dt>行</dt><dd>12</dd></div><div><dt>小节</dt><dd>35</dd></div><div><dt>播放事件</dt><dd>549</dd></div><div><dt>拍</dt><dd>140</dd></div></dl>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ m.53 版本 ============ -->
+<section class="section section-alt" id="editions">
+  <div class="wrap">
+    <header class="sec-head">
+      <p class="label" data-reveal><span class="m">m. 53</span><i class="rule"></i><span>版本 · Editions</span></p>
+      <h2 class="h2"><span class="line"><span>四个版本，</span></span><span class="line"><span>各自的状态。</span></span></h2>
+      <p class="en" data-reveal>What is live today, and what is still being prepared.</p>
+    </header>
+
+    <div class="ed-grid">
+      <ul class="editions">
+        <li data-reveal>
+          <div class="ed-head"><h3>网页版</h3><span class="tag tag-live">已可使用</span></div>
+          <p>GitHub Pages 纯静态基础版：内置曲库、五线谱 / 简谱、播放、编辑、变速、分手、循环、移调、导出，以及 MusicXML / MXL / MIDI / JSON 导入。图片 / PDF 识谱与联网找谱需本机服务，页面会提示。</p>
+          <a class="line-link" href="https://dns0129.github.io/Open_Piano_Player/app/" target="_blank" rel="noopener">dns0129.github.io/Open_Piano_Player/app ↗</a>
+        </li>
+        <li data-reveal>
+          <div class="ed-head"><h3>本地完整版</h3><span class="tag tag-local">本机运行</span></div>
+          <p>保留原有图片 / PDF 识谱、识谱任务与设置、找谱、导入、编辑、播放和本机曲库。macOS 双击「启动琴伴.command」，在菜单中选 1；需要 Node.js ≥ 22.19。服务仅监听 127.0.0.1，未发布公网服务。</p>
+        </li>
+        <li data-reveal>
+          <div class="ed-head"><h3>商业账号版</h3><span class="tag tag-dev">本机预览</span></div>
+          <p>登录、私有曲库、原谱上传、后台识谱、每人每月任务数、全站成本上限、反馈与运营。正式 PostgreSQL、SMTP、HTTPS 和付费模型接入尚未配置；模型凭据未配置时识谱默认关闭，账号、上传和练习仍可使用。</p>
+        </li>
+        <li data-reveal>
+          <div class="ed-head"><h3>iOS App</h3><span class="tag tag-wait">尚未上架</span></div>
+          <p>SwiftUI / WKWebView 工程与 StoreKit 2 购买、恢复接口已就绪，服务端验单、续订与退款通知、账号删除流程已加入。开发者账号、正式商品、签名和线上服务配置后才能真实购买与提交审核；目前没有手机安装包。</p>
+        </li>
+      </ul>
+      <div class="ed-vis" data-reveal>
+        <figure class="dev dev-pad"><img src="img/ipad-portrait.webp" width="834" height="1194" alt="iPad 竖屏专注模式：只保留乐谱与播放键" loading="lazy"></figure>
+        <figure class="dev dev-phone"><span class="notch"></span><img src="img/phone-online.webp" width="390" height="844" alt="手机端 C 大调练习示例" loading="lazy"></figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ m.61 边界 ============ -->
+<section class="section" id="limits">
+  <div class="wrap">
+    <header class="sec-head">
+      <p class="label" data-reveal><span class="m">m. 61</span><i class="rule"></i><span>边界 · Honest notes</span></p>
+      <h2 class="h2"><span class="line"><span>先把话说清楚。</span></span></h2>
+      <p class="en" data-reveal>What Qinban does not claim.</p>
+    </header>
+    <ol class="limits">
+      <li data-reveal><span>1</span><p><b>识谱要校对。</b>AI 识谱需对照原谱与试听逐行确认；结构检查并不保证每个音高正确，未校对草稿的标记会一直保留。</p></li>
+      <li data-reveal><span>2</span><p><b>不作曲，不补页。</b>琴伴不会凭记忆编写原曲，也不会用其他版本填补缺失的页；部分来源只提供预览时，会标明预览，不冒充整曲。</p></li>
+      <li data-reveal><span>3</span><p><b>音频转谱暂未开放。</b>现有入口只检查文件能力，不会上传文件，也不会生成音符或曲谱。</p></li>
+      <li data-reveal><span>4</span><p><b>暂无评弹。</b>尚未接入麦克风评弹或 MIDI 键盘自动评分。</p></li>
+      <li data-reveal><span>5</span><p><b>吉他分区是第一版。</b>暂不开放 PDF / 图片识谱及音频转谱；品位由实际音高自动建议，不代表原谱指法。</p></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============ Fine ============ -->
+<section class="finale" id="fine">
+  <div class="finale-staff" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><b class="bar-thin"></b><b class="bar-thick"></b></div>
+  <div class="wrap finale-in">
+    <p class="label light" data-reveal><span class="m">m. 64</span><i class="rule"></i><span>终 · Fine</span></p>
+    <h2 class="fine-title" data-reveal>拍下一页谱，<br>开始练。</h2>
+    <p class="en light" data-reveal>Open the web edition now — or read the code.</p>
+    <div class="hero-cta" data-reveal>
+      <a class="btn btn-ivory" href="https://dns0129.github.io/Open_Piano_Player/app/" target="_blank" rel="noopener">在线打开网页版 <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10h10m-4-4 4 4-4 4"/></svg></a>
+      <a class="btn btn-line-light" href="https://github.com/dns0129/Open_Piano_Player" target="_blank" rel="noopener">GitHub 仓库</a>
+    </div>
+    <div class="todo" data-reveal>
+      <div><span>下载</span><b class="ph">安装包 / App Store 链接 · 待发布后补充</b></div>
+      <div><span>联系</span><b class="ph">联系方式（邮箱 / 微信 / WhatsApp）· 待补充</b></div>
+    </div>
+  </div>
+  <footer class="foot wrap">
+    <div class="foot-brand"><img src="img/logo.svg" alt="" width="28" height="28"><span>琴伴 · 钢琴练习室</span><em>Open Piano Player</em></div>
+    <p class="credits">钢琴采样：Salamander Grand Piano，Alexander Holm，<a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener">CC BY 3.0</a>（经 Tonejs/audio）· 乐谱字体 Bravura，SIL OFL 1.1 · 谱面装饰：Mutopia Project 公有领域排版 · 《野蜂飞舞》钢琴编配 Kevin W. K. Yeung，CC BY-SA 3.0 · 本页文字字体 Noto Serif SC、Cormorant Garamond、Jost（SIL OFL）。截图均来自琴伴实机。第三方依赖与网上曲谱保留各自来源和许可。</p>
+  </footer>
+</section>
+
+</main>
+
+<script src="audio/samples.js"></script>
+<script src="js/engrave.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

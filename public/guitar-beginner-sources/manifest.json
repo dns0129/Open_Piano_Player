@@ -9,7 +9,7 @@
       "notes": 16,
       "durationBeats": 16,
       "tempo": 72,
-      "sha256": "9c7af589754c75e6926ab6f07a8103e30c90c07ed2fb48feb1451ccb82d97fcc"
+      "sha256": "af176cf873b65d3b833b64fe7e13a8b615baae4bcd99200b097c5dc6b13e8edc"
     },
     {
       "id": "guitar-beginner-first-string",
@@ -18,7 +18,7 @@
       "notes": 13,
       "durationBeats": 16,
       "tempo": 72,
-      "sha256": "db099b55ef92fdec593f01f5181594e4512180548cbe6c1b9d641b06fc74bb31"
+      "sha256": "7a5c1e2922ab074448e094063b8ce8065f247a2a043740b04d621b57753e695e"
     },
     {
       "id": "guitar-beginner-two-strings",
@@ -27,7 +27,7 @@
       "notes": 15,
       "durationBeats": 16,
       "tempo": 76,
-      "sha256": "1ddb2838ba3bfb025cc467c4b22bc1a7e094492ebd0be90364559ac8135fb5b4"
+      "sha256": "0d593a3f5296db595ef4f0bb02ac28fc49e6c3711d6f86f03c54984be228a552"
     },
     {
       "id": "guitar-beginner-mary-lamb",
@@ -72,7 +72,7 @@
       "notes": 32,
       "durationBeats": 16,
       "tempo": 72,
-      "sha256": "c25f6fcda816f797ba270c783835a635f74290c5ad07dafd78279777bb6742ed"
+      "sha256": "894c8afa8af752c267e922e7c3ecc0ef1d63173ad6bd59026acbe4da2ba6f02e"
     }
   ]
 }
