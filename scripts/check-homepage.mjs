@@ -1342,6 +1342,10 @@ try {
     .evaluateAll((elements) => [
       ...new Set(elements.map((a) => a.getAttribute("href"))),
     ]);
+  // The practice room moves to /app/ in the same Pages publish as this homepage.
+  // Until that publish is live, the root is still the previous app and /app/ 404s.
+  const practiceApp = "https://dns0129.github.io/Open_Piano_Player/app/";
+  let practiceAppUnpublished;
   for (const href of hrefs) {
     if (href.startsWith("#")) {
       assert((await linkPage.locator(href).count()) > 0);
@@ -1350,6 +1354,26 @@ try {
     }
     const url = new URL(href, base).href;
     const response = await linkContext.request.get(url, { timeout: 20000 });
+    if (!response.ok() && url === practiceApp && response.status() === 404) {
+      if (practiceAppUnpublished === undefined) {
+        const root = await linkContext.request.get(
+          "https://dns0129.github.io/Open_Piano_Player/",
+          { timeout: 20000 },
+        );
+        const html = root.ok() ? await root.text() : "";
+        practiceAppUnpublished =
+          root.ok() && !html.includes('href="css/style.css"');
+      }
+      if (practiceAppUnpublished) {
+        report.links.push({
+          href,
+          status: response.status(),
+          final: response.url(),
+          note: "practice app path is published with the next Pages deploy",
+        });
+        continue;
+      }
+    }
     assert(response.ok(), `link ${href} returned ${response.status()}`);
     report.links.push({
       href,
