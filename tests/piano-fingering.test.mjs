@@ -323,6 +323,4 @@ test("the practice room persists its fingering toggle across notation modes", as
   newToggle.checked = true;
   newToggle.dispatchEvent(new w.Event("change"));
   assert.ok(doc.querySelectorAll(".notation-fingering").length > 0);
-  // Let startup IndexedDB jobs finish before the test tears down the window.
-  await new Promise((resolve) => setTimeout(resolve, 100));
 });

@@ -4200,6 +4200,32 @@
               "null"
             ],
             "format": "date-time"
+          },
+          "music": {
+            "type": "object",
+            "properties": {
+              "composer": {
+                "type": "string"
+              },
+              "tempo": {
+                "type": "number"
+              },
+              "mode": {
+                "type": "string"
+              },
+              "timeSignature": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                },
+                "minItems": 2,
+                "maxItems": 2
+              },
+              "keySignature": {
+                "type": "integer"
+              }
+            },
+            "additionalProperties": false
           }
         },
         "required": [

@@ -19,10 +19,11 @@ export function createAccountClient({
     const changed =
       session?.user.id !== value?.user.id ||
       session?.user.state !== value?.user.state;
+    const previous = session;
     session = value;
     if (changed) {
       epoch++;
-      onIdentityChange(value);
+      onIdentityChange(value, previous);
       for (const fn of listeners) fn(value);
     }
   }
@@ -312,42 +313,39 @@ export function createHostedLibrary(account) {
       cursor = page.nextCursor;
     } while (cursor);
     summaries = all;
-    // The existing player requires score projections; load documents, never image bytes here.
-    const { toPracticeScore } = await import("../../lib/score-document.ts");
-    const records = [];
-    for (const s of all) {
-      const e = await account.json("/library/entries/" + s.entryId, {
-        expectedEpoch: generation,
-        signal: AbortSignal.timeout(30_000),
-      });
-      records.push({
-        id: s.documentId,
-        entryId: s.entryId,
-        document: e.document,
-        score: toPracticeScore(e.document),
-        revision: s.revision,
-        createdAt: s.updatedAt,
-        updatedAt: s.updatedAt,
-        history: [],
-        assets: [],
-        sourceNotation: e.sourceNotation,
-        reviewStatus: { status: s.reviewState, humanConfirmed: false },
-      });
-    }
-    account.checkEpoch(generation);
-    return { records, warnings: [] };
+    return {
+      records: all.map((item) => ({
+        id: item.documentId,
+        entryId: item.entryId,
+        revision: item.revision,
+        summary: {
+          ...item.music,
+          id: item.documentId,
+          title: item.title,
+          instrument: item.instrument,
+        },
+        updatedAt: item.updatedAt,
+      })),
+      warnings: [],
+    };
   }
-  async function get(docId, generation = account.epoch) {
+  async function readEntry(docId, generation, signal) {
     account.checkEpoch(generation);
     const found = summaries.find((s) => s.documentId === docId);
     if (!found)
       throw Object.assign(new Error("账号曲库中没有这份乐谱。"), {
         code: "LIBRARY_NOT_FOUND",
       });
-    const e = await account.json("/library/entries/" + found.entryId, {
-        expectedEpoch: generation,
-      }),
-      assets = [];
+    return account.json("/library/entries/" + found.entryId, {
+      signal,
+      expectedEpoch: generation,
+    });
+  }
+  async function get(docId, generation = account.epoch) {
+    return hydrate(await readEntry(docId, generation), generation);
+  }
+  async function hydrate(e, generation, practiceOnly = false) {
+    const assets = [];
     let originalFile;
     const base64 = async (r) => {
       const bytes = new Uint8Array(await r.arrayBuffer());
@@ -357,6 +355,7 @@ export function createHostedLibrary(account) {
       return btoa(text);
     };
     for (const a of e.assets) {
+      if (practiceOnly && a.role === "original") continue;
       const r = await account.request("/resources/" + a.resourceId, {
           expectedEpoch: generation,
         }),
@@ -405,7 +404,7 @@ export function createHostedLibrary(account) {
         warnings: e.warnings,
         ...(originalFile ? { originalFile } : {}),
       }),
-      entryId: found.entryId,
+      entryId: e.summary.entryId,
     };
   }
   async function ensureFile(
@@ -432,6 +431,22 @@ export function createHostedLibrary(account) {
     metadata,
     list,
     get,
+    async openPractice(id) {
+      const generation = account.epoch;
+      const entry = await readEntry(
+        id,
+        generation,
+        AbortSignal.timeout(30_000),
+      );
+      const { toPracticeScore } = await import("../../lib/score-document.ts");
+      account.checkEpoch(generation);
+      return {
+        score: toPracticeScore(entry.document),
+        warnings: entry.warnings || [],
+        readRecord: async () =>
+          entry.sourceNotation ? hydrate(entry, generation, true) : null,
+      };
+    },
     async save(record, { expectedRevision = 0 } = {}) {
       if (!account.session) throw noLogin();
       const generation = account.epoch;

@@ -19,7 +19,7 @@ const bundled = build({
 
 async function boot(
   t,
-  { recovery = false, native = false, failCleanup = false } = {},
+  { recovery = false, native = false, failCleanup = false, libraryPage } = {},
 ) {
   const errors = [],
     virtualConsole = new VirtualConsole();
@@ -155,7 +155,12 @@ async function boot(
     }
     if (String(path).startsWith("/api/v1/library/entries"))
       return session?.user.state === "active"
-        ? reply(200, { records: [] })
+        ? reply(
+            200,
+            libraryPage?.(new URL(path, w.location.href).searchParams) || {
+              records: [],
+            },
+          )
         : reply(401, { code: "SESSION_REQUIRED", message: "请先恢复账号。" });
     if (path === "/api/v1/sessions") return reply(200, { sessions: [] });
     if (path === "/api/v1/source-groups") return reply(200, { groups: [] });
@@ -507,4 +512,34 @@ test("native pending purchases resume after BFCache return and a fresh account s
   assert.equal(calls.pending, 3);
   assert.equal(submitted().length, 3);
   assert.deepEqual(errors, []);
+});
+
+test("library management loads the next page and resets its cursor for trash", async (t) => {
+  const { doc, requests } = await boot(t, {
+    libraryPage(params) {
+      const trash = params.get("deleted") === "true";
+      const second = !!params.get("cursor");
+      return {
+        records: Array.from({ length: second ? 1 : 100 }, (_, i) => ({
+          entryId: (trash ? "trash-" : "song-") + (second ? 101 : i + 1),
+          title: "曲目",
+          revision: 1,
+          updatedAt: "2026-01-01",
+        })),
+        nextCursor: second ? null : trash ? "trash-page" : "songs-page",
+      };
+    },
+  });
+  doc.querySelector("[data-more-records]").click();
+  await until(() => doc.querySelector('[data-history="song-101"]'));
+  assert.equal(doc.querySelectorAll("[data-history]").length, 101);
+  doc.querySelector("[data-trash]").click();
+  await until(() => doc.querySelector('[data-restore="trash-1"]'));
+  assert.equal(doc.querySelector("[data-history]"), null);
+  doc.querySelector("[data-more-records]").click();
+  await until(() => doc.querySelector('[data-restore="trash-101"]'));
+  assert.equal(doc.querySelector("[data-more-records]"), null);
+  assert.ok(
+    requests.some((r) => r.path.endsWith("deleted=true&cursor=trash-page")),
+  );
 });

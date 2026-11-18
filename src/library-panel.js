@@ -13,6 +13,10 @@ export function createLibraryPanel({
   capabilities,
   render,
   setScore,
+  openLibraryScore = (id) => {
+    const score = client.scores.find((item) => item.id === id);
+    if (score) setScore(score);
+  },
   starterScore,
   keyName,
   toast,
@@ -33,24 +37,22 @@ export function createLibraryPanel({
     openOnlineSearch,
   });
   const availableScores = () =>
-    client.scores.filter(
+    (HOSTED ? client.catalogue : client.scores).filter(
       (score) => scoreSection(score) === (state.section || "piano"),
     );
-  async function remember(score, sourceRecord, originalFile, options = {}) {
-    const saved = await client.save(score, {
+  function remember(score, sourceRecord, originalFile, options = {}) {
+    return client.save(score, {
       sourceRecord,
       originalFile,
       ...options,
     });
-    state.shared = client.scores;
-    return saved;
   }
-  async function loadAvailablePracticeSource(score) {
+  async function loadAvailablePracticeSource(score, current) {
     // Built-in exercises have no saved original, so skip the guaranteed 404.
     if ([starterScore.id, guitarStarterScore.id].includes(score.id))
       return null;
     try {
-      return await client.readSource(score);
+      return await client.readSource(score, current);
     } catch (e) {
       if (e.code === "LIBRARY_NOT_FOUND") return null;
       throw e;
@@ -82,7 +84,6 @@ export function createLibraryPanel({
         const pending = client.initialize();
         if (pending === initialization) await client.refresh();
         else await (initialization = pending);
-        state.shared = client.scores;
         // The header count was rendered before the library finished loading.
         const count = $('.main-nav [data-nav="library"] small');
         if (count) count.textContent = availableScores().length;
@@ -213,7 +214,7 @@ export function createLibraryPanel({
     return scores
       .map(
         (s, i) =>
-          `<article class="score-card" data-card="${esc(s.id)}"><div class="card-art tone-${i % 4}">${noteSketch(s) || `<span class="card-note">${["𝄞", "♫", "♩", "♬"][i % 4]}</span>`}<span class="card-type">${HOSTED ? "私有曲谱 · 请核对原谱" : s.source?.kind === "full-score-agent-approved" ? "已审核 · AI逐谱校对" : s.source?.kind === "full-score-model-reviewed" ? "AI全谱校对版 · 待人工确认" : s.source?.reviewRequired || s.source?.kind === "full-score-ai-draft" ? "数字谱 · 待校对" : s.source?.kind === "full-pdf-reviewed" ? "完整PDF钢琴谱" : s.source?.kind === "pdf-transcription-checked" ? "7页完整钢琴谱" : library.some((x) => x.id === s.id) ? "精选练习曲" : "我的乐谱"}</span><button data-open="${esc(s.id)}" class="card-play" aria-label="打开 ${esc(s.title)}">${icon("play")}</button></div><div class="card-info"><h3>${esc(s.title)}</h3><p>${esc(s.composer || (state.section === "guitar" ? "吉他练习曲" : "钢琴练习曲"))}</p><div class="card-details"><span>${s.mode ? esc(tonalityLabel(s)) : keyName(s.keySignature) + " 调"} · ${s.timeSignature.join("/")}</span><span>${s.tempo} BPM</span></div></div>${capabilities.publish ? `<button class="button quiet cloud-upload" data-cloud-upload="${esc(s.id)}" ${state.cloudBusy ? "disabled" : ""}>上传云端</button>` : ""}<button class="button quiet" data-revisions="${esc(s.id)}">修订历史</button><button class="button quiet cloud-delete-local" data-delete="${esc(s.id)}" aria-label="${HOSTED ? "移到回收站" : "本地删除"} ${esc(s.title)}" title="${HOSTED ? "30 天内可在账号页面恢复" : "仅删除本地副本"}">${icon("trash-2")}${HOSTED ? "移到回收站" : "删除本地"}</button></article>`,
+          `<article class="score-card" data-card="${esc(s.id)}"><div class="card-art tone-${i % 4}">${noteSketch(s) || `<span class="card-note">${["𝄞", "♫", "♩", "♬"][i % 4]}</span>`}<span class="card-type">${HOSTED ? "私有曲谱 · 请核对原谱" : s.source?.kind === "full-score-agent-approved" ? "已审核 · AI逐谱校对" : s.source?.kind === "full-score-model-reviewed" ? "AI全谱校对版 · 待人工确认" : s.source?.reviewRequired || s.source?.kind === "full-score-ai-draft" ? "数字谱 · 待校对" : s.source?.kind === "full-pdf-reviewed" ? "完整PDF钢琴谱" : s.source?.kind === "pdf-transcription-checked" ? "7页完整钢琴谱" : library.some((x) => x.id === s.id) ? "精选练习曲" : "我的乐谱"}</span><button data-open="${esc(s.id)}" class="card-play" aria-label="打开 ${esc(s.title)}">${icon("play")}</button></div><div class="card-info"><h3>${esc(s.title)}</h3><p>${esc(s.composer || (state.section === "guitar" ? "吉他练习曲" : "钢琴练习曲"))}</p>${s.timeSignature ? `<div class="card-details"><span>${s.mode ? esc(tonalityLabel(s)) : keyName(s.keySignature) + " 调"} · ${s.timeSignature.join("/")}</span><span>${s.tempo} BPM</span></div>` : ""}</div>${capabilities.publish ? `<button class="button quiet cloud-upload" data-cloud-upload="${esc(s.id)}" ${state.cloudBusy ? "disabled" : ""}>上传云端</button>` : ""}<button class="button quiet" data-revisions="${esc(s.id)}">修订历史</button><button class="button quiet cloud-delete-local" data-delete="${esc(s.id)}" aria-label="${HOSTED ? "移到回收站" : "本地删除"} ${esc(s.title)}" title="${HOSTED ? "30 天内可在账号页面恢复" : "仅删除本地副本"}">${icon("trash-2")}${HOSTED ? "移到回收站" : "删除本地"}</button></article>`,
       )
       .join("");
   }
@@ -223,22 +224,14 @@ export function createLibraryPanel({
     });
     $$("[data-cloud-open]").forEach(
       (button) =>
-        (button.onclick = () => {
-          const score = availableScores().find(
-            (item) => item.id === button.dataset.cloudOpen,
-          );
-          if (score) setScore(score);
-        }),
+        (button.onclick = () => openLibraryScore(button.dataset.cloudOpen)),
     );
     $("[data-guitar-example]")?.addEventListener("click", () =>
       setScore(guitarStarterScore),
     );
     $$("[data-open]").forEach(
-      (b) =>
-        (b.onclick = () => {
-          const score = availableScores().find((s) => s.id === b.dataset.open);
-          if (score) setScore(score);
-        }),
+      (button) =>
+        (button.onclick = () => openLibraryScore(button.dataset.open)),
     );
     $$("[data-library-tab]").forEach(
       (b) =>
@@ -266,7 +259,6 @@ export function createLibraryPanel({
             if (bundle.score?.id !== id)
               throw new Error("云端下载曲目不匹配，未保存。");
             await client.saveBundle(bundle);
-            await syncLocalLibrary();
             toast(
               HOSTED
                 ? "已保存到账号曲库，原谱图片一并保存。"
@@ -355,7 +347,6 @@ export function createLibraryPanel({
             )
               return;
             await client.remove(id);
-            state.shared = client.scores;
             if (state.score.id === id) {
               client.release(id);
               setScore(
@@ -401,7 +392,6 @@ export function createLibraryPanel({
           if (file.size > 512 * 1024 * 1024)
             throw new Error("备份文件超过 512 MB。");
           const result = await client.restore(JSON.parse(await file.text()));
-          await syncLocalLibrary();
           toast(
             "已恢复 " +
               result.restored.length +
@@ -447,7 +437,6 @@ export function createLibraryPanel({
                       button.dataset.revisions,
                       Number(b.dataset.restoreRevision),
                     );
-                    await syncLocalLibrary();
                     toast("已恢复为新修订，原历史保留。");
                   })),
             );

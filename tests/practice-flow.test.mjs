@@ -85,3 +85,130 @@ test("a MusicXML import reaches the practice room and exports as MusicXML and MI
   const header = new Uint8Array(await downloads[1].arrayBuffer()).slice(0, 4);
   assert.equal(String.fromCharCode(...header), "MThd");
 });
+
+test("a late original score keeps the editor and shares its source request", async (t) => {
+  const { normalizeLibraryRecord } = await import("../lib/library-format.ts");
+  const { starterScore } = await import("../lib/starter-score.mjs");
+  const score = { ...starterScore, id: "with-source" };
+  const record = normalizeLibraryRecord({
+    score,
+    sourceNotation: {
+      version: 1,
+      scoreId: score.id,
+      systems: [{ id: "row", page: 1, system: 1 }],
+      notes: [{ noteId: score.notes[0].id, page: 1, system: 1, x: 10, y: 10 }],
+    },
+    assets: [{ id: "row", mimeType: "image/png", data: "YQ==" }],
+  });
+  const pending = [];
+  const { w, doc } = await boot(t, {
+    fetchResponse: (path) =>
+      path === "/api/library"
+        ? Response.json({ records: [record] })
+        : path.includes("/records/")
+          ? new Promise((resolve) => pending.push(resolve))
+          : undefined,
+  });
+  w.URL.createObjectURL = () => "blob:row";
+  w.URL.revokeObjectURL = () => {};
+  doc.querySelector('.main-nav [data-nav="library"]').click();
+  await until(() => doc.querySelector('[data-open="with-source"]'), "曲目录入");
+  doc.querySelector('[data-open="with-source"]').click();
+  await until(() => pending.length, "开始读取原谱");
+  doc.querySelector("[data-edit-notes]").click();
+  const host = doc.querySelector("#note-editor-host");
+  await new Promise((resolve) => setImmediate(resolve));
+  const total = pending.length;
+  for (const resolve of pending) resolve(Response.json(record));
+  await until(() => doc.querySelector('[data-mode="source"]'), "原图参考入口");
+  assert.equal(total, 1);
+  assert.equal(doc.querySelector("#note-editor-host"), host);
+  await until(() => host.childElementCount, "编辑器可用");
+});
+
+test("startup restoration respects navigation while the catalogue is loading", async (t) => {
+  const { starterScore } = await import("../lib/starter-score.mjs");
+  const score = { ...starterScore, id: "remembered", title: "上次练习" };
+  let finish;
+  const { doc } = await boot(t, {
+    beforeStart: (w) =>
+      w.localStorage.setItem("qinban-active-score", JSON.stringify(score.id)),
+    fetchResponse: (path) =>
+      path === "/api/library"
+        ? new Promise((r) => (finish = r))
+        : path === "/api/cloud-library"
+          ? Response.json({ version: 1, scores: [] })
+          : undefined,
+  });
+  doc.querySelector('.main-nav [data-nav="search"]').click();
+  finish(Response.json({ records: [{ id: score.id, score }] }));
+  await until(
+    () =>
+      doc.querySelector('.main-nav [data-nav="library"] small').textContent ===
+      "1",
+    "曲库加载",
+  );
+  assert.ok(doc.querySelector(".view-search"));
+});
+
+test("a hosted practice link opens only the selected document and skips the original PDF", async (t) => {
+  const { starterScore } = await import("../lib/starter-score.mjs");
+  const { readScoreDocument } = await import("../lib/score-document.ts");
+  const records = [1, 2].map((i) => ({
+    entryId: "e" + i,
+    documentId: "d" + i,
+    title: "私有曲" + i,
+    instrument: "piano",
+    revision: 1,
+  }));
+  const score = { ...starterScore, id: "d2", title: records[1].title };
+  const { doc, requests, startup } = await boot(t, {
+    hosted: true,
+    url: "http://localhost/practice.html?entry=e2",
+    fetchResponse(path) {
+      if (path === "/api/v1/session")
+        return Response.json({
+          user: { id: "a", state: "active" },
+          sessionId: "s",
+        });
+      if (path === "/api/v1/library/entries?limit=100")
+        return Response.json({ records });
+      if (path === "/api/v1/library/entries/e2")
+        return Response.json({
+          summary: records[1],
+          document: readScoreDocument(score),
+          sourceNotation: null,
+          assets: [{ role: "original", resourceId: "pdf" }],
+        });
+    },
+  });
+  await startup;
+  assert.equal(doc.querySelector(".practice-current").textContent, "私有曲2");
+  assert.equal(
+    requests.filter((p) => p === "/api/v1/library/entries/e2").length,
+    1,
+  );
+  assert.equal(requests.includes("/api/v1/library/entries/e1"), false);
+  assert.equal(requests.includes("/api/v1/resources/pdf"), false);
+});
+
+test("a delayed first hosted sign-in preserves the user's navigation", async (t) => {
+  let authenticate;
+  const { doc, startup } = await boot(t, {
+    hosted: true,
+    fetchResponse: (path) => {
+      if (path === "/api/v1/session")
+        return new Promise((resolve) => (authenticate = resolve));
+      if (path.endsWith("/cloud-library/index.json"))
+        return Response.json({ version: 1, scores: [] });
+      return Response.json({ records: [] });
+    },
+  });
+  await until(() => authenticate, "准备账号请求");
+  doc.querySelector('.main-nav [data-nav="search"]').click();
+  authenticate(
+    Response.json({ user: { id: "a", state: "active" }, sessionId: "s" }),
+  );
+  await startup;
+  assert.ok(doc.querySelector(".view-search"));
+});

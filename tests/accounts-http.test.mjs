@@ -335,6 +335,15 @@ test("hosted HTTP authentication, CSRF, account boundaries and late responses", 
         ],
         reviewStatus: { humanConfirmed: true },
       });
+      await playerLibrary.refresh();
+      const card = playerLibrary.catalogue.find((card) => card.id === score.id);
+      assert.equal(card.title, score.title);
+      assert.equal(card.tempo, 80);
+      assert.deepEqual(card.timeSignature, [4, 4]);
+      assert.equal(card.notes, undefined);
+      const selected = await playerLibrary.loadPractice(score.id);
+      assert.equal(selected.score.notes[0].midi, 60);
+      assert.ok(await selected.readSource(() => true));
       const reopened = await playerLibrary.readSource(score);
       assert.ok(reopened);
       assert.ok(reopened.notation.systems[0].imageUrl.startsWith("blob:"));
@@ -359,4 +368,31 @@ test("hosted HTTP authentication, CSRF, account boundaries and late responses", 
       account.dispose();
     },
   );
+});
+
+test("listing 100 hosted scores requests only their catalogue", async () => {
+  const requests = [];
+  const records = Array.from({ length: 100 }, (_, index) => ({
+    entryId: "entry-" + index,
+    documentId: "score-" + index,
+    title: "曲目 " + index,
+    instrument: "piano",
+    music: { composer: "作曲者", tempo: 90 },
+  }));
+  const hosted = createHostedLibrary({
+    session: {},
+    epoch: 0,
+    initialize: async () => {},
+    subscribe() {},
+    checkEpoch() {},
+    async json(path) {
+      requests.push(path);
+      assert.equal(path, "/library/entries?limit=100");
+      return { records, nextCursor: null };
+    },
+  });
+  const listed = await hosted.list();
+  assert.equal(listed.records.length, 100);
+  assert.equal(listed.records[99].summary.composer, "作曲者");
+  assert.equal(requests.length, 1);
 });

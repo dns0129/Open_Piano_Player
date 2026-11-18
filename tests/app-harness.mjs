@@ -13,19 +13,29 @@ export async function until(check, message) {
   }
 }
 
-export async function boot(t, { staticSite = false, fetchResponse } = {}) {
+export async function boot(
+  t,
+  {
+    staticSite = false,
+    hosted = false,
+    url = "http://127.0.0.1:8792/",
+    fetchResponse,
+    beforeStart,
+  } = {},
+) {
   const bundle = await build({
     entryPoints: ["src/app.js"],
     bundle: true,
     write: false,
     format: "iife",
+    globalName: "practiceApp",
     platform: "browser",
     loader: { ".css": "empty" },
     define: {
       "import.meta.env": JSON.stringify({
         BASE_URL: "/",
         VITE_STATIC_SITE: staticSite ? "1" : "0",
-        VITE_HOSTED_SITE: "0",
+        VITE_HOSTED_SITE: hosted ? "1" : "0",
       }),
     },
     logLevel: "silent",
@@ -33,13 +43,12 @@ export async function boot(t, { staticSite = false, fetchResponse } = {}) {
   const dom = new JSDOM(
       '<!doctype html><html><body><div id="app"></div></body></html>',
       {
-        url: "http://127.0.0.1:8792/",
+        url,
         runScripts: "outside-only",
         pretendToBeVisual: true,
       },
     ),
     w = dom.window;
-  t.after(() => w.close());
   Object.defineProperty(w, "crypto", { value: webcrypto });
   Object.assign(w, {
     structuredClone,
@@ -93,14 +102,21 @@ export async function boot(t, { staticSite = false, fetchResponse } = {}) {
         : { records: [], scores: [], warnings: [] },
     );
   };
-  w.eval(bundle.outputFiles[0].text);
+  beforeStart?.(w);
+  const startup = w.eval(
+    bundle.outputFiles[0].text + "\npracticeApp.startupReady",
+  );
+  t.after(async () => {
+    await startup;
+    w.close();
+  });
   await until(
     () =>
-      staticSite
+      staticSite || hosted
         ? w.document.querySelector(".practice-current")
         : w.document.querySelector("[data-fullscore-jobs]") &&
           requests.some((p) => p.endsWith("/api/library")),
     "练习室应完成启动和曲库同步",
   );
-  return { w, doc: w.document, requests };
+  return { w, doc: w.document, requests, startup };
 }

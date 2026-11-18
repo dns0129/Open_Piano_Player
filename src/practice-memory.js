@@ -49,7 +49,7 @@ export function createPracticeMemory({ persist = true, storage } = {}) {
         announce,
       };
     },
-    remember(score, { tempo, beat, loopStart, loopEnd }) {
+    remember(score, { tempo, beat, loopStart, loopEnd, defaultLoopEnd = 0 }) {
       if (!score?.id) return;
       const next = {
         tempo: Math.round(Number(tempo)) || score.tempo,
@@ -60,7 +60,14 @@ export function createPracticeMemory({ persist = true, storage } = {}) {
       };
       const previous = entries[score.id];
       // Nothing to keep for a piece left untouched at its own tempo.
-      if (!previous && next.beat === 0 && next.tempo === score.tempo) return;
+      if (
+        !previous &&
+        next.beat === 0 &&
+        next.tempo === score.tempo &&
+        next.loopStart === 0 &&
+        next.loopEnd === defaultLoopEnd
+      )
+        return;
       if (
         previous &&
         previous.tempo === next.tempo &&

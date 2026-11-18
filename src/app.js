@@ -59,7 +59,6 @@ const state = {
   view: "practice",
   mode: "staff",
   score: startupSection === "guitar" ? guitarStarterScore : starterScore,
-  shared: [],
   cloudScores: [],
   cloudLoaded: false,
   cloudError: "",
@@ -142,6 +141,7 @@ function applySection(section) {
 }
 function switchSection(section) {
   if (section === state.section) return;
+  navigationEpoch++;
   const view = ["library", "search"].includes(state.view)
     ? state.view
     : "practice";
@@ -236,10 +236,42 @@ function originalNotation(score = state.score) {
   return notation;
 }
 let sourceLoadEpoch = 0;
-function setScore(score, warnings = [], sourceRecord = null) {
+let pendingPracticeSource;
+let navigationEpoch = 0;
+async function openLibraryScore(id) {
+  const epoch = ++navigationEpoch;
+  const modalVersion = modalEpoch();
+  const scoreVersion = sourceLoadEpoch;
+  const current = () =>
+    epoch === navigationEpoch &&
+    scoreVersion === sourceLoadEpoch &&
+    modalVersion === modalEpoch();
+  const record = scoreLibrary.records.find((item) => item.id === id);
+  if (!record) return;
+  if (record.score) {
+    setScore(record.score);
+    return;
+  }
+  try {
+    const loaded = await scoreLibrary.loadPractice(id);
+    if (current())
+      setScore(loaded.score, loaded.warnings, undefined, {
+        readSource: loaded.readSource,
+      });
+  } catch (error) {
+    if (current()) toast(error.message, true);
+  }
+}
+function setScore(
+  score,
+  warnings = [],
+  sourceRecord,
+  { rememberActive = true, readSource } = {},
+) {
   const epoch = ++sourceLoadEpoch;
+  pendingPracticeSource = null;
   if ($("#modal-root")?.childElementCount) closeModal();
-  rememberPractice();
+  if (epoch > 1) rememberPractice();
   player.stop();
   if (state.score?.id !== score.id) {
     releasePracticeSource(state.score.id);
@@ -250,7 +282,7 @@ function setScore(score, warnings = [], sourceRecord = null) {
   state.document = readScoreDocument(score);
   state.score = toPracticeScore(state.document);
   try {
-    if (capabilities.mode !== "hosted")
+    if (rememberActive && capabilities.mode !== "hosted")
       localStorage.setItem(
         sectionKey("qinban-active-score", state.section),
         JSON.stringify(state.score.id),
@@ -293,8 +325,12 @@ function setScore(score, warnings = [], sourceRecord = null) {
     toast(
       `已回到上次练到的第 ${measureIndexAtBeat(remembered.beat) + 1} 小节，按「回到开头」可从头开始。`,
     );
-  if (!originalNotation(state.score))
-    loadAvailablePracticeSource(state.score)
+  if (sourceRecord === undefined) {
+    const current = () => epoch === sourceLoadEpoch;
+    pendingPracticeSource = readSource
+      ? readSource(current)
+      : loadAvailablePracticeSource(state.score, current);
+    pendingPracticeSource
       .then((record) => {
         if (epoch !== sourceLoadEpoch || !record) return;
         state.sourceRecord = record;
@@ -304,14 +340,39 @@ function setScore(score, warnings = [], sourceRecord = null) {
         if (
           !state.loopEnabled &&
           state.loopStart === 0 &&
-          state.loopEnd === initialLoopEnd
+          state.loopEnd === initialLoopEnd &&
+          !remembered?.loopEnd
         ) {
           state.loopEnd = measureEnd(Math.min(3, measureCount() - 1));
           player.configure(configuration());
         }
-        render();
+        if (state.view === "practice") {
+          const switcher = $(".notation-switch");
+          if (!$('[data-mode="source"]', switcher)) {
+            switcher.insertAdjacentHTML(
+              "afterbegin",
+              '<button data-mode="source">原图参考</button>',
+            );
+            bindNotationModes();
+          }
+          const start = $("#loop-start"),
+            end = $("#loop-end");
+          start.max = end.max = measureCount();
+          start.value = measureIndexAtBeat(state.loopStart) + 1;
+          end.value =
+            measureIndexAtBeat(Math.max(0, state.loopEnd - 0.00001)) + 1;
+          state.renderer?.destroy();
+          drawNotation();
+          updateFrame(state.beat);
+        }
       })
-      .catch((error) => toast(error.message, true));
+      .catch((error) => {
+        if (epoch === sourceLoadEpoch) toast(error.message, true);
+      })
+      .finally(() => {
+        if (epoch === sourceLoadEpoch) pendingPracticeSource = null;
+      });
+  }
 }
 
 let disposePracticeLayout;
@@ -460,6 +521,7 @@ function bindCommon() {
       (b.onclick = () => {
         player.pause();
         state.searchAbort?.abort();
+        navigationEpoch++;
         state.view = b.dataset.nav;
         if (state.view === "library") state.libraryTab = "local";
         if (state.view === "search") state.searchScope = "catalogue";
@@ -475,6 +537,7 @@ function bindCommon() {
   $(".brand").onclick = (e) => {
     if (capabilities.mode === "hosted") return;
     e.preventDefault();
+    navigationEpoch++;
     state.view = "practice";
     render();
   };
@@ -550,6 +613,20 @@ function refreshInstrumentUI() {
   if (preview) preview.disabled = state.instrumentInfo.status === "loading";
   updatePlayback(player.state);
 }
+function bindNotationModes() {
+  $$("[data-mode]").forEach(
+    (b) =>
+      (b.onclick = () => {
+        state.mode = b.dataset.mode;
+        if (state.mode !== "source")
+          localStorage.setItem(
+            sectionKey("qinban-mode", state.section),
+            JSON.stringify(state.mode),
+          );
+        render();
+      }),
+  );
+}
 function bindPractice() {
   $("#piano-instrument").onchange = async (event) => {
     const id = event.target.value;
@@ -582,18 +659,7 @@ function bindPractice() {
       toast(error.message || "音色试听失败，请重试。", true);
     }
   };
-  $$("[data-mode]").forEach(
-    (b) =>
-      (b.onclick = () => {
-        state.mode = b.dataset.mode;
-        if (state.mode !== "source")
-          localStorage.setItem(
-            sectionKey("qinban-mode", state.section),
-            JSON.stringify(state.mode),
-          );
-        render();
-      }),
-  );
+  bindNotationModes();
   $("#play").onclick = togglePlay;
   $$("[data-zoom-step]").forEach(
     (button) =>
@@ -743,6 +809,7 @@ function rememberPractice() {
     beat: state.beat,
     loopStart: state.loopStart,
     loopEnd: state.loopEnd,
+    defaultLoopEnd: measureEnd(Math.min(3, measureCount() - 1)),
   });
 }
 function syncPracticeSession() {
@@ -927,7 +994,9 @@ async function openNoteEditor() {
     import("./note-editor.js"),
     state.sourceRecord
       ? Promise.resolve(state.sourceRecord)
-      : loadAvailablePracticeSource(state.score).catch((error) => {
+      : (
+          pendingPracticeSource || loadAvailablePracticeSource(state.score)
+        ).catch((error) => {
           toast("原谱读取失败：" + error.message, true);
           return null;
         }),
@@ -976,13 +1045,13 @@ const api = (path, body, signal) => apiClient.json(path, body, signal);
 const accountClient =
   capabilities.mode === "hosted"
     ? createAccountClient({
-        onIdentityChange: () => {
-          if (typeof scoreLibrary === "undefined") return;
+        onIdentityChange: (session, previous) => {
+          // The first signed-in session has no previous private score to clear.
+          if (session && !previous) return;
           player.stop();
-          closeModal();
+          if ($("#modal-root")?.childElementCount) closeModal();
           scoreLibrary.reset();
           lastSectionScores.clear();
-          state.shared = [];
           state.sourceRecord = null;
           state.notationScore = null;
           sourceLoadEpoch++;
@@ -1061,6 +1130,7 @@ const {
   download,
   modal,
   openOnlineSearch: (query) => openSearch(query),
+  openLibraryScore,
   onLoadingChange: updateLibraryLoading,
 });
 const { isAudioFile, audioView, receiveAudio, bindAudio } =
@@ -1202,31 +1272,30 @@ const startupActiveId =
   capabilities.mode === "hosted"
     ? null
     : read(sectionKey("qinban-active-score", startupSection), null);
-const restoredScore = availableScores().find(
-  (score) => score.id === startupActiveId,
-);
-setScore(restoredScore || state.score);
-void Promise.all([syncLocalLibrary(), taskVault.initialize()])
-  .then(() => {
+setScore(state.score, [], undefined, { rememberActive: false });
+const startupNavigation = navigationEpoch;
+const startupModal = modalEpoch();
+export const startupReady = Promise.all([
+  syncLocalLibrary(),
+  taskVault.initialize(),
+])
+  .then(async () => {
     const entryId =
-      capabilities.mode === "hosted"
-        ? new URL(location.href).searchParams.get("entry")
-        : null;
-    const chosen =
-      entryId && scoreLibrary.records.find((r) => r.entryId === entryId);
-    const restored = state.shared.find(
-      (score) => score.id === (chosen?.id || startupActiveId),
+      capabilities.mode === "hosted" &&
+      new URL(location.href).searchParams.get("entry");
+    const chosen = scoreLibrary.records.find((record) =>
+      entryId ? record.entryId === entryId : record.id === startupActiveId,
     );
     if (
-      restored &&
+      chosen &&
+      navigationEpoch === startupNavigation &&
+      modalEpoch() === startupModal &&
+      state.view === "practice" &&
       state.section === startupSection &&
       state.score.id ===
-        (
-          restoredScore ||
-          (startupSection === "guitar" ? guitarStarterScore : starterScore)
-        ).id
+        (startupSection === "guitar" ? guitarStarterScore : starterScore).id
     )
-      setScore(restored);
+      await openLibraryScore(chosen.id);
   })
   .catch((error) => toast(error.message, true));
 window.addEventListener("focus", () => void syncLocalLibrary().catch(() => {}));

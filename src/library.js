@@ -3,6 +3,7 @@ import { readLegacySources, sourceMatchesScore } from "./source-library.js";
 import { readScoreDocument } from "../lib/score-document.ts";
 import {
   contentHash,
+  normalizeLibraryRecord,
   createLibraryBackup,
   readLibraryBackup,
 } from "../lib/library-format.ts";
@@ -56,14 +57,13 @@ export function createDiskLibrary(api, { restoreBatchChars } = {}) {
     },
   };
 }
-const identity = (score) => [
-  score.id,
-  score.durationBeats,
-  score.keySignature,
-  score.timeSignature,
-  score.notes
-    .map((n) => [n.id, n.beat, n.duration, n.midi, n.hand])
-    .sort((a, b) => String(a[0]).localeCompare(String(b[0]))),
+const migrationContents = (record) => [
+  record.document,
+  record.assets,
+  record.sourceReference,
+  record.downloaded,
+  record.reviewStatus,
+  record.warnings,
 ];
 const base64 = async (blob) => {
   const bytes = new Uint8Array(await blob.arrayBuffer());
@@ -109,17 +109,32 @@ export function createUnifiedLibrary({
     return cache;
   }
   async function migrate() {
-    const raw = storage?.getItem("qinban-scores"),
+    const live = storage?.getItem("qinban-scores"),
       legacy = await legacySources();
-    if (!raw && !legacy.length) return;
-    const fingerprint = await contentHash([
-      raw,
-      legacy.map((r) => [r.id, r.savedAt, r.downloaded, r.score, r.reference]),
+    const backup = live || (await metadata.get("legacy-localStorage-backup"));
+    if (!backup && !legacy.length) return;
+    const index = legacy.map((r) => [
+      r.id,
+      r.savedAt,
+      r.downloaded,
+      r.score,
+      r.reference,
     ]);
-    if (await metadata.get("legacy-receipt:" + fingerprint)) {
-      if (raw) storage.removeItem("qinban-scores");
+    const oldFingerprint = await contentHash([backup || null, index]);
+    const completed = (hash) => "legacy-receipt-v2:" + hash;
+    if (await metadata.get(completed(oldFingerprint))) {
+      if (live) storage.removeItem("qinban-scores");
       return;
     }
+    // Use a retained backup only if the old migration recorded its completion.
+    const previouslyMigrated = await metadata.get(
+      "legacy-receipt:" + oldFingerprint,
+    );
+    const raw = live || (previouslyMigrated ? backup : null);
+    const receipt = completed(
+      raw === backup ? oldFingerprint : await contentHash([raw || null, index]),
+    );
+    if (await metadata.get(receipt)) return;
     let saved = [];
     if (raw) {
       try {
@@ -136,17 +151,28 @@ export function createUnifiedLibrary({
     for (const score of saved) scores.set(score.id, score);
     const prior = new Map((await adapter.list()).records.map((r) => [r.id, r]));
     // Archive the original browser representation before any cleanup.
-    if (raw) await metadata.set("legacy-localStorage-backup", raw);
+    if (live) await metadata.set("legacy-localStorage-backup", live);
     for (const [id, score] of scores) {
-      let document = readScoreDocument(score),
-        existing = prior.get(id);
-      if (
-        existing &&
-        JSON.stringify(identity(existing.score)) ===
-          JSON.stringify(identity(score))
-      )
-        continue;
+      const existing = prior.get(id);
       const original = legacy.find((s) => s.id === id);
+      const oldId =
+        "migrated-" +
+        (await contentHash([score, original?.reference])).slice(0, 32);
+      if (prior.get(oldId)?.document?.lineage?.parentId === id) {
+        const old = await adapter.get(oldId);
+        if (old.sourceNotation && old.sourceReference?.id === id) {
+          await adapter.save(
+            {
+              ...old,
+              sourceReference: { ...old.sourceReference, id: oldId },
+              sourceNotation: { ...old.sourceNotation, scoreId: oldId },
+            },
+            { expectedRevision: old.revision },
+          );
+        }
+        if (previouslyMigrated) continue;
+      }
+      if (previouslyMigrated && !existing && !live) continue;
       const assets = [];
       for (const asset of original?.assets || [])
         assets.push({
@@ -156,33 +182,60 @@ export function createUnifiedLibrary({
           mimeType: asset.blob.type,
           data: await base64(asset.blob),
         });
-      if (existing) {
-        const migratedId =
-          "migrated-" +
-          (await contentHash([score, original?.reference])).slice(0, 32);
-        if (prior.has(migratedId)) continue;
-        document = {
-          ...document,
-          id: migratedId,
-          title: document.title + "（旧曲库迁移版本）",
-          lineage: {
-            originalId: existing.document.lineage.originalId,
-            parentId: id,
-          },
-        };
-      }
-      await adapter.save({
-        document,
-        sourceNotation: original?.notation || null,
-        sourceReference: original?.reference,
+      const candidate = normalizeLibraryRecord({
+        score,
+        sourceNotation: original?.notation,
         assets,
         downloaded: original?.downloaded === true,
+        sourceReference: original?.reference,
         reviewStatus: original?.reviewStatus,
         warnings: original?.warnings,
       });
+      if (!existing) {
+        await adapter.save(candidate, { expectedRevision: 0 });
+        continue;
+      }
+      const current = await adapter.get(id);
+      const signature = await contentHash(migrationContents(candidate));
+      // Include history so a later edit doesn't resurrect an already migrated version.
+      let alreadySaved = false;
+      for (const revision of [current, ...current.history]) {
+        if ((await contentHash(migrationContents(revision))) === signature) {
+          alreadySaved = true;
+          break;
+        }
+      }
+      if (alreadySaved) continue;
+      const migratedId = "migrated-" + signature.slice(0, 32);
+      if (prior.has(migratedId)) continue;
+      const document = {
+        ...candidate.document,
+        id: migratedId,
+        title: candidate.document.title + "（旧曲库迁移版本）",
+        lineage: {
+          originalId: existing.document.lineage.originalId,
+          parentId: id,
+        },
+      };
+      await adapter.save(
+        {
+          ...candidate,
+          id: migratedId,
+          document,
+          sourceReference: candidate.sourceReference && {
+            ...candidate.sourceReference,
+            id: migratedId,
+          },
+          sourceNotation: candidate.sourceNotation && {
+            ...candidate.sourceNotation,
+            scoreId: migratedId,
+          },
+        },
+        { expectedRevision: 0 },
+      );
     }
-    await metadata.set("legacy-receipt:" + fingerprint, true);
-    if (raw) storage.removeItem("qinban-scores");
+    await metadata.set(receipt, true);
+    if (live) storage.removeItem("qinban-scores");
   }
   function release(id) {
     for (const url of urls.get(id) || []) URL.revokeObjectURL(url);
@@ -238,8 +291,31 @@ export function createUnifiedLibrary({
         }));
     },
     refresh,
+    get catalogue() {
+      return cache.map((record) => record.score || record.summary);
+    },
     get scores() {
-      return cache.map((r) => r.score);
+      return cache.flatMap((record) => (record.score ? [record.score] : []));
+    },
+    async loadPractice(id) {
+      const generation = cacheGeneration;
+      const opened = await adapter.openPractice(id);
+      checkGeneration(generation);
+      return {
+        score: opened.score,
+        warnings: opened.warnings,
+        async readSource(current) {
+          const record = await opened.readRecord();
+          checkGeneration(generation);
+          return record &&
+            current() &&
+            sourceMatchesScore(opened.score, {
+              reference: record.sourceReference,
+            })
+            ? source(record)
+            : null;
+        },
+      };
     },
     get records() {
       return cache;
@@ -348,6 +424,11 @@ export function createUnifiedLibrary({
         { expectedRevision: expectedRevision ?? known?.revision ?? 0 },
       );
       await refresh();
+      checkGeneration(generation);
+      const saved = cache.find(
+        (item) => item.id === record.id && item.revision === record.revision,
+      );
+      if (saved?.summary) saved.score = record.score;
       return record.score;
     },
     async saveBundle(bundle) {
@@ -359,11 +440,12 @@ export function createUnifiedLibrary({
       await refresh();
       return record.score;
     },
-    async readSource(score) {
+    async readSource(score, current = () => true) {
       const generation = cacheGeneration;
       const record = await adapter.get(score.id);
       checkGeneration(generation);
-      return sourceMatchesScore(score, { reference: record.sourceReference })
+      return current() &&
+        sourceMatchesScore(score, { reference: record.sourceReference })
         ? source(record)
         : null;
     },

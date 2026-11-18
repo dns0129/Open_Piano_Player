@@ -295,3 +295,91 @@ test("disk client restores a full backup in separately verified requests", async
   await assert.rejects(disk.restore(corrupt), /校验/);
   assert.equal(requests.length, 0, "损坏的备份不应发出任何恢复请求");
 });
+
+test("migration preserves tempo-only arrangements and rebinds the original to each conflict copy", async (t) => {
+  const browser = createBrowserLibrary({
+    name: "variant-" + crypto.randomUUID(),
+    indexedDB,
+  });
+  t.after(() => browser.close());
+  const fixture = input(),
+    original = await browser.save(fixture);
+  for (const changedPitch of [false, true]) {
+    const score = {
+      ...fixture.score,
+      title: "旧教材编配",
+      tempo: 112,
+      notes: fixture.score.notes.map((n) => ({
+        ...n,
+        midi: n.midi + Number(changedPitch),
+      })),
+    };
+    const reference = {
+      ...original.sourceReference,
+      notes: score.notes.map((n) => [n.id, n.beat, n.duration, n.midi, n.hand]),
+    };
+    const legacy = {
+      id: score.id,
+      score,
+      reference,
+      notation: fixture.sourceNotation,
+      assets: [
+        { id: "row", blob: new Blob(["archived"], { type: "image/png" }) },
+      ],
+    };
+    const lib = createUnifiedLibrary({
+      adapter: browser,
+      metadata: browser.metadata,
+      storage: null,
+      legacySources: async () => [legacy],
+    });
+    await lib.initialize();
+    const copy = lib.scores.find(
+      (s) => s.tempo === 112 && s.notes[0].midi === score.notes[0].midi,
+    );
+    assert.ok(copy);
+    const source = await lib.readSource(copy);
+    assert.equal(source?.notation.scoreId, copy.id);
+    assert.equal(await source.assets[0].blob.text(), "archived");
+    lib.release(copy.id);
+  }
+});
+
+test("repairs completed legacy migrations using their backup and leaves deleted songs deleted", async (t) => {
+  const { contentHash } = await import("../lib/library-format.ts");
+  const adapter = createBrowserLibrary({
+    name: "past-" + crypto.randomUUID(),
+    indexedDB,
+  });
+  t.after(() => adapter.close());
+  const current = input().score;
+  await adapter.save({ score: current });
+  const old = { ...current, tempo: 114, title: "旧速度版本" };
+  const backup = JSON.stringify([
+    old,
+    { ...old, id: "deleted", title: "已删除" },
+  ]);
+  await adapter.metadata.set("legacy-localStorage-backup", backup);
+  await adapter.metadata.set(
+    "legacy-receipt:" + (await contentHash([backup, []])),
+    true,
+  );
+  const open = () =>
+    createUnifiedLibrary({
+      adapter,
+      metadata: adapter.metadata,
+      storage: null,
+      legacySources: async () => [],
+    });
+  const client = open();
+  await client.initialize();
+  assert.deepEqual(client.scores.map((s) => s.tempo).sort(), [114, 90]);
+  const copy = client.scores.find((s) => s.tempo === 114);
+  await client.remove(copy.id);
+  const reopened = open();
+  await reopened.initialize();
+  assert.deepEqual(
+    reopened.scores.map((s) => s.id),
+    [current.id],
+  );
+});

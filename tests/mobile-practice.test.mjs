@@ -227,8 +227,22 @@ test("practice memory restores tempo, loop and place per piece and announces a r
   const score = { id: "piece", tempo: 96, durationBeats: 64 };
   const first = createPracticeMemory({ storage });
   assert.equal(first.recall(score), null);
-  first.remember(score, { tempo: 96, beat: 0, loopStart: 0, loopEnd: 16 });
+  first.remember(score, {
+    tempo: 96,
+    beat: 0,
+    loopStart: 0,
+    loopEnd: 16,
+    defaultLoopEnd: 16,
+  });
   assert.equal(values.size, 0, "an untouched piece stores nothing");
+  first.remember(score, {
+    tempo: 96,
+    beat: 0,
+    loopStart: 0,
+    loopEnd: 8,
+    defaultLoopEnd: 16,
+  });
+  assert.equal(first.recall(score)?.loopEnd, 8);
   first.remember(score, { tempo: 60, beat: 20, loopStart: 16, loopEnd: 32 });
 
   const next = createPracticeMemory({ storage });

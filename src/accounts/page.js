@@ -20,6 +20,7 @@ const root = document.querySelector("#account-app");
 const account = createAccountClient(),
   state = {
     records: [],
+    nextCursor: null,
     trash: false,
     busy: false,
     error: "",
@@ -84,13 +85,20 @@ async function run(fn) {
     render();
   }
 }
+async function loadRecords(cursor) {
+  const url =
+    "/library/entries?limit=100&deleted=" +
+    state.trash +
+    (cursor ? "&cursor=" + encodeURIComponent(cursor) : "");
+  const page = await account.json(url);
+  state.records = cursor ? [...state.records, ...page.records] : page.records;
+  state.nextCursor = page.nextCursor || null;
+}
 async function load() {
   // Recovery sessions can only restore the account, not read private data.
   // A library request here would return 401 and erase the recovery session.
   if (account.session?.user.state !== "active") return;
-  state.records = (
-    await account.json("/library/entries?limit=100&deleted=" + state.trash)
-  ).records;
+  await loadRecords();
   state.devices = (await account.json("/sessions")).sessions;
   state.groups = (await account.json("/source-groups")).groups;
   // Invites and quota are optional services; the library stays usable without them.
@@ -479,7 +487,7 @@ function bindInvites() {
   });
 }
 function dashboard(s) {
-  return `<section class="account-card"><div class="account-row"><div><h1>我的私有曲库</h1><p>${esc(s.user.email)} · ${state.records.length} 首${state.trash ? "已回收" : ""}曲目</p></div><button data-logout>退出账号</button></div><div class="account-actions"><label class="account-file">导入数字乐谱<input data-digital type="file" accept=".json,.mid,.midi,.xml,.musicxml,.mxl" hidden></label><label class="account-file">保存原始图片<input data-images type="file" accept="image/png,image/jpeg,image/webp" multiple hidden></label><label class="account-file">保存原始 PDF<input data-pdf type="file" accept="application/pdf,.pdf" hidden></label><button data-export>下载完整备份</button><label class="account-file">恢复备份<input data-backup type="file" accept=".json" hidden></label><button data-local>选择导入本机曲库</button><button data-trash>${state.trash ? "返回曲库" : "回收站"}</button></div>${state.group ? `<p class="account-notice">原始资料已私有保存：${state.group.pages.length} 页，来源组 ${esc(state.group.sourceGroupId)}。本页面不调用识谱模型。</p>` : ""}<div class="account-list">${state.records.length ? state.records.map((r) => `<article class="account-record"><div><strong>${esc(r.title)}</strong><small>修订 ${r.revision} · ${esc(new Date(r.updatedAt).toLocaleString())} · 私有</small></div><div>${state.trash ? `<button data-restore="${r.entryId}">恢复</button>` : `<a href="/practice.html?entry=${r.entryId}">打开练习</a><button data-history="${r.entryId}">历史</button><button data-delete="${r.entryId}">移到回收站</button>`}</div></article>`).join("") : '<p class="account-empty">曲库暂无内容。导入不会公开曲谱。</p>'}</div></section>${inviteCard()}${state.pendingImages.length ? imageOrder() : ""}${sourceGroups()}${state.preview ? preview() : ""}${state.localRecords.length ? localSelection() : ""}${accountSecurity({ session: s, state, nativeSubscriptions: !!window.QinbanNative?.manageSubscriptions })}`;
+  return `<section class="account-card"><div class="account-row"><div><h1>我的私有曲库</h1><p>${esc(s.user.email)} · ${state.records.length} 首${state.trash ? "已回收" : ""}曲目</p></div><button data-logout>退出账号</button></div><div class="account-actions"><label class="account-file">导入数字乐谱<input data-digital type="file" accept=".json,.mid,.midi,.xml,.musicxml,.mxl" hidden></label><label class="account-file">保存原始图片<input data-images type="file" accept="image/png,image/jpeg,image/webp" multiple hidden></label><label class="account-file">保存原始 PDF<input data-pdf type="file" accept="application/pdf,.pdf" hidden></label><button data-export>下载完整备份</button><label class="account-file">恢复备份<input data-backup type="file" accept=".json" hidden></label><button data-local>选择导入本机曲库</button><button data-trash>${state.trash ? "返回曲库" : "回收站"}</button></div>${state.group ? `<p class="account-notice">原始资料已私有保存：${state.group.pages.length} 页，来源组 ${esc(state.group.sourceGroupId)}。本页面不调用识谱模型。</p>` : ""}<div class="account-list">${state.records.length ? state.records.map((r) => `<article class="account-record"><div><strong>${esc(r.title)}</strong><small>修订 ${r.revision} · ${esc(new Date(r.updatedAt).toLocaleString())} · 私有</small></div><div>${state.trash ? `<button data-restore="${r.entryId}">恢复</button>` : `<a href="/practice.html?entry=${r.entryId}">打开练习</a><button data-history="${r.entryId}">历史</button><button data-delete="${r.entryId}">移到回收站</button>`}</div></article>`).join("") : '<p class="account-empty">曲库暂无内容。导入不会公开曲谱。</p>'}</div>${state.nextCursor ? "<button data-more-records>加载更多曲目</button>" : ""}</section>${inviteCard()}${state.pendingImages.length ? imageOrder() : ""}${sourceGroups()}${state.preview ? preview() : ""}${state.localRecords.length ? localSelection() : ""}${accountSecurity({ session: s, state, nativeSubscriptions: !!window.QinbanNative?.manageSubscriptions })}`;
 }
 function imageOrder() {
   return `<section class="account-card"><h2>核对原图页序</h2><p>原文件保持不变。请按谱面顺序调整后保存。</p>${state.pendingImages.map((f, i) => `<div class="account-row"><span>第 ${i + 1} 页 · ${esc(f.name)} · ${(f.size / 1048576).toFixed(2)} MiB</span><div><button data-image-move="-1" data-index="${i}" ${i === 0 ? "disabled" : ""}>上移</button><button data-image-move="1" data-index="${i}" ${i === state.pendingImages.length - 1 ? "disabled" : ""}>下移</button></div></div>`).join("")}<button data-save-images>按此页序保存到账号</button><button data-cancel-images>取消</button></section>`;
@@ -522,15 +530,21 @@ function bind() {
       const cleanup = await account.logout();
       state.deviceCleanupPending = !cleanup.deviceCleared;
       state.records = [];
+      state.nextCursor = null;
       state.preview = null;
       state.localRecords = [];
       state.context = await account.loginContext();
       state.message = "已退出当前账号。" + cleanup.warning;
     }),
   );
+  $("[data-more-records]")?.addEventListener("click", () =>
+    run(() => loadRecords(state.nextCursor)),
+  );
   $("[data-trash]")?.addEventListener("click", () =>
     run(async () => {
       state.trash = !state.trash;
+      state.records = [];
+      state.nextCursor = null;
       await load();
     }),
   );
@@ -789,6 +803,7 @@ function bind() {
             const cleanup = await account.clearDeviceSession();
             state.deviceCleanupPending = !cleanup.deviceCleared;
             state.records = [];
+            state.nextCursor = null;
             state.context = await account.loginContext();
             state.message = "已退出当前设备。" + cleanup.warning;
           } else await load();
@@ -831,6 +846,7 @@ function bind() {
       const cleanup = await account.clearDeviceSession();
       state.deviceCleanupPending = !cleanup.deviceCleared;
       state.records = [];
+      state.nextCursor = null;
       state.context = await account.loginContext();
       state.message = "所有设备均已退出。" + cleanup.warning;
     }),
@@ -895,6 +911,7 @@ account.subscribe(() => {
   state.quota = null;
   state.newInvite = null;
   state.records = [];
+  state.nextCursor = null;
   state.devices = [];
   state.preview = null;
   state.localRecords = [];
