@@ -1,0 +1,505 @@
+/* 琴伴 promo site, shared by the homepage and the guide: a practice desk — warm score paper,
+   green printed ink, red pencil marks, taped-down prints and strips of engraved score. */
+@font-face {
+  font-family: "Bravura";
+  src: url("fonts/Bravura.woff2") format("woff2");
+  font-display: block;
+}
+
+:root {
+  --paper: #f3eee1;
+  --paper-2: #ebe4d2;
+  --sheet: #fcfaf3;
+  --ink: #1f2a22;
+  --ink-2: #4b574d;
+  --ink-3: #7d8378;
+  --line: #e0d9c6;
+  --line-2: #cfc8b2;
+  --green: #234f3e;
+  --green-2: #39734f;
+  --green-soft: #e4ecdf;
+  --copper: #a4735e;
+  --pencil: #b4452f;
+  --marker: rgba(247, 204, 66, 0.5);
+  --rule: rgba(35, 79, 62, 0.075);
+  --serif:
+    "Songti SC", "STSong", "Source Han Serif SC", "Noto Serif SC",
+    "Noto Serif CJK SC", "SimSun", serif;
+  --engrave:
+    "Century Schoolbook", "New Century Schoolbook", "Iowan Old Style",
+    "Palatino", "Palatino Linotype", Georgia, var(--serif);
+  --hand:
+    "Hannotate SC", "HanziPen SC", "Kaiti SC", "STKaiti", "KaiTi", "BiauKai",
+    var(--serif);
+  --font:
+    -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+    "Microsoft YaHei", "Noto Sans CJK SC", "Segoe UI", sans-serif;
+  --sheet-shadow:
+    0 1px 1px rgba(60, 50, 25, 0.08), 0 22px 40px -26px rgba(60, 50, 25, 0.55);
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html {
+  overflow-x: clip;
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px;
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  margin: 0;
+  overflow-x: clip;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 17px;
+  line-height: 1.8;
+  -webkit-font-smoothing: antialiased;
+}
+/* Paper grain and a slightly darker edge, like an old practice book. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .36 0 0 0 0 .3 0 0 0 0 .18 0 0 0 .55 -.2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.004 .09' numOctaves='2' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .38 0 0 0 0 .22 0 0 0 .22 -.08'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E"),
+    radial-gradient(
+      ellipse at 50% 40%,
+      transparent 55%,
+      rgba(120, 95, 50, 0.1) 100%
+    );
+}
+::selection {
+  background: rgba(247, 204, 66, 0.55);
+}
+a {
+  color: var(--green);
+}
+button {
+  font: inherit;
+}
+h1,
+h2,
+h3,
+p,
+figure,
+dl,
+dd,
+ol {
+  margin: 0;
+}
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+[hidden] {
+  display: none !important;
+}
+:focus-visible {
+  outline: 2px solid var(--green-2);
+  outline-offset: 3px;
+}
+.defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 46px;
+  padding: 0 22px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    color 0.2s;
+}
+.btn-solid {
+  border: 1px solid var(--green);
+  background: var(--green);
+  color: #fbf8ef;
+}
+.btn-solid:hover {
+  background: #1a3d30;
+}
+.btn-line {
+  border: 1px solid var(--line-2);
+  background: var(--sheet);
+  color: var(--green);
+}
+.btn-line:hover {
+  border-color: var(--green-2);
+}
+.btn-sm {
+  height: 38px;
+  padding: 0 16px;
+  font-size: 14px;
+}
+.btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* ---------- Header ---------- */
+.top {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  height: 64px;
+  padding: 0 max(20px, calc(50% - 600px));
+  background: rgba(243, 238, 225, 0.92);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+}
+.brand img {
+  border-radius: 8px;
+}
+.top nav {
+  display: flex;
+  gap: 22px;
+  margin-right: auto;
+}
+.top nav a {
+  color: var(--ink-2);
+  font-size: 15px;
+  text-decoration: none;
+}
+.top nav a:hover {
+  color: var(--green);
+}
+
+/* Faint manuscript staves behind a section (opening, ending). */
+.ruled {
+  position: relative;
+}
+.ruled::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 100vw;
+  transform: translateX(-50%);
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0 40px,
+    var(--rule) 40px 41px,
+    transparent 41px 50px,
+    var(--rule) 50px 51px,
+    transparent 51px 60px,
+    var(--rule) 60px 61px,
+    transparent 61px 70px,
+    var(--rule) 70px 71px,
+    transparent 71px 80px,
+    var(--rule) 80px 81px,
+    transparent 81px 124px
+  );
+  -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent);
+  mask-image: linear-gradient(to bottom, #000 55%, transparent);
+}
+
+/* Screenshots: printed out, taped down. */
+.photo {
+  position: relative;
+  padding: 8px;
+  background: #fffefa;
+  box-shadow: var(--sheet-shadow);
+}
+.photo > img {
+  border: 1px solid #e7e1cf;
+}
+.photo::before,
+.photo::after {
+  content: "";
+  position: absolute;
+  z-index: 3;
+  top: -13px;
+  width: clamp(64px, 12%, 104px);
+  height: 26px;
+  background: rgba(226, 214, 172, 0.72);
+  box-shadow: 0 1px 2px rgba(60, 50, 25, 0.12);
+  clip-path: polygon(
+    0 10%,
+    5% 0,
+    12% 8%,
+    88% 4%,
+    95% 0,
+    100% 12%,
+    97% 52%,
+    100% 92%,
+    94% 100%,
+    6% 96%,
+    0 100%,
+    3% 50%
+  );
+}
+.photo::before {
+  left: 10%;
+  transform: rotate(-4deg);
+}
+.photo::after {
+  right: 10%;
+  transform: rotate(5deg);
+}
+/* ---------- Pencil marks ---------- */
+.over {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+}
+.marks {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.marks path {
+  fill: none;
+  stroke: var(--pencil);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  opacity: 0.88;
+  filter: url(#pencil);
+  transition: stroke-dashoffset 0.9s cubic-bezier(0.55, 0.1, 0.35, 1)
+    var(--d, 0s);
+}
+.mark-text {
+  position: absolute;
+  color: var(--pencil);
+  font-family: var(--hand);
+  font-size: 1em;
+  line-height: 1.2;
+  white-space: nowrap;
+  transform: rotate(var(--r, -2deg));
+  clip-path: inset(-30% 100% -30% -5%);
+  transition: clip-path 0.8s steps(14) var(--d, 0s);
+}
+.over.drawn .marks path {
+  stroke-dashoffset: 0;
+}
+.over.drawn .mark-text {
+  clip-path: inset(-30% -5% -30% -5%);
+}
+
+/* ---------- Strips of score paper between sections ---------- */
+.strip {
+  --h: 132px;
+  position: relative;
+  height: var(--h);
+  margin: 96px 0 0;
+  overflow: hidden;
+  background: var(--sheet);
+  box-shadow: var(--sheet-shadow);
+  transform: rotate(-1.1deg);
+}
+.strip i {
+  --tile: calc((var(--h) - 28px) * 2400 / 439);
+  position: absolute;
+  top: 14px;
+  bottom: 14px;
+  left: 0;
+  width: calc(100% + var(--tile));
+  background: url("img/ink-bach.webp") repeat-x left center / auto 100%;
+  animation: drift 90s linear infinite;
+}
+.strip-chopin {
+  transform: rotate(0.9deg);
+}
+.strip-chopin i {
+  --tile: calc((var(--h) - 28px) * 2400 / 482);
+  background-image: url("img/ink-chopin.webp");
+  animation-direction: reverse;
+}
+@keyframes drift {
+  to {
+    transform: translateX(calc(-1 * var(--tile)));
+  }
+}
+
+.movement {
+  display: grid;
+  grid-template-columns: auto minmax(0, 780px);
+  justify-content: start;
+  gap: 6px 30px;
+  align-items: start;
+  margin-bottom: 48px;
+}
+.mv-no {
+  min-width: 1.1em;
+  font-family: var(--engrave);
+  font-size: clamp(72px, 9vw, 120px);
+  font-style: italic;
+  line-height: 0.85;
+  color: var(--green);
+}
+.mv-tempo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 14px;
+  margin-bottom: 6px;
+}
+.mv-tempo i {
+  font-family: var(--engrave);
+  font-size: 22px;
+  font-style: normal;
+  font-weight: 700;
+  color: var(--ink);
+}
+.mv-tempo span {
+  font-family: var(--hand);
+  font-size: 19px;
+  color: var(--pencil);
+  transform: rotate(-1.5deg);
+}
+.movement h2 {
+  font-family: var(--serif);
+  font-size: clamp(30px, 3.6vw, 42px);
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--ink);
+}
+.movement p:not(.mv-tempo) {
+  margin-top: 12px;
+  color: var(--ink-2);
+}
+
+/* The last bar of a score: Fine over a final barline. */
+.fine-mark {
+  position: relative;
+  width: 240px;
+  height: 70px;
+  margin: 0 auto 30px;
+}
+.fine-mark::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 41px;
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--ink-2) 0 1px,
+    transparent 1px 10px
+  );
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 70%);
+  mask-image: linear-gradient(to right, transparent, #000 70%);
+}
+.fine-mark::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 11px;
+  height: 41px;
+  border-left: 1.5px solid var(--ink);
+  border-right: 5px solid var(--ink);
+}
+.fine-mark i {
+  position: absolute;
+  right: -4px;
+  top: -2px;
+  font-family: var(--engrave);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.foot {
+  max-width: 1000px;
+  margin: 90px auto 0;
+  padding: 28px 20px 48px;
+  border-top: 1px solid var(--line-2);
+  color: var(--ink-3);
+  font-size: 13px;
+  text-align: center;
+}
+.foot p + p {
+  margin-top: 4px;
+}
+
+/* ---------- Small screens ---------- */
+@media (max-width: 640px) {
+  body {
+    font-size: 16px;
+  }
+  .top {
+    gap: 14px;
+    height: 56px;
+  }
+  .top nav {
+    display: none;
+  }
+  .top .btn {
+    margin-left: auto;
+  }
+  .photo {
+    padding: 5px;
+  }
+  .photo::before,
+  .photo::after {
+    top: -10px;
+    height: 20px;
+  }
+  .strip {
+    --h: 96px;
+    margin-top: 72px;
+  }
+  .movement {
+    grid-template-columns: 1fr;
+    margin-bottom: 36px;
+  }
+  .mv-no {
+    font-size: 64px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .strip i {
+    animation: none;
+  }
+  .marks path,
+  .mark-text {
+    transition: none;
+  }
+}

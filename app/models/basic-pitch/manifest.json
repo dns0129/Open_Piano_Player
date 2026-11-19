@@ -1,0 +1,28 @@
+{
+  "engine": "Spotify Basic Pitch",
+  "version": "1.0.1",
+  "license": "Apache-2.0",
+  "source": "https://github.com/spotify/basic-pitch-ts",
+  "files": {
+    "model.json": {
+      "sha256": "1ed1aaee3409ec1dc098c8b01f430c0911f6fe9412e7af8086750f9e8f302f68",
+      "bytes": 174537
+    },
+    "group1-shard1of1.bin": {
+      "sha256": "b142a95737a52e1e412d5f92e73d8bb80dfe8d04941acc0702f11f4524fb377c",
+      "bytes": 742392
+    },
+    "tfjs-backend-wasm-simd.wasm": {
+      "sha256": "918e97b89039305394e9987088249bacee5ef09111ae9f9384c06bec564e2d7b",
+      "bytes": 377757
+    },
+    "tfjs-backend-wasm-threaded-simd.wasm": {
+      "sha256": "7ca7dc269cc43b600cc231c252d16383aae22c4383f4363ce30c413673d8a911",
+      "bytes": 386833
+    },
+    "tfjs-backend-wasm.wasm": {
+      "sha256": "3fdde0b7f76782146ed7a5212bca394d1e59e1bfb8768531c72480d6f10aee1f",
+      "bytes": 275675
+    }
+  }
+}
