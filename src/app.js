@@ -46,6 +46,7 @@ import "./style.css";
 import "./practice-layout.css";
 import "./guitar.css";
 import "./search-discovery.css";
+import "./score-shelf.css";
 
 const startupSection =
   read("qinban-section", "piano") === "guitar" ? "guitar" : "piano";
@@ -1050,6 +1051,7 @@ const accountClient =
           if (session && !previous) return;
           player.stop();
           if ($("#modal-root")?.childElementCount) closeModal();
+          resetShelf();
           scoreLibrary.reset();
           lastSectionScores.clear();
           state.sourceRecord = null;
@@ -1109,6 +1111,7 @@ function updateLibraryLoading() {
   }
 }
 const {
+  resetShelf,
   libraryView,
   bindLibrary,
   availableScores,

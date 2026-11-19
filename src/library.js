@@ -297,6 +297,19 @@ export function createUnifiedLibrary({
     get scores() {
       return cache.flatMap((record) => (record.score ? [record.score] : []));
     },
+    async renameEntry(entryId, title, revision, key) {
+      const generation = cacheGeneration;
+      const saved = await adapter.renameEntry(entryId, title, revision, key);
+      checkGeneration(generation);
+      const known = cache.find((r) => r.entryId === entryId);
+      if (known && known.revision <= saved.revision) {
+        if (known.summary) known.summary.title = saved.title;
+        if (known.score) known.score.title = saved.title;
+        known.revision = saved.revision;
+        known.updatedAt = saved.updatedAt;
+      }
+      return saved;
+    },
     async loadPractice(id) {
       const generation = cacheGeneration;
       const opened = await adapter.openPractice(id);

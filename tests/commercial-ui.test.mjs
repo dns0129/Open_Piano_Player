@@ -307,3 +307,74 @@ test("commercial offline handler never intercepts private API data or stores res
   assert.equal(offline.headers.get("cache-control"), "no-store");
   assert.match(await offline.text(), /重新连接琴伴/);
 });
+
+test("private scores switch layout and rename inline with cancel, validation and retry", async (t) => {
+  const record = {
+    entryId: jobId,
+    documentId: "private-score",
+    title: "原曲名",
+    instrument: "piano",
+    revision: 2,
+    updatedAt: new Date().toISOString(),
+  };
+  const calls = [],
+    keys = [];
+  const w = await open(t, "home", (path, options) => {
+    if (path.startsWith("/api/v1/library/entries?"))
+      return Response.json({ records: [record] });
+    if (path.endsWith("/rename")) {
+      calls.push(JSON.parse(options.body));
+      keys.push(options.headers["Idempotency-Key"]);
+      if (calls.length === 1)
+        return Response.json({ message: "保存失败，请重试" }, { status: 503 });
+      return Response.json({
+        ...record,
+        title: calls.at(-1).title,
+        revision: 3,
+      });
+    }
+  });
+  const $ = (s) => w.document.querySelector(s);
+  await until(() => $("[data-rename]"));
+  assert.equal($(".score-shelf").dataset.shelfMode, "grid");
+  $("[data-layout-choice=list]").click();
+  assert.equal(w.localStorage.getItem("qinban-library-layout"), "list");
+  $("[data-rename]").click();
+  let input = $(".shelf-edit input");
+  assert.equal(w.document.activeElement, input);
+  assert.equal(input.selectionEnd, record.title.length);
+  input.dispatchEvent(
+    new w.KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
+  );
+  assert.equal($(".shelf-edit"), null);
+  $("[data-rename]").click();
+  input = $(".shelf-edit input");
+  function type(value) {
+    input.value = value;
+    input.dispatchEvent(new w.Event("input", { bubbles: true }));
+  }
+  type(" ");
+  $(".shelf-edit").requestSubmit();
+  assert.equal(calls.length, 0);
+  assert.match($(".shelf-edit [role=alert]").textContent, /输入曲名/);
+  input = $(".shelf-edit input");
+  input.dispatchEvent(new w.Event("compositionstart", { bubbles: true }));
+  type("练");
+  $(".shelf-edit").requestSubmit();
+  assert.equal(calls.length, 0);
+  input.dispatchEvent(new w.Event("compositionend", { bubbles: true }));
+  type("  练习 <A>  ");
+  $(".shelf-edit").requestSubmit();
+  await until(() =>
+    $(".shelf-edit [role=alert]")?.textContent.includes("保存失败"),
+  );
+  assert.equal($(".shelf-edit input").value, "  练习 <A>  ");
+  $(".shelf-edit").requestSubmit();
+  await until(() => $(".shelf-title h3")?.textContent === "练习 <A>");
+  assert.ok(keys[0] && keys[0] === keys[1]);
+  assert.deepEqual(calls, [
+    { title: "练习 <A>", expectedRevision: 2 },
+    { title: "练习 <A>", expectedRevision: 2 },
+  ]);
+  assert.equal($(".score-shelf").dataset.shelfMode, "list");
+});

@@ -1,0 +1,226 @@
+.score-shelf {
+  --shelf-line: var(--border-strong);
+  color: var(--text);
+  min-width: 0;
+}
+.shelf-switch {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: fit-content;
+  margin: 0 0 14px auto;
+  padding: 3px;
+  gap: 2px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.score-shelf .shelf-switch button,
+.score-shelf .shelf-rename,
+.score-shelf .shelf-actions :is(a, button),
+.score-shelf .shelf-edit button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: auto;
+  min-height: 38px;
+  margin: 0;
+  padding: 5px 11px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-2);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.3;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 0.16s,
+    color 0.16s;
+}
+.score-shelf .shelf-switch [aria-pressed="true"] {
+  background: var(--surface-0);
+  color: var(--accent);
+  box-shadow: 0 1px 4px #183e2d1a;
+  font-weight: 650;
+}
+.shelf-glyph {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+}
+.shelf-glyph.list {
+  background: repeating-linear-gradient(
+    to bottom,
+    currentColor 0 2px,
+    transparent 2px 5px
+  );
+  height: 12px;
+}
+.shelf-glyph.grid {
+  width: 12px;
+  height: 12px;
+  background:
+    linear-gradient(currentColor, currentColor) 0 0,
+    linear-gradient(currentColor, currentColor) 100% 0,
+    linear-gradient(currentColor, currentColor) 0 100%,
+    linear-gradient(currentColor, currentColor) 100% 100%;
+  background-repeat: no-repeat;
+  background-size: 5px 5px;
+}
+.shelf-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 245px), 1fr));
+  gap: 12px;
+}
+.shelf-item {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 26px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--shelf-line);
+  border-radius: 12px;
+  background: var(--surface-0);
+}
+.shelf-item[hidden] {
+  display: none;
+}
+.shelf-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+.score-shelf .shelf-title h3 {
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 650;
+  line-height: 1.45;
+  letter-spacing: -0.02em;
+  color: var(--text-strong);
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.score-shelf .shelf-rename {
+  flex-shrink: 0;
+  min-height: 38px;
+  padding: 3px 6px;
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 4px;
+}
+.score-shelf .shelf-info p,
+.score-shelf .shelf-foot small {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-mid);
+  margin: 3px 0 0;
+  overflow-wrap: anywhere;
+}
+.shelf-foot {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+}
+.shelf-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.score-shelf .shelf-actions .shelf-primary,
+.score-shelf .shelf-edit [type="submit"] {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.score-shelf button:hover:not(:disabled),
+.score-shelf .shelf-actions a:hover {
+  background: var(--surface-3);
+  color: var(--accent);
+}
+.score-shelf :is(button, a, input):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.score-shelf .shelf-edit {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  width: 100%;
+  min-width: 0;
+}
+.score-shelf .shelf-edit input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--accent);
+  border-radius: 7px;
+  padding: 7px 9px;
+  margin: 0;
+  color: var(--text);
+  background: var(--surface-0);
+  font: inherit;
+  font-size: 16px;
+}
+.score-shelf .shelf-edit [role="alert"] {
+  font-size: 12px;
+  color: var(--danger);
+}
+.shelf-edit [role="alert"]:empty {
+  display: none;
+}
+.score-shelf[data-shelf-mode="list"] .shelf-items {
+  display: block;
+  border-block: 1px solid var(--shelf-line);
+}
+.score-shelf[data-shelf-mode="list"] .shelf-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 4px;
+  border: 0;
+  background: transparent;
+  border-radius: 0;
+}
+.score-shelf[data-shelf-mode="list"] .shelf-item[hidden] {
+  display: none;
+}
+.score-shelf[data-shelf-mode="list"] .shelf-item + .shelf-item {
+  border-top: 1px solid var(--border);
+}
+.score-shelf[data-shelf-mode="list"] .shelf-foot {
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+}
+@media (max-width: 700px) {
+  .score-shelf[data-shelf-mode="list"] .shelf-item {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+  .score-shelf[data-shelf-mode="list"] .shelf-foot {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+  .score-shelf
+    :is(.shelf-switch, .shelf-title, .shelf-actions, .shelf-edit)
+    button,
+  .score-shelf .shelf-actions a {
+    min-height: 44px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .score-shelf * {
+    transition: none !important;
+  }
+}

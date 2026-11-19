@@ -1,3 +1,4 @@
+import { createScoreShelf } from "./score-shelf.js";
 import { scoreSection, sectionKey } from "../lib/instrument-sections.mjs";
 import { guitarStarterScore } from "../lib/guitar.mjs";
 import { $, $$, esc, icon } from "./ui.js";
@@ -25,6 +26,7 @@ export function createLibraryPanel({
   openOnlineSearch,
   onLoadingChange = () => {},
 }) {
+  const shelf = createScoreShelf();
   const HOSTED = capabilities.mode === "hosted";
   const STATIC_SITE = capabilities.mode !== "local",
     library = [starterScore];
@@ -96,7 +98,11 @@ export function createLibraryPanel({
         throw e;
       } finally {
         librarySync = null;
-        if (isLocalView() && !$("#modal-root")?.childElementCount) {
+        if (
+          isLocalView() &&
+          !$("#modal-root")?.childElementCount &&
+          !$(".shelf-edit")
+        ) {
           const query = $("#library-query")?.value || "";
           const scroll = $(".view-library")?.scrollTop || 0;
           render();
@@ -164,7 +170,27 @@ export function createLibraryPanel({
       ${state.section === "guitar" ? `<div class="cloud-library-tabs"><button class="button secondary" data-guitar-example>${icon("guitar")}打开吉他示例</button><button class="button secondary" data-upload>导入吉他谱</button></div>` : ""}
       ${localError ? `<div class="cloud-library-error" role="alert">${esc(localError)} <button class="button quiet" data-library-retry>重新加载</button></div>` : ""}
       ${client.warnings.length ? `<p class="cloud-library-error" role="alert">${client.warnings.map(esc).join(" ")}</p>` : ""}
-      <div class="library-filter search-input">${icon("search")}<input id="library-query" aria-label="搜索曲库" placeholder="搜索歌名、作曲家…"><span>${scores.length} 份乐谱</span></div><div class="library-grid" id="library-grid">${scoreCards(scores)}</div>
+      <div class="library-filter search-input">${icon("search")}<input id="library-query" aria-label="搜索曲库" placeholder="搜索歌名、作曲家…"><span>${scores.length} 份乐谱</span></div>${
+        HOSTED
+          ? shelf.markup(
+              client.records
+                .filter(
+                  (r) =>
+                    scoreSection(r.summary || r.score) ===
+                    (state.section || "piano"),
+                )
+                .map((r) => ({
+                  ...r,
+                  documentId: r.id,
+                  title: (r.summary || r.score).title,
+                  instrument: (r.summary || r.score).instrument,
+                  music: r.summary || r.score,
+                })),
+              (r) =>
+                `<button class="shelf-primary" data-open="${esc(r.documentId)}">打开练习</button><button data-revisions="${esc(r.documentId)}">历史</button><button data-delete="${esc(r.documentId)}">移到回收站</button>`,
+            )
+          : `<div class="library-grid" id="library-grid">${scoreCards(scores)}</div>`
+      }
       ${!scores.length && !localError && !librarySync ? '<p class="cloud-library-empty">这里还没有乐谱。点击「搜索乐谱」下载，或导入自己的乐谱。</p>' : ""}</section>`;
   }
   function cloudRows(scores) {
@@ -219,6 +245,23 @@ export function createLibraryPanel({
       .join("");
   }
   function bindLibrary() {
+    if (HOSTED && isLocalView())
+      shelf.bind($("#app"), client.renameEntry, (result) => {
+        if (state.score.id === result.documentId) {
+          state.score.title = result.title;
+          state.document.title = result.title;
+        }
+        if (isLocalView()) {
+          const query = $("#library-query")?.value;
+          render();
+          const input = $("#library-query");
+          if (query && input) {
+            input.value = query;
+            input.dispatchEvent(new Event("input"));
+          }
+        }
+        toast("曲名已保存。");
+      });
     $("[data-library-retry]")?.addEventListener("click", () => {
       void syncLocalLibrary().catch(() => {});
     });
@@ -460,6 +503,7 @@ export function createLibraryPanel({
     };
   }
   return {
+    resetShelf: shelf.reset,
     libraryView,
     bindLibrary,
     availableScores,

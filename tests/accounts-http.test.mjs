@@ -185,6 +185,15 @@ test("hosted HTTP authentication, CSRF, account boundaries and late responses", 
       );
       assert.equal(
         (
+          await b.req("/library/entries/" + saved.summary.entryId + "/rename", {
+            method: "POST",
+            body: { title: "其他账号", expectedRevision: 1 },
+          })
+        ).status,
+        404,
+      );
+      assert.equal(
+        (
           await b.req("/sessions/" + sa.sessionId, {
             method: "DELETE",
             body: {},
@@ -364,6 +373,43 @@ test("hosted HTTP authentication, CSRF, account boundaries and late responses", 
       assert.equal(playerLibrary.scores[0].title, "账号修改已保存");
       const privateCopy = await playerLibrary.package(score.id);
       assert.equal(privateCopy.assets[0].data, png.toString("base64"));
+      const eid = privateCopy.entryId;
+      const key = randomUUID();
+      const revised = await playerLibrary.renameEntry(
+        eid,
+        "  新练习曲名  ",
+        2,
+        key,
+      );
+      assert.deepEqual(
+        await account.renameEntry(eid, "  新练习曲名  ", 2, key),
+        revised,
+      );
+      assert.equal(revised.title, "新练习曲名");
+      assert.equal(revised.revision, 3);
+      assert.equal(playerLibrary.catalogue[0].title, revised.title);
+      const after = await playerLibrary.package(score.id);
+      assert.deepEqual(after.document, {
+        ...privateCopy.document,
+        title: revised.title,
+      });
+      assert.deepEqual(after.assets, privateCopy.assets);
+      assert.deepEqual(after.sourceNotation, privateCopy.sourceNotation);
+      await assert.rejects(account.renameEntry(eid, "第二台设备", 2), {
+        code: "REVISION_CONFLICT",
+      });
+      await assert.rejects(account.renameEntry(eid, "   ", 3), {
+        code: "INVALID_TITLE",
+      });
+      assert.equal(
+        (await account.renameEntry(eid, "新练习曲名", 3)).revision,
+        3,
+      );
+      const historic = await account.json(
+        "/library/entries/" + eid + "/restore",
+        { method: "POST", body: { targetRevision: 2, expectedRevision: 3 } },
+      );
+      assert.deepEqual(historic.document, privateCopy.document);
       playerLibrary.reset();
       account.dispose();
     },

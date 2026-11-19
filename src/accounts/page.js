@@ -1,3 +1,5 @@
+import { createScoreShelf, practiceLink } from "../score-shelf.js";
+import "../score-shelf.css";
 import { authLayout, authForm } from "./auth-view.js";
 import { navigation } from "../commercial/shared.js";
 import { createAccountClient } from "./client.js";
@@ -16,6 +18,7 @@ import { readScoreDocument } from "../../lib/score-document.ts";
 import { escapeHTML as esc } from "../html.js";
 import "./style.css";
 import "./auth.css";
+const shelf = createScoreShelf();
 const root = document.querySelector("#account-app");
 const account = createAccountClient(),
   state = {
@@ -487,7 +490,7 @@ function bindInvites() {
   });
 }
 function dashboard(s) {
-  return `<section class="account-card"><div class="account-row"><div><h1>我的私有曲库</h1><p>${esc(s.user.email)} · ${state.records.length} 首${state.trash ? "已回收" : ""}曲目</p></div><button data-logout>退出账号</button></div><div class="account-actions"><label class="account-file">导入数字乐谱<input data-digital type="file" accept=".json,.mid,.midi,.xml,.musicxml,.mxl" hidden></label><label class="account-file">保存原始图片<input data-images type="file" accept="image/png,image/jpeg,image/webp" multiple hidden></label><label class="account-file">保存原始 PDF<input data-pdf type="file" accept="application/pdf,.pdf" hidden></label><button data-export>下载完整备份</button><label class="account-file">恢复备份<input data-backup type="file" accept=".json" hidden></label><button data-local>选择导入本机曲库</button><button data-trash>${state.trash ? "返回曲库" : "回收站"}</button></div>${state.group ? `<p class="account-notice">原始资料已私有保存：${state.group.pages.length} 页，来源组 ${esc(state.group.sourceGroupId)}。本页面不调用识谱模型。</p>` : ""}<div class="account-list">${state.records.length ? state.records.map((r) => `<article class="account-record"><div><strong>${esc(r.title)}</strong><small>修订 ${r.revision} · ${esc(new Date(r.updatedAt).toLocaleString())} · 私有</small></div><div>${state.trash ? `<button data-restore="${r.entryId}">恢复</button>` : `<a href="/practice.html?entry=${r.entryId}">打开练习</a><button data-history="${r.entryId}">历史</button><button data-delete="${r.entryId}">移到回收站</button>`}</div></article>`).join("") : '<p class="account-empty">曲库暂无内容。导入不会公开曲谱。</p>'}</div>${state.nextCursor ? "<button data-more-records>加载更多曲目</button>" : ""}</section>${inviteCard()}${state.pendingImages.length ? imageOrder() : ""}${sourceGroups()}${state.preview ? preview() : ""}${state.localRecords.length ? localSelection() : ""}${accountSecurity({ session: s, state, nativeSubscriptions: !!window.QinbanNative?.manageSubscriptions })}`;
+  return `<section class="account-card"><div class="account-row"><div><h1>我的私有曲库</h1><p>${esc(s.user.email)} · ${state.records.length} 首${state.trash ? "已回收" : ""}曲目</p></div><button data-logout>退出账号</button></div><div class="account-actions"><label class="account-file">导入数字乐谱<input data-digital type="file" accept=".json,.mid,.midi,.xml,.musicxml,.mxl" hidden></label><label class="account-file">保存原始图片<input data-images type="file" accept="image/png,image/jpeg,image/webp" multiple hidden></label><label class="account-file">保存原始 PDF<input data-pdf type="file" accept="application/pdf,.pdf" hidden></label><button data-export>下载完整备份</button><label class="account-file">恢复备份<input data-backup type="file" accept=".json" hidden></label><button data-local>选择导入本机曲库</button><button data-trash>${state.trash ? "返回曲库" : "回收站"}</button></div>${state.group ? `<p class="account-notice">原始资料已私有保存：${state.group.pages.length} 页，来源组 ${esc(state.group.sourceGroupId)}。本页面不调用识谱模型。</p>` : ""}${!state.records.length ? '<p class="account-empty">暂无曲目。</p>' : state.trash ? `<div class="account-list">${state.records.map((r) => `<article class="account-record"><div><strong>${esc(r.title)}</strong><small>修订 ${r.revision} · ${esc(new Date(r.updatedAt).toLocaleString())}</small></div><button data-restore="${esc(r.entryId)}">恢复</button></article>`).join("")}</div>` : shelf.markup(state.records, (r) => `${practiceLink(r)}<button data-history="${esc(r.entryId)}">历史</button><button data-delete="${esc(r.entryId)}">移到回收站</button>`)}${state.nextCursor ? "<button data-more-records>加载更多曲目</button>" : ""}</section>${inviteCard()}${state.pendingImages.length ? imageOrder() : ""}${sourceGroups()}${state.preview ? preview() : ""}${state.localRecords.length ? localSelection() : ""}${accountSecurity({ session: s, state, nativeSubscriptions: !!window.QinbanNative?.manageSubscriptions })}`;
 }
 function imageOrder() {
   return `<section class="account-card"><h2>核对原图页序</h2><p>原文件保持不变。请按谱面顺序调整后保存。</p>${state.pendingImages.map((f, i) => `<div class="account-row"><span>第 ${i + 1} 页 · ${esc(f.name)} · ${(f.size / 1048576).toFixed(2)} MiB</span><div><button data-image-move="-1" data-index="${i}" ${i === 0 ? "disabled" : ""}>上移</button><button data-image-move="1" data-index="${i}" ${i === state.pendingImages.length - 1 ? "disabled" : ""}>下移</button></div></div>`).join("")}<button data-save-images>按此页序保存到账号</button><button data-cancel-images>取消</button></section>`;
@@ -503,6 +506,14 @@ function localSelection() {
   return `<section class="account-card"><h2>选择本机曲库内容</h2><p>只上传勾选的曲目及其原图和历史，目标账号 ${esc(account.session.user.email)}。</p>${state.localRecords.map((r) => `<label class="account-row"><span>${esc(r.title)} · 修订 ${r.revision}</span><input type="checkbox" data-local-id="${esc(r.id)}"></label>`).join("")}<button data-local-import>上传选中内容并预览</button><button data-local-cancel>取消</button></section>`;
 }
 function bind() {
+  shelf.bind(root, account.renameEntry, (result) => {
+    Object.assign(
+      state.records.find((r) => r.entryId === result.entryId) || {},
+      result,
+    );
+    state.message = "曲名已保存。";
+    render();
+  });
   bindSignIn();
   bindInvites();
   $("[data-retry-device-cleanup]")?.addEventListener("click", () =>
@@ -907,6 +918,7 @@ function bind() {
   });
 }
 account.subscribe(() => {
+  shelf.reset();
   state.invites = null;
   state.quota = null;
   state.newInvite = null;
@@ -951,7 +963,7 @@ window.addEventListener("focus", () => {
   if (state.busy) return;
   void account
     .initialize()
-    .then(() => (account.session ? run(load) : undefined))
+    .then(() => (account.session && !$(".shelf-edit") ? run(load) : undefined))
     .catch(() => {});
 });
 window.addEventListener("pagehide", () => account.clearLocal());

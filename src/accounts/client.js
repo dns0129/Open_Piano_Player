@@ -111,6 +111,16 @@ export function createAccountClient({
       listeners.add(fn);
       return () => listeners.delete(fn);
     },
+    renameEntry(entryId, title, expectedRevision, key) {
+      return api.json(
+        "/library/entries/" + encodeURIComponent(entryId) + "/rename",
+        {
+          method: "POST",
+          body: { title, expectedRevision },
+          key,
+        },
+      );
+    },
     async json(path, options) {
       const r = await request(path, options);
       return r.status === 204 ? null : r.json();
@@ -431,6 +441,13 @@ export function createHostedLibrary(account) {
     metadata,
     list,
     get,
+    async renameEntry(entryId, title, revision, key) {
+      const saved = await account.renameEntry(entryId, title, revision, key);
+      const known = summaries.find((s) => s.entryId === entryId);
+      if (known && known.revision <= saved.revision)
+        Object.assign(known, saved);
+      return saved;
+    },
     async openPractice(id) {
       const generation = account.epoch;
       const entry = await readEntry(

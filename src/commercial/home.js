@@ -1,3 +1,5 @@
+import { createScoreShelf, practiceLink } from "../score-shelf.js";
+import "../score-shelf.css";
 import {
   esc,
   date,
@@ -6,6 +8,7 @@ import {
   createPage,
   currentSignInHref,
 } from "./shared.js";
+const shelf = createScoreShelf();
 const root = document.querySelector("#commercial-app"),
   state = {
     records: [],
@@ -21,6 +24,9 @@ const root = document.querySelector("#commercial-app"),
     feedbackDraft: { category: "recognition", message: "" },
   };
 const page = createPage(() => {
+    shelf.reset();
+    state.query = "";
+    state.nextCursor = null;
     state.records = [];
     state.jobs = [];
     state.feedback = [];
@@ -66,7 +72,7 @@ function guest() {
 function library() {
   const q = state.query.toLowerCase(),
     records = state.records.filter((r) => r.title.toLowerCase().includes(q));
-  return `<section class="commerce-summary"><div><div class="commerce-eyebrow">YOUR PRIVATE LIBRARY</div><h1>我的乐谱，随时接着练。</h1><p>${esc(client.session.user.email)}<br>原始曲谱与修改历史私有保存。</p><div class="commerce-actions"><a class="commerce-button primary" href="/recognition.html">拍照或上传识谱</a><a class="commerce-button" href="/account.html">导入数字谱与管理资料</a></div></div>${state.quota ? `<aside class="commerce-quota"><strong>${state.quota.remaining}</strong> ${state.quota.unit === "point" ? `可用积分<small>冻结 ${state.quota.held} 积分 · 每行 ${state.quota.pointsPerRegion} 积分</small><a href="/subscription.html">订阅 / 补充积分</a>` : `个本月可用任务<small>已用 ${state.quota.used} / ${state.quota.limit} · ${state.quota.period}</small>`}</aside>` : ""}</section>${!state.info?.recognitionAvailable ? '<p class="commerce-notice">识谱服务暂未启用或已暂停。上传资料、已保存的乐谱和练习功能仍可使用。</p>' : ""}<div class="commerce-section-heading"><h2>私有曲库 <small class="commerce-muted">${state.records.length} 首已载入</small></h2><a href="/account.html">历史、备份与回收站</a></div><section class="commerce-card"><label for="score-search">查找曲目<input id="score-search" value="${esc(state.query)}" placeholder="输入曲名" maxlength="100"></label><div class="commerce-grid">${records.map((r) => `<article class="commerce-card commerce-score"><span class="commerce-tag">私有 · 修订 ${r.revision}</span><h3>${esc(r.title)}</h3><p class="commerce-muted">${date(r.updatedAt)}</p><a class="commerce-button" href="/practice.html?entry=${r.entryId}">打开练习</a></article>`).join("")}</div>${!records.length ? '<div class="commerce-empty"><p>还没有这首乐谱。可以导入数字文件，或拍照建立识谱任务。</p></div>' : ""}${state.nextCursor ? "<button data-more>继续载入曲目</button>" : ""}</section>${
+  return `<section class="commerce-summary"><div><div class="commerce-eyebrow">YOUR PRIVATE LIBRARY</div><h1>我的乐谱，随时接着练。</h1><p>${esc(client.session.user.email)}<br>原始曲谱与修改历史私有保存。</p><div class="commerce-actions"><a class="commerce-button primary" href="/recognition.html">拍照或上传识谱</a><a class="commerce-button" href="/account.html">导入数字谱与管理资料</a></div></div>${state.quota ? `<aside class="commerce-quota"><strong>${state.quota.remaining}</strong> ${state.quota.unit === "point" ? `可用积分<small>冻结 ${state.quota.held} 积分 · 每行 ${state.quota.pointsPerRegion} 积分</small><a href="/subscription.html">订阅 / 补充积分</a>` : `个本月可用任务<small>已用 ${state.quota.used} / ${state.quota.limit} · ${state.quota.period}</small>`}</aside>` : ""}</section>${!state.info?.recognitionAvailable ? '<p class="commerce-notice">识谱服务暂未启用或已暂停。上传资料、已保存的乐谱和练习功能仍可使用。</p>' : ""}<div class="commerce-section-heading"><h2>私有曲库 <small class="commerce-muted">${state.records.length} 首已载入</small></h2><a href="/account.html">历史、备份与回收站</a></div><section class="commerce-card"><label for="score-search">查找曲目<input id="score-search" value="${esc(state.query)}" placeholder="输入曲名" maxlength="100"></label>${shelf.markup(records, practiceLink)}${!records.length ? '<div class="commerce-empty"><p>还没有这首乐谱。可以导入数字文件，或拍照建立识谱任务。</p></div>' : ""}${state.nextCursor ? "<button data-more>继续载入曲目</button>" : ""}</section>${
     state.jobs.length
       ? `<section class="commerce-card"><h2>最近的识谱任务</h2>${state.jobs
           .slice(0, 4)
@@ -91,6 +97,14 @@ function render() {
   bind();
 }
 function bind() {
+  shelf.bind(root, client.renameEntry, (result) => {
+    Object.assign(
+      state.records.find((r) => r.entryId === result.entryId) || {},
+      result,
+    );
+    state.message = "曲名已保存。";
+    render();
+  });
   $("[data-feedback]")?.addEventListener("input", (e) => {
     state.feedbackDraft = Object.fromEntries(new FormData(e.currentTarget));
   });
@@ -133,5 +147,6 @@ window.addEventListener("pageshow", (e) => {
   if (e.persisted) void run(load);
 });
 window.addEventListener("focus", () => {
-  if (!state.busy) void run(load);
+  if ($(".shelf-edit")) void client.initialize().catch(() => {});
+  else if (!state.busy) void run(load);
 });
