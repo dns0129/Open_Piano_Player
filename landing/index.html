@@ -12,7 +12,7 @@
 </head>
 <body class="is-loading">
 
-<!-- ============ 开场：五线谱描线 · 音符落墨 · 翻页 ============ -->
+<!-- ============ 开场：五线谱描线 · 音符落墨 · 纸页抬起 ============ -->
 <div id="intro" aria-hidden="true">
   <div class="intro-sheet">
     <svg id="intro-svg" xmlns="http://www.w3.org/2000/svg"></svg>
@@ -150,7 +150,7 @@
         </li>
       </ol>
       <div class="split-vis" data-reveal>
-        <figure class="dev dev-win tilt">
+        <figure class="dev dev-win">
           <div class="dev-bar"><i></i><i></i><i></i><span>选择识谱范围 · 野蜂飞舞 7 页 PDF</span></div>
           <img src="img/shot-recognize-bee.webp" width="1280" height="720" alt="选择识谱范围对话框：按谱行选择，检测到双谱表" loading="lazy">
         </figure>
@@ -255,39 +255,33 @@
       <li data-reveal><span>vi</span><b>专注模式</b><p>只保留乐谱与播放键；iPad 竖屏默认专注。</p></li>
     </ul>
 
-    <!-- 翻页：真实截图 -->
+    <!-- 层叠纸页：真实截图，始终正向 -->
     <div class="folio-wrap" data-reveal>
       <div class="folio-copy">
         <p class="label"><span class="m">fol.</span><i class="rule"></i><span>实机截图 · Real screens</span></p>
-        <h3 class="h3" id="folio-title">五线谱，连续分行</h3>
+        <h3 class="h3" id="folio-title" aria-live="polite">五线谱，连续分行</h3>
         <p class="body" id="folio-text">一行内多个小节首尾相接，每行起点才出现谱号、调号；点哪个音就从哪里播，播放时谱面自动跟随。</p>
         <div class="folio-nav">
-          <button type="button" id="folio-prev" aria-label="上一页">‹</button>
+          <button type="button" id="folio-prev" aria-label="上一张">‹</button>
           <span class="dots" id="folio-dots"></span>
-          <button type="button" id="folio-next" aria-label="下一页">›</button>
+          <button type="button" id="folio-next" aria-label="下一张">›</button>
           <span class="folio-count"><b id="folio-i">1</b> / 4</span>
         </div>
       </div>
-      <div class="folio" id="folio" tabindex="0" aria-label="实机截图，点击翻页">
-        <div class="leaf" data-title="五线谱，连续分行" data-text="一行内多个小节首尾相接，每行起点才出现谱号、调号；点哪个音就从哪里播，播放时谱面自动跟随。">
-          <div class="face front"><figure class="dev dev-win"><div class="dev-bar"><i></i><i></i><i></i><span>五线谱 · 致爱丽丝 WoO 59</span></div><img src="img/shot-practice-staff.webp" width="1600" height="1000" alt="五线谱练习室" loading="lazy"></figure></div>
-          <div class="face back"></div>
+      <div class="folio" id="folio" tabindex="0" role="group" aria-roledescription="截图序列" aria-label="实机截图，点击查看下一张">
+        <div class="plate is-on" data-title="五线谱，连续分行" data-text="一行内多个小节首尾相接，每行起点才出现谱号、调号；点哪个音就从哪里播，播放时谱面自动跟随。">
+          <figure class="dev dev-win"><div class="dev-bar"><i></i><i></i><i></i><span>五线谱 · 致爱丽丝 WoO 59</span></div><img src="img/shot-practice-staff.webp" width="1600" height="1000" alt="五线谱练习室"></figure>
         </div>
-        <div class="leaf" data-title="简谱，同一条时间线" data-text="简谱同样连续分行，每行共用右手 / 左手标签，以小节线分隔；切换视图不打断播放。">
-          <div class="face front"><figure class="dev dev-win"><div class="dev-bar"><i></i><i></i><i></i><span>简谱 · 致爱丽丝 WoO 59</span></div><img src="img/shot-practice-jianpu.webp" width="1400" height="684" alt="简谱视图" loading="lazy"></figure></div>
-          <div class="face back"></div>
+        <div class="plate" data-title="简谱，同一条时间线" data-text="简谱同样连续分行，每行共用右手 / 左手标签，以小节线分隔；切换视图不打断播放。" aria-hidden="true">
+          <figure class="dev dev-win"><div class="dev-bar"><i></i><i></i><i></i><span>简谱 · 致爱丽丝 WoO 59</span></div><img src="img/shot-practice-jianpu.webp" width="1400" height="684" alt="简谱视图"></figure>
         </div>
-        <div class="leaf" data-title="iPad：横屏与专注" data-text="顶栏、侧栏和钢琴键盘均可独立收起；「专注」只保留乐谱、播放按钮和右上角退出入口，横竖屏分别记住布局。">
-          <div class="face front"><figure class="dev dev-pad"><img src="img/ipad-landscape.webp" width="1194" height="834" alt="iPad 横屏练习室" loading="lazy"></figure></div>
-          <div class="face back"></div>
+        <div class="plate" data-title="iPad：横屏与专注" data-text="顶栏、侧栏和钢琴键盘均可独立收起；「专注」只保留乐谱、播放按钮和右上角退出入口，横竖屏分别记住布局。" aria-hidden="true">
+          <figure class="dev dev-pad"><img src="img/ipad-landscape.webp" width="1194" height="834" alt="iPad 横屏练习室"></figure>
         </div>
-        <div class="leaf" data-title="iPhone：底部导航与曲库" data-text="iPhone 使用底部导航、列表曲库与「继续练习」入口；练习设置以抽屉展开，键盘按需显示并可横向滑动。">
-          <div class="face front phones">
-            <figure class="dev dev-phone"><span class="notch"></span><img src="img/phone-library.webp" width="390" height="844" alt="手机端曲库" loading="lazy"></figure>
-            <figure class="dev dev-phone"><span class="notch"></span><img src="img/phone-practice2.webp" width="390" height="844" alt="手机端练习" loading="lazy"></figure>
-            <figure class="dev dev-phone"><span class="notch"></span><img src="img/phone-jianpu.webp" width="390" height="844" alt="手机端简谱" loading="lazy"></figure>
-          </div>
-          <div class="face back"></div>
+        <div class="plate phones" data-title="iPhone：底部导航与曲库" data-text="iPhone 使用底部导航、列表曲库与「继续练习」入口；练习设置以抽屉展开，键盘按需显示并可横向滑动。" aria-hidden="true">
+          <figure class="dev dev-phone"><span class="notch"></span><img src="img/phone-library.webp" width="390" height="844" alt="手机端曲库"></figure>
+          <figure class="dev dev-phone"><span class="notch"></span><img src="img/phone-practice2.webp" width="390" height="844" alt="手机端练习"></figure>
+          <figure class="dev dev-phone"><span class="notch"></span><img src="img/phone-jianpu.webp" width="390" height="844" alt="手机端简谱"></figure>
         </div>
       </div>
     </div>

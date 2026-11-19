@@ -82,13 +82,13 @@
   }
   function runIntro(done) {
     var intro = $('#intro');
-    if (root.classList.contains('nointro') || reduce) { done(); return; }
+    if (root.classList.contains('nointro') || reduce) { intro.classList.add('done'); done(); return; }
     var lines = buildIntro(), svg = $('#intro-svg'), finished = false, timers = [];
     function at(ms, fn) { timers.push(setTimeout(fn, ms)); }
     function finish() {
       if (finished) return; finished = true; timers.forEach(clearTimeout);
       intro.classList.add('run', 'turn'); done();
-      setTimeout(function () { intro.classList.add('done'); }, 1900);
+      setTimeout(function () { intro.classList.add('done'); }, 1100);
     }
     lines.forEach(function (l, i) { var bar = l.classList.contains('bar'); l.style.transition = 'stroke-dashoffset ' + (bar ? .5 : 1.3) + 's cubic-bezier(.65,.05,.25,1) ' + (bar ? 2.5 : i * .09) + 's'; });
     requestAnimationFrame(function () { requestAnimationFrame(function () { lines.forEach(function (l) { l.style.strokeDashoffset = 0; }); }); });
@@ -306,19 +306,28 @@
     var sc = $('#kb-scroll'); setTimeout(function () { sc.scrollLeft = 0; }, 0);
   }
 
-  /* ================= 翻页 ================= */
+  /* ================= 截图层叠 ================= */
   function initFolio() {
-    var f = $('#folio'), leaves = $$('.leaf', f), n = leaves.length, idx = 0, dots = $('#folio-dots');
-    leaves.forEach(function (l, i) { l.style.zIndex = n - i; var d = document.createElement('i'); d.addEventListener('click', function (e) { e.stopPropagation(); go(i); }); dots.appendChild(d); });
+    var f = $('#folio'), leaves = $$('.plate', f), n = leaves.length, idx = 0, prev = 0, dots = $('#folio-dots');
+    leaves.forEach(function (l, i) { var d = document.createElement('i'); d.addEventListener('click', function (e) { e.stopPropagation(); go(i); }); dots.appendChild(d); });
     var di = $$('i', dots), copy = $('.folio-copy');
-    function paint() {
-      leaves.forEach(function (l, i) { l.classList.toggle('turned', i < idx); });
+    function paint(swapCopy) {
+      leaves.forEach(function (l, i) {
+        l.classList.toggle('is-on', i === idx);
+        l.classList.toggle('is-prev', i === prev && i !== idx);
+        l.setAttribute('aria-hidden', i === idx ? 'false' : 'true');
+      });
       di.forEach(function (d, i) { d.classList.toggle('on', i === idx); });
       $('#folio-i').textContent = idx + 1;
+      if (!swapCopy) return;
       copy.classList.add('swap');
-      setTimeout(function () { $('#folio-title').textContent = leaves[idx].dataset.title; $('#folio-text').textContent = leaves[idx].dataset.text; copy.classList.remove('swap'); }, 350);
+      setTimeout(function () { $('#folio-title').textContent = leaves[idx].dataset.title; $('#folio-text').textContent = leaves[idx].dataset.text; copy.classList.remove('swap'); }, 280);
     }
-    function go(i) { idx = Math.max(0, Math.min(n - 1, i)); paint(); }
+    function go(i) {
+      var nextIdx = Math.max(0, Math.min(n - 1, i));
+      if (nextIdx === idx) return;
+      prev = idx; idx = nextIdx; paint(true);
+    }
     function next() { go(idx >= n - 1 ? 0 : idx + 1); }
     $('#folio-next').addEventListener('click', next);
     $('#folio-prev').addEventListener('click', function () { go(idx <= 0 ? n - 1 : idx - 1); });
@@ -326,7 +335,7 @@
     f.addEventListener('keydown', function (e) { if (e.key === 'ArrowRight') { e.preventDefault(); next(); } if (e.key === 'ArrowLeft') { e.preventDefault(); go(idx - 1); } });
     var sx = null; f.addEventListener('pointerdown', function (e) { sx = e.clientX; }); f.addEventListener('pointerup', function (e) { if (sx != null && Math.abs(e.clientX - sx) > 50) { e.preventDefault(); if (e.clientX < sx) go(idx + 1); else go(idx - 1); f._swiped = true; setTimeout(function () { f._swiped = false; }, 50); } sx = null; });
     f.addEventListener('click', function (e) { if (f._swiped) e.stopImmediatePropagation(); }, true);
-    di[0].classList.add('on');
+    paint(false);
   }
 
   /* ================= 找谱：打字 ================= */
